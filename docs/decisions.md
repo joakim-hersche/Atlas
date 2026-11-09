@@ -44,5 +44,21 @@ All `*` rows are placeholders (`verified = no`) until the cantonal sweep.
 - Education: include attainment and completion rates; maybe higher-education presence, district Matura rate.
 The catalog already carried these values; no row changes.
 
+### D8. Reference vintage: latest state
+All data is shown on the **latest municipality state** (currently 2026-01-01, 2,110 municipalities). History is reprojected onto it. The reference moves forward each January after mergers; the pipeline rebuilds the crosswalk accordingly.
+
+### D9. Reach hubs: the proposed 20
+Zürich HB, Bern, Basel SBB, Genève, Lausanne, Luzern, St. Gallen, Winterthur, Lugano, Bellinzona, Chur, Biel/Bienne, Fribourg, Sion, Zug, Aarau, Olten, Schaffhausen, Neuchâtel, Thun.
+
+### D10. Public-transport reach
+- Mode: **all public transport** (train, bus, tram, boat, cableway), labeled "public transport" in the UI.
+- Time: **median travel time over departures 07:30–08:30 on a typical weekday** (exact reference date chosen from the GTFS feed in Phase 3; avoid holidays).
+- Drawing: lines along real rail track (BAV rail network); bus legs drawn simplified.
+
+### D11. Car reach: typical weekday
+- Travel times from the official **ARE national passenger transport model (NPVM 2023) car matrix** (Zenodo, CC-BY 4.0, average weekday), hub zone → municipality zones, reprojected from the 2023 zone state.
+- Lines drawn on swisstopo roads (swissTLMRegio), so OpenStreetMap is not required for v1.
+- To verify in Phase 3: whether the NPVM car times reflect congested (peak) or daily-average conditions; state it on the sources page.
+
 ### Pending
-Reference vintage · hubs and reach parameters · blocked hosts.
+Blocked hosts and the cantonal sweep for the `*` metrics.
