@@ -1,44 +1,40 @@
 # Data quality report
 
-Generated 2026-11-09T22:38 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-09T23:14 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
-Metrics: 201 defined (142 base, 59 derived) · rows: 5,650,312
+Metrics: 567 defined (401 base, 166 derived) · rows: 5,650,312
 
 ## A. Additivity — municipalities vs. published district/canton/national values
 
 | Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Fail | Max rel. residual |
 |---|---|---|---|---|---|---|---|---|
-| bfe_energy | kanton | en_heat_nonrenewable_count | 1716 | 1592 | 0 | 10 | **114** | 9.036% |
 | bfs_vehicles | kanton | mfz_cars_diesel | 416 | 192 | 16 | 111 | **97** | 25.818% |
-| bfe_energy | kanton | en_ecar_count | 1716 | 1595 | 0 | 34 | **87** | 8.499% |
 | bfs_vehicles | kanton | mfz_cars | 416 | 192 | 16 | 130 | **78** | 32.140% |
 | bfs_vehicles | kanton | mfz_cars_hev | 416 | 215 | 16 | 112 | **73** | 52.334% |
 | bfs_vehicles | kanton | mfz_cars_bev | 416 | 243 | 11 | 91 | **71** | 45.882% |
 | bfs_vehicles | kanton | mfz_cars_phev | 416 | 259 | 4 | 86 | **67** | 65.933% |
-| bfe_energy | kanton | en_pv_installed_kwp | 1716 | 1592 | 0 | 61 | **63** | 3.929% |
 | bfs_vehicles | kanton | mfz_newreg_cars | 416 | 216 | 16 | 121 | **63** | 13.733% |
-| bfe_energy | kanton | en_elec_consumption_mwh | 1040 | 978 | 0 | 0 | **62** | 7.115% |
 | bfs_vehicles | kanton | mfz_cars_petrol | 416 | 192 | 16 | 149 | **59** | 29.058% |
-| bfe_energy | kanton | en_heat_renewable_count | 1716 | 1592 | 0 | 67 | **57** | 4.023% |
 | bfs_vehicles | kanton | mfz_newreg_bev | 416 | 301 | 3 | 58 | **54** | 17.297% |
 | bfs_vehicles | kanton | mfz_cars_private | 260 | 48 | 4 | 172 | **36** | 18.293% |
-| bfe_energy | kanton | en_charging_spots | 884 | 815 | 0 | 20 | **28** | 6.087% |
-| bfe_energy | kanton | en_renelec_solar_mwh | 910 | 858 | 0 | 23 | **26** | 3.421% |
-| bfe_energy | kanton | en_renelec_hydro_mwh | 910 | 858 | 0 | 26 | **23** | 19.543% |
-| bfe_energy | kanton | en_renelec_production_mwh | 910 | 858 | 0 | 26 | **23** | 5.782% |
 | bfs_vehicles | schweiz | mfz_newreg_bev | 16 | 8 | 0 | 0 | **8** | 1.915% |
 | bfs_vehicles | schweiz | mfz_cars_diesel | 16 | 7 | 0 | 2 | **7** | 1.440% |
 | bfs_vehicles | schweiz | mfz_newreg_cars | 16 | 8 | 0 | 1 | **7** | 0.897% |
-| geo_identity | kanton | geo_area_lake_ha | 26 | 21 | 0 | 0 | **5** | 99.933% |
-| geo_identity | kanton | geo_area_total_ha | 26 | 19 | 0 | 2 | **5** | 13.155% |
 | bfs_vehicles | schweiz | mfz_cars_hev | 16 | 8 | 0 | 5 | **3** | 2.452% |
 | bfs_vehicles | schweiz | mfz_cars | 16 | 0 | 0 | 14 | **2** | 1.115% |
 | bfs_vehicles | schweiz | mfz_cars_bev | 16 | 8 | 0 | 6 | **2** | 2.147% |
 | bfs_vehicles | schweiz | mfz_cars_petrol | 16 | 0 | 0 | 14 | **2** | 0.792% |
 | bfs_vehicles | schweiz | mfz_cars_phev | 16 | 8 | 0 | 6 | **2** | 3.127% |
 | bfs_vehicles | schweiz | mfz_cars_private | 10 | 0 | 0 | 9 | **1** | 0.699% |
-| geo_identity | schweiz | geo_area_lake_ha | 1 | 0 | 0 | 0 | **1** | 34.355% |
-| geo_identity | schweiz | geo_area_total_ha | 1 | 0 | 0 | 0 | **1** | 1.091% |
+| bfe_energy | kanton | en_charging_spots | 834 | 815 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_ecar_count | 1592 | 1592 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_elec_consumption_mwh | 978 | 978 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_heat_nonrenewable_count | 1592 | 1592 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_heat_renewable_count | 1592 | 1592 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_pv_installed_kwp | 1592 | 1592 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_renelec_hydro_mwh | 858 | 858 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_renelec_production_mwh | 858 | 858 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | kanton | en_renelec_solar_mwh | 858 | 858 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_charging_spots | 34 | 33 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_ecar_count | 66 | 66 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_elec_consumption_mwh | 40 | 40 | 0 | 0 | 0 | 0.000% |
@@ -137,15 +133,6 @@ Metrics: 201 defined (142 base, 59 derived) · rows: 5,650,312
 
 Worst unexplained differences:
 
-- bfe_energy / kanton / en_charging_spots: [{'unit_id': 'JU', 'period': '2025-11', 'value_pub': 115.0, 'value_agg': 122.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2024-02', 'value_pub': 67.0, 'value_agg': 71.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2024-01', 'value_pub': 71.0, 'value_agg': 75.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_ecar_count: [{'unit_id': 'JU', 'period': '2021-04', 'value_pub': 353.0, 'value_agg': 383.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2022-06', 'value_pub': 713.0, 'value_agg': 771.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2023-01', 'value_pub': 929.0, 'value_agg': 1004.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_elec_consumption_mwh: [{'unit_id': 'JU', 'period': '2025-11', 'value_pub': 443988.0, 'value_agg': 475579.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-12', 'value_pub': 444427.0, 'value_agg': 476039.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-10', 'value_pub': 444199.0, 'value_agg': 475779.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_heat_nonrenewable_count: [{'unit_id': 'JU', 'period': '2025-12', 'value_pub': 13956.0, 'value_agg': 15217.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2024-12', 'value_pub': 14418.0, 'value_agg': 15712.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-06', 'value_pub': 14331.0, 'value_agg': 15616.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_heat_renewable_count: [{'unit_id': 'JU', 'period': '2025-11', 'value_pub': 10391.0, 'value_agg': 10809.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-10', 'value_pub': 10372.0, 'value_agg': 10788.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-12', 'value_pub': 10642.0, 'value_agg': 11068.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_pv_installed_kwp: [{'unit_id': 'JU', 'period': '2025-10', 'value_pub': 133253.0, 'value_agg': 138489.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-11', 'value_pub': 134314.0, 'value_agg': 139574.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-12', 'value_pub': 134320.0, 'value_agg': 139580.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_renelec_hydro_mwh: [{'unit_id': 'JU', 'period': '2024-02', 'value_pub': 35619.0, 'value_agg': 42580.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2024-01', 'value_pub': 34985.0, 'value_agg': 41822.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-12', 'value_pub': 32363.0, 'value_agg': 38678.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_renelec_production_mwh: [{'unit_id': 'JU', 'period': '2025-05', 'value_pub': 176591.0, 'value_agg': 186801.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-04', 'value_pub': 175232.0, 'value_agg': 185217.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-06', 'value_pub': 178404.0, 'value_agg': 188481.0, 'explained': 0.0}]
-- bfe_energy / kanton / en_renelec_solar_mwh: [{'unit_id': 'JU', 'period': '2025-10', 'value_pub': 120183.0, 'value_agg': 124294.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-12', 'value_pub': 123267.0, 'value_agg': 127459.0, 'explained': 0.0}, {'unit_id': 'JU', 'period': '2025-11', 'value_pub': 122837.0, 'value_agg': 126996.0, 'explained': 0.0}]
 - bfs_vehicles / kanton / mfz_cars: [{'unit_id': 'AI', 'period': '2022', 'value_pub': 22228.0, 'value_agg': 15084.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '2019', 'value_pub': 23677.0, 'value_agg': 18288.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2022', 'value_pub': 61702.0, 'value_agg': 59291.0, 'explained': 0.0}]
 - bfs_vehicles / kanton / mfz_cars_bev: [{'unit_id': 'AI', 'period': '2022', 'value_pub': 595.0, 'value_agg': 322.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2025', 'value_pub': 3078.0, 'value_agg': 2765.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2024', 'value_pub': 2426.0, 'value_agg': 2193.0, 'explained': 0.0}]
 - bfs_vehicles / kanton / mfz_cars_diesel: [{'unit_id': 'AI', 'period': '2019', 'value_pub': 8409.0, 'value_agg': 6238.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '2022', 'value_pub': 5958.0, 'value_agg': 4573.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2019', 'value_pub': 19059.0, 'value_agg': 17946.0, 'explained': 0.0}]
@@ -164,10 +151,6 @@ Worst unexplained differences:
 - bfs_vehicles / schweiz / mfz_cars_private: [{'unit_id': 'CH', 'period': '2022', 'value_pub': 4126791.0, 'value_agg': 4097939.0, 'explained': -0.0}]
 - bfs_vehicles / schweiz / mfz_newreg_bev: [{'unit_id': 'CH', 'period': '2018', 'value_pub': 5066.0, 'value_agg': 4969.0, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2023', 'value_pub': 52333.0, 'value_agg': 51649.0, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2022', 'value_pub': 39868.0, 'value_agg': 39441.0, 'explained': -0.0}]
 - bfs_vehicles / schweiz / mfz_newreg_cars: [{'unit_id': 'CH', 'period': '2023', 'value_pub': 250293.0, 'value_agg': 248048.0, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2018', 'value_pub': 297007.0, 'value_agg': 294419.0, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2024', 'value_pub': 237562.0, 'value_agg': 235566.0, 'explained': -0.0}]
-- geo_identity / kanton / geo_area_lake_ha: [{'unit_id': 'BE', 'period': '2026', 'value_pub': 11854.0, 'value_agg': 8.0, 'explained': 0.0}, {'unit_id': 'NE', 'period': '2026', 'value_pub': 8511.0, 'value_agg': 25.0, 'explained': 0.0}, {'unit_id': 'TG', 'period': '2026', 'value_pub': 13119.0, 'value_agg': 39.0, 'explained': 0.0}]
-- geo_identity / kanton / geo_area_total_ha: [{'unit_id': 'TG', 'period': '2026', 'value_pub': 99433.0, 'value_agg': 86353.0, 'explained': 0.0}, {'unit_id': 'NE', 'period': '2026', 'value_pub': 80216.0, 'value_agg': 71730.0, 'explained': 0.0}, {'unit_id': 'ZH', 'period': '2026', 'value_pub': 172894.0, 'value_agg': 166488.0, 'explained': 0.0}]
-- geo_identity / schweiz / geo_area_lake_ha: [{'unit_id': 'CH', 'period': '2026', 'value_pub': 129467.0, 'value_agg': 84988.0, 'explained': -0.0}]
-- geo_identity / schweiz / geo_area_total_ha: [{'unit_id': 'CH', 'period': '2026', 'value_pub': 4129069.0, 'value_agg': 4084036.0, 'explained': -0.0}]
 
 ## B. Ranges
 

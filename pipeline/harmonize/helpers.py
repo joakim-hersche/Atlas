@@ -57,8 +57,10 @@ def to_reference(df: pd.DataFrame, source_vintage: dt.date | None, value_cols: l
     """
     out, unm_all = None, []
     prov = None
+    extra = [rule.split(":", 1)[1]] if rule.startswith("weighted_mean:") else []
     for col in value_cols:
-        r, unm = to_vintage(df[[*([c for c in ("bfs_nr", "hist_id") if c in df]), *group_cols, col]]
+        r, unm = to_vintage(df[[*([c for c in ("bfs_nr", "hist_id") if c in df]), *group_cols, col,
+                                *[e for e in extra if e != col]]]
                             .rename(columns={col: "value"}),
                             source_vintage=source_vintage, rule=rule, group_cols=group_cols,
                             return_unmapped=True)
