@@ -13,5 +13,11 @@ Where no national municipality-level source exists, a metric may be **compiled f
 - Applies to the gap themes (e.g. public finances, property prices, crime, unemployment), decided theme by theme.
 - Consequences for later phases: one connector per local publisher, a coverage map per `*` metric, and the cantonal hosts must be allowed in the environment.
 
+### D3. Language & religion: option B
+- Municipality level: census values (language 1860–2000, religion 1850–2000), shown for 2000 with change since 1970, labeled "census 2000".
+- Each profile also shows its **district's** current language shares from the Structural Survey (3-year pooled, with confidence intervals), labeled "district, survey".
+- City-level survey values (~170 cities) are not used, to avoid mixing levels on one map.
+- Catalog: `bfs_se_language_bezirk` → include, `bfs_se_language_cities` → exclude.
+
 ### Pending
-Language & religion · Public finances · Real estate prices · Energy & climate · Environment & hazards · Health & social · Education · Safety · reference vintage · hubs and reach parameters · blocked hosts.
+Public finances · Real estate prices · Energy & climate · Environment & hazards · Health & social · Education · Safety · reference vintage · hubs and reach parameters · blocked hosts.
