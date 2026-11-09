@@ -37,5 +37,12 @@ Owner instruction: where a theme has a national or regional fallback and a possi
 - **Economy & jobs (extension of D1):** `*` registered unemployment per municipality from cantonal labour-market offices (`kt_unemployment_gemeinde_compiled`); cities and cantons as fallback.
 All `*` rows are placeholders (`verified = no`) until the cantonal sweep.
 
+### D7. Energy & climate, Environment & hazards, Health & social, Education: approved as proposed
+- Energy: include Energie Reporter, solar potential, PV capacity, Energiestadt, climate normals 1991–2020 (settlement-weighted); maybe charging points, Minergie, district heating, biomass.
+- Environment: include population-weighted air quality and protected-area share; maybe noise (effort L), radon, earthquake zone, national hazard overviews.
+- Health & social: include social assistance rate, health-sector jobs, distance to services, health insurance premiums (once hosts allowed); maybe canton-only supply figures.
+- Education: include attainment and completion rates; maybe higher-education presence, district Matura rate.
+The catalog already carried these values; no row changes.
+
 ### Pending
-Energy & climate · Environment & hazards (non-* items) · Health & social · Education (non-* items) · reference vintage · hubs and reach parameters · blocked hosts.
+Reference vintage · hubs and reach parameters · blocked hosts.
