@@ -2,7 +2,7 @@
 
 Owner decisions, newest last. The `recommendation` column in `data_catalog.csv` reflects these decisions.
 
-## Checkpoint 1 — data review (2026-11-09, in progress)
+## Checkpoint 1 — data review (2026-11-09, closed)
 
 ### D1. Strong themes approved as proposed
 Approved without changes: Geography & identity, Population & demography, Migration & nationality, Households & family, Economy & jobs, Income & tax, Housing & buildings, Land use & built environment, Mobility & accessibility, Politics. The include/maybe/exclude values in `data_catalog.csv` for these themes now stand as decisions.
@@ -60,5 +60,9 @@ Zürich HB, Bern, Basel SBB, Genève, Lausanne, Luzern, St. Gallen, Winterthur, 
 - Lines drawn on swisstopo roads (swissTLMRegio), so OpenStreetMap is not required for v1.
 - To verify in Phase 3: whether the NPVM car times reflect congested (peak) or daily-average conditions; state it on the sources page.
 
-### Pending
-Blocked hosts and the cantonal sweep for the `*` metrics.
+### D12. Hosts and cantonal sweep: option B
+- Federal hosts added to the Atlas environment: `www.bag.admin.ch`, `www.priminfo.admin.ch`, `upload.wikimedia.org`, `www.efv.admin.ch`.
+- Checkpoint 1 is closed; Phase 2 (backbone) starts now.
+- The cantonal sweep for the `*` metrics (D4–D6) runs alongside or after Phase 2. Its cantonal hosts are requested in one batch before it starts. Results replace the placeholder rows in `data_catalog.csv`.
+
+**Checkpoint 1 closed: 2026-11-09.**
