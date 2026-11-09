@@ -59,7 +59,7 @@ def to_observations(wide: pd.DataFrame, geo_col: str, period_col: str, metric_ma
 
     # published higher levels (kept as native for validation and for canton/district views)
     mv, _ = load_backbone()
-    for level in ("kanton", "bezirk", "schweiz", "other"):
+    for level in ("kanton", "bezirk", "schweiz", "pseudo", "other"):
         sub = wide[wide["_level"] == level].copy()
         if sub.empty:
             continue
@@ -73,6 +73,8 @@ def to_observations(wide: pd.DataFrame, geo_col: str, period_col: str, metric_ma
             continue
         if level == "bezirk":
             sub["unit"] = sub[geo_col].str[-4:].astype(int).astype(str)  # 000101 -> 101
+        elif level == "pseudo":
+            sub["unit"] = sub[geo_col]
         elif level == "schweiz":
             sub["unit"] = "CH"
         else:

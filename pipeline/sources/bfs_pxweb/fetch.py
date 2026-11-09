@@ -112,8 +112,10 @@ def _query_codes_single(dbid: str, select: dict[str, list[str]]) -> pd.DataFrame
 
 def geo_level_of_code(code: str) -> str:
     """BFS PxWeb institutional geography codes: 8100 CH, 2-letter canton, 6-digit district, 4-digit municipality."""
-    if code == "8100":
+    if code in ("8100", "CH"):
         return "schweiz"
+    if code.isdigit() and len(code) == 4 and int(code) >= 9000:
+        return "pseudo"  # e.g. Swiss abroad, postal-vote districts (votes)
     if code.isalpha() and len(code) == 2:
         return "kanton"
     if code.isdigit() and len(code) == 6:

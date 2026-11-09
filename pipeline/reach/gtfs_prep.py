@@ -9,7 +9,9 @@ Output (data/interim/reach/gtfs_<date>/):
                        trip (int), seq, board (pickup allowed at from), alight (drop-off allowed at to),
                        route_type, chain_trip (trip continued in-seat at to via transfer_type 4, or -1)
   footpaths.parquet    from_idx, to_idx, walk_s (stations within 400 m straight line, time =
-                       d * 1.3 / 1.2 m/s, overridden by transfers.txt between stations where given)
+                       d * 1.3 / 1.2 m/s, overridden by transfers.txt between stations where given;
+                       a station with no neighbour within 400 m is linked to its nearest station
+                       within 1 km)
   trips.parquet        trip (int), trip_id, route_id, route_type, route_short_name, agency_id
 
 Platforms are collapsed onto their parent station (every parent has exactly one didok number).
@@ -40,6 +42,7 @@ WINDOW = (7 * 3600 + 30 * 60, 18 * 3600)   # keep connections departing 07:30 ..
 DEFAULT_MCT = 120
 MAX_MCT = 900   # a few bus stops carry implausible rules (e.g. 5940 s); capped
 FOOT_RADIUS = 400.0
+ISOLATED_RADIUS = 1000.0
 WALK_SPEED = 1.2
 DETOUR = 1.3
 DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -242,6 +245,18 @@ def build(date: dt.date = SERVICE_DATE, feed: str = FEED) -> dict:
     d = np.hypot(*(xy[pairs[:, 0]] - xy[pairs[:, 1]]).T)
     fp = pd.DataFrame({"from_idx": np.r_[pairs[:, 0], pairs[:, 1]], "to_idx": np.r_[pairs[:, 1], pairs[:, 0]],
                        "walk_s": np.r_[d, d] * DETOUR / WALK_SPEED, "source": "distance"})
+    # isolated stations (nothing within 400 m, e.g. a cableway valley station off the bus line):
+    # link to the nearest station within 1 km so that they are not cut off
+    iso = np.setdiff1d(np.arange(len(xy)), pairs.ravel())
+    far = pairs_within(xy, ISOLATED_RADIUS)
+    far = far[np.isin(far[:, 0], iso) | np.isin(far[:, 1], iso)]
+    df_far = pd.DataFrame({"a": np.r_[far[:, 0], far[:, 1]], "b": np.r_[far[:, 1], far[:, 0]]})
+    df_far = df_far[df_far.a.isin(iso)]
+    df_far["d"] = np.hypot(*(xy[df_far.a] - xy[df_far.b]).T)
+    df_far = df_far.sort_values("d").drop_duplicates("a")
+    extra = pd.DataFrame({"from_idx": np.r_[df_far.a, df_far.b], "to_idx": np.r_[df_far.b, df_far.a],
+                          "walk_s": np.r_[df_far.d, df_far.d] * DETOUR / WALK_SPEED, "source": "isolated station link"})
+    fp = pd.concat([fp, extra]).drop_duplicates(["from_idx", "to_idx"])
     between = s[(s.fp != s.tp) & s.fp.isin(sidx.index) & s.tp.isin(sidx.index)]
     between = between.groupby(["fp", "tp"]).mt.median().reset_index()
     between = pd.DataFrame({"from_idx": between.fp.map(sidx).to_numpy(), "to_idx": between.tp.map(sidx).to_numpy(),
@@ -258,6 +273,7 @@ def build(date: dt.date = SERVICE_DATE, feed: str = FEED) -> dict:
     rail_types = set(range(100, 118)) | {2}
     rail_st = set(con.loc[con.route_type.isin(rail_types), "from_idx"]) | set(con.loc[con.route_type.isin(rail_types), "to_idx"])
     sta["rail"] = sta.idx.isin(rail_st)
+    sta["served_in_window"] = sta.idx.isin(set(con.from_idx) | set(con.to_idx))
 
     od = outdir(date)
     sta.to_parquet(od / "stations.parquet")

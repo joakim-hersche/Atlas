@@ -12,7 +12,9 @@ Energie Reporter (geoimpact / EnergieSchweiz, CC BY 4.0), historized monthly sli
   equal periods and STATPOP is annual. Reads data/interim/observation/bfs_statpop.parquet.
   Slices whose BFS-number set matches no single municipality state (2025-01, 2026-01: old and new
   numbers of merged municipalities side by side, indicators split between them) are skipped; the
-  canton/national rows of those months are kept.
+  national rows of those months are kept. Published canton rows are kept only where the canton's
+  territory in the slice equals the reference territory (decision D16: Moutier counted in JU,
+  Clavaleyres in FR throughout), so they stay comparable with sums of municipalities.
 Solar potential (BFE OGD 52, release 2025-03, municipality state 2025-04-05): roofs only (scenario 1)
   and roofs + facades (scenario 3), GWh per year, summed to the reference state.
 Energiestädte (BFE, data.geo.admin.ch): label holders with category (50-64%, 65-74%, Gold) and
@@ -29,6 +31,8 @@ import numpy as np
 import pandas as pd
 import pyogrio
 
+from pipeline.backbone.crosswalk import load_backbone, versions_at
+from pipeline.backbone.vintage import crosswalk
 from pipeline.common import REFERENCE_DATE, interim_path
 from pipeline.harmonize.helpers import emit, infer_vintage, to_reference
 from pipeline.harmonize.schema import OBS_COLUMNS
@@ -124,7 +128,22 @@ def _per_capita(obs: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(out, ignore_index=True)
 
 
-def _native(level: str, name: str, unit_col: str) -> pd.DataFrame:
+def _changed_cantons(g: pd.DataFrame, vintage: dt.date) -> set[str]:
+    """Cantons whose territory in this slice differs from the reference state (e.g. Moutier BE->JU
+    2026-01-01): their published rows are not comparable with sums of reference municipalities."""
+    mv, _ = load_backbone()
+    ver = versions_at(mv, vintage, municipalities_only=False).drop_duplicates("bfs_nr")
+    d = g[["bfs_nr", "canton"]].merge(ver[["bfs_nr", "hist_id"]], on="bfs_nr")
+    cw = crosswalk()[["from_hist_id", "to_bfs_nr"]]
+    d = d.merge(cw, left_on="hist_id", right_on="from_hist_id")
+    mem = pd.read_parquet(interim_path("backbone", f"membership_{REFERENCE_DATE.isoformat()}.parquet"),
+                          columns=["bfs_nr", "kanton"]).set_index("bfs_nr")["kanton"]
+    d["ref_canton"] = d["to_bfs_nr"].astype(int).map(mem)
+    diff = d[d["canton"] != d["ref_canton"]]
+    return set(diff["canton"]) | set(diff["ref_canton"].dropna())
+
+
+def _native(level: str, name: str, unit_col: str, exclude: dict[str, set[str]] | None = None) -> pd.DataFrame:
     df = _read(name)
     df["period"] = df["energyreporter_date"].str[:7]
     if level == "schweiz":
@@ -137,7 +156,10 @@ def _native(level: str, name: str, unit_col: str) -> pd.DataFrame:
         d[col] = d[col] * f
         o = emit(d, {col: mid}, "period", SOURCE, level=level, unit_col=unit_col, precision=prec,
                  provenance="native")
-        parts.append(o[o["status"] == "ok"])
+        o = o[o["status"] == "ok"]
+        if exclude:
+            o = o[[u not in exclude.get(p, set()) for u, p in zip(o["unit_id"], o["period"])]]
+        parts.append(o)
     return pd.concat(parts, ignore_index=True)
 
 
@@ -145,6 +167,7 @@ def _reporter() -> pd.DataFrame:
     m = _read("energyreporter_municipality_historized.csv")
     states: dict[frozenset, tuple[dt.date, float]] = {}
     parts, unmapped, skipped = [], [], []
+    changed: dict[str, set[str]] = {}
     for date, g in m.groupby("energyreporter_date"):
         key = frozenset(g["bfs_nr"])
         if key not in states:
@@ -155,13 +178,20 @@ def _reporter() -> pd.DataFrame:
             # with some indicators on the old and others on the new municipality -> not usable
             skipped.append(date)
             continue
+        changed[date[:7]] = _changed_cantons(g, vintage)
         o, unm = _slice_obs(g, vintage, date[:7])
         parts.append(o)
         if len(unm):
             unmapped.append(unm.assign(slice=date))
     obs = pd.concat(parts, ignore_index=True)
-    obs = pd.concat([obs, _per_capita(obs), _native("kanton", "energyreporter_canton_historized.csv", "canton"),
+    # indicators not yet in the reporter for a month (e.g. charging points before 2023-11): no rows
+    has = obs.groupby(["metric_id", "period"])["status"].transform(lambda s: (s == "ok").any())
+    obs = obs[has]
+    obs = pd.concat([obs, _per_capita(obs), _native("kanton", "energyreporter_canton_historized.csv", "canton",
+                                                     {**{d[:7]: {"BE", "JU", "FR"} for d in skipped}, **changed}),
                      _native("schweiz", "energyreporter_national_historized.csv", "country")], ignore_index=True)
+    print("energie reporter: canton rows left out (territory differs from reference)",
+          {k: sorted(v) for k, v in changed.items() if v and k[5:] in ("01", "12")})
     if skipped:
         print("energie reporter: skipped transitional slices", skipped)
     if unmapped:

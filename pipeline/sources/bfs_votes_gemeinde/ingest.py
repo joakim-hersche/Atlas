@@ -55,11 +55,9 @@ def observations() -> pd.DataFrame:
     obs = to_observations(wide[~wide[GEO].str.fullmatch(r"9\d{3}")], GEO, "period", METRICS, SOURCE)
     gap = (obs["level"] == "gemeinde") & (obs["status"] != "ok")
     obs.loc[gap, "status"], obs.loc[gap, "note"] = "not_published", GAP_NOTE
-    # national rows: this cube codes Switzerland as 'CH' (not 8100), which to_observations skips
-    ch = wide[wide[GEO] == "CH"].assign(unit="CH")
-    nat = emit(ch, METRICS, "period", SOURCE, level="schweiz", unit_col="unit", precision="exact",
-               provenance="native")
-    return pd.concat([obs, nat, _pseudo(wide)], ignore_index=True)[OBS_COLUMNS]
+    # national rows ('CH' code) are emitted by to_observations; pseudo-units are kept here so that
+    # only published ones (status ok) are listed
+    return pd.concat([obs, _pseudo(wide)], ignore_index=True)[OBS_COLUMNS]
 
 
 def write_vorlagen() -> pd.DataFrame:

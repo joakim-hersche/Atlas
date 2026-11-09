@@ -85,6 +85,7 @@ def to_vintage(df: pd.DataFrame, source_vintage, target_vintage: dt.date = REFER
     d = d[d["hist_id"].notna()].astype({"hist_id": "int64"})
     cw = crosswalk(target_vintage)[["from_hist_id", "to_hist_id", "to_bfs_nr", "weight", "weight_source"]]
     cw = cw[cw["to_hist_id"].isin(_municipal_targets(target_vintage))]
+    cw = cw[cw["weight"] > 0]  # zero-weight rows (e.g. no population moved) contribute nothing
     m = d.merge(cw, left_on="hist_id", right_on="from_hist_id", how="left")
     no_target = m[m["to_hist_id"].isna()]
     m = m[m["to_hist_id"].notna()]
