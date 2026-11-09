@@ -59,9 +59,17 @@ def to_observations(wide: pd.DataFrame, geo_col: str, period_col: str, metric_ma
 
     # published higher levels (kept as native for validation and for canton/district views)
     mv, _ = load_backbone()
-    for level in ("kanton", "bezirk", "schweiz"):
+    for level in ("kanton", "bezirk", "schweiz", "other"):
         sub = wide[wide["_level"] == level].copy()
         if sub.empty:
+            continue
+        if level == "other":
+            # e.g. 'Ohne Angabe': persons BFS cannot attribute to a municipality. Kept so national
+            # totals can be reconciled (level 'unallocated').
+            sub["unit"] = "unallocated"
+            sub["precision"], sub["provenance"] = "exact", "native"
+            parts.append(emit(sub, metric_map, period_col, source_id, level="unallocated",
+                              unit_col="unit", vintage=vintage))
             continue
         if level == "bezirk":
             sub["unit"] = sub[geo_col].str[-4:].astype(int).astype(str)  # 000101 -> 101
