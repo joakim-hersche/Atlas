@@ -158,6 +158,69 @@ def check_population_totals(mv: pd.DataFrame) -> dict:
     return res
 
 
+VOTE_COLS = ["eligible", "ballots", "valid", "yes", "no"]
+
+
+def check_votes(n_sample: int = 12) -> dict:
+    """T2: reproject vote results from the state at the vote date to the reference state and
+    compare with BFS's own re-aggregation, for a spread of vote dates 1981–latest."""
+    from pipeline.sources.bfs_votes.fetch import fetch_vote, list_vote_assets, parse_vote
+    assets = list_vote_assets()
+    idx = np.unique(np.linspace(0, len(assets) - 1, n_sample).round().astype(int))
+    sample = assets.iloc[idx]
+    out = {"votes": [], "pass": True}
+    for a in sample.itertuples():
+        src, voge = parse_vote(fetch_vote(a.date, a.vote_date, "date"))
+        ref, voge_ref = parse_vote(fetch_vote(a.current, a.vote_date, "current"))
+        # 9xxx = pseudo-units (Swiss abroad, postal-vote districts); not municipalities
+        n_pseudo = int((src["bfs_nr"] >= 9000).sum())
+        src, ref = src[src["bfs_nr"] < 9000], ref[ref["bfs_nr"] < 9000]
+        if voge_ref != REFERENCE_DATE.isoformat():
+            out["votes"].append({"vote_date": a.vote_date, "skipped": f"BFS current state is {voge_ref}"})
+            continue
+        merged = None
+        unm_rows = 0
+        for col in VOTE_COLS:
+            r, unm = to_vintage(src[["vorlagen_id", "bfs_nr", col]].rename(columns={col: "value"}),
+                                source_vintage=dt.date.fromisoformat(voge), rule="sum",
+                                group_cols=["vorlagen_id"], return_unmapped=True)
+            unm_rows = max(unm_rows, len(unm))
+            r = r[["vorlagen_id", "bfs_nr", "value"]].rename(columns={"value": col})
+            merged = r if merged is None else merged.merge(r, on=["vorlagen_id", "bfs_nr"])
+        cmp_ = merged.merge(ref[["vorlagen_id", "bfs_nr", *VOTE_COLS]], on=["vorlagen_id", "bfs_nr"],
+                            suffixes=("_ours", "_bfs"), how="outer")
+        diffs = {c: (cmp_[f"{c}_ours"] - cmp_[f"{c}_bfs"]).abs() for c in VOTE_COLS}
+        n_rows = len(cmp_)
+        exact = int((pd.concat(diffs, axis=1).fillna(np.inf) <= TOL_ABS).all(axis=1).sum())
+        nat_ours = merged[["yes", "no"]].sum()
+        worst = cmp_.assign(d=diffs["yes"]).sort_values("d", ascending=False).head(3)
+        ok = abs(src["yes"].sum() - nat_ours["yes"]) <= TOL_ABS and unm_rows == 0
+        out["pass"] &= bool(ok)
+        out["votes"].append({
+            "pass": bool(ok), "vote_date": a.vote_date, "source_state": voge, "n_vorlagen": int(src["vorlagen_id"].nunique()),
+            "n_rows": n_rows, "n_exact": exact, "unmapped_source_rows": unm_rows, "pseudo_unit_rows": n_pseudo,
+            "yes_src_total": float(src["yes"].sum()), "yes_reprojected_total": float(nat_ours["yes"]),
+            "worst": worst[["vorlagen_id", "bfs_nr", "yes_ours", "yes_bfs"]].astype(str).to_dict("records"),
+        })
+    return out
+
+
+def check_jobs(years=(2011, 2018, 2024)) -> dict:
+    """T3: STATENT per-year files (own state, histId) reprojected; totals must be preserved."""
+    from pipeline.sources.bfs_statent_geodata.fetch import municipalities as statent
+    out = {"years": [], "pass": True}
+    for y in years:
+        d = pd.read_parquet(statent(y))
+        hcol = "GDEHISTID" if "GDEHISTID" in d.columns else "GDE_HISTID"
+        g = pd.DataFrame({"hist_id": d[hcol].astype("int64"), "value": d["B08EMPT"].astype(float)})
+        r, unm = to_vintage(g, source_vintage=None, rule="sum", return_unmapped=True)
+        ok = abs(g["value"].sum() - r["value"].sum()) <= TOL_ABS and len(unm) == 0
+        out["pass"] &= bool(ok)
+        out["years"].append({"year": y, "n_source": len(g), "n_target": len(r), "jobs_source": float(g["value"].sum()),
+                             "jobs_reprojected": float(r["value"].sum()), "unmapped": len(unm), "pass": bool(ok)})
+    return out
+
+
 def write_report(results: dict) -> str:
     L = ["# Backbone validation report", "",
          f"Generated {dt.datetime.now().isoformat(timespec='minutes')} · reference state "
@@ -175,6 +238,13 @@ def write_report(results: dict) -> str:
           f"| T1 population totals preserved (2010–{LAST_YEAR}) | {status(t1['pass'])} | national totals per year; canton diffs listed below |",
           f"| T1b vs. BFS's own re-projection | info | {t1['bfs_compare']['n_exact']} of {t1['bfs_compare']['n_comparisons']} municipality-years identical |",
           ""]
+    t2, t3 = results.get("T2"), results.get("T3")
+    if t2:
+        L.insert(len(L) - 1,
+                 f"| T2 votes: reprojected vs. BFS re-aggregation ({len(t2['votes'])} vote dates) | {status(t2['pass'])} | "
+                 f"{sum(v.get('n_exact', 0) for v in t2['votes'])} of {sum(v.get('n_rows', 0) for v in t2['votes'])} municipality-proposition rows identical |")
+    if t3:
+        L.insert(len(L) - 1, f"| T3 jobs (STATENT) totals preserved | {status(t3['pass'])} | years {', '.join(str(y['year']) for y in t3['years'])} |")
     L += ["## Crosswalk weight sources", "", "| Source | Versions |", "|---|---|"]
     L += [f"| {k} | {v} |" for k, v in c1["by_source"].items()] + [""]
     L += ["## C2 differences vs. official correspondence", ""]
@@ -197,6 +267,22 @@ def write_report(results: dict) -> str:
               "|---|---|---|---|---|"]
         L += [f"| {m['hist_id']} | {m['name']} | {m['years']} | {float(m['max_abs']):.0f} | {float(m['max_rel']):.2%} |"
               for m in t1["bfs_compare_by_municipality"]]
+    if t2:
+        L += ["", "## T2 federal votes: our reprojection vs. BFS's re-aggregation", "",
+              "Source: BFS JSON per vote on the municipality state of the vote date, reprojected with the "
+              "crosswalk (sum of eligible voters, ballots, valid, yes, no), compared per municipality and "
+              "proposition with BFS's file on the latest state. Pseudo-units (Swiss abroad, 9xxx) excluded.", "",
+              "| Vote date | Source state | Propositions | Rows identical | Yes total (source → reprojected) | Pseudo-unit rows |",
+              "|---|---|---|---|---|---|"]
+        for v in t2["votes"]:
+            if "skipped" in v:
+                L.append(f"| {v['vote_date']} | – | – | skipped: {v['skipped']} | – | – |")
+                continue
+            L.append(f"| {v['vote_date']} | {v['source_state']} | {v['n_vorlagen']} | {v['n_exact']} / {v['n_rows']} | "
+                     f"{v['yes_src_total']:,.0f} → {v['yes_reprojected_total']:,.0f} | {v['pseudo_unit_rows']} |")
+    if t3:
+        L += ["", "## T3 jobs (STATENT employees, B08EMPT)", "", "| Year | Source units | Target units | Source total | Reprojected | Unmapped |", "|---|---|---|---|---|---|"]
+        L += [f"| {y['year']} | {y['n_source']} | {y['n_target']} | {y['jobs_source']:,.0f} | {y['jobs_reprojected']:,.0f} | {y['unmapped']} |" for y in t3["years"]]
     L += ["", "## Notes", "",
           "- Versions from 1848–1849 have no geometry (the boundary series starts in 1850); their few "
           "splits use equal shares (`equal_no_geometry`). No dataset in the catalog is keyed on them.",
@@ -216,7 +302,7 @@ def run() -> str:
     cw = crosswalk(REFERENCE_DATE)
     results = {"R1": check_register(mv), "R2": check_geometry(mv), "C1": check_weights(cw),
                "C2": check_official_correspondence(cw, mv), "C3": check_dead_ends(cw, mv),
-               "T1": check_population_totals(mv)}
+               "T1": check_population_totals(mv), "T2": check_votes(), "T3": check_jobs()}
     pd.to_pickle(results, interim_path("backbone", "validation_results.pkl"))
     return write_report(results)
 

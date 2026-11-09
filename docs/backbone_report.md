@@ -1,6 +1,6 @@
 # Backbone validation report
 
-Generated 2026-11-09T21:44 · reference state **2026-01-01** · regenerate with `make validate`.
+Generated 2026-11-09T21:49 · reference state **2026-01-01** · regenerate with `make validate`.
 
 ## Summary
 
@@ -13,6 +13,8 @@ Generated 2026-11-09T21:44 · reference state **2026-01-01** · regenerate with 
 | C3 versions not reaching the reference state | info | 0 |
 | T1 population totals preserved (2010–2025) | PASS | national totals per year; canton diffs listed below |
 | T1b vs. BFS's own re-projection | info | 33670 of 33760 municipality-years identical |
+| T2 votes: reprojected vs. BFS re-aggregation (12 vote dates) | PASS | 66895 of 67270 municipality-proposition rows identical |
+| T3 jobs (STATENT) totals preserved | PASS | years 2011, 2018, 2024 |
 
 ## Crosswalk weight sources
 
@@ -129,6 +131,33 @@ Municipalities with differences (all years 2010–latest):
 | 16667 | Oberbuchsiten | 10 | 2 | 0.09% |
 | 16656 | Kloten | 14 | 8 | 0.04% |
 | 15514 | Neftenbach | 3 | 1 | 0.02% |
+
+## T2 federal votes: our reprojection vs. BFS's re-aggregation
+
+Source: BFS JSON per vote on the municipality state of the vote date, reprojected with the crosswalk (sum of eligible voters, ballots, valid, yes, no), compared per municipality and proposition with BFS's file on the latest state. Pseudo-units (Swiss abroad, 9xxx) excluded.
+
+| Vote date | Source state | Propositions | Rows identical | Yes total (source → reprojected) | Pseudo-unit rows |
+|---|---|---|---|---|---|
+| 1981-06-14 | 1981-01-01 | 2 | 4138 / 4190 | 1,655,102 → 1,655,102 | 6 |
+| 1985-09-22 | 1984-01-01 | 3 | 6225 / 6288 | 2,600,458 → 2,600,458 | 9 |
+| 1991-03-03 | 1991-01-01 | 2 | 4150 / 4192 | 1,477,891 → 1,477,891 | 4 |
+| 1994-09-25 | 1994-09-01 | 2 | 4162 / 4198 | 2,415,801 → 2,415,801 | 6 |
+| 1999-02-07 | 1999-01-01 | 4 | 8372 / 8416 | 4,452,060 → 4,452,060 | 12 |
+| 2002-09-22 | 2002-01-01 | 4 | 8372 / 8416 | 3,877,472 → 3,877,472 | 12 |
+| 2006-11-26 | 2006-10-22 | 2 | 4190 / 4208 | 2,616,561 → 2,616,561 | 10 |
+| 2010-11-28 | 2010-11-21 | 4 | 8380 / 8416 | 4,871,863 → 4,871,863 | 36 |
+| 2014-09-28 | 2014-05-01 | 2 | 4194 / 4208 | 1,597,490 → 1,597,490 | 22 |
+| 2018-06-10 | 2018-04-01 | 2 | 4196 / 4210 | 1,736,172 → 1,736,172 | 24 |
+| 2022-05-15 | 2022-05-01 | 3 | 6306 / 6318 | 4,022,684 → 4,022,684 | 36 |
+| 2026-09-27 | 2026-01-01 | 2 | 4210 / 4210 | 1,486,099 → 1,486,099 | 24 |
+
+## T3 jobs (STATENT employees, B08EMPT)
+
+| Year | Source units | Target units | Source total | Reprojected | Unmapped |
+|---|---|---|---|---|---|
+| 2011 | 2212 | 2110 | 4,866,992 | 4,866,992 | 0 |
+| 2018 | 2212 | 2110 | 5,252,344 | 5,252,344 | 0 |
+| 2024 | 2131 | 2110 | 5,681,022 | 5,681,022 | 0 |
 
 ## Notes
 
