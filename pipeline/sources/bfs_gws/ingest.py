@@ -71,5 +71,4 @@ def observations() -> pd.DataFrame:
     w = wide()
     cols = [c for c in w.columns if c.startswith("gws_") and not c.endswith("__status")]
     obs, _ = to_observations(w, GEO, "TIME_PERIOD", {c: c for c in cols}, SOURCE)
-    # series that start later (heating 2021+, floor area 2012+) have no rows before
-    return obs[~((obs["status"] == "no_data") & obs["note"].isna())].reset_index(drop=True)
+    return obs

@@ -1,0 +1,13 @@
+source_id: bfs_se_language_bezirk
+title: Structural Survey – main languages by district, 3-year pooled, with confidence intervals
+publisher: BFS (Federal Statistical Office) – Strukturerhebung (SE)
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets/36491978/master
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Strukturerhebung (SE), kumuliert"
+vintage: districts as valid on 31 Dec of the last pooled year; matched by canton + district name to the register (data/interim/backbone/district_version.parquet). Early editions use pre-reform GR districts (1821–1831, up to 2015) and NE districts (2401–2406, up to 2017), which no longer exist at the reference state.
+years: pooled 2011-2013 … 2022-2024 (12 annual rolling editions; period = 'YYYY-YYYY')
+precision: survey (95 % CI per value)
+notes: "Level bezirk + schweiz only (D21: regional value, not municipal). Multiple main languages per person since 2010 – not comparable with the census single answer (bfs_census_1970_2000). Cantons without districts appear in the SE table with their district entry; the register's 'bezirksfreies Gebiet' entries have no SE row. First three editions are legacy .xls files (cached under .xlsx names; parsed by magic bytes)."
+table: su-d-40.02.01.08.09-<year>
+dam_ids: {2011-2013: 218742, 2012-2014: 255518, 2013-2015: 2262964, 2014-2016: 4842079, 2015-2017: 7726978, 2016-2018: 12228955, 2017-2019: 16404823, 2018-2020: 21765643, 2019-2021: 24311536, 2020-2022: 31068963, 2021-2023: 34727037, 2022-2024: 36491978}
+catalog_ids: [bfs_se_language_bezirk]

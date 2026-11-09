@@ -5,7 +5,7 @@ Area (ha): swissBOUNDARIES3D 2026-01 (swisstopo), layer tlm_hoheitsgebiet, objek
   The 2026-01 release holds exactly the 2110 municipalities of the reference state (keyed on
   bfs_nummer), so no reprojection is needed. Lake areas and state forest outside any municipality
   (objektart Kantonsgebiet, BFS codes 9xxx and 2391 Staatswald Galm) and the two Kommunanzen are not
-  part of any municipality; they are included in the native canton / Switzerland rows.
+  part of any municipality; only native canton / Switzerland land area is emitted (see _area).
   Area refers to the reference boundaries and is the same for every year (decision D16), so it is
   emitted for every STATPOP year (2010–latest) and the release year: density
   (pop_total / land area) can then be computed per year by the build.
@@ -57,7 +57,10 @@ def _area() -> pd.DataFrame:
     mun = _rows(g, "bfs_nummer", "gemeinde",
                 {"gem_flaeche": "geo_area_total_ha", "see_flaeche": "geo_area_lake_ha", "land": "geo_area_land_ha"},
                 AREA_PERIODS, "source_current_state", note)
-    # native canton and national totals (include lake/forest areas outside municipalities)
+    # native canton and national land area. Total and lake area are not emitted at those levels:
+    # the published canton/Swiss totals include lake areas that belong to no municipality (e.g.
+    # most of Lake Neuchâtel, Lake Thun, Lake Constance), so they are not comparable with sums of
+    # municipalities. Land area differs only by the Kommunanzen (TI) and Staatswald Galm (FR).
     k = pyogrio.read_dataframe(path, layer="tlm_kantonsgebiet", read_geometry=False)
     cant = pd.read_parquet(interim_path("backbone", "canton.parquet"))
     k = k[k["icc"] == "CH"].merge(cant[["canton_id", "canton"]], left_on="kantonsnummer", right_on="canton_id")
@@ -65,13 +68,9 @@ def _area() -> pd.DataFrame:
     l = pyogrio.read_dataframe(path, layer="tlm_landesgebiet", read_geometry=False)
     l = l[l["icc"] == "CH"].assign(unit="CH")
     l["land"] = l["landesflaeche"] - l["see_flaeche"]
-    nnote = f"swissBOUNDARIES3D {RELEASE}; includes lake and state-forest areas outside municipalities"
-    nat = [
-        _rows(k, "canton", "kanton", {"kantonsflaeche": "geo_area_total_ha", "see_flaeche": "geo_area_lake_ha",
-                                      "land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote),
-        _rows(l, "unit", "schweiz", {"landesflaeche": "geo_area_total_ha", "see_flaeche": "geo_area_lake_ha",
-                                     "land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote),
-    ]
+    nnote = f"swissBOUNDARIES3D {RELEASE}; includes Kommunanzen and state forest outside municipalities"
+    nat = [_rows(k, "canton", "kanton", {"land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote),
+           _rows(l, "unit", "schweiz", {"land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote)]
     return pd.concat([mun, *nat], ignore_index=True)
 
 

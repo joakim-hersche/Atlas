@@ -185,11 +185,15 @@ def to_obs(wide: pd.DataFrame, geo_col: str, period_col: str, metric_map: dict[s
     if per_year_state:
         parts = []
         for p, g in mun.groupby(period_col):
-            d = dt.date(int(str(p)[:4]), 12, 31)
-            ver = versions_at(mv, d, municipalities_only=False).drop_duplicates("bfs_nr").set_index("bfs_nr")
-            parts.append(g.assign(hist_id=g["bfs_nr"].map(ver["hist_id"])))
+            y = int(str(p)[:4])
+            ver = versions_at(mv, dt.date(y, 12, 31), municipalities_only=False).drop_duplicates("bfs_nr")
+            jan = versions_at(mv, dt.date(y, 1, 1), municipalities_only=False).drop_duplicates("bfs_nr")
+            hid = g["bfs_nr"].map(ver.set_index("bfs_nr")["hist_id"])
+            # fallback: units abolished during the year (mutations dated within the year)
+            hid = hid.fillna(g["bfs_nr"].map(jan.set_index("bfs_nr")["hist_id"]))
+            parts.append(g.assign(hist_id=hid))
         mun = pd.concat(parts)
-        rep["state"] = "per year (31 Dec)"
+        rep["state"] = "per year (31 Dec, else 1 Jan)"
     else:
         if vintage is None:
             vintage, jac = infer_vintage(mun["bfs_nr"].unique())
@@ -211,20 +215,28 @@ def to_obs(wide: pd.DataFrame, geo_col: str, period_col: str, metric_map: dict[s
     rep["unmapped_nonzero_rows"] = int((unm[cols].fillna(0).abs().sum(axis=1) > 0).sum())
     rep["unmapped_codes"] = sorted(unm["bfs_nr"].unique().tolist())[:30]
     mun = mun[mun["hist_id"].notna()].astype({"hist_id": "int64"})
-    flag_cols = [f"_s_{c}" for c in cols] if suppressed is not None else []
-    ref, _ = to_reference(mun[["hist_id", period_col, *cols, *flag_cols]], None, cols + flag_cols,
-                          [period_col], rule="sum", bfs_already_current=published_on_current_state)
+    # a target value is only formed when every contributing source value is present
+    for c in cols:
+        mun[f"_m_{c}"] = mun[c].isna().astype(float)
+    sup_cols = [f"_s_{c}" for c in cols] if suppressed is not None else []
+    miss_cols = [f"_m_{c}" for c in cols]
+    ref, _ = to_reference(mun[["hist_id", period_col, *cols, *sup_cols, *miss_cols]], None,
+                          cols + sup_cols + miss_cols, [period_col], rule="sum",
+                          bfs_already_current=published_on_current_state)
     obs = emit(ref, {c: metric_map[c] for c in cols}, period_col, source_id)
-    if flag_cols:
-        flags = pd.concat([pd.DataFrame({"unit_id": ref["bfs_nr"].astype(str), "metric_id": metric_map[c],
-                                         "period": ref[period_col].astype(str), "_sup": ref[f"_s_{c}"] > 0})
-                           for c in cols], ignore_index=True)
-        obs = obs.merge(flags, on=["unit_id", "metric_id", "period"], how="left")
-        s = obs["_sup"].fillna(False).astype(bool)
-        obs.loc[s, "value"] = np.nan
-        obs.loc[s, "status"] = "suppressed"
-        obs.loc[s, "note"] = "suppressed by the source (small numbers)"
-        obs = obs.drop(columns="_sup")
+    flags = pd.concat([pd.DataFrame({
+        "unit_id": ref["bfs_nr"].astype(str), "metric_id": metric_map[c], "period": ref[period_col].astype(str),
+        "_sup": (ref[f"_s_{c}"] > 0) if sup_cols else False, "_miss": ref[f"_m_{c}"] > 0}) for c in cols],
+        ignore_index=True)
+    obs = obs.merge(flags, on=["unit_id", "metric_id", "period"], how="left")
+    m = obs["_miss"].fillna(False).astype(bool)
+    rep["partial_sums_blanked"] = int((m & obs["value"].notna()).sum())
+    obs.loc[m, "value"], obs.loc[m, "status"] = np.nan, "no_data"
+    obs.loc[m, "note"] = "not available in the source for this year (or for one of the predecessor municipalities)"
+    s = obs["_sup"].fillna(False).astype(bool)
+    obs.loc[s, "value"], obs.loc[s, "status"] = np.nan, "suppressed"
+    obs.loc[s, "note"] = "suppressed by the source (small numbers)"
+    obs = obs.drop(columns=["_sup", "_miss"])
     parts = [obs]
     for level in native_levels:
         sub = wide[wide["_level"] == level].copy()
