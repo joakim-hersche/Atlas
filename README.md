@@ -2,7 +2,7 @@
 
 Personal web app to explore and compare every Swiss municipality, district, canton and region on one map, on consistent boundaries over time.
 
-Status: **Phase 2 — backbone** (municipality history, crosswalk, geometry). See `CLAUDE.md` for the project brief, `docs/data_catalog.md` for the data catalog and `docs/decisions.md` for the owner's decisions.
+Status: **Checkpoint 2 — backbone built and validated, awaiting owner review** (`docs/checkpoint2.md`). See `CLAUDE.md` for the project brief, `docs/data_catalog.md` for the data catalog and `docs/decisions.md` for the owner's decisions.
 
 ## Rebuild
 
