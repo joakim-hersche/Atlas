@@ -19,5 +19,10 @@ Where no national municipality-level source exists, a metric may be **compiled f
 - City-level survey values (~170 cities) are not used, to avoid mixing levels on one map.
 - Catalog: `bfs_se_language_bezirk` → include, `bfs_se_language_cities` → exclude.
 
+### D4. Public finances: option B
+- National: city finances from BFS SDMX (~180 cities, 2023), labeled as cities (`bfs_ssv_city_finances` → include).
+- Plus a `*` compilation of about five standard HRM2 ratios per municipality from cantonal sources (`kt_gemeindefinanzen_compiled`, placeholder row until verified).
+- Prerequisite: a **cantonal sweep** before Phase 3 to establish which cantons publish municipal finances, in what format and license. Needs cantonal hosts allowed. If coverage turns out thin, fall back to cities only.
+
 ### Pending
-Public finances · Real estate prices · Energy & climate · Environment & hazards · Health & social · Education · Safety · reference vintage · hubs and reach parameters · blocked hosts.
+Real estate prices · Energy & climate · Environment & hazards · Health & social · Education · Safety · reference vintage · hubs and reach parameters · blocked hosts.
