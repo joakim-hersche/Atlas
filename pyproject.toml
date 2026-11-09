@@ -11,8 +11,10 @@ dependencies = [
     "pyogrio>=0.13.0",
     "pytest>=9.2.0",
     "pyyaml>=6.0.3",
+    "rasterio>=1.5.2",
     "requests>=2.34.2",
     "shapely>=2.2.0",
+    "xlrd>=2.0.2",
 ]
 
 [tool.pytest.ini_options]
