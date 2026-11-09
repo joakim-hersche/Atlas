@@ -1,7 +1,7 @@
 # Gemeindebank — Data catalog (Phase 1)
 
 Status: **reviewed at Checkpoint 1** (2026-11-09). The `recommendation` column now holds the owner's decisions; see `decisions.md` (D1–D12). Theme sections below show the original proposals.
-Machine-readable catalog: [`data_catalog.csv`](data_catalog.csv) — 214 datasets, one row per dataset, including rejected ones.
+Machine-readable catalog: [`data_catalog.csv`](data_catalog.csv) — 218 datasets (214 found in the sweep + 4 placeholder rows for `*` compilations added at Checkpoint 1), one row per dataset, including rejected ones.
 
 **Totals:** 81 proposed *include*, 92 *maybe*, 41 *exclude*. Verification: 107 rows checked against a live data sample, 99 against live metadata or the source page only, 8 not reachable. The `include` rows alone yield about 420 candidate metrics.
 
