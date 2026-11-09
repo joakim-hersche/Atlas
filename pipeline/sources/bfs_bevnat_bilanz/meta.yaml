@@ -1,0 +1,12 @@
+source_id: bfs_bevnat_bilanz
+title: Demographic balance by municipality (births, deaths, migration, naturalisations, population stock)
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0102020000_201/px-x-0102020000_201.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – ESPOP (to 2010), STATPOP and BEVNAT (from 2011)"
+vintage: BFS publishes all years on the latest municipality state (2025-12-31); mapped to the reference state (mergers only). Three TG units of the 1990s reform (cube codes 4505, 4670, 4695) are reprojected with crosswalk weights for the years they existed.
+years: 1981–2025
+cubes: [px-x-0102020000_201]
+catalog_ids: [bfs_bilanz_px_gemeinde]
+caveats: 1981–2010 come from ESPOP (older definition of the permanent population); the 'Ohne Angabe' pseudo-unit (2011+, mostly emigrations of persons without a known municipality) is only in the Swiss total.
+helpers: pxgeo.py (geo label parsing for index-coded PxWeb cubes, JSON-stat status, to_obs) is also used by bfs_migration, bfs_naturalisation, bfs_statent, bfs_udemo, bfs_agriculture and bfs_construction

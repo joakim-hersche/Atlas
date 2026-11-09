@@ -1,0 +1,10 @@
+source_id: bfs_education
+title: Educational attainment (Bildungsstand – Geodaten) and upper-secondary completion (LABB) by municipality
+publisher: BFS (Federal Statistical Office)
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.bildungsstand ; https://dam-api.bfs.admin.ch/hub/api/dam/assets/36811719/master
+license: "Open use, must provide the source (BFS OPEN-BY; the STAC collection links opendata.swiss terms_by_ask: commercial use needs permission)"
+attribution: "Source: BFS – Bildungsstand Geodaten; BFS – Längsschnittanalysen im Bildungsbereich (LABB)"
+vintage: "Bildungsstand: all years published on one state with GDEHISTID (2121 municipalities, PUBJAHR 2025), mapped by hist_id. LABB: state 2024-06-28 (STATE_NOMEN), not_aggregatable."
+years: "Bildungsstand 1990, 2000, 2017–2023; LABB cohorts 2010–2014"
+caveats: "Shares published as integer percent (counts reconstructed from them); 2017+ modelled (imputation); small municipalities suppressed. LABB rates rounded to even numbers, ~53 % of municipalities blank."
+catalog_ids: [bfs_bildungsstand_geodata, bfs_labb_sek2_gemeinde]

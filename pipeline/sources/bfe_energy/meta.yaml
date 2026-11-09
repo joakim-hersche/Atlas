@@ -1,0 +1,11 @@
+source_id: bfe_energy
+title: Energy transition per municipality – Energie Reporter, BFE solar potential, Energiestädte
+publisher: geoimpact AG / EnergieSchweiz (Energie Reporter); BFE (Swiss Federal Office of Energy)
+url: https://opendata.geoimpact.ch/energiereporter/energyreporter_historized.zip
+url_solar_potential: https://www.uvek-gis.admin.ch/BFE/ogd/52/Solarenergiepotenziale_Gemeinden_Daecher_und_Fassaden.json
+url_energiestaedte: https://data.geo.admin.ch/ch.bfe.energiestaedte/energiestaedte/energiestaedte_2056.gpkg
+license: "Energie Reporter: CC BY 4.0 (README in zip). BFE solar potential: opendata.swiss terms (open use, source required; UNVERIFIED on opendata.swiss, 403 from session). Energiestädte: geo.admin.ch STAC 'proprietary' (UNVERIFIED; geo.admin free use with source)"
+attribution: "Source: Energie Reporter (https://www.energiereporter.ch), contributors geoimpact and EnergieSchweiz; BFE – Solarenergiepotenziale der Schweizer Gemeinden; BFE – Energiestädte"
+vintage: "Energie Reporter: each monthly slice on its own municipality state (inferred, Jaccard 1.0 except 2025-01 and 2026-01 slices ≥ 0.998), mapped to the reference state; solar potential on state 2025-04-05; Energiestädte current"
+years: "Energie Reporter 2021-03..2026-10 monthly; solar potential release 2025-03; Energiestädte 2026-11"
+catalog_ids: [bfe_energiereporter, bfe_solarpotenzial_gemeinden, bfe_energiestaedte]

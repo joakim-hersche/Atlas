@@ -1,0 +1,17 @@
+source_id: bfs_vacancy
+title: Leerwohnungszählung – vacant dwellings on 1 June by municipality, rooms and type
+publisher: BFS (Federal Statistical Office)
+url: https://disseminate.stats.swiss/rest/data/CH1.LWZ,DF_LWZ_1,1.1.0/._T._T..A
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, asset https://www.bfs.admin.ch/asset/en/DF_LWZ_1)"
+attribution: "Source: BFS – Leerwohnungszählung (LWZ); dwelling stock: BFS – GWS"
+vintage: LWZ geo codelist CL_KT_BEZ_GDE_SNAP_2026 (state 2026; history re-mapped by BFS); the GWS stock is on SNAP_2025; both mapped to the reference state
+years: 1995–2026 (counts); published rate 1997–2026; stock / derived rate 2011–2026
+dataflows: [CH1.LWZ DF_LWZ_1 1.1.0, CH1.GWS DF_GWS_REG5 1.1.0 (stock)]
+client: pipeline/sources/bfs_sdmx
+catalog_ids: [bfs_vacancy_gemeinde]
+notes: >-
+  The flow has no dwelling stock. BFS's rate uses the GWS dwelling stock at 31 December of the
+  previous year; vac_dwelling_stock(Y) = GWS dwellings(Y-1) reproduces the published rate exactly
+  (CH 2026: 45 493 / 4 883 159 = 0.93 %). GWS via SDMX starts in 2010, so the derived rate exists
+  from 2011; the published rate (vac_rate_bfs, 1997+) covers the earlier years where the municipality
+  is unchanged. Types delivered: in single-family houses, for sale, for rent, new (≤ 2 years).

@@ -1,0 +1,14 @@
+source_id: bfs_crossborder
+title: Grenzgängerstatistik – foreign cross-border commuters by municipality of work
+publisher: BFS (Federal Statistical Office)
+url: https://disseminate.stats.swiss/rest/data/CH1.GGS,DF_GGS_2,1.1.0/Q._T.
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, DAM asset 36759702 / https://www.bfs.admin.ch/asset/en/DF_GGS_2)"
+attribution: "Source: BFS – Grenzgängerstatistik (GGS)"
+vintage: SDMX geo codelist CL_KT_BEZ_GDE_SNAP_2026 (history re-mapped by BFS); mapped to the reference state
+years: 1996–2025 (annual means of quarterly values 1996-Q1 … 2025-Q4; 2026 incomplete and not delivered)
+dataflows: [CH1.GGS DF_GGS_2 1.1.0]
+client: pipeline/sources/bfs_sdmx
+catalog_ids: [bfs_sdmx_ggs_crossborder_gemeinde]
+notes: >-
+  Annual value = arithmetic mean of the four quarter values (choice: smoother than Q4 alone and
+  comparable with annual job counts). Values are non-integer BFS estimates -> precision modelled.

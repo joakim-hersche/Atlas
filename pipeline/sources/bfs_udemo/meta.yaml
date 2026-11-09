@@ -1,0 +1,11 @@
+source_id: bfs_udemo
+title: UDEMO – business demography by municipality (active enterprises, new enterprises, closures, jobs)
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0602030000_205/px-x-0602030000_205.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Unternehmensdemografie (UDEMO)"
+vintage: one municipality state (2023-12-31, 2136 municipalities), mapped to the reference state (mergers only)
+years: 2013–2023
+cubes: [px-x-0602030000_205]
+catalog_ids: [bfs_udemo_gemeinde]
+caveats: secondary and tertiary sector only; small cells suppressed ('X' -> status suppressed); a merged municipality is suppressed if any predecessor is

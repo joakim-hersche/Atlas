@@ -1,0 +1,12 @@
+source_id: bfs_statent
+title: STATENT – workplaces, jobs and full-time equivalents by municipality, sector and selected NOGA divisions
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0602010000_102/px-x-0602010000_102.px
+url_geodata: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.betriebszaehlungen
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – STATENT"
+vintage: PxWeb cube on one municipality state (2131 municipalities, BFS re-projection), mapped to the reference state (mergers only); NOGA divisions from the per-year geodata files, mapped via GDEHISTID
+years: 2011–2024
+cubes: [px-x-0602010000_102]
+catalog_ids: [bfs_statent_gemeinde_sector, bfs_statent_geodata_noga]
+caveats: NOGA division metrics come from the geodata, where every value below 4 is set to 4 (zeros stay zero)

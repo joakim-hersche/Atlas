@@ -1,0 +1,11 @@
+source_id: bfs_migration
+title: Migration of the permanent resident population by municipality and nationality (Swiss / non-Swiss)
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0103010200_121/px-x-0103010200_121.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – STATPOP"
+vintage: BFS publishes all years on the latest municipality state (2025-12-31); mapped to the reference state (mergers only)
+years: 2011–2025
+cubes: [px-x-0103010200_121]
+catalog_ids: [bfs_migration_px_gemeinde]
+caveats: geo value codes are running indices, BFS numbers parsed from the labels (bfs_bevnat_bilanz/pxgeo.py); moves within a municipality are not included; 'non-Swiss' = total minus Swiss
