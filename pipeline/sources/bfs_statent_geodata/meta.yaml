@@ -1,0 +1,10 @@
+source_id: bfs_statent_geodata
+title: STATENT geodata – workplaces, jobs and FTE per municipality by NOGA division
+publisher: BFS (Federal Statistical Office)
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.betriebszaehlungen
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse; confirm per asset)"
+attribution: "Source: BFS – STATENT"
+vintage: municipality state of each year (GDENR + GDEHISTID)
+format: Parquet / CSV
+caveats: values below 4 are set to 4 (data protection), so sums over small municipalities are biased upward
+catalog_ids: [bfs_statent_geodata_noga]
