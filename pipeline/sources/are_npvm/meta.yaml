@@ -1,0 +1,10 @@
+source_id: are_npvm
+title: Nationales Personenverkehrsmodell (NPVM) 2023 – zone-to-zone travel-time matrices (car, public transport) and zones
+publisher: ARE / Verkehrsmodellierung im UVEK (VM-UVEK)
+url: https://doi.org/10.5281/zenodo.23009199
+license: CC-BY-4.0 (Zenodo record); zone documentation 'Freie Nutzung. Quellenangabe ist Pflicht'
+attribution: "Source: ARE / Verkehrsmodellierung im UVEK (VM-UVEK), NPVM 2023, doi:10.5281/zenodo.23009199"
+vintage: "model state 2023, average weekday (DWV); 7,978 Swiss zones with ID_Gem = municipality number on the state 2023-01-01"
+format: "$O-format text matrices in zip; GeoPackage zones"
+catalog_ids: [are_npvm_matrices_zenodo]
+use: car reach (official travel times, decision D11); PT matrix as sanity check of the GTFS computation

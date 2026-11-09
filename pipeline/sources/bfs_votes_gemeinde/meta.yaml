@@ -1,0 +1,13 @@
+source_id: bfs_votes_gemeinde
+title: Federal popular votes – results by municipality since 1960
+publisher: BFS (Federal Statistical Office) – Statistik der Abstimmungen
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-1703030000_101/px-x-1703030000_101.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Statistik der Abstimmungen"
+vintage: BFS publishes all votes re-aggregated to the current municipality state (D14); mapped to the reference state (mergers only)
+years: 1960-05-29 – latest vote in the cube (511 Vorlagen at download)
+period_convention: "'YYYY-MM-DD#<vorlagenId>' – vote date and BFS vorlagenId (same key as voteinfo); lookup in vorlagen.csv"
+pseudo_units: "D17 – Swiss abroad (90x0), postal/correspondence voting (90x1), 'Anderes' (90x2) kept as level 'pseudo', unit_id = BFS code; digits 2–3 = canton number. Include in canton/national totals, never on the municipality map."
+titles: "vorlagen.csv – titles de/fr/it/rm/en and accepted flag from the voteinfo OGD JSON (ogd-static.voteinfo-app.ch/v1/ogd/sd-t-17-02-YYYYMMDD-eidgAbstimmung.json, 1981-06-14+); before 1981 German title from the PxWeb label, accepted empty"
+cubes: [px-x-1703030000_101]
+catalog_ids: [bfs_pxweb_votes_gemeinde_1960, bfs_voteinfo_federal_votes]

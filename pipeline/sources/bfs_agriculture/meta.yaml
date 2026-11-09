@@ -1,0 +1,11 @@
+source_id: bfs_agriculture
+title: Agricultural structure survey – farms, workers, agricultural area and livestock by municipality
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0702000000_104/px-x-0702000000_104.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Landwirtschaftliche Strukturerhebung (STRU)"
+vintage: BFS publishes all years on the latest municipality state; mapped to the reference state (mergers only)
+years: 1975, 1980, 1985, 1990, 1996, 1997, 1998, 2000, 2002, 2004, 2006, 2008, 2010–2025
+cubes: [px-x-0702000000_104]
+catalog_ids: [bfs_agri_structure_gemeinde]
+caveats: farms, land and animals are counted at the farm seat; livestock in head counts (no livestock units in this cube)

@@ -1,0 +1,10 @@
+source_id: bav_rail
+title: Schienennetz (rail network, BAV basic geodata)
+publisher: BAV / FOT via geo.admin.ch
+url: https://data.geo.admin.ch/api/stac/v0.9/collections/ch.bav.schienennetz
+license: "Open use, must provide the source (opendata.swiss terms_by)"
+attribution: "Source: BAV – Schienennetz (geo.admin.ch)"
+vintage: "current network (STAC asset updated 2026-11-02)"
+format: GeoPackage (LV95)
+catalog_ids: [bav_schienennetz]
+use: rail line geometry for the growing-network drawing (pipeline/reach), decision D10

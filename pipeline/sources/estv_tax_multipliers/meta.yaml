@@ -1,0 +1,11 @@
+source_id: estv_tax_multipliers
+title: ESTV Steuerfüsse – cantonal and municipal tax multipliers of natural persons (income, wealth)
+publisher: ESTV/AFC (Federal Tax Administration)
+url: https://swisstaxcalculator.estv.admin.ch/delegate/ost-integration/v1/export/income-tax-rates/DE
+access: "Undocumented POST export of the public ESTV tax calculator; request body {taxGroup: 99, simKey: null, year: <year>}; raw responses cached with the request body in manifest.jsonl"
+license: "UNVERIFIED for the web app; ESTV statistics colophon: 'Wiedergabe unter Angabe der Quelle gestattet'"
+attribution: "Source: ESTV – Steuerfüsse (Steuerrechner)"
+vintage: municipalities of each tax year (inferred per year), mapped 1:1 to the reference state (not_aggregatable)
+years: 2010–2026
+caveats: "Compare within canton only. Endpoint is internal and may change without notice."
+catalog_ids: [estv_tax_multipliers_api]

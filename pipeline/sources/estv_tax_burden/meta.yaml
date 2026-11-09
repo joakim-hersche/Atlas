@@ -1,0 +1,12 @@
+source_id: estv_tax_burden
+title: ESTV Steuerbelastung – income tax burden of standard households in every municipality
+publisher: ESTV/AFC (Federal Tax Administration)
+url: https://swisstaxcalculator.estv.admin.ch/delegate/ost-integration/v1/export/income-tax-values/XLSX/DE
+access: "Undocumented POST export of the public ESTV tax calculator (request body in fetch.py and in manifest.jsonl); one request per case and year"
+license: "UNVERIFIED for the web app; ESTV statistics colophon: 'Wiedergabe unter Angabe der Quelle gestattet'"
+attribution: "Source: ESTV – Steuerbelastung in den Gemeinden (Steuerrechner)"
+vintage: municipalities of each tax year (inferred per year), mapped 1:1 to the reference state (not_aggregatable)
+years: 2010–2026
+cases: "single 80k, single 150k (model 1); married one income 2 children 100k, 200k (model 7); pensioner couple one pension 60k (model 18); confession reformed; wealth 0"
+caveats: "Model results (precision modelled). Burden by level computed as CHF part / gross income. Endpoint internal, may change."
+catalog_ids: [estv_tax_burden_api]

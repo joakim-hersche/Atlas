@@ -1,0 +1,11 @@
+source_id: bfs_construction
+title: Construction and dwelling statistics – new dwellings, new residential buildings, construction expenditure and investment by municipality
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0904030000_105/px-x-0904030000_105.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Bau- und Wohnbaustatistik"
+vintage: 2013+ dwelling cubes and the expenditure cubes on one municipality state each (BFS re-projection, mergers-only to the reference); 1995–2012 dwelling cubes list each year on its own state (mapped with the state of 31 December of each year, then crosswalked)
+years: new dwellings 1995–2024; expenditure/investment 1994–2024
+cubes: [px-x-0904030000_101, px-x-0904030000_102, px-x-0904030000_103, px-x-0904030000_105, px-x-0904030000_106, px-x-0904030000_107, px-x-0904010000_201, px-x-0904010000_203]
+catalog_ids: [bfs_bau_neue_wohnungen, bfs_bau_ausgaben_investitionen]
+caveats: expenditure in CHF 1000 at current prices; 'Unzuteilbar' (76xx) pseudo-units are not allocated to municipalities (they remain in the published canton/CH totals)

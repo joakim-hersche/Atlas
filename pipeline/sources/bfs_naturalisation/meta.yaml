@@ -1,0 +1,11 @@
+source_id: bfs_naturalisation
+title: Acquisitions of Swiss citizenship by municipality and former nationality
+publisher: BFS (Federal Statistical Office)
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-0103030100_102/px-x-0103030100_102.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – STATPOP"
+vintage: BFS publishes all years on the latest municipality state (2025-12-31); mapped to the reference state (mergers only)
+years: 2011–2025
+cubes: [px-x-0103030100_102]
+catalog_ids: [bfs_naturalisation_px_gemeinde]
+caveats: geo value codes are running indices, BFS numbers parsed from the labels (bfs_bevnat_bilanz/pxgeo.py); naturalisations 1981–2010 per municipality are in bfs_bevnat_bilanz (bil_naturalisations)

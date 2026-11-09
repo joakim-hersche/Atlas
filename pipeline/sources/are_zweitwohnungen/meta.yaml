@@ -1,0 +1,11 @@
+source_id: are_zweitwohnungen
+title: Wohnungsinventar und Zweitwohnungsanteil (second-homes inventory per municipality)
+publisher: ARE (Federal Office for Spatial Development)
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.are.wohnungsinventar-zweitwohnungsanteil
+license: "Open use, must provide the source (opendata.swiss terms_by, linked from the STAC collection; STAC license field 'proprietary')"
+attribution: "Source: ARE – Wohnungsinventar"
+vintage: each release on its own municipality state (Gemeindestand 1.1. of the release year); inferred per release and reprojected to the reference state (counts summed)
+years: "2016-12, 2017-12, 2019-03 … 2026-10 (18 releases; March and October since 2019)"
+format: XLSX (zipped), one per release
+caveats: "October releases often repeat the March figures. Second homes are dwellings without a registered resident (administrative definition)."
+catalog_ids: [are_zweitwohnungsinventar]

@@ -1,0 +1,16 @@
+source_id: bfs_bevnat_sdmx
+title: BEVNAT – marriages, divorces and live births by municipality (SDMX)
+publisher: BFS (Federal Statistical Office)
+url: https://disseminate.stats.swiss/rest/data/CH1.BEVNAT,DF_BEVNAT_MARIAGES_2,1.0.0/._T._T._T.A
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, assets https://www.bfs.admin.ch/asset/en/DF_BEVNAT_MARIAGES_2 etc.)"
+attribution: "Source: BFS – Statistik der natürlichen Bevölkerungsbewegung (BEVNAT)"
+vintage: SDMX geo codelist CL_KT_BEZ_GDE_SNAP_2025 (state 2025-12-31; BFS re-maps all years to it); mapped to the reference state (mergers only)
+years: 1969–2025
+dataflows: [CH1.BEVNAT DF_BEVNAT_MARIAGES_2 1.0.0, CH1.BEVNAT DF_BEVNAT_DIVORCES_3 1.0.0, CH1.BEVNAT DF_BEVNAT_NAISSANCES_1 1.0.0]
+client: pipeline/sources/bfs_sdmx
+catalog_ids: [bfs_bevnat_marriage_divorce, bfs_sdmx_bevnat_births_deaths]
+notes: >-
+  Counts of 1 to 3 are suppressed (status suppressed), about 500 municipalities per year and series.
+  Per-1000 rates are derived with pop_total (STATPOP, 31 December, bfs_statpop) and therefore exist
+  only from 2010; for 1969–2009 only the counts are available here. BFS's official crude rates use
+  the mean population of the year, so ours differ slightly.

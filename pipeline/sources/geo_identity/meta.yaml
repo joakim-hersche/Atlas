@@ -1,0 +1,10 @@
+source_id: geo_identity
+title: Municipal area (swissBOUNDARIES3D) and elevation (BFS generalized boundaries G1)
+publisher: swisstopo; BFS (Federal Statistical Office)
+url: https://data.geo.admin.ch/ch.swisstopo.swissboundaries3d/swissboundaries3d_2026-01/swissboundaries3d_2026-01_2056_5728.gpkg.zip
+url_elevation: https://data.geo.admin.ch/ch.bfs.historisierte-administrative_grenzen_g1/historisierte-administrative_grenzen_g1/historisierte-administrative_grenzen_g1_2056.gpkg
+license: "swisstopo OGD – free use with source attribution (STAC lists 'proprietary'); BFS OPEN-BY"
+attribution: "© swisstopo – swissBOUNDARIES3D; Source: BFS – generalized boundaries"
+vintage: "swissBOUNDARIES3D 2026-01 = reference state (2110 municipalities, 1:1 on bfs_nummer); G1 versions valid on the reference date"
+years: "area: 2026-01 release (repeated for 2010–2026); elevation: G1 2025 publication"
+catalog_ids: [swisstopo_swissboundaries3d, bfs_hist_boundaries_g1]
