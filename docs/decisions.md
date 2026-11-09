@@ -24,5 +24,18 @@ Where no national municipality-level source exists, a metric may be **compiled f
 - Plus a `*` compilation of about five standard HRM2 ratios per municipality from cantonal sources (`kt_gemeindefinanzen_compiled`, placeholder row until verified).
 - Prerequisite: a **cantonal sweep** before Phase 3 to establish which cantons publish municipal finances, in what format and license. Needs cantonal hosts allowed. If coverage turns out thin, fall back to cities only.
 
+### D5. Real estate prices: option B
+- Regional values attached to each municipality, labeled "region": rent per m² by labour-market region and canton (Structural Survey), and the BFS property price index trend for the municipality's type.
+- Census rent classes 1970–2000 as history.
+- `*` compilation of cantonal municipal property/land prices (ZH known, others via the cantonal sweep), one metric per price type.
+
+### D6. Standing rule: apply the D4/D5 pattern wherever the choice is similar
+Owner instruction: where a theme has a national or regional fallback and a possible `*` compilation from local sources, take **option B** (fallback + `*` compilation) without asking again. Applied so far:
+- **Safety:** district crime rates (BFS, national) and the ~27-city table included; `*` municipal crime statistics from cantonal police/statistics (`kt_crime_gemeinde_compiled`).
+- **Environment & hazards:** cantonal hazard maps (Gefahrenkarten) as a `*` compilation (`cantonal_gefahrenkarten` → include; the cantonal geodata hub geodienste.ch is the lead).
+- **Education:** `*` pupils and schools per municipality from cantonal education statistics (`kt_pupils_schools_compiled`); canton values as fallback.
+- **Economy & jobs (extension of D1):** `*` registered unemployment per municipality from cantonal labour-market offices (`kt_unemployment_gemeinde_compiled`); cities and cantons as fallback.
+All `*` rows are placeholders (`verified = no`) until the cantonal sweep.
+
 ### Pending
-Real estate prices · Energy & climate · Environment & hazards · Health & social · Education · Safety · reference vintage · hubs and reach parameters · blocked hosts.
+Energy & climate · Environment & hazards (non-* items) · Health & social · Education (non-* items) · reference vintage · hubs and reach parameters · blocked hosts.
