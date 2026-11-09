@@ -15,6 +15,7 @@ assigned to the nearest municipality cell within 500 m; the rest is reported as 
 """
 from __future__ import annotations
 
+import warnings
 from functools import lru_cache
 
 import geopandas as gpd
@@ -126,7 +127,8 @@ def block_mean_100m(path, rows_per_window: int = 500) -> np.ndarray:
             a = r.read(1, window=Window(0, top, ncols, h)).astype("float32")
             if r.nodata is not None:
                 a[a == r.nodata] = np.nan
-            with np.errstate(invalid="ignore"):
+            with np.errstate(invalid="ignore"), warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)  # all-nodata blocks -> NaN
                 m = np.nanmean(a.reshape(h // f, f, ncols // f, f), axis=(1, 3))
             rr = r0 + top // f
             cc = c0

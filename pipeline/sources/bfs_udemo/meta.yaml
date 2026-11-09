@@ -8,4 +8,4 @@ vintage: one municipality state (2023-12-31, 2136 municipalities), mapped to the
 years: 2013–2023
 cubes: [px-x-0602030000_205]
 catalog_ids: [bfs_udemo_gemeinde]
-caveats: secondary and tertiary sector only; small cells suppressed ('X' -> status suppressed); a merged municipality is suppressed if any predecessor is
+caveats: secondary and tertiary sector only; closures (and jobs of closed enterprises) only to 2021 ('...' afterwards -> no_data); small cells suppressed ('X' -> status suppressed); a merged municipality is suppressed if any predecessor is

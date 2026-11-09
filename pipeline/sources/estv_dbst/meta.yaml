@@ -1,0 +1,12 @@
+source_id: estv_dbst
+title: Statistik der direkten Bundessteuer, natürliche Personen – Gemeinden
+publisher: ESTV/AFC (Federal Tax Administration)
+url: https://www.estv.admin.ch/de/statistiken-natuerliche-personen-gemeinden-1983-bis-heute
+license: "Wiedergabe unter Angabe der Quelle für Nutzung gestattet (file colophon, © ESTV)"
+attribution: "Source: ESTV – Statistik der direkten Bundessteuer, natürliche Personen"
+vintage: municipality state of each tax year, inferred per year from the BFS numbers and reprojected to the reference state (sums)
+years: "2003–2023 (incomes 2008–2023; income classes 2020–2023)"
+out_of_scope: "1983–1998 (PDF only), 1999/2000 (two-year praenumerando periods), 2001–2002 (incomplete: several cantons still on two-year assessment)"
+caveats: "2020 '-normalfall' file is a copy of the special cases (publisher error) -> 2020 normal cases rebuilt from with-tax + without-tax files. Suppressed cells '-'/'*'. Tax units, not persons."
+helpers: "refhelp.py holds the reprojection/emit helper and the cached POST fetch used by this agent's other connectors"
+catalog_ids: [estv_dbst_np_gemeinde]
