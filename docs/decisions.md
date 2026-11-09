@@ -71,3 +71,37 @@ Zürich HB, Bern, Basel SBB, Genève, Lausanne, Luzern, St. Gallen, Winterthur, 
 
 ### D13. Data plausibility sweep (owner request, 2026-11-09)
 A detailed plausibility sweep is scheduled at the end of Phase 3, before Checkpoint 3: municipalities must add up to districts, cantons and Switzerland as published by each source, plus range, time-series, cross-source, spatial and coverage checks. It then runs on every rebuild and in the monthly refresh. Plan: `validation_plan.md`.
+
+## Checkpoint 2 — backbone review (2026-11-09, closed)
+
+Owner instruction: "Use common sense on these. It needs to be transparent, but you have the data, so use the best way to show gaps." The recommended option was taken for each question in `checkpoint2.md`, with transparency rules added.
+
+### D14. Prefer BFS's own re-projection where it exists
+Series that BFS already publishes on the current state (STATPOP, federal votes) are taken from BFS. Our engine reprojects everything else. Every value carries a provenance tag: "BFS, current boundaries" or "reprojected by Gemeindebank (population-weighted)" when a weighted split was involved. Our version of BFS-reprojected series stays in the quality report as a cross-check.
+
+### D15. Pre-1991 splits: 1990 population as proxy, labeled
+Kept, with the weight method stored per crosswalk row. Values that depend on a proxy-weighted split show a "boundary estimate" marker with the method in the tooltip.
+
+### D16. Current boundaries throughout, with explicit notes
+History is shown on current boundaries at every level, including cantons (Moutier counted in JU, Clavaleyres in FR for all years). Canton pages note the difference from the officially published historical canton totals and give the size of the difference.
+
+### D17. Vote pseudo-units
+Swiss abroad and postal-vote districts (BFS codes 9xxx) are excluded from the municipality map but included in canton and national results, so these match the official results. The canton/national view states how many votes come from them.
+
+### D18. MS regions dropped from v1
+Not valid on the current state; BFS's labour market areas 2018 replace them.
+
+### D19. Web geometry from BFS generalized boundaries (G1)
+Kept. swissBOUNDARIES3D is used for area figures only.
+
+### D20. Cantonal hosts allowed in one batch; cantonal sweep runs
+Candidate hosts from `cantonal_sources.md` are requested in one batch; the sweep then replaces the `*` placeholder rows with verified sources.
+
+### D21. How gaps are shown (transparency rule for the app)
+- A missing value is never blank and never zero. It is shown as a hatched "no data" fill on the map, with the reason in the card: *not published at this level*, *suppressed (small numbers)*, *not covered by this canton* (for `*` metrics), *not applicable*, or *no data for this year*.
+- `*` metrics show a coverage indicator (e.g. "14 of 26 cantons") and a coverage map; rankings say "rank among N municipalities with data".
+- Regional values attached to municipalities (district survey, labour-market-region rents, district crime) are labeled with their level and drawn without municipal borders inside the region, so they don't look municipal.
+- Every value carries its precision tag (exact / survey with confidence interval / modelled / boundary estimate) and its source and year.
+- The quality report and the sources page list all known gaps per metric.
+
+**Checkpoint 2 closed: 2026-11-09.** Phase 3 (ingestion and harmonization) starts.

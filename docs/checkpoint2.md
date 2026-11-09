@@ -1,6 +1,6 @@
 # Checkpoint 2 — Backbone review
 
-Status: **ready for owner review** (2026-11-09). Full numbers: [`backbone_report.md`](backbone_report.md) (regenerate with `make validate`).
+Status: **closed** (2026-11-09) — decisions D14–D21 in [`decisions.md`](decisions.md). Full numbers: [`backbone_report.md`](backbone_report.md) (regenerate with `make validate`).
 
 ## What was built
 
