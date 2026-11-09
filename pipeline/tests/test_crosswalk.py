@@ -94,5 +94,7 @@ def test_unmapped_rows_are_reported(history, monkeypatch):
     monkeypatch.setattr(vintage, "crosswalk", lambda target=None: cw)
     monkeypatch.setattr(vintage, "load_backbone", lambda: (mv, pair))
     df = pd.DataFrame({"bfs_nr": [101, 999], "value": [1.0, 2.0]})
-    out = vintage.to_vintage(df, source_vintage=dt.date(1990, 1, 1), rule="sum")
-    assert list(out.attrs["unmapped"]["bfs_nr"]) == [999]
+    out, unmapped = vintage.to_vintage(df, source_vintage=dt.date(1990, 1, 1), rule="sum",
+                                       return_unmapped=True)
+    assert list(unmapped["bfs_nr"]) == [999]
+    assert list(out["bfs_nr"]) == [103]

@@ -17,8 +17,9 @@ rule      'sum'                       counts: values distributed by crosswalk we
                                        (single source, single target, weight 1); else NaN
 
 Returns a DataFrame keyed by target hist_id and bfs_nr, with the group columns preserved, plus
-`n_sources` and `min_weight_source` for traceability. Unmapped source rows are returned separately
-in the attribute `.attrs["unmapped"]` so the quality report can log them.
+`n_sources` and `min_weight` for traceability. With return_unmapped=True, returns
+(result, unmapped) where unmapped holds the source rows that could not be mapped, so the quality
+report can log them.
 """
 from __future__ import annotations
 
@@ -64,7 +65,7 @@ def _attach_hist_id(df: pd.DataFrame, source_vintage) -> pd.DataFrame:
 
 def to_vintage(df: pd.DataFrame, source_vintage, target_vintage: dt.date = REFERENCE_DATE,
                rule: str = "sum", value_col: str = "value",
-               group_cols: list[str] | None = None) -> pd.DataFrame:
+               group_cols: list[str] | None = None, return_unmapped: bool = False):
     group_cols = list(group_cols or [])
     d = _attach_hist_id(df.copy(), source_vintage)
     unmapped = d[d["hist_id"].isna()]
@@ -104,5 +105,6 @@ def to_vintage(df: pd.DataFrame, source_vintage, target_vintage: dt.date = REFER
     else:
         raise ValueError(f"unknown rule: {rule}")
     out = out.reset_index().rename(columns={"to_hist_id": "hist_id", "to_bfs_nr": "bfs_nr"})
-    out.attrs["unmapped"] = pd.concat([unmapped, no_target.drop(columns=cw.columns, errors="ignore")])
+    if return_unmapped:
+        return out, pd.concat([unmapped, no_target.drop(columns=cw.columns, errors="ignore")])
     return out
