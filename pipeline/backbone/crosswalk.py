@@ -55,10 +55,15 @@ def build_crosswalk(mv: pd.DataFrame, pair: pd.DataFrame, split_weights: pd.Data
     succ: dict[int, list[tuple[int, float, str]]] = defaultdict(list)
     sw = {(r.mutation_id, r.from_hist_id, r.to_hist_id): (r.weight, r.weight_source)
           for r in split_weights.itertuples()}
+    # look-through weights replace the successors of a group by later versions with geometry
+    lookthrough: dict[tuple[int, int], list[int]] = {}
+    for r in split_weights.itertuples():
+        if str(r.weight_source).endswith("_lookthrough"):
+            lookthrough.setdefault((r.mutation_id, r.from_hist_id), []).append(r.to_hist_id)
     pair = pair[pair["date"] <= target]
     groups = pair.groupby(["mutation_id", "from_hist_id"])
     for (mid, fh), g in groups:
-        tos = sorted(set(g["to_hist_id"]))
+        tos = sorted(lookthrough.get((mid, fh), set(g["to_hist_id"])))
         if len(tos) == 1:
             if tos[0] != fh:
                 succ[fh].append((tos[0], 1.0, "single_successor"))

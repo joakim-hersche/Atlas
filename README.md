@@ -40,4 +40,4 @@ out = to_vintage(df, source_vintage=date(2015, 1, 1), rule="weighted_mean:pop") 
 out = to_vintage(df, source_vintage=date(2015, 1, 1), rule="not_aggregatable")  # medians
 ```
 
-Rows that can't be mapped are returned in `out.attrs["unmapped"]`.
+Pass `return_unmapped=True` to also get the source rows that couldn't be mapped: `out, unmapped = to_vintage(...)`.

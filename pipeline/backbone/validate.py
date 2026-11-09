@@ -110,8 +110,8 @@ def check_population_totals(mv: pd.DataFrame) -> dict:
     reproj = []
     for y, g in sp.groupby("year"):
         # rows carry hist_id, so no source date is needed to resolve them
-        r = to_vintage(g[["hist_id", "value"]], source_vintage=None, rule="sum")
-        unm = r.attrs["unmapped"]
+        r, unm = to_vintage(g[["hist_id", "value"]], source_vintage=None, rule="sum",
+                            return_unmapped=True)
         nat_src, nat_tgt = g["value"].sum(), r["value"].sum()
         ok = abs(nat_src - nat_tgt) <= TOL_ABS
         res["years"].append({"year": int(y), "national_source": float(nat_src),
@@ -138,6 +138,13 @@ def check_population_totals(mv: pd.DataFrame) -> dict:
     cmp_["diff"] = cmp_["value_ours"] - cmp_["value_bfs"]
     cmp_["rel"] = cmp_["diff"] / cmp_["value_bfs"]
     mism = cmp_[cmp_["diff"].abs() > TOL_ABS]
+    names = versions_at(mv, REFERENCE_DATE).set_index("hist_id")["name"]
+    by_mun = (mism.assign(name=mism["hist_id"].map(names), absdiff=mism["diff"].abs())
+              .groupby(["hist_id", "name"])
+              .agg(years=("year", "count"), max_abs=("absdiff", "max"),
+                   max_rel=("rel", lambda s: s.abs().max())).reset_index()
+              .sort_values("max_rel", ascending=False))
+    res["bfs_compare_by_municipality"] = by_mun.astype(str).to_dict("records")
     res["bfs_compare"] = {
         "pxweb_geo_variable": geo_text,
         "n_comparisons": int(len(cmp_)),
@@ -184,9 +191,21 @@ def write_report(results: dict) -> str:
           f"{bc['n_exact']} of {bc['n_comparisons']} municipality-years identical; {bc['n_differ']} differ "
           f"(max relative difference {bc['max_abs_rel']:.2%}). Differences are expected only where splits or "
           "territory exchanges required weights (BFS's method is unpublished).", ""]
-    if bc["worst"]:
-        L += ["| Year | histId | BFS nr | Ours | BFS | Rel. diff |", "|---|---|---|---|---|---|"]
-        L += [f"| {w['year']} | {w['hist_id']} | {w['bfs_nr_ours']} | {w['value_ours']} | {w['value_bfs']} | {float(w['rel']):.2%} |" for w in bc["worst"]]
+    if t1.get("bfs_compare_by_municipality"):
+        L += ["Municipalities with differences (all years 2010–latest):", "",
+              "| histId | Municipality | Years differing | Max abs. diff (persons) | Max rel. diff |",
+              "|---|---|---|---|---|"]
+        L += [f"| {m['hist_id']} | {m['name']} | {m['years']} | {float(m['max_abs']):.0f} | {float(m['max_rel']):.2%} |"
+              for m in t1["bfs_compare_by_municipality"]]
+    L += ["", "## Notes", "",
+          "- Versions from 1848–1849 have no geometry (the boundary series starts in 1850); their few "
+          "splits use equal shares (`equal_no_geometry`). No dataset in the catalog is keyed on them.",
+          "- `pop_ha_proxy_1990`: splits before 1991 are weighted with the 1990 population grid, the "
+          "earliest available. Long series before 1990 (census 1850–1980) carry this approximation.",
+          "- `_lookthrough`: the successor was a short-lived transitional version without geometry "
+          "(e.g. Thurgau reform 1994–1998); weights go directly to the next versions with geometry.",
+          "- Canton totals change only through canton transfers: Moutier BE→JU (2026) and "
+          "Clavaleyres BE→FR (2022, merged into Murten)."]
     path = ROOT / "docs" / "backbone_report.md"
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return str(path)

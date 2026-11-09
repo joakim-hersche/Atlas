@@ -34,7 +34,24 @@ def load_g1() -> gpd.GeoDataFrame:
     path = fetch_boundaries()["g1"]
     g = gpd.read_file(path)
     g = g[g["GARTE"] == 11]  # political municipalities only
-    return g[["GDEHISTID", "GDENR", "GDENAME", "VALID_FROM", "VALID_TO", "geometry"]]
+    g = g[["GDEHISTID", "GDENR", "GDENAME", "VALID_FROM", "VALID_TO", "geometry"]].copy()
+    # A register version (histId) can have several geometry states in G1 (boundary corrections
+    # without a register mutation), each with its own VALID_FROM/VALID_TO. Select by date.
+    g["VALID_FROM"] = pd.to_datetime(g["VALID_FROM"])
+    g["VALID_TO"] = pd.to_datetime(g["VALID_TO"])
+    return g
+
+
+def geom_at(g1: gpd.GeoDataFrame, hist_id: int, date: pd.Timestamp):
+    """Geometry of a version valid on date; nearest state in time if none covers the date."""
+    rows = g1[g1["GDEHISTID"] == hist_id]
+    if rows.empty:
+        return None
+    cover = rows[(rows["VALID_FROM"] <= date) & (rows["VALID_TO"].isna() | (rows["VALID_TO"] >= date))]
+    if cover.empty:
+        dist = (rows["VALID_FROM"] - date).abs()
+        cover = rows.loc[[dist.idxmin()]]
+    return cover.geometry.union_all()
 
 
 def load_hectare_points(year: int) -> gpd.GeoDataFrame:
@@ -67,12 +84,58 @@ def pop_year_for(date: pd.Timestamp, available: list[int]) -> tuple[int, str]:
     return min(available), "pop_ha_proxy"  # mutation before 1991: nearest later grid as proxy
 
 
+def _descend_to_geometry(t: int, date: pd.Timestamp, g1: gpd.GeoDataFrame, succ: dict,
+                         depth: int = 0) -> list[tuple[int, pd.Timestamp]]:
+    """Versions with geometry reached from t (t itself if it has geometry on/after date).
+
+    Short-lived transitional versions (e.g. one-day versions of the Thurgau reform 1994–1998) have
+    no geometry in G1; their successors do.
+    """
+    if geom_at(g1, t, date) is not None or depth > 20:
+        return [(t, date)]
+    out = []
+    for nxt, ndate in succ.get(t, []):
+        out += _descend_to_geometry(nxt, ndate, g1, succ, depth + 1)
+    return out
+
+
+def _predecessor_geometry(h: int, g1: gpd.GeoDataFrame, pred: dict, depth: int = 0):
+    """Union of the predecessors' geometries just before they became version h.
+
+    Only valid when h was created entirely from its predecessors (merger/rename result), which is
+    the case for the transitional versions this is used for.
+    """
+    if depth > 10 or h not in pred:
+        return None
+    parts = []
+    for p, d in pred[h]:
+        geom = geom_at(g1, p, d - pd.Timedelta(days=1))
+        if geom is None:
+            geom = _predecessor_geometry(p, g1, pred, depth + 1)
+        if geom is None:
+            return None
+        parts.append(geom)
+    return gpd.GeoSeries(parts, crs=2056).union_all()
+
+
 def compute_split_weights(pair: pd.DataFrame) -> pd.DataFrame:
+    """Weights per (mutation, source version, successor).
+
+    Where a successor has no geometry (transitional version), the weights are computed directly
+    onto the first descendants that have geometry ('look-through'); build_crosswalk then uses those
+    descendants as the successors of the source version for that mutation.
+    """
+    succ: dict[int, list[tuple[int, pd.Timestamp]]] = {}
+    pred: dict[int, list[tuple[int, pd.Timestamp]]] = {}
+    for r in pair.sort_values("date").itertuples():
+        if r.to_hist_id != r.from_hist_id:
+            succ.setdefault(r.from_hist_id, []).append((r.to_hist_id, r.date))
+            pred.setdefault(r.to_hist_id, []).append((r.from_hist_id, r.date))
     sp = split_pairs(pair)
     if sp.empty:
         return pd.DataFrame(columns=["mutation_id", "from_hist_id", "to_hist_id", "weight",
                                      "weight_source", "pop_year", "pop_total"])
-    g1 = load_g1().set_index("GDEHISTID")
+    g1 = load_g1()
     years = hectare_years()
     groups = list(sp.groupby(["mutation_id", "from_hist_id"]))
     needed = {pop_year_for(g["date"].iloc[0], years)[0] for _, g in groups}
@@ -82,13 +145,33 @@ def compute_split_weights(pair: pd.DataFrame) -> pd.DataFrame:
         date = g["date"].iloc[0]
         tos = sorted(set(g["to_hist_id"]))
         year, label = pop_year_for(date, years)
-        have_geom = fh in g1.index and all(t in g1.index for t in tos)
-        if not have_geom:
+        src = geom_at(g1, fh, date - pd.Timedelta(days=1))   # state just before the mutation
+        if src is None:
+            # transitional source (e.g. Verzasca 2020-10-17, a one-day merger result): its territory
+            # is the union of its predecessors just before they were merged into it
+            src = _predecessor_geometry(fh, g1, pred)
+        if src is None:
+            # source itself is a transitional version without geometry; no data is keyed on it in
+            # practice, and earlier versions look through it. Equal shares, flagged.
             for t in tos:
                 rows.append((mid, fh, t, 1 / len(tos), "equal_no_geometry", None, None))
             continue
-        src = g1.loc[[fh], "geometry"].union_all()
-        tgt = gpd.GeoDataFrame({"to": tos}, geometry=[g1.loc[t, "geometry"] for t in tos], crs=2056)
+        suffix = ""
+        if any(geom_at(g1, t, date) is None for t in tos):
+            reached = []
+            for t in tos:
+                reached += _descend_to_geometry(t, date, g1, succ)
+            seen, uniq = set(), []
+            for h, d in reached:
+                if h not in seen:
+                    seen.add(h)
+                    uniq.append((h, d))
+            tos = [h for h, _ in uniq]
+            tgeoms = [geom_at(g1, h, d) for h, d in uniq]
+            suffix = "_lookthrough"
+        else:
+            tgeoms = [geom_at(g1, t, date) for t in tos]      # states on the mutation date
+        tgt = gpd.GeoDataFrame({"to": tos}, geometry=tgeoms, crs=2056)
         pts = points[year]
         inside = pts[pts.within(src)]
         if inside["pop"].sum() > 0:
@@ -97,12 +180,12 @@ def compute_split_weights(pair: pd.DataFrame) -> pd.DataFrame:
             share = j.groupby("to")["pop"].sum().reindex(tos, fill_value=0.0)
             total = share.sum()
             w = share / total
-            src_label = f"{label}_{year}"
+            src_label = f"{label}_{year}{suffix}"
         else:
             area = np.array([src.intersection(geom).area for geom in tgt.geometry])
             total = None
             w = pd.Series(area / area.sum() if area.sum() > 0 else 1 / len(tos), index=tos)
-            src_label = "area_g1"
+            src_label = f"area_g1{suffix}"
         for t in tos:
             rows.append((mid, fh, t, float(w[t]), src_label, year if total else None, total))
     out = pd.DataFrame(rows, columns=["mutation_id", "from_hist_id", "to_hist_id", "weight",
