@@ -1,0 +1,10 @@
+source_id: bfs_statpop_geodata
+title: STATPOP geodata – population and households per municipality and per hectare
+publisher: BFS (Federal Statistical Office)
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.statistik-bevoelkerung_haushalte
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse; confirm per asset)"
+attribution: "Source: BFS – STATPOP"
+vintage: municipality files on the state at 31.12. of each year (GDENR + GDEHISTID); hectare grid boundary-free
+format: CSV (1990, 2000; LV03) and Parquet (2010–2025; LV95)
+catalog_ids: [bfs_statpop_geodata_gemeinde, bfs_statpop_geodata_hectare]
+use_in_backbone: population weights for splits and territory exchanges; validation of reprojected totals

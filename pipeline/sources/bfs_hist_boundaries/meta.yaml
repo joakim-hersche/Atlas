@@ -1,0 +1,9 @@
+source_id: bfs_hist_boundaries
+title: Generalized historized administrative boundaries G1 and K4 (all states since 1850)
+publisher: BFS (GEOSTAT / ThemaKart)
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.historisierte-administrative_grenzen_g1
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, DAM asset 36390147)"
+attribution: "Source: BFS, ThemaKart – Generalisierte Gemeindegrenzen"
+vintage: every municipality state 1850–today (VALID_FROM / VALID_TO per GDEHISTID)
+format: GeoPackage, LV95 (EPSG:2056)
+catalog_ids: [bfs_hist_boundaries_g1]
