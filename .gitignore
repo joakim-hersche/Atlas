@@ -18,3 +18,7 @@ web/dist/
 # OS / editor
 .DS_Store
 *.swp
+
+# Generated web data (rebuilt by make; deployment builds them in CI)
+data/out/web/
+data/out/reach/
