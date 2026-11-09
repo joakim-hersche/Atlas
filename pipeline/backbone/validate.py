@@ -181,9 +181,11 @@ def check_votes(n_sample: int = 12) -> dict:
         merged = None
         unm_rows = 0
         for col in VOTE_COLS:
+            # vote results are reported per voting district (voge); some small municipalities are
+            # counted with a neighbour and are absent from the file, so absence is not a gap here
             r, unm = to_vintage(src[["vorlagen_id", "bfs_nr", col]].rename(columns={col: "value"}),
                                 source_vintage=dt.date.fromisoformat(voge), rule="sum",
-                                group_cols=["vorlagen_id"], return_unmapped=True)
+                                group_cols=["vorlagen_id"], return_unmapped=True, strict_missing=False)
             unm_rows = max(unm_rows, len(unm))
             r = r[["vorlagen_id", "bfs_nr", "value"]].rename(columns={"value": col})
             merged = r if merged is None else merged.merge(r, on=["vorlagen_id", "bfs_nr"])

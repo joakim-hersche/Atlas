@@ -63,14 +63,28 @@ def _attach_hist_id(df: pd.DataFrame, source_vintage) -> pd.DataFrame:
     return df.assign(hist_id=df["bfs_nr"].map(lk))
 
 
+def _municipal_targets(target_vintage: dt.date) -> set[int]:
+    mv, _ = load_backbone()
+    return set(versions_at(mv, target_vintage, municipalities_only=True)["hist_id"].astype(int))
+
+
 def to_vintage(df: pd.DataFrame, source_vintage, target_vintage: dt.date = REFERENCE_DATE,
                rule: str = "sum", value_col: str = "value",
-               group_cols: list[str] | None = None, return_unmapped: bool = False):
+               group_cols: list[str] | None = None, return_unmapped: bool = False,
+               strict_missing: bool = True):
+    """See module docstring.
+
+    strict_missing (rule 'sum'): a target gets NaN if any contributing source value is NaN, or —
+    when source_vintage is a date — if a municipality of that state that maps to the target is
+    absent from df. Sources where absence means zero (e.g. event counts) must fill 0 first.
+    Non-municipal units (Kommunanzen, lake areas) are never targets; their rows are unmapped.
+    """
     group_cols = list(group_cols or [])
     d = _attach_hist_id(df.copy(), source_vintage)
     unmapped = d[d["hist_id"].isna()]
     d = d[d["hist_id"].notna()].astype({"hist_id": "int64"})
     cw = crosswalk(target_vintage)[["from_hist_id", "to_hist_id", "to_bfs_nr", "weight", "weight_source"]]
+    cw = cw[cw["to_hist_id"].isin(_municipal_targets(target_vintage))]
     m = d.merge(cw, left_on="hist_id", right_on="from_hist_id", how="left")
     no_target = m[m["to_hist_id"].isna()]
     m = m[m["to_hist_id"].notna()]
@@ -78,9 +92,20 @@ def to_vintage(df: pd.DataFrame, source_vintage, target_vintage: dt.date = REFER
 
     if rule == "sum":
         m["_v"] = m[value_col] * m["weight"]
-        out = m.groupby(keys, dropna=False).agg(value=("_v", lambda s: s.sum(min_count=1)),
-                                                n_sources=("hist_id", "nunique"),
-                                                min_weight=("weight", "min"))
+        g = m.groupby(keys, dropna=False)
+        out = g.agg(value=("_v", lambda s: s.sum(min_count=1)),
+                    n_sources=("hist_id", "nunique"), min_weight=("weight", "min"))
+        if strict_missing:
+            has_nan = g["_v"].apply(lambda s: s.isna().any())
+            out.loc[has_nan[has_nan].index, "value"] = np.nan
+            if source_vintage is not None and not (isinstance(source_vintage, str)):
+                mv, _ = load_backbone()
+                src = set(versions_at(mv, pd.Timestamp(source_vintage).date())["hist_id"].astype(int))
+                exp = cw[cw["from_hist_id"].isin(src)].groupby("to_hist_id")["from_hist_id"].nunique()
+                got = out["n_sources"]
+                tgt = out.index.get_level_values("to_hist_id")
+                incomplete = got.values < exp.reindex(tgt).fillna(0).values
+                out.loc[incomplete, "value"] = np.nan
     elif rule.startswith("weighted_mean:"):
         wcol = rule.split(":", 1)[1]
         m["_w"] = m[wcol] * m["weight"]
