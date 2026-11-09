@@ -9,9 +9,9 @@
 
 PY := uv run python
 
-.PHONY: data backbone geometry validate observations metrics quality test clean-interim
+.PHONY: data backbone geometry validate observations metrics quality web test clean-interim
 
-data: backbone geometry validate observations metrics quality
+data: backbone geometry validate observations metrics quality web
 
 backbone:
 	$(PY) -m pipeline.backbone.build
@@ -30,6 +30,9 @@ metrics: observations
 
 quality: metrics
 	$(PY) -m pipeline.build.quality
+
+web: metrics geometry
+	$(PY) -m pipeline.build.web
 
 test:
 	uv run pytest -q pipeline/tests
