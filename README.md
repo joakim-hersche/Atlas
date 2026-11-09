@@ -2,4 +2,42 @@
 
 Personal web app to explore and compare every Swiss municipality, district, canton and region on one map, on consistent boundaries over time.
 
-Status: **Phase 1 — data discovery.** See `CLAUDE.md` for the project brief and `docs/` for the data catalog.
+Status: **Phase 2 — backbone** (municipality history, crosswalk, geometry). See `CLAUDE.md` for the project brief, `docs/data_catalog.md` for the data catalog and `docs/decisions.md` for the owner's decisions.
+
+## Rebuild
+
+Requirements: [uv](https://docs.astral.sh/uv/) (Python 3.13) and Node.js (for `npx mapshaper`).
+
+```sh
+uv sync          # install the pipeline's Python dependencies
+make data        # fetch (cached) + build backbone, geometry and the validation report
+make test        # unit tests
+```
+
+- Downloads are cached in `data/raw/<source>/<date>/` with a `manifest.jsonl` (URL, hash, time) and are never edited. Rebuilds reuse the cache; `GB_REFRESH=1 make data` downloads again.
+- The target municipality state defaults to 2026-01-01 (decision D8: latest state). Override with `GB_REFERENCE_DATE=YYYY-MM-DD`.
+- Outputs: `data/interim/` (tables, gitignored) and `data/out/` (files for the web app).
+
+## Layout
+
+```
+pipeline/
+  common.py                 paths, cached downloads, date helpers
+  sources/<source_id>/      fetch.py, parse.py, meta.yaml (license, attribution, vintage)
+  backbone/                 register tables, split weights, crosswalk, to_vintage, validation
+  build/                    outputs for the web app (geometry, ...)
+  tests/
+docs/                       catalog, decisions, validation reports
+```
+
+## Reprojecting data onto the reference state
+
+```python
+from pipeline.backbone.vintage import to_vintage
+# df: one row per municipality, columns bfs_nr (valid on 2015-01-01) and value
+out = to_vintage(df, source_vintage=date(2015, 1, 1), rule="sum")              # counts
+out = to_vintage(df, source_vintage=date(2015, 1, 1), rule="weighted_mean:pop") # rates
+out = to_vintage(df, source_vintage=date(2015, 1, 1), rule="not_aggregatable")  # medians
+```
+
+Rows that can't be mapped are returned in `out.attrs["unmapped"]`.
