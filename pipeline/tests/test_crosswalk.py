@@ -98,3 +98,22 @@ def test_unmapped_rows_are_reported(history, monkeypatch):
                                        return_unmapped=True)
     assert list(unmapped["bfs_nr"]) == [999]
     assert list(out["bfs_nr"]) == [103]
+
+
+def test_strict_sum_on_missing_predecessor(history, monkeypatch):
+    mv, pair, sw = history
+    cw = build_crosswalk(mv, pair, sw, dt.date(2026, 1, 1))
+    monkeypatch.setattr(vintage, "crosswalk", lambda target=None: cw)
+    monkeypatch.setattr(vintage, "load_backbone", lambda: (mv, pair))
+    # B (102) missing: merged C (103) must be a gap, not A's value alone
+    df = pd.DataFrame({"bfs_nr": [101, 104, 108], "value": [10.0, 100.0, 5.0]})
+    s = vintage.to_vintage(df, source_vintage=dt.date(1990, 1, 1), rule="sum").set_index("bfs_nr")["value"]
+    assert pd.isna(s[103]) and s[108] == 5
+    # explicit NaN for B: also a gap
+    df2 = pd.DataFrame({"bfs_nr": [101, 102], "value": [10.0, float("nan")]})
+    s2 = vintage.to_vintage(df2, source_vintage=dt.date(1990, 1, 1), rule="sum").set_index("bfs_nr")["value"]
+    assert pd.isna(s2[103])
+    # non-strict keeps the partial sum (for callers that want it)
+    s3 = vintage.to_vintage(df, source_vintage=dt.date(1990, 1, 1), rule="sum",
+                            strict_missing=False).set_index("bfs_nr")["value"]
+    assert s3[103] == 10
