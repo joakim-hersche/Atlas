@@ -69,8 +69,13 @@ def _to_topojson(gdf: gpd.GeoDataFrame, level: str, keep: str) -> str:
 def run() -> dict:
     g = current_units()
     ref = REFERENCE_DATE.isoformat()
-    mun = g[g["GARTE"] == 11].copy()
-    lakes = g[g["GARTE"] != 11].copy()
+    swiss = g["CODE_ISO"] == "CH"
+    mun = g[(g["GARTE"] == 11) & swiss].copy()
+    # Liechtenstein and the foreign enclaves Büsingen (DE) and Campione (IT) as a context layer
+    foreign = g[(g["GARTE"] == 11) & ~swiss].copy()
+    # GARTE 13 = lake areas (shown as lakes); 12 = territory not assigned to a municipality
+    # (Staatswald Galm, Kommunanzen), left out of all units, as in BFS maps
+    lakes = g[g["GARTE"] == 13].copy()
     levels = pd.read_parquet(interim_path("backbone", f"levels_{ref}.parquet"))
     mun = mun.merge(levels, left_on="GDENR", right_on="BfsCode", how="left")
     mun = mun.rename(columns={"GDENR": "id", "GDENAME": "name", "KTKZ": "canton", "BEZNR": "district"})
@@ -82,12 +87,16 @@ def run() -> dict:
     out = {"gemeinde": _to_topojson(mun[["id", "name", "canton", "district", "geometry"]], "gemeinde", DETAIL["gemeinde"])}
     labels = {"gemeinde": _label_points(mun, "id")}
 
+    mun["district"] = mun["district"].astype("Int64")
     dissolves = {"bezirk": ("district", None), "kanton": ("canton", None)}
     dissolves.update({k: v for k, v in ANALYSIS_LEVELS.items()})
     for level, (col, label_col) in dissolves.items():
         if col not in mun.columns:
             continue
-        d = mun[[col, "geometry"]].dropna(subset=[col]).dissolve(by=col, as_index=False)
+        d = mun[[col, "geometry"]].dropna(subset=[col])
+        if level in ANALYSIS_LEVELS:
+            d = d[d[col].astype(str) != "0"]  # code 0 = not part of any unit (e.g. no agglomeration)
+        d = d.dissolve(by=col, as_index=False)
         d = d.rename(columns={col: "id"})
         d["id"] = d["id"].astype(str)
         if label_col and label_col in levels.columns:
@@ -97,8 +106,13 @@ def run() -> dict:
         out[level] = _to_topojson(d, level, DETAIL.get(level, DEFAULT_DETAIL))
         labels[level] = _label_points(d, "id")
     if not lakes.empty:
-        lk = lakes[["SEENAME", "geometry"]].rename(columns={"SEENAME": "name"})
+        lk = lakes.assign(name=lakes["SEENAME"].fillna(lakes["GDENAME"]))
+        lk = lk[["SEENR", "name", "geometry"]].dissolve(by="SEENR", as_index=False, aggfunc="first")
         out["lakes"] = _to_topojson(lk, "lakes", "20%")
+    if not foreign.empty:
+        fg = foreign[["GDENR", "GDENAME", "CODE_ISO", "geometry"]].rename(
+            columns={"GDENR": "id", "GDENAME": "name", "CODE_ISO": "country"})
+        out["context_foreign"] = _to_topojson(fg, "context_foreign", "30%")
     lp = out_path("geo", "labels.json")
     lp.write_text(json.dumps(labels, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     out["labels"] = str(lp)
