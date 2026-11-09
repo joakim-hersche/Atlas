@@ -47,9 +47,15 @@ def run(selected: list[str] | None = None) -> dict:
             log[sid] = {"error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()[-2000:],
                         "seconds": round(time.time() - t0, 1)}
         print(sid, {k: v for k, v in log[sid].items() if k != "trace"})
-    parts = [pd.read_parquet(p) for p in sorted(interim_path("observation", "x").parent.glob("*.parquet"))]
-    if parts:
-        pd.concat(parts, ignore_index=True).to_parquet(interim_path("observation.parquet"), index=False)
+    files = sorted(interim_path("observation", "x").parent.glob("*.parquet"))
+    if files:  # concatenate out of core (≈20M rows)
+        import duckdb
+        con = duckdb.connect()
+        con.execute("SET memory_limit='3GB'")
+        lst = ", ".join(f"'{f}'" for f in files)
+        con.execute(f"COPY (SELECT * FROM read_parquet([{lst}], union_by_name=true)) "
+                    f"TO '{interim_path('observation.parquet')}' (FORMAT PARQUET, COMPRESSION ZSTD)")
+        con.close()
     prev = interim_path("observation", "_runlog.json")
     allog = json.loads(prev.read_text()) if prev.exists() else {}
     allog.update(log)
