@@ -1,0 +1,12 @@
+source_id: bfs_social_assistance
+title: Wirtschaftliche Sozialhilfe – recipients and social assistance rate per municipality (SHS)
+publisher: BFS (Federal Statistical Office)
+url: https://mapexplorer.bfs.admin.ch/GC_coldata.php?view=map226&dataset=ch_13_05a&indic=sozialhilfequot&vars=sozialhilfequot
+access: "Undocumented internal JSON of the Swiss Stats Map Explorer (GC_coldata / GC_refdata / GC_indic); raw responses cached"
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, DAM 36878678)"
+attribution: "Source: BFS – Sozialhilfeempfängerstatistik (SHS)"
+vintage: "All years on one state (nivgeo polg2025_04_06, 2115 municipalities), mapped to the reference state (recipients summed, rate 1:1 only)"
+years: 2007–2025
+value_order: "territory-major, years ascending; verified against Regionalporträts 2021 (2019 rates, 95 % exact of 1647) and the canton arrays (all years); the check runs on every ingest"
+caveats: "-9999 = not available (small numbers or data not delivered; e.g. Genève 2025) -> no_data. 2024–2025 weighted (modelled), break in series 2025."
+catalog_ids: [bfs_sozialhilfe_gemeinde_statatlas]

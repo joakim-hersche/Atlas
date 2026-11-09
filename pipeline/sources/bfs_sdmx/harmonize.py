@@ -142,4 +142,25 @@ def to_observations(wide: pd.DataFrame, geo_col: str, period_col: str, metric_ma
             parts.append(e)
     obs = pd.concat(parts, ignore_index=True)[OBS_COLUMNS]
     obs.loc[obs["status"] != "ok", "value"] = np.nan
-    return obs, {"vintage": vintage, "jaccard": jac, "unmapped": pd.concat(unmapped)}
+    # municipality rows only for municipalities of the reference state (the crosswalk also carries
+    # non-municipal units such as condominium areas / Kommunanzen, which stay in canton totals)
+    ref_units = _reference_units()
+    is_gem = obs["level"] == "gemeinde"
+    extra = obs.loc[is_gem & ~obs["unit_id"].isin(ref_units), "unit_id"].unique()
+    obs = obs[~(is_gem & obs["unit_id"].isin(extra))]
+    # drop 'no_data' rows that only say a series does not exist: all native-level ones, and
+    # municipality ones for metric x period combinations without any value
+    nd = obs["status"] == "no_data"
+    gem_ok = obs[(obs["level"] == "gemeinde") & (obs["status"] != "no_data")][["metric_id", "period"]].drop_duplicates()
+    key = pd.MultiIndex.from_frame(obs[["metric_id", "period"]])
+    has = key.isin(pd.MultiIndex.from_frame(gem_ok))
+    obs = obs[~(nd & ((obs["level"] != "gemeinde") | ~has))].reset_index(drop=True)
+    return obs, {"vintage": vintage, "jaccard": jac, "unmapped": pd.concat(unmapped),
+                 "non_municipal_units": list(extra)}
+
+
+def _reference_units() -> set[str]:
+    from pipeline.backbone.crosswalk import load_backbone, versions_at
+    from pipeline.common import REFERENCE_DATE
+    mv, _ = load_backbone()
+    return set(versions_at(mv, REFERENCE_DATE)["bfs_nr"].astype(int).astype(str))
