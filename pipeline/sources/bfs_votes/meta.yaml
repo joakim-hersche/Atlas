@@ -1,0 +1,10 @@
+source_id: bfs_votes
+title: Federal popular votes – results by municipality (JSON, voteinfo schema)
+publisher: BFS (Federal Statistical Office)
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets?language=de&extendedSearch=Volksabstimmung%20vom%25
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Eidgenössische Volksabstimmungen"
+vintage: two files per vote – municipality state at the vote date, and re-aggregated to the latest state
+format: JSON
+coverage: 136 vote dates 1981-06-14 to 2026-09-27 (DAM listing 2026-11-09)
+catalog_ids: [bfs_dam_federal_votes_state_at_date, bfs_voteinfo_federal_votes]

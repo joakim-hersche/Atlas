@@ -1,0 +1,11 @@
+source_id: are_bauzonen
+title: Bauzonenstatistik Schweiz – building zones per municipality (main use, unbuilt reserves, PT quality)
+publisher: ARE (Federal Office for Spatial Development), with the cantonal spatial planning offices
+url: https://www.are.admin.ch/de/bauzonenstatistik-schweiz
+license: "2022: Open Data, free use, source must be cited (sheet 'Inhalt'). 2017: unbuilt-zone results only in aggregated form (not per municipality) -> not ingested. 2012: municipal results not public, no redistribution -> edition not used."
+attribution: "Source: Bundesamt für Raumentwicklung ARE, Kantonale Fachstellen für Raumplanung – Bauzonenstatistik Schweiz"
+vintage: "2017 edition on state 1.1.2017, 2022 edition on state 1.1.2022 (inferred from BFS numbers), reprojected to the reference state (areas summed)"
+years: "2017, 2022 (2012 excluded for licence reasons)"
+format: XLSX
+catalog_ids: [are_bauzonenstatistik]
+checks: "National building-zone total 2022 vs. ARE results workbook (bauzonenstatistik_schweiz_2022_resultate.xlsx)"

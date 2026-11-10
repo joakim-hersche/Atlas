@@ -1,0 +1,168 @@
+// Stacked filters (brief 6.1): any number of conditions, combined with AND.
+// A unit with no value for a filtered metric does not match; those are counted separately so the
+// UI can say how many were excluded for missing data (D21: gaps are shown, never hidden).
+import type { ColView } from './columns.svelte';
+import { type LevelData, type MetricMeta, type UnitRow } from './data';
+import type { CatField, Filter } from './hash';
+import { sortedValues, wantsLog } from './classify';
+import { levelName, t, levelWord } from './i18n.svelte';
+
+/** Label of a categorical filter field in the UI language. */
+export const catLabel = (f: CatField): string => t(`cat.${f}`);
+
+export interface CatOption {
+  id: string;
+  name: string;
+}
+
+export interface FilterEval {
+  filter: Filter;
+  /** active: filters the map; loading: data not there yet (no effect); inactive: cannot apply here */
+  status: 'active' | 'loading' | 'inactive';
+  note: string | null;
+  /** 1 = passes (only when active) */
+  pass: Uint8Array | null;
+  /** 1 = no value for this condition's metric (counted as not passing) */
+  miss: Uint8Array | null;
+  nPass: number;
+  nMissing: number;
+  /** numeric conditions: the column and the slider domain */
+  col?: ColView;
+  domain?: { min: number; max: number; log: boolean };
+  /** reach conditions: hub name */
+  hubName?: string;
+}
+
+export interface FilterContext {
+  ld: LevelData;
+  rows: UnitRow[] | null;
+  metas: Map<string, MetricMeta>;
+  hubName: (slug: string) => string;
+  /** reactive column lookup (ColumnStore.get bound to the level and year) */
+  col: (id: string) => ColView | null | undefined;
+}
+
+/** Value of a categorical field per unit of the current level, or null when it does not apply. */
+export function catValues(field: CatField, ld: LevelData, rows: UnitRow[] | null): (string | undefined)[] | null {
+  if (ld.level === field) return ld.units.slice();
+  if (field === 'kanton' && ld.level !== 'gemeinde') {
+    return ld.canton.some(Boolean) ? ld.canton.map((c) => c || undefined) : null;
+  }
+  if (ld.level !== 'gemeinde' || !rows) return null;
+  const out: (string | undefined)[] = new Array(ld.units.length);
+  for (const r of rows) {
+    if (r.level !== 'gemeinde') continue;
+    const i = ld.index.get(r.id);
+    if (i === undefined) continue;
+    const v = field === 'kanton' ? r.kanton : r[field];
+    out[i] = v ?? undefined;
+  }
+  return out;
+}
+
+/** Options of a categorical field (from units.json), sorted for display. */
+export function catOptions(field: CatField, rows: UnitRow[] | null): CatOption[] {
+  if (!rows) return [];
+  const out = rows.filter((r) => r.level === field).map((r) => ({ id: r.id, name: r.name }));
+  if (field === 'agglomeration') out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  else out.sort((a, b) => (field === 'kanton' ? a.id.localeCompare(b.id) : Number(a.id) - Number(b.id)));
+  return out;
+}
+
+export function evalFilter(f: Filter, cx: FilterContext): FilterEval {
+  const n = cx.ld.units.length;
+  const word = levelWord(cx.ld.level);
+  const base = { filter: f, pass: null, miss: null, nPass: n, nMissing: 0 };
+  if (f.kind === 'cat') {
+    const vals = catValues(f.field, cx.ld, cx.rows);
+    if (!vals) {
+      if (cx.ld.level === 'gemeinde' && !cx.rows) return { ...base, status: 'loading', note: t('f.loading') };
+      return { ...base, status: 'inactive', note: t(f.field === 'kanton' ? 'f.catOnlyKt' : 'f.catOnlyGem', { units: word }) };
+    }
+    if (!f.values.length) return { ...base, status: 'inactive', note: t('f.chooseValues') };
+    const want = new Set(f.values);
+    const pass = new Uint8Array(n);
+    let nPass = 0;
+    for (let i = 0; i < n; i++) {
+      const v = vals[i];
+      if (v !== undefined && want.has(v)) {
+        pass[i] = 1;
+        nPass++;
+      }
+    }
+    return { ...base, status: 'active', note: null, pass, nPass };
+  }
+
+  let id: string;
+  let lo: number | null;
+  let hi: number | null;
+  let hubName: string | undefined;
+  if (f.kind === 'reach') {
+    hubName = cx.hubName(f.hub);
+    if (cx.ld.level !== 'gemeinde') return { ...base, status: 'inactive', note: t('f.reachGem', { units: word }), hubName };
+    id = `reach_${f.mode}_${f.hub}`;
+    lo = null;
+    hi = f.max;
+  } else {
+    id = f.metric;
+    lo = f.lo;
+    hi = f.hi;
+  }
+  const meta = cx.metas.get(id);
+  if (!meta) return { ...base, status: 'inactive', note: t('f.notInBuild'), hubName };
+  const c = cx.col(id);
+  if (c === undefined) return { ...base, status: 'loading', note: t('f.loading'), hubName };
+  if (c === null) {
+    const note = t(meta.aggregation === 'not_aggregatable' ? 'f.notAgg' : 'f.notPub', { units: word });
+    return { ...base, status: 'inactive', note, hubName };
+  }
+  const v = c.col.v;
+  const pass = new Uint8Array(n);
+  const miss = new Uint8Array(n);
+  let nPass = 0;
+  let nMissing = 0;
+  for (let i = 0; i < n; i++) {
+    const x = v[i];
+    if (x === null || x === undefined) {
+      miss[i] = 1;
+      nMissing++;
+    } else if ((lo === null || x >= lo) && (hi === null || x <= hi)) {
+      pass[i] = 1;
+      nPass++;
+    }
+  }
+  const s = sortedValues(v);
+  const domain = s.length ? { min: s[0], max: s[s.length - 1], log: wantsLog(s) } : undefined;
+  return { filter: f, status: 'active', note: null, pass, miss, nPass, nMissing, col: c, domain, hubName };
+}
+
+export interface MatchResult {
+  /** 1 = matches all active conditions */
+  m: Uint8Array;
+  n: number;
+  /** units excluded only because a filtered metric has no value */
+  nMissingOnly: number;
+  active: number;
+}
+
+export function combine(evals: FilterEval[], n: number): MatchResult {
+  const m = new Uint8Array(n).fill(1);
+  const act = evals.filter((e) => e.status === 'active' && e.pass);
+  let count = 0;
+  let nMissingOnly = 0;
+  for (let i = 0; i < n; i++) {
+    let ok = true;
+    let missing = false;
+    let other = false;
+    for (const e of act) {
+      if (e.pass![i]) continue;
+      ok = false;
+      if (e.miss?.[i]) missing = true;
+      else other = true;
+    }
+    m[i] = ok ? 1 : 0;
+    if (ok) count++;
+    else if (missing && !other) nMissingOnly++;
+  }
+  return { m, n: count, nMissingOnly, active: act.length };
+}

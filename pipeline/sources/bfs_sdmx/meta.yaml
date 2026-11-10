@@ -1,0 +1,19 @@
+source_id: bfs_sdmx
+title: BFS SDMX dissemination platform (.Stat Suite) – generic client
+publisher: BFS (Federal Statistical Office)
+url: https://disseminate.stats.swiss/rest
+license: "OPEN-BY – open use, the source must be provided (termsOfUse of the statistik.admin.ch asset linked from each dataflow's EXT_RESOURCE, checked for 12 flows)"
+attribution: "Source: BFS (stats.swiss)"
+vintage: per dataflow; geo codelists CL_*KT_BEZ_GDE_SNAP_<year> are snapshots of one municipality state with all years re-mapped by BFS (Gemeinde = BFS number, canton = abbreviation, district = B_<nr>, Switzerland = 8100)
+format: SDMX-ML structures, SDMX-CSV 1.0 data (Accept application/vnd.sdmx.data+csv;version=1.0.0)
+endpoints:
+  catalogue: /dataflow/all
+  structure: /dataflow/<agency>/<DF>/<version>?references=all
+  availability: /availableconstraint/<agency>,<DF>,<version>/all/all/all
+  data: /data/<agency>,<DF>,<version>/<key>?startPeriod=&endPeriod=
+notes: >-
+  No ingest.py: fetch.py (cached downloads via pipeline.common.fetch into data/raw/bfs_sdmx/) and
+  harmonize.py (wide series -> observations, state inference, gap status, native higher levels) are
+  used by bfs_vacancy, bfs_gws, bfs_arealstatistik, bfs_vehicles, bfs_households, bfs_bevnat_sdmx and
+  bfs_crossborder. All flows carry the annotation NonProductionDataflow=true, so callers pin versions.
+  OBS_STATUS Q (confidentiality) -> 'suppressed'; MFZ/IVS omit zero cells (absent_is_zero option).

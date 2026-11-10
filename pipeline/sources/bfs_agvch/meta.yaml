@@ -1,0 +1,9 @@
+source_id: bfs_agvch
+title: Historized municipality register of Switzerland (Historisiertes Gemeindeverzeichnis) and REST API
+publisher: BFS (Federal Statistical Office)
+url: https://www.agvchapp.bfs.admin.ch/de
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Historisiertes Gemeindeverzeichnis der Schweiz"
+vintage: every municipality version since 1848-09-12; snapshot/levels at the reference date
+format: TXT (eCH-0071 v1.2.0, tab-separated, Latin-1) and CSV (API)
+catalog_ids: [bfs_agvch_register, bfs_agvch_api, bfs_agvch_levels, bfs_agvchapp_levels_historic]

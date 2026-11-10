@@ -1,0 +1,10 @@
+source_id: otd_gtfs
+title: Swiss national public transport timetable (GTFS2020), timetable year 2026
+publisher: opentransportdata.swiss (Geschäftsstelle SKI on behalf of BAV/FOT)
+url: https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020
+license: "opentransportdata.swiss Terms of Use: commercial and non-commercial use allowed; ToU 5.1 cite opentransportdata.swiss as source; ToU 5.2 derived data must state the feed version used"
+attribution: "Source: opentransportdata.swiss – Timetable 2026 (GTFS), feed gtfs_fp2026_20261107"
+vintage: "feed version 2026-11-07, timetable year 2026 (2025-12-14 to 2026-12-12); stops are points (no municipality state)"
+format: GTFS zip (agency, routes, trips, stops, calendar, calendar_dates, transfers, feed_info, frequencies, stop_times; no shapes.txt)
+catalog_ids: [otd_gtfs_timetable_2026, otd_gtfs_timetable_2027]
+use: public-transport reach (pipeline/reach), decision D10

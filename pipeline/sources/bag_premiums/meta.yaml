@@ -1,0 +1,14 @@
+source_id: bag_premiums
+title: Health insurance premiums (OKP) by premium region, attached to municipalities, 2026–2027
+publisher: BAG / FOPH (Federal Office of Public Health), priminfo.admin.ch; premium regions EDI ordinance (SR 832.106.1)
+url: https://www.priminfo.admin.ch/de/downloads/aktuell
+url_overview: https://www.priminfo.admin.ch/downloads/gesamtbericht_ch-2027.pdf ; https://www.priminfo.admin.ch/downloads/praemien_2026.pdf
+url_regions: https://www.priminfo.admin.ch/downloads/praemienregionen-2027.xlsx ; https://www.bag.admin.ch/de/krankenversicherung-praemienregionen (annex state 1.1.2026)
+license_status: UNVERIFIED
+license: "UNVERIFIED – priminfo/BAG publications without an explicit licence on the download page; the same premium data is published on opendata.swiss (dataset health-insurance-premiums, not reachable from here, 403). Federal publications, free use with source assumed; confirm on opendata.swiss."
+attribution: "Source: BAG – Prämienübersicht 2026/2027 and Prämienregionen (priminfo.admin.ch); mean/median per region computed by Gemeindebank"
+vintage: "2026: region annex on the state of 1.1.2026 (= reference); 2027: D_PRIM on the state of 1.1.2027, 2027 mergers (VD) mapped back to their reference predecessors"
+years: "2026, 2027 (premium years); BAG mean premium 2027 only"
+choice: "Standard model, adults (26+), franchise CHF 300, accident cover INCLUDED (BAG reference premium); unweighted over insurers. The without-accident premium is parsed but not delivered."
+not_done: "Years before 2026: the PDF overviews 1996–2025 are online (praemien_<year>.pdf) but the region of each municipality for those years is only given as a PLZ/locality list inside the PDFs; no BFS-number region file on the allowed hosts."
+catalog_ids: [bag_health_premiums, bag_premium_regions_mapping]

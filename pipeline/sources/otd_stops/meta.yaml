@@ -1,0 +1,10 @@
+source_id: otd_stops
+title: Public transport stops per municipality (atlas service points) and rail station ridership (Ein- und Aussteigende)
+publisher: "opentransportdata.swiss (atlas / SKI business platform); ridership: SBB Angebotsplanung"
+url: https://data.opentransportdata.swiss/en/dataset/service-point-v2
+url_ridership: https://data.opentransportdata.swiss/en/dataset/einundaus
+license: "opentransportdata.swiss terms of use (https://opentransportdata.swiss/de/terms-of-use/): commercial and non-commercial use allowed; 5.1 cite opentransportdata.swiss as source; 5.2 keep data as current as the raw data (state the data date)"
+attribution: "Source: opentransportdata.swiss – Service Points (atlas), state 2026-11-10; SBB / opentransportdata.swiss – Ein- und Aussteigende (state March 2026)"
+vintage: "fsoNumber on the current state = reference state 2026-01-01 (infer_vintage, all numbers checked)"
+years: "stops: 2026 (2026-11-10); ridership: 2018, 2022, 2023, 2024, 2025"
+catalog_ids: [otd_service_points, bav_haltestellen_oev, otd_ridership_stations]

@@ -1,0 +1,79 @@
+:root {
+  /* Light only (D29): white Swiss style, black type, hairline and heavy black rules, red as the single accent. */
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #f4f4f4;
+  --text: #000000;
+  --muted: #3d3d3d;       /* 11.0:1 on white */
+  --faint: #595959;       /* 7.0:1 on white */
+  --border: #d6d6d6;
+  --border-strong: #000000;
+  --rule: #000000;
+  --accent: #d52b1e;      /* Swiss red, 4.9:1 on white */
+  --accent-soft: #fbe9e7;
+  --accent-text: #ffffff;
+  --ink: #000000;         /* selected controls: black fill */
+  --ink-text: #ffffff;
+  --focus: #d52b1e;
+  --map-bg: #ffffff;
+  --water: #dce6ee;
+  --gem-line: #ffffff;
+  --kt-line: #000000;
+  --sel-line: #d52b1e;
+  --sel-casing: #ffffff;
+  --nodata-fill: #f0f0f0;
+  --nodata-line: #9a9a9a;
+  --sym-ground: #eeeeee;  /* polygons under proportional symbols */
+  --sym-line: #ffffff;
+  --sym-stroke: #ffffff;
+  --reach-line: #000000;
+  --reach-casing: #ffffff;
+  --plot-grid: #e6e6e6;
+  --plot-axis: #000000;
+  --shadow: none;
+  --radius: 0px;
+  --font-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  --font-mono: 'Inter', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+#app { position: fixed; inset: 0; }
+
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* shared typographic roles */
+.caps { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
+.num, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.foot { font-size: 0.72rem; color: var(--faint); line-height: 1.4; }
+.hatch {
+  display: inline-block; width: 14px; height: 10px; border: 1px solid var(--nodata-line); vertical-align: -1px;
+  background: repeating-linear-gradient(-45deg, var(--nodata-line) 0 1px, var(--nodata-fill) 1px 4px);
+}
+.seg { display: inline-flex; border: 1px solid var(--ink); overflow: hidden; background: var(--panel); }
+.seg button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text); }
+.seg button + button { border-left: 1px solid var(--ink); }
+.seg button[aria-checked='true'], .seg button[aria-pressed='true'] { background: var(--ink); color: var(--ink-text); }
+.seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.maplibregl-ctrl-group { background: var(--panel) !important; box-shadow: none !important; border: 1px solid var(--ink); border-radius: 0 !important; }
+.maplibregl-ctrl-group button { width: 26px !important; height: 26px !important; }
+.maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
+.maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
+.gb-reset-btn { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
+.gb-reset-btn:hover { background: var(--panel-2) !important; }
+.maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 10px; color: var(--muted); }
+.maplibregl-ctrl-attrib a { color: var(--muted); }
+.maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }
+
+.reach-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+::placeholder { color: var(--muted); opacity: 1; }

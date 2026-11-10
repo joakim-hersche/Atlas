@@ -1,0 +1,9 @@
+source_id: astra_accidents
+title: Road traffic accidents with personal injury (point locations)
+publisher: ASTRA / FEDRO (Federal Roads Office) via data.geo.admin.ch
+url: https://data.geo.admin.ch/ch.astra.unfaelle-personenschaeden_alle/unfaelle-personenschaeden_alle/unfaelle-personenschaeden_alle_2056.csv.zip
+license: "geo.admin.ch terms of use (STAC license 'proprietary', link disclaimer.admin.ch; UNVERIFIED: free use with source)"
+attribution: "Source: ASTRA – Strassenverkehrsunfälle mit Personenschaden"
+vintage: "MunicipalityCode on the state at extraction (2026-02); infer_vintage gives 2026-01-01 for every year"
+years: 2011–2025
+catalog_ids: [astra_road_accidents]

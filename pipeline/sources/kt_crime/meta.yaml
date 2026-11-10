@@ -1,0 +1,20 @@
+source_id: kt_crime
+title: Criminal Code offences per municipality (compiled from cantonal police statistics, *)
+publisher: Kantonspolizei Zürich; Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt; Kantonspolizeien Appenzell Ausserrhoden, Appenzell Innerrhoden, Basel-Landschaft (BFS PKS)
+url: https://daten.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00003600.csv
+license: "Per publisher (see publishers)"
+attribution: "Compiled by Gemeindebank from: Kantonspolizei Zürich – Polizeiliche Kriminalstatistik; Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt; BFS – Polizeiliche Kriminalstatistik via Kantonspolizei AR, AI, BL"
+vintage: "ZH and BS BFS numbers of the current state (ZH municipalities > 10,000 inhabitants); ZH burglaries per year, state inferred from ZH's BFS numbers; AR, AI, BL PKS 2025 tables on the 2025 state (names matched)"
+years: "2009–2025"
+catalog_ids: [kt_crime_gemeinde_compiled, kt_zh_crime, kt_bs_crime, kt_other_crime_leads]
+publishers:
+  ZH: {publisher: "Kantonspolizei Zürich – Straftaten nach Gemeinde (OGD KTZH_00001202_00003600) and Anzahl Einbrüche nach Gemeinden (KTZH_00001202_00006848)", url: "https://daten.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00003600.csv", license: "terms_by: 00003600 NonCommercialAllowed-CommercialAllowed-ReferenceRequired; 00006848 NonCommercialAllowed-CommercialAllowed-ReferenceNotRequired (ZH OGD catalogue zhweb.json, dataset 1202)", attribution: "Source: Kantonspolizei Zürich – PKS"}
+  BS: {publisher: "Statistisches Amt Basel-Stadt – dataset 100508 Angezeigte Straftaten nach StGB", url: "https://data.bs.ch/explore/dataset/100508/", license: "CC BY 4.0", attribution: "Source: Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt"}
+  AR: {publisher: "Kantonspolizei Appenzell Ausserrhoden – Kriminalstatistik 2025 (BFS PKS Jahresbericht), table T 39 Straftaten nach Gemeinde", url: "https://ar.ch/fileadmin/user_upload/Departement_Inneres_Sicherheit/Kapo/Kriminalpolizei/Statistiken/Kriminalstatistik_2025.pdf", license: "UNVERIFIED: not stated in the report (tables 'Quelle: BFS – PKS, © BFS 2026'; BFS terms: open use, source must be stated)", attribution: "Source: BFS – Polizeiliche Kriminalstatistik; Kantonspolizei Appenzell Ausserrhoden"}
+  AI: {publisher: "Kantonspolizei Appenzell Innerrhoden – Kriminalstatistik 2025 (BFS PKS Jahresbericht), table T 35 Straftaten nach Gemeinde", url: "https://www.ai.ch/themen/sicherheit/kantonspolizei/statistik/kriminalstatistiken", license: "UNVERIFIED: not stated in the report (tables 'Quelle: BFS – PKS, © BFS 2026')", attribution: "Source: BFS – Polizeiliche Kriminalstatistik; Kantonspolizei Appenzell Innerrhoden"}
+  BL: {publisher: "Polizei Basel-Landschaft – Kriminalstatistik 2025 (BFS PKS Jahresbericht), table T 39 Straftaten nach Gemeinde", url: "https://bl-api.webcloud7.ch/politik-und-behorden/direktionen/sicherheitsdirektion/polizei/statistik/downloads-statistiken/kriminalstatistik-2025.pdf", license: "UNVERIFIED: not stated in the report (tables 'Quelle: BFS – PKS, © BFS 2026')", attribution: "Source: BFS – Polizeiliche Kriminalstatistik; Polizei Basel-Landschaft", note: "only the 40 municipalities with most offences are listed"}
+excluded:
+  LU, SO, FR, GR, SZ, GE, BE, VD: "PDF reports only (not parsed; same BFS template as AR/AI/BL, so pks_pdf.py could read the German ones)"
+  GL: "www.gl.ch refused by the proxy (CONNECT 403)"
+  ZG: "data.zg.ch publishes offences for the canton only"
+  others: "no municipal table found"

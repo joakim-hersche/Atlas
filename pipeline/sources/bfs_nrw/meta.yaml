@@ -1,0 +1,14 @@
+source_id: bfs_nrw
+title: National Council elections – party strength, turnout and ballot types by municipality since 1971
+publisher: BFS (Federal Statistical Office) – Statistik der Nationalratswahlen
+url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-1702020000_105/px-x-1702020000_105.px
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Statistik der Nationalratswahlen"
+vintage: cubes 105 and 101 are on the 2023-01-01 municipality state (BFS retro-aggregated older elections); reprojected to the reference state by Gemeindebank (mergers; Moutier BE->JU)
+years: 1971, 1975, ..., 2019, 2023 (14 elections; period = election year)
+method: "Party results as fiktive Wählende (BFS method for cross-canton aggregation): Parteistimmen × ΣFW/ΣPS of the canton the municipality belonged to at the election (cube 104). Party strength = derived ratio nrw_fw_<party>/nrw_fw_total. Raw Parteistimmen are not delivered: they are list votes (one per seat) and not additive across cantons."
+parties: "25 BFS party codes as published; CVP and BDP merged into Die Mitte (2021): cvp/bdp up to 2019, mitte from 2023; LPS merged into FDP (2009). '...' = party did not stand -> not_applicable."
+pseudo_units: "D17 – 9xxx (Swiss abroad, postal voting, other) kept as level 'pseudo', unit_id = BFS code (digits 2–3 = canton number)"
+native_levels: "kanton/schweiz fiktive Wählende from cube 104; kanton/bezirk/schweiz turnout from cube 101 (historical canton boundaries as published)"
+cubes: [px-x-1702020000_105, px-x-1702020000_104, px-x-1702020000_101]
+catalog_ids: [bfs_pxweb_nrw_parties_1971, bfs_pxweb_nrw_turnout_1971, bfs_pxweb_nrw_kanton]

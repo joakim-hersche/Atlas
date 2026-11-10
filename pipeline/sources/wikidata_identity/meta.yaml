@@ -1,0 +1,11 @@
+source_id: wikidata_identity
+title: Wikidata identity of municipalities (names, links, coat of arms, Wikipedia editions)
+publisher: Wikidata (Wikimedia Foundation); coat-of-arms metadata from Wikimedia Commons
+url: https://query.wikidata.org/sparql
+url_commons: https://commons.wikimedia.org/w/api.php (prop=imageinfo, extmetadata)
+license: "Wikidata data CC0 1.0; coat-of-arms files: licence per file in identity.csv (license_short_name, attribution_required); images not downloaded"
+attribution: "Data: Wikidata (CC0); coats of arms: Wikimedia Commons (licence per file)"
+vintage: "current items (P31 Q70208, no P576), matched on P771 to the reference state"
+years: "snapshot 2026-11"
+outputs: [pipeline/sources/wikidata_identity/identity.csv]
+catalog_ids: [wikidata_municipalities]

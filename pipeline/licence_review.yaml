@@ -1,0 +1,89 @@
+# Licence review (brief rule 5). Explicit decisions override the automatic text check in
+# pipeline/build/web.py. status: cleared | blocked. Optional `metrics`: only these metric ids are
+# cleared (for sources mixing several publishers). Every 'cleared' needs evidence.
+# Reviewed 2026-11-10.
+
+bfs_census_1970_2000:
+  status: cleared
+  evidence: "BFS DAM asset 284986 (px-x-4001000000_101) termsOfUse = OPEN-BY, checked 2026-11-10"
+
+are_bauzonen:
+  status: cleared
+  evidence: "2022 workbook, sheet 'Inhalt': 'Open Data, free use, source must be cited'. The restricted 2012 municipal results and 2017 unbuilt reserves are not ingested."
+
+are_zweitwohnungen:
+  status: cleared
+  evidence: "STAC collection links opendata.swiss terms_by (open use, source must be provided)"
+
+are_gueteklassen:
+  status: cleared
+  evidence: "STAC collection links opendata.swiss terms_by (open use, source must be provided)"
+
+otd_stops:
+  status: cleared
+  evidence: "opentransportdata.swiss terms of use: commercial and non-commercial use allowed, cite opentransportdata.swiss (ToU 5.1); state feed version (5.2) — recorded on the sources page"
+
+bfe_energy:
+  status: cleared
+  metrics: [en_ecar_count, en_ecar_share, en_charging_spots, en_pv_installed_kwp, en_pv_kwp_per_capita,
+            en_solar_potential_used, en_heat_renewable_count, en_heat_nonrenewable_count,
+            en_heat_renewable_share, en_elec_consumption_mwh, en_elec_consumption_per_capita,
+            en_renelec_production_mwh, en_renelec_hydro_mwh, en_renelec_solar_mwh, en_renelec_per_capita,
+            energiestadt_label, energiestadt_gold, energiestadt_score]
+  evidence: "Energie Reporter: CC BY 4.0 (README in the downloaded zip). Energiestaedte: STAC https://data.geo.admin.ch/api/stac/v1/collections/ch.bfe.energiestaedte links https://opendata.swiss/en/terms-of-use/#terms_by (provider SFOE) = 'Freie Nutzung. Quellenangabe ist Pflicht' (category text on https://www.bfs.admin.ch/de/nutzungsbedingungen), checked 2026-11-10; same basis as BLN/ARE. BFE municipal solar potential (en_solar_roof_*) stays held back: the aggregate file https://www.uvek-gis.admin.ch/BFE/ogd/52/... carries no licence and its opendata.swiss entry is unreadable (403)."
+
+bafu_protected_areas:
+  status: cleared
+  metrics: [pa_municipal_area_ha, pa_bln_ha, pa_bln_share]
+  evidence: "BLN: STAC https://data.geo.admin.ch/api/stac/v1/collections/ch.bafu.bundesinventare-bln links opendata.swiss terms_by. Parks (ch.bafu.schutzgebiete-paerke_nationaler_bedeutung) and moors/floodplains/dry grasslands: STAC 'proprietary' without licence link, geocat.ch unreadable (checked 2026-11-10); biotope union mixes them with amphibians (terms_by), so parks and biotopes stay held back."
+
+# --- Verification pass D22, 2026-11-10 (excerpts: scratchpad samples/licences/) ---
+
+geo_identity:
+  status: cleared
+  evidence: "swissBOUNDARIES3D: product page links https://www.swisstopo.admin.ch/de/nutzungsbedingungen-kostenlose-geodaten-und-geodienste: 'Die kostenlosen Geodaten und Geodienste von swisstopo duerfen genutzt, verbreitet und zugaenglich gemacht werden. Weiter duerfen sie angereichert, bearbeitet sowie auch kommerziell genutzt werden. Eine Quellenangabe ist Pflicht.' Elevation: BFS G1 boundaries, DAM asset 36390147 termsOfUse OPEN-BY ('Freie Nutzung - Quellenangabe ist Pflicht'), checked 2026-11-10."
+
+bfs_accessibility:
+  status: cleared
+  evidence: "Binding dataset-level terms on the BFS asset https://statistik.admin.ch/de/asset/32029919: 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Stricter statements also permit this use: data description PDF in the official zip 'Wiedergabe unter Angabe der Quelle fuer nichtkommerzielle Nutzung gestattet'; STAC links opendata.swiss terms_by_ask (commercial use needs permission). Cleared for non-commercial use with attribution only, checked 2026-11-10."
+
+kt_crime:
+  status: cleared
+  cantons: [ZH, BS]   # AR, AI, BL (PDF reports) not checked yet
+  evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json, dataset 1202@kantonspolizei-kanton-zuerich, file KTZH_00001202_00003600.csv licence 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'; ZH OGD terms https://www.zh.ch/de/politik-staat/opendata.html 'Sie duerfen offene Daten vervielfaeltigen, verbreiten und weiter zugaenglich machen, anreichern und bearbeiten, kommerziell nutzen'. BS: https://data.bs.ch dataset 100508 licence 'CC BY 4.0'. Checked 2026-11-10."
+
+kt_landprice:
+  status: cleared
+  cantons: [ZH, BL]
+  metrics: [land_price_m2, land_price_model_m2]
+  evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json lists KANTON_ZUERICH_199.csv (296@statistisches-amt) and _477.csv (332@statistisches-amt) with 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'. BL: https://data.bl.ch/terms/terms-and-conditions/ 'Alle Datensaetze koennen unter der Lizenz CC-BY (freie Nutzung mit Quellenangabe) weiterverarbeitet und kommerziell genutzt werden'; dataset 10200 dcat_ap_ch terms_by. land_transactions stays held back: ZH indicator 402 is not in the OGD catalogue (no licence). Checked 2026-11-10."
+
+kt_hazards:
+  status: cleared
+  cantons: [AG, AI, AR, BE, BL, FR, GE, GL, JU, LU, NE, SH, SO, SZ, TG, TI, VS, ZG, ZH]
+  evidence: "geodienste.ch lists each canton's hazard-map terms; most state 'Freie Nutzung. Quellenangabe ist Pflicht.' (recorded in pipeline/sources/kt_hazards/meta.yaml). GR and SG carry no licence statement on geodienste.ch ('keine Angabe') and stay out. NE allows commercial use only with permission; Gemeindebank is non-commercial. FR hazard data is not CC BY-SA (the BY-SA note concerns FR statistics). Reviewed 2026-11-10."
+
+kt_finance:
+  status: cleared
+  cantons: [ZH, BL, GR, TG, GE]
+  evidence: "ZH: OGD catalogue lists Gemeindeporträt indicators 431, 434, 297 with terms_by (NonCommercialAllowed-CommercialAllowed-ReferenceRequired). BL: data.bl.ch terms 'CC-BY (freie Nutzung mit Quellenangabe)'. GR: data.gr.ch CC0 1.0. TG: data.tg.ch CC0 1.0. GE: OCSTAT clauses d'utilisation 'L'utilisation ou la reproduction des résultats statistiques ... est libre, pour autant que leur origine et leur source soient indiquées.' Not shipped: LU, SO, AG, VD (written permission required), FR (CC BY-SA, share-alike), ZG, SG, TI (not yet checked). Excerpts: scratchpad samples/licences/_cantonal_publishers.txt, 2026-11-10."
+
+kt_unemployment:
+  status: cleared
+  cantons: [ZH, GE]
+  evidence: "ZH: OGD catalogue lists indicator 107 with terms_by. GE: OCSTAT clauses d'utilisation (free use with source). Not shipped: VD (permission required), SG (not checked)."
+
+kt_pupils:
+  status: cleared
+  cantons: [BL]
+  evidence: "BL: data.bl.ch CC-BY. Not shipped: ZH (indicators 143/147/149 not in the OGD catalogue), FR (CC BY-SA), ZG (not checked)."
+
+# --- Profile and search lookups (pipeline/build/profile.py), 2026-11-10 ---
+
+swisstopo_plz:
+  status: cleared
+  evidence: "STAC https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo-vd.ortschaftenverzeichnis_plz: licence field 'proprietary', link rel=license 'Terms of use' https://www.swisstopo.admin.ch/ogd-conditions, which redirects to https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices: 'The free geodata and geoservices of swisstopo may be used, distributed and made accessible. Furthermore, they may be enriched and processed and also used commercially. A reference to the source is mandatory.' Accepted references include '©swisstopo'. The exceptions list (other wording required) names only swissALTI Regio and swissEO. Collection description: 'The data set covers all of Switzerland and is available free of charge.' Checked 2026-11-10."
+
+wikidata_cantons:
+  status: cleared
+  evidence: "Wikidata structured data are CC0 1.0 (Wikidata:Licensing), the basis already recorded for wikidata_identity. www.wikidata.org is blocked by the session proxy (403, 2026-11-10), so the licensing page was not re-read in this pass; only item labels and ISO 3166-2 codes from query.wikidata.org are used."

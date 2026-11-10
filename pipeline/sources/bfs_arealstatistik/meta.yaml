@@ -1,0 +1,20 @@
+source_id: bfs_arealstatistik
+title: Arealstatistik – land use (standard nomenclature NOAS04) and soil sealing by municipality and survey period
+publisher: BFS (Federal Statistical Office)
+url: https://disseminate.stats.swiss/rest/data/CH1.AREA,DF_AREA_NOAS,1.1.0/1+2+3+4..
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, assets https://www.bfs.admin.ch/asset/en/DF_AREA_NOAS, .../DF_AREA_IMPV)"
+attribution: "Source: BFS – Arealstatistik der Schweiz"
+vintage: municipality state 2026 (codelist CL_AREA_HIER_REGION_2026_DIFF; hectare sample points re-assigned to current boundaries by BFS) = reference state
+years: survey periods 1979/85, 1992/97, 2004/09, 2013/18, 2020/25 (incomplete)
+dataflows: [CH1.AREA DF_AREA_NOAS 1.1.0, CH1.AREA DF_AREA_IMPV 1.0.0]
+client: pipeline/sources/bfs_sdmx
+catalog_ids: [bfs_arealstatistik_sdmx]
+notes: >-
+  2020/25 is published canton by canton; at download (2026-11-09) it covers AG, BL, BS, FR, GE,
+  JU, LU, NE, SO, VD completely (1008 municipalities, all others have status not_covered; no
+  national value yet). Periods are survey windows; the flight year varies by municipality.
+  Settlement change is delivered as an index (1979/85 = 100): area_settlement_base_ha repeats the
+  1979/85 settlement area for every later period so the ratio re-aggregates at every level.
+  Lake areas outside municipalities (codes 9xxx) and the condominium areas Staatswald Galm (2391),
+  C'za Cadenazzo/Monteceneri (5391) and C'za Capriasca/Lugano (5394) appear only in canton and
+  national totals (e.g. CH total area 4 129 072 ha vs 3 999 706 ha in municipalities).
