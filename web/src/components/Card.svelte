@@ -20,9 +20,10 @@
     index: number;
     source: Source | undefined;
     reach: Reach | null;
+    docked?: boolean;
     onclose: () => void;
   }
-  let { name, canton, bfs, meta, file, col, index, source, reach, onclose }: Props = $props();
+  let { name, canton, bfs, meta, file, col, index, source, reach, docked = false, onclose }: Props = $props();
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
@@ -31,7 +32,7 @@
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
 </script>
 
-<div class="card" role="dialog" aria-label="{name} quick card">
+<div class="card" class:docked role="dialog" aria-label="{name} quick card">
   <div class="top">
     <h2>{name}</h2>
     <span class="sub">{canton} · BFS {bfs}</span>
@@ -44,7 +45,7 @@
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
-          Rank {fmtNumber(rank.rank, 0)} of {fmtNumber(rank.n, 0)}<span class="long">{cov ? ' municipalities with data' : ' in Switzerland'}
+          Rank {fmtNumber(rank.rank, 0)} of {fmtNumber(rank.n, 0)} · P{Math.round(rank.pct)}<span class="long">{cov ? ' · among municipalities with data' : ''}
           <span class="muted">({meta.direction === 'lower_better' ? '1 = lowest' : '1 = highest'})</span></span>
         </span>
       {/if}
@@ -60,7 +61,7 @@
     <span class="tags">
       <span class="tag">{precision}</span>
       {#if cov}<span class="tag warn">partial: {cov.length} of 26 cantons</span>{/if}
-      <span class="tag src" title={source?.attribution ?? ''}>{publisher}</span>
+      <span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>
     </span>
     {#if reach}
       <span class="reach">
@@ -77,53 +78,49 @@
 
 <style>
   .card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: 12px 14px; width: 100%;
+    background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 10px 12px; width: 100%;
   }
+  .card.docked { box-shadow: none; border: 0; padding: 0; background: none; }
   .top { display: flex; align-items: baseline; gap: 8px; }
-  h2 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
-  .sub { color: var(--muted); font-size: 0.85rem; flex: 1; min-width: 0; }
+  h2 { margin: 0; font-size: 1.05rem; line-height: 1.2; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 0.78rem; flex: 1; min-width: 0; font-family: var(--font-mono); }
   .close {
-    border: 0; background: var(--panel-2); width: 30px; height: 30px; border-radius: 50%; font-size: 1.2rem; line-height: 1;
-    cursor: pointer; flex: none; align-self: start;
+    border: 1px solid var(--border); background: none; width: 26px; height: 26px; border-radius: var(--radius); font-size: 1.05rem; line-height: 1;
+    cursor: pointer; flex: none; align-self: start; color: var(--muted);
   }
-  .mlabel { margin: 4px 0 0; color: var(--muted); font-size: 0.85rem; }
-  .valrow { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; margin-top: 1px; }
-  .val { font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .yr { font-size: 0.8rem; color: var(--muted); }
-  .rank { flex-basis: 100%; font-size: 0.88rem; margin-top: 2px; }
+  .mlabel { margin: 6px 0 0; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .valrow { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; margin-top: 1px; }
+  .val { font-size: 1.2rem; font-weight: 500; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .yr { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
+  .rank { flex-basis: 100%; font-size: 0.8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .reason { color: var(--text); }
-  .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
-  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; }
-  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tag { font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
-  .tag.warn { color: var(--text); border-color: var(--nodata-line); }
-  .reach { display: flex; gap: 8px; align-items: baseline; font-size: 0.9rem; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
+  .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: 0.72rem; color: var(--faint); }
+  .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); }
+  .tag.warn { color: var(--text); }
+  .reach { display: flex; gap: 8px; align-items: baseline; font-size: 0.82rem; }
   .rl { color: var(--muted); }
-  .rv { font-weight: 650; font-variant-numeric: tabular-nums; }
-  .rv.within { color: var(--reach-line); }
+  .rv { font-weight: 500; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .rv.within { color: var(--accent); }
   .short { display: none; }
   @media (min-width: 900px) {
-    .reach { flex-basis: 100%; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 8px; }
+    .reach { flex-basis: 100%; justify-content: space-between; }
   }
   @media (max-width: 899px) {
-    .card { padding: 8px 12px 9px; }
-    h2 { font-size: 1.02rem; }
-    .sub { font-size: 0.8rem; }
-    .close { width: 26px; height: 26px; font-size: 1.05rem; }
+    .card { padding: 7px 10px 8px; }
+    h2 { font-size: 0.98rem; }
+    .close { width: 24px; height: 24px; }
     .mlabel { display: none; }
-    .val { font-size: 1.05rem; }
-    .rank { flex-basis: auto; font-size: 0.82rem; margin: 0; }
+    .val { font-size: 1rem; }
+    .rank { flex-basis: auto; font-size: 0.78rem; margin: 0; }
     .rank::before { content: '· '; color: var(--muted); }
     .long { display: none; }
     .short { display: inline; }
     .foot { margin-top: 5px; flex-wrap: nowrap; }
-    .tags { flex-wrap: nowrap; overflow: hidden; }
-    .reach { flex: none; font-size: 0.85rem; }
-  }
-  .hatch {
-    display: inline-block; width: 18px; height: 14px; border-radius: 2px; border: 1px solid var(--nodata-line);
-    background: repeating-linear-gradient(-45deg, var(--nodata-line) 0 1.5px, var(--nodata-fill) 1.5px 5px);
+    .tags { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
+    .reach { flex: none; font-size: 0.8rem; }
   }
 </style>

@@ -1,7 +1,7 @@
 // Copy exactly the data files the skeleton reads from data/out/ into web/public/data/.
 // The source files are built by the pipeline (make web, make reach, make geometry) and are never
 // edited here. Run: node scripts/copy-data.mjs  (also part of npm run dev / npm run build).
-import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,18 +10,30 @@ const OUT = resolve(here, '../../data/out');
 const DEST = resolve(here, '../public/data');
 
 // [path under data/out, required]
-const FILES = [
+const FILES = dedupe([
   ['geo/gemeinde.topojson', true],
   ['geo/kanton.topojson', true],
   ['geo/lakes.topojson', true],
   ['web/metrics.json', true],
   ['web/sources.json', true],
+  ['web/units.json', true],
   ['web/latest/gemeinde/core.json', true],
   ['web/latest/gemeinde/mobility_accessibility.json', true],
+  // every theme file (D23, loaded on first use) and the national values for the statistics panel
+  ...['web/latest/gemeinde', 'web/latest/schweiz'].flatMap((dir) =>
+    existsSync(join(OUT, dir))
+      ? readdirSync(join(OUT, dir)).filter((f) => f.endsWith('.json')).map((f) => [`${dir}/${f}`, false])
+      : [],
+  ),
   ['reach/zuerich_pt.json', true],
   // car reach can be held back by the licence gate; the app handles its absence
   ['reach/zuerich_car.json', false],
-];
+]);
+
+function dedupe(list) {
+  const seen = new Set();
+  return list.filter(([rel]) => !seen.has(rel) && seen.add(rel));
+}
 
 rmSync(DEST, { recursive: true, force: true });
 let missing = 0;

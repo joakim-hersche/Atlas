@@ -1,61 +1,128 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import Card from './components/Card.svelte';
   import Legend from './components/Legend.svelte';
+  import MetricPicker from './components/MetricPicker.svelte';
   import RangeFilter from './components/RangeFilter.svelte';
-  import { gapReason, loadReach, loadStart, loadTheme, type ColumnFile, type MetricMeta, type ReachFile, type StartData } from './lib/data';
-  import { fmtNumber, quantileClasses } from './lib/classify';
-  import { readHash, T_MAX, writeHash, type ReachMode } from './lib/hash';
-  import { CH_BOUNDS, MapView } from './lib/mapview';
+  import Scatter from './components/Scatter.svelte';
+  import StatsBlock from './components/StatsBlock.svelte';
+  import {
+    gapReason, loadCH, loadReach, loadStart, loadTheme, loadUnits, type ColumnFile, type MetricMeta, type ReachFile, type StartData,
+  } from './lib/data';
+  import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues, type Method } from './lib/classify';
+  import { readHash, T_MAX, writeHash, type Mode, type ReachMode } from './lib/hash';
+  import { CH_BOUNDS, MapView, syncCameras } from './lib/mapview';
   import { ReachOverlay } from './lib/reach';
-  import { dark, ramp, rampWord } from './lib/theme';
+  import { dark, divRamp, mute, seqRamp, token } from './lib/theme';
 
   const HUB = { slug: 'zuerich', name: 'Zürich HB' };
   const REACH_FILE = 'mobility_accessibility';
   const MIN_PER_SECOND = 30; // Play speed: 0 -> 180 min in 6 s
   const DESKTOP = '(min-width: 900px)';
+  const REGION_NAMES: Record<string, string> = { '1': 'German', '2': 'French', '3': 'Italian', '4': 'Romansh' };
+
+  interface Preset {
+    slug: string;
+    label: string;
+    a: string;
+    b: string;
+    fallback?: { b: string; label: string };
+  }
+  const PRESETS: Preset[] = [
+    { slug: 'left-income', label: 'Left bloc vs income', a: 'nrw_share_left_bloc', b: 'tax_np_mean_taxable_income',
+      fallback: { b: 'nrw_share_sp', label: 'SP share vs income' } },
+    { slug: 'density-foreigners', label: 'Density vs foreigners', a: 'geo_pop_density', b: 'share_foreign' },
+    { slug: 'age-svp', label: 'Age vs SVP', a: 'share_age_65plus', b: 'nrw_share_svp' },
+    { slug: 'heatpumps-income', label: 'Heat pumps vs income', a: 'gws_share_heatpump', b: 'tax_np_mean_taxable_income' },
+  ];
 
   const initial = readHash();
   let data = $state.raw<StartData | null>(null);
   let loadError = $state<string | null>(null);
+  let mode = $state<Mode>(initial.mode);
   let metricId = $state(initial.metric ?? 'pop_total');
+  let metricB = $state<string | null>(initial.metricB);
+  let method = $state<Method>(initial.cls);
   let popMin = $state<number | null>(initial.popMin);
   let popMax = $state<number | null>(initial.popMax);
   let reachMode = $state<ReachMode>(initial.reach);
   let t = $state(initial.t);
   let playing = $state(false);
   let sel = $state<number | null>(null);
+  let hover = $state<number | null>(null);
+  let hoverAt = $state<{ pane: 'a' | 'b'; x: number; y: number } | null>(null);
   let sheetOpen = $state(false);
   let panelH = $state(0);
   let isDark = $state(dark.matches);
+  let desktop = $state(window.matchMedia(DESKTOP).matches);
   let mapReady = $state(false);
-  let metricFile = $state.raw<ColumnFile | null>(null);
+  let mapReadyB = $state(false);
+  let fileA = $state.raw<ColumnFile | null>(null);
+  let fileB = $state.raw<ColumnFile | null>(null);
+  let chA = $state.raw<{ value: number; period: string } | null>(null);
   let mobility = $state.raw<ColumnFile | null>(null);
   let reachFiles = $state.raw<Partial<Record<'pt' | 'car', ReachFile | null>>>({});
   let reachError = $state<string | null>(null);
+  let regions = $state.raw<{ idx: Int8Array; names: string[] } | null>(null);
 
-  let mapEl: HTMLDivElement;
-  let panelEl: HTMLElement;
-  let view: MapView | null = null;
+  let mapElA: HTMLDivElement;
+  let mapElB = $state<HTMLDivElement>();
+  let panelEl = $state<HTMLElement>();
+  let viewA: MapView | null = null;
+  let viewB: MapView | null = null;
   let overlay: ReachOverlay | null = null;
 
-  // ------------------------------------------------------------------ derived data
-  const metas = $derived(new Map((data?.metrics ?? []).map((m) => [m.id, m])));
-  const meta = $derived<MetricMeta | undefined>(metas.get(metricId) ?? metas.get('pop_total'));
-  const col = $derived(meta && metricFile ? metricFile.metrics[meta.id] : undefined);
-  const colours = $derived(ramp(isDark));
-  const word = $derived(rampWord(isDark));
-  const classes = $derived(col ? quantileClasses(col.v) : null);
-  const nUnits = $derived(data?.core.units.length ?? 0);
+  const compare = $derived(mode === 'compare');
 
-  // headline metrics (D24), grouped by theme in headline order
-  const groups = $derived.by(() => {
-    const hl = (data?.metrics ?? []).filter((m) => m.headline !== null && !m.hidden).sort((a, b) => a.headline! - b.headline!);
-    const out = new Map<string, MetricMeta[]>();
-    for (const m of hl) out.set(m.theme, [...(out.get(m.theme) ?? []), m]);
-    if (meta && !hl.some((m) => m.id === meta.id)) out.set('Other', [meta]);
-    return [...out.entries()];
+  // ------------------------------------------------------------------ metrics and presets
+  const metas = $derived(new Map((data?.metrics ?? []).map((m) => [m.id, m])));
+  const metaA = $derived<MetricMeta | undefined>(metas.get(metricId) ?? metas.get('pop_total'));
+  const metaB = $derived<MetricMeta | undefined>(metricB ? metas.get(metricB) : undefined);
+  const presets = $derived(
+    PRESETS.flatMap((p) => {
+      if (!metas.size) return [];
+      if (metas.has(p.a) && metas.has(p.b)) return [p];
+      // left bloc not in this build yet: SP share vs income
+      if (p.fallback && metas.has(p.fallback.b) && metas.has(p.b)) return [{ ...p, a: p.fallback.b, label: p.fallback.label }];
+      return [];
+    }),
+  );
+  const activePreset = $derived(presets.find((p) => p.a === metricId && p.b === metricB)?.slug ?? null);
+
+  function applyPreset(p: Preset) {
+    metricId = p.a;
+    metricB = p.b;
+    sel = null;
+  }
+
+  // ------------------------------------------------------------------ columns
+  $effect(() => {
+    const m = metaA;
+    if (!data || !m) return;
+    let live = true;
+    loadTheme(m.file, data.core).then((f) => live && (fileA = f)).catch((e) => (loadError = String(e)));
+    loadCH(m.file).then((f) => {
+      if (!live) return;
+      const c = f?.metrics[m.id];
+      chA = c && c.v[0] !== null ? { value: c.v[0]!, period: c.period } : null;
+    });
+    return () => (live = false);
   });
+  $effect(() => {
+    const m = metaB;
+    if (!data || !m || !compare) return;
+    let live = true;
+    loadTheme(m.file, data.core).then((f) => live && (fileB = f)).catch((e) => (loadError = String(e)));
+    return () => (live = false);
+  });
+  const colA = $derived(metaA && fileA ? fileA.metrics[metaA.id] : undefined);
+  const colB = $derived(metaB && fileB ? fileB.metrics[metaB.id] : undefined);
+
+  const seq = $derived(seqRamp(isDark));
+  const div = $derived(divRamp(isDark));
+  const scaleA = $derived(colA && metaA ? buildScale(colA.v, method, isDiverging(metaA, sortedValues(colA.v)), seq, div) : null);
+  const scaleB = $derived(colB && metaB ? buildScale(colB.v, method, isDiverging(metaB, sortedValues(colB.v)), seq, div) : null);
+  const nUnits = $derived(data?.core.units.length ?? 0);
 
   // unit names and cantons by core index
   const unitInfo = $derived.by(() => {
@@ -72,6 +139,7 @@
     const v = pop.filter((x): x is number => x !== null);
     return v.length ? { min: Math.min(...v), max: Math.max(...v) } : { min: 0, max: 1 };
   });
+  const filtered = $derived(popMin !== null || popMax !== null);
   const match = $derived.by(() => {
     const m = new Uint8Array(pop.length);
     let n = 0;
@@ -84,7 +152,8 @@
     return { m, n };
   });
 
-  const reachOn = $derived(reachMode !== 'off');
+  // ------------------------------------------------------------------ reach
+  const reachOn = $derived(reachMode !== 'off' && !compare);
   const reachMetricId = $derived(reachOn ? `reach_${reachMode}_${HUB.slug}` : null);
   const reachCol = $derived(reachMetricId && mobility ? mobility.metrics[reachMetricId] ?? null : null);
   const reachFile = $derived(reachOn ? reachFiles[reachMode as 'pt' | 'car'] : undefined);
@@ -103,6 +172,9 @@
   onMount(() => {
     const onTheme = () => (isDark = dark.matches);
     dark.addEventListener('change', onTheme);
+    const mqd = window.matchMedia(DESKTOP);
+    const onDesk = () => (desktop = mqd.matches);
+    mqd.addEventListener('change', onDesk);
     const t0 = performance.now();
     loadStart()
       .then((d) => {
@@ -111,85 +183,166 @@
           const i = d.core.units.indexOf(initial.sel);
           if (i >= 0) sel = i;
         }
-        view = new MapView(mapEl, d, (i) => {
-          sel = i;
-          if (i !== null && !window.matchMedia(DESKTOP).matches) sheetOpen = false;
-        });
-        overlay = new ReachOverlay(view.map, mapEl);
-        // ?debug exposes the map object for automated checks
-        if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = view.map;
-        view.ready.then(() => {
+        // bare '#compare' or '#<preset>' from a shared link
+        if (initial.preset !== null) {
+          const ids = new Set(d.metrics.map((m) => m.id));
+          const avail = PRESETS.map((p) =>
+            ids.has(p.a) && ids.has(p.b) ? p : p.fallback && ids.has(p.fallback.b) ? { ...p, a: p.fallback.b } : null,
+          ).filter((p): p is Preset => p !== null);
+          const p = avail.find((x) => x.slug === initial.preset) ?? avail[0];
+          if (p) applyPreset(p);
+        } else if (mode === 'compare' && !metricB) metricB = defaultB(metricId);
+        viewA = new MapView(mapElA, d, { onSelect: select, onHover: (i, p) => onMapHover('a', i, p) });
+        overlay = new ReachOverlay(viewA.map, mapElA);
+        if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = viewA.map;
+        viewA.ready.then(() => {
           fit();
           mapReady = true;
-          view!.map.once('idle', () => {
+          viewA!.map.once('idle', () => {
             (window as unknown as { __firstRender: number }).__firstRender = performance.now() - t0;
           });
         });
       })
       .catch((e) => (loadError = String(e)));
-    const ro = new ResizeObserver(() => fit());
-    ro.observe(document.body);
+    const ro = new ResizeObserver(() => {
+      viewA?.map.resize();
+      viewB?.map.resize();
+    });
+    ro.observe(mapElA);
     return () => {
       dark.removeEventListener('change', onTheme);
+      mqd.removeEventListener('change', onDesk);
       ro.disconnect();
     };
   });
 
-  function fit() {
-    if (!view || !panelEl) return;
-    const desktop = window.matchMedia(DESKTOP).matches;
-    const r = panelEl.getBoundingClientRect();
-    const padding = desktop
-      ? { top: 24, bottom: 24, left: r.right + 16, right: 64 }
-      : { top: 16, bottom: Math.min(window.innerHeight * 0.55, window.innerHeight - r.top + 8), left: 12, right: 12 };
-    view.map.fitBounds(CH_BOUNDS, { padding, animate: false });
+  function defaultB(a: string) {
+    return a === 'tax_np_mean_taxable_income' ? 'nrw_share_svp' : 'tax_np_mean_taxable_income';
   }
 
-  // metric column: core file or the theme file holding it (D23)
+  function select(i: number | null) {
+    sel = i;
+    if (i !== null && !desktop) sheetOpen = false;
+  }
+  function onMapHover(pane: 'a' | 'b', i: number | null, p: { x: number; y: number } | null) {
+    hover = i;
+    hoverAt = i === null || !p ? null : { pane, x: p.x, y: p.y };
+  }
+
+  // second map, created the first time compare mode is shown
+  let unsync: (() => void) | null = null;
   $effect(() => {
-    if (!data || !meta) return;
-    const file = meta.file;
-    if (file === 'core') {
-      metricFile = data.core;
-      return;
+    if (!compare || !data || !mapElB || viewB) return;
+    const el = mapElB;
+    viewB = new MapView(el, data, { onSelect: select, onHover: (i, p) => onMapHover('b', i, p) }, { nav: false });
+    const ro = new ResizeObserver(() => viewB?.map.resize());
+    ro.observe(el);
+    viewB.ready.then(() => {
+      unsync = syncCameras(viewA!.map, viewB!.map);
+      mapReadyB = true;
+    });
+  });
+  $effect(() => () => unsync?.());
+
+  function fit() {
+    if (!viewA) return;
+    const mob = !window.matchMedia(DESKTOP).matches;
+    let padding: { top: number; bottom: number; left: number; right: number };
+    if (compare) padding = { top: 8, bottom: 8, left: 8, right: 8 };
+    else if (!mob) padding = { top: 24, bottom: 24, left: 24, right: 48 };
+    else {
+      const top = panelEl ? panelEl.getBoundingClientRect().top - mapElA.getBoundingClientRect().top : mapElA.clientHeight;
+      padding = { top: 12, bottom: Math.max(12, mapElA.clientHeight - top + 8), left: 10, right: 10 };
     }
-    let live = true;
-    loadTheme(file).then((f) => live && (metricFile = f)).catch((e) => (loadError = String(e)));
-    return () => (live = false);
+    viewA.map.resize();
+    viewB?.map.resize();
+    viewA.map.fitBounds(CH_BOUNDS, { padding, animate: false });
+  }
+  // refit after a layout change (mode, phone/desktop)
+  $effect(() => {
+    void [compare, desktop];
+    if (!mapReady) return;
+    tick().then(() => requestAnimationFrame(() => fit()));
+  });
+  $effect(() => {
+    if (!mapReadyB) return;
+    tick().then(() => requestAnimationFrame(() => fit()));
+  });
+  // phones: compact compare maps scroll with the page; panning needs two fingers
+  $effect(() => {
+    const coop = compare && !desktop;
+    for (const v of [mapReady ? viewA : null, mapReadyB ? viewB : null]) {
+      if (!v) continue;
+      if (coop) v.map.cooperativeGestures.enable();
+      else v.map.cooperativeGestures.disable();
+    }
+  });
+
+  // language regions for the scatter plot
+  $effect(() => {
+    if (!compare || !data || regions) return;
+    const d = data;
+    loadUnits()
+      .then((u) => {
+        const pos = new Map(d.core.units.map((id, i) => [id, i]));
+        const idx = new Int8Array(d.core.units.length).fill(-1);
+        for (const r of u) {
+          if (r.level !== 'gemeinde' || !r.sprachgebiet) continue;
+          const i = pos.get(r.id);
+          if (i !== undefined) idx[i] = Number(r.sprachgebiet) - 1;
+        }
+        const names = ['1', '2', '3', '4'].map((k) => REGION_NAMES[k]);
+        regions = { idx, names };
+      })
+      .catch((e) => (loadError = String(e)));
   });
 
   // reach data loads on first use
   $effect(() => {
     if (!data || !reachOn) return;
-    const mode = reachMode as 'pt' | 'car';
+    const m = reachMode as 'pt' | 'car';
     if (!mobility) loadTheme(REACH_FILE).then((f) => (mobility = f)).catch((e) => (reachError = String(e)));
-    if (!(mode in reachFiles)) {
-      loadReach(HUB.slug, mode)
-        .then((f) => (reachFiles = { ...reachFiles, [mode]: f }))
+    if (!(m in reachFiles)) {
+      loadReach(HUB.slug, m)
+        .then((f) => (reachFiles = { ...reachFiles, [m]: f }))
         .catch((e) => (reachError = String(e)));
     }
   });
 
   // ------------------------------------------------------------------ map updates
-  $effect(() => {
-    if (mapReady && classes) view!.setColours(classes.colour);
-  });
-  $effect(() => {
-    if (!mapReady) return;
-    const dim = new Float32Array(match.m.length);
-    for (let i = 0; i < dim.length; i++) {
-      if (!match.m[i]) dim[i] = 0.82;
+  const coloursA = $derived.by(() => {
+    if (!scaleA) return null;
+    isDark;
+    const surface = token('--map-bg');
+    const out = scaleA.unitColour.slice();
+    if (compare) return out;
+    for (let i = 0; i < out.length; i++) {
+      const c = out[i];
+      if (c === null) continue;
+      if (!match.m[i]) out[i] = mute(c, surface, 0.88);
       else if (reachOn && reachCol) {
         const x = reachCol.v[i];
-        dim[i] = x !== null && x <= t ? 0 : 0.62;
+        if (!(x !== null && x <= t)) out[i] = mute(c, surface, 0.72);
       }
     }
-    view!.setDim(dim);
+    return out;
   });
   $effect(() => {
-    if (mapReady) view!.setSelected(sel);
+    if (mapReady && coloursA) viewA!.setColours(coloursA);
   });
-  // read the dependencies before the readiness check so the effects re-run on change
+  $effect(() => {
+    if (mapReadyB && scaleB) viewB!.setColours(scaleB.unitColour);
+  });
+  $effect(() => {
+    const s = sel;
+    if (mapReady) viewA!.setSelected(s);
+    if (mapReadyB) viewB!.setSelected(s);
+  });
+  $effect(() => {
+    const h = hover;
+    if (mapReady) viewA!.setHover(h);
+    if (mapReadyB) viewB!.setHover(h);
+  });
   $effect(() => {
     const f = reachFile ?? null;
     if (mapReady) overlay!.setNetwork(f);
@@ -205,22 +358,34 @@
   $effect(() => {
     isDark;
     if (mapReady) {
-      view!.applyTheme();
+      viewA!.applyTheme();
       overlay!.draw();
     }
+    if (mapReadyB) viewB!.applyTheme();
   });
   // URL hash (not while the animation runs)
   $effect(() => {
-    const s = { metric: metricId, popMin, popMax, reach: reachMode, t, sel: sel === null || !data ? null : data.core.units[sel] };
+    const s = {
+      mode, metric: metricId, metricB, cls: method, popMin, popMax, reach: reachMode, t,
+      sel: sel === null || !data ? null : data.core.units[sel],
+    };
     if (playing) return;
     const h = setTimeout(() => writeHash(s), 150);
     return () => clearTimeout(h);
   });
-  // shrinking the sheet changes the visible map area
   $effect(() => {
     sheetOpen;
-    requestAnimationFrame(() => view?.map.resize());
+    requestAnimationFrame(() => viewA?.map.resize());
   });
+
+  function setModeTo(m: Mode) {
+    if (m === mode) return;
+    stop();
+    hover = null;
+    hoverAt = null;
+    if (m === 'compare' && !metricB) metricB = defaultB(metricId);
+    mode = m;
+  }
 
   // ------------------------------------------------------------------ reach animation
   let raf = 0;
@@ -252,203 +417,361 @@
     playing = false;
     t = Math.round(t);
   }
-  function setMode(m: ReachMode) {
+  function setReach(m: ReachMode) {
     stop();
     reachMode = m;
   }
 
-  // ------------------------------------------------------------------ card
+  // ------------------------------------------------------------------ card and tooltip
   const card = $derived.by(() => {
-    if (sel === null || !data || !meta || !col || !metricFile) return null;
+    if (sel === null || !data || !metaA || !colA || !fileA || compare) return null;
     let reach = null;
     if (reachOn) {
       const label = reachMode === 'pt' ? 'Public transport' : 'Car';
-      const short = reachMode === 'pt' ? 'Public transport' : 'Car';
       const rmeta = reachMetricId ? metas.get(reachMetricId) : undefined;
       if (reachCol && rmeta && mobility) {
         const x = reachCol.v[sel];
         reach = {
-          label, short, hub: HUB.name, minutes: x,
+          label, short: label, hub: HUB.name, minutes: x,
           reason: x === null ? gapReason(mobility, reachCol, sel, rmeta, unitInfo.canton[sel]) : null,
           within: x !== null && x <= t,
         };
       } else {
-        reach = { label, short, hub: HUB.name, minutes: null, reason: mobility ? 'held back in this build' : 'loading…', within: false };
+        reach = { label, short: label, hub: HUB.name, minutes: null, reason: mobility ? 'held back in this build' : 'loading…', within: false };
       }
     }
     return { i: sel, reach };
   });
+  const tipRows = $derived.by(() => {
+    if (hover === null || !hoverAt || !metaA || !colA) return null;
+    const rows: { k: string; v: string }[] = [];
+    const fmt = (c: typeof colA, m: MetricMeta) => (c && c.v[hover!] !== null ? fmtValue(c.v[hover!]!, m) : 'no data');
+    if (compare) {
+      rows.push({ k: 'A', v: fmt(colA, metaA) });
+      if (metaB && colB) rows.push({ k: 'B', v: fmt(colB, metaB) });
+    } else rows.push({ k: '', v: fmt(colA, metaA) });
+    return rows;
+  });
 </script>
 
-<div class="app" style="--sheet:{panelH}px">
-  <div class="map" bind:this={mapEl}></div>
-
-  {#if !mapReady && !loadError}
-    <div class="status" role="status">Loading map…</div>
-  {/if}
-  {#if loadError}
-    <div class="status err" role="alert">Could not load data: {loadError}</div>
-  {/if}
-
-  {#if card && meta && col && metricFile && data}
-    <div class="card-wrap">
-      <Card
-        name={unitInfo.name[card.i]} canton={unitInfo.canton[card.i]} bfs={data.core.units[card.i]}
-        {meta} file={metricFile} {col} index={card.i} source={data.sources.get(meta.source)}
-        reach={card.reach} onclose={() => (sel = null)} />
+<div class="app" class:compare class:single={!compare} style="--sheet:{panelH}px">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <strong>Gemeindebank</strong>
+      <span class="sub">Swiss municipalities · <span class="num">{fmtNumber(nUnits || 2110, 0)}</span> units · boundaries of 2026</span>
     </div>
+    <div class="seg modes" role="radiogroup" aria-label="View">
+      <button type="button" role="radio" aria-checked={!compare} onclick={() => setModeTo('single')}>Single map</button>
+      <button type="button" role="radio" aria-checked={compare} onclick={() => setModeTo('compare')}>Compare</button>
+    </div>
+  </header>
+
+  {#if compare}
+    <nav class="presets" aria-label="Example comparisons">
+      <span class="caps">Examples</span>
+      {#each presets as p}
+        <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{p.label}</button>
+      {/each}
+    </nav>
   {/if}
 
-  <aside class="panel" class:open={sheetOpen} bind:this={panelEl} bind:offsetHeight={panelH} aria-label="Map controls">
-    <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
-      <span class="grip" aria-hidden="true"></span>
-      <span class="brand">Gemeindebank</span>
-      <span class="summary">
-        {(popMin !== null || popMax !== null ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'More filters')}
-      </span>
-    </button>
-    <div class="body">
-      <section>
-        <label class="field">
-          <span class="flabel">Shade by</span>
-          <select bind:value={metricId} disabled={!data}>
-            {#each groups as [theme, list]}
-              <optgroup label={theme}>
-                {#each list as m}<option value={m.id}>{m.label_en}</option>{/each}
-              </optgroup>
-            {/each}
-          </select>
-        </label>
-        {#if meta && classes && col}
-          <Legend {meta} {classes} {colours} {word} {nUnits} />
-        {/if}
-      </section>
-
-      <section class="reach">
-        <div class="row">
-          <span class="flabel">Reach<span class="hubname">&nbsp;from {HUB.name}</span></span>
-          <div class="seg" role="radiogroup" aria-label="Reach mode">
-            <button type="button" role="radio" aria-checked={reachMode === 'off'} onclick={() => setMode('off')}>Off</button>
-            <button type="button" role="radio" aria-checked={reachMode === 'pt'} onclick={() => setMode('pt')}>Public transport</button>
-            <button type="button" role="radio" aria-checked={reachMode === 'car'} disabled={carHeld}
-              title={carHeld ? 'Car reach is not in this build' : ''} onclick={() => setMode('car')}>Car</button>
-          </div>
-        </div>
-        {#if reachOn}
-          <div class="time">
-            <button type="button" class="play" onclick={play} aria-label={playing ? 'Pause' : 'Play'}>
-              {#if playing}
-                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" /><rect x="9.5" y="2" width="3.5" height="12" rx="1" /></svg>
-              {:else}
-                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 2.5v11a.7.7 0 0 0 1.06.6l9-5.5a.7.7 0 0 0 0-1.2l-9-5.5A.7.7 0 0 0 4 2.5z" /></svg>
-              {/if}
-            </button>
-            <input type="range" min="0" max={T_MAX} step="1" value={t} aria-label="Travel time in minutes"
-              oninput={(e) => { stop(); t = +e.currentTarget.value; }} />
-            <output class="tval">{Math.round(t)} min</output>
-          </div>
-          <p class="note">
-            {#if reachError}
-              Reach data could not be loaded: {reachError}
-            {:else if reachFile === undefined || !mobility}
-              Loading network…
-            {:else if reachFile === null}
-              No {reachMode === 'car' ? 'car' : 'public transport'} network in this build.
-            {:else}
-              {#if reachedCount !== null}<strong>{fmtNumber(reachedCount, 0)}</strong> municipalities within {Math.round(t)} min of {HUB.name}{popMin !== null || popMax !== null ? ' (among the filtered)' : ''}.
-              {:else}Municipality times are held back in this build; only the network is drawn.{/if}
-              <span class="muted detail">{reachMode === 'pt' ? `Weekday departure ${reachFile.departure ?? ''}, wait at the hub included.` : 'Average weekday (ARE NPVM 2023).'}</span>
+  <main class="stage">
+    {#if !compare}
+      <aside class="controls" class:open={sheetOpen} bind:this={panelEl} bind:offsetHeight={panelH} aria-label="Map controls">
+        <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
+          <span class="grip" aria-hidden="true"></span>
+          <span class="summary">
+            {(filtered ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'Statistics, filters')}
+          </span>
+        </button>
+        <div class="body">
+          <section>
+            <div class="caps lab">Shade by</div>
+            {#if data}<MetricPicker metrics={data.metrics} value={metricId} onpick={(id) => (metricId = id)} />{/if}
+            {#if metaA && scaleA && colA}
+              <div class="legend-wrap">
+                <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} source={data?.sources.get(metaA.source)}
+                  {method} onmethod={(m) => (method = m)} compact={!desktop && !sheetOpen} />
+              </div>
             {/if}
-          </p>
+          </section>
+
+          <section class="reach">
+            <div class="row">
+              <span class="caps">Reach from {HUB.name}</span>
+              <div class="seg" role="radiogroup" aria-label="Reach mode">
+                <button type="button" role="radio" aria-checked={reachMode === 'off'} onclick={() => setReach('off')}>Off</button>
+                <button type="button" role="radio" aria-checked={reachMode === 'pt'} onclick={() => setReach('pt')}>Public transport</button>
+                <button type="button" role="radio" aria-checked={reachMode === 'car'} disabled={carHeld}
+                  title={carHeld ? 'Car reach is not in this build' : ''} onclick={() => setReach('car')}>Car</button>
+              </div>
+            </div>
+            {#if reachOn}
+              <div class="time">
+                <button type="button" class="play" onclick={play} aria-label={playing ? 'Pause' : 'Play'}>
+                  {#if playing}
+                    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>
+                  {:else}
+                    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 2v12l10-6z" /></svg>
+                  {/if}
+                </button>
+                <input type="range" min="0" max={T_MAX} step="1" value={t} aria-label="Travel time in minutes"
+                  oninput={(e) => { stop(); t = +e.currentTarget.value; }} />
+                <output class="tval num">{Math.round(t)} min</output>
+              </div>
+              <p class="note">
+                {#if reachError}
+                  Reach data could not be loaded: {reachError}
+                {:else if reachFile === undefined || !mobility}
+                  Loading network…
+                {:else if reachFile === null}
+                  No {reachMode === 'car' ? 'car' : 'public transport'} network in this build.
+                {:else}
+                  {#if reachedCount !== null}<span class="num">{fmtNumber(reachedCount, 0)}</span> municipalities within {Math.round(t)} min{filtered ? ' (among the filtered)' : ''}; others shown desaturated.
+                  {:else}Municipality times are held back in this build; only the network is drawn.{/if}
+                  <span class="foot detail">{reachMode === 'pt' ? `Weekday departure ${reachFile.departure ?? ''}, wait at the hub included. Own routing on the national GTFS timetable.` : 'Average weekday, ARE NPVM 2023.'}</span>
+                {/if}
+              </p>
+            {/if}
+          </section>
+
+          <section class="extra">
+            <RangeFilter label="Population filter" min={popRange.min} max={popRange.max} bind:lo={popMin} bind:hi={popMax}
+              count={match.n} total={nUnits} />
+            {#if data}<p class="foot">BFS STATPOP {data.core.metrics['pop_total'].period}. Non-matching municipalities are muted, not hidden.</p>{/if}
+          </section>
+
+          {#if !desktop && metaA && colA}
+            <section class="extra">
+              <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={unitInfo.name} cantons={unitInfo.canton} ch={chA} sel={null}
+                source={data?.sources.get(metaA.source)} />
+            </section>
+          {/if}
+        </div>
+      </aside>
+    {/if}
+
+    <section class="pane pa">
+      {#if compare && data}
+        <div class="phead">
+          <MetricPicker metrics={data.metrics} value={metricId} tag="A" onpick={(id) => (metricId = id)} />
+        </div>
+      {/if}
+      <div class="pbody">
+        <div class="mapbox">
+          <div class="map" bind:this={mapElA}></div>
+          {#if hoverAt?.pane === 'a' && tipRows && hover !== null && desktop}
+            <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
+              <strong>{unitInfo.name[hover]}</strong> <span class="muted">{unitInfo.canton[hover]}</span>
+              {#each tipRows as r}<div class="num">{#if r.k}<span class="k">{r.k}</span>{/if}{r.v}</div>{/each}
+            </div>
+          {/if}
+        </div>
+        {#if compare && metaA && scaleA && colA}
+          <div class="plegend">
+            <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} source={data?.sources.get(metaA.source)}
+              {method} onmethod={(m) => (method = m)} />
+          </div>
+        {/if}
+      </div>
+    </section>
+
+    <section class="pane pb" hidden={!compare}>
+      {#if data}
+        <div class="phead">
+          <MetricPicker metrics={data.metrics} value={metricB ?? ''} tag="B" onpick={(id) => (metricB = id)} />
+        </div>
+      {/if}
+      <div class="pbody">
+        <div class="mapbox">
+          <div class="map" bind:this={mapElB}></div>
+          {#if hoverAt?.pane === 'b' && tipRows && hover !== null && desktop}
+            <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
+              <strong>{unitInfo.name[hover]}</strong> <span class="muted">{unitInfo.canton[hover]}</span>
+              {#each tipRows as r}<div class="num">{#if r.k}<span class="k">{r.k}</span>{/if}{r.v}</div>{/each}
+            </div>
+          {/if}
+        </div>
+        {#if compare && metaB && scaleB && colB}
+          <div class="plegend">
+            <Legend meta={metaB} v={colB.v} period={colB.period} scale={scaleB} {nUnits} source={data?.sources.get(metaB.source)}
+              {method} onmethod={(m) => (method = m)} />
+          </div>
+        {/if}
+      </div>
+    </section>
+
+    {#if compare}
+      <section class="pane ps">
+        {#if metaA && metaB && colA && colB && regions}
+          <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
+            region={regions.idx} regionNames={regions.names} {pop} names={unitInfo.name} cantons={unitInfo.canton}
+            {hover} {sel} {isDark} onhover={(i) => { hover = i; hoverAt = null; }} onselect={(i) => (sel = i)} />
+        {:else}
+          <p class="muted loading">Loading…</p>
         {/if}
       </section>
+    {/if}
 
-      <section class="extra">
-        <RangeFilter label="Population" min={popRange.min} max={popRange.max} bind:lo={popMin} bind:hi={popMax}
-          count={match.n} total={nUnits} />
-        {#if data}<p class="note muted">{data.core.metrics['pop_total'].period} · BFS STATPOP. Non-matching municipalities are dimmed.</p>{/if}
-      </section>
-    </div>
-  </aside>
+    {#if !compare && desktop}
+      <aside class="side" aria-label="Statistics">
+        {#if card && metaA && colA && fileA && data}
+          <div class="caps lab">Selected municipality</div>
+          <Card name={unitInfo.name[card.i]} canton={unitInfo.canton[card.i]} bfs={data.core.units[card.i]}
+            meta={metaA} file={fileA} col={colA} index={card.i} source={data.sources.get(metaA.source)}
+            reach={card.reach} docked onclose={() => (sel = null)} />
+        {:else}
+          <p class="foot hint">Tap or click a municipality for its value, rank and percentile.</p>
+        {/if}
+        {#if metaA && colA}
+          <div class="sblock">
+            <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={unitInfo.name} cantons={unitInfo.canton} ch={chA} sel={null}
+              source={data?.sources.get(metaA.source)} />
+          </div>
+        {/if}
+      </aside>
+    {/if}
+
+    {#if !compare && !desktop && card && metaA && colA && fileA && data}
+      <div class="card-wrap">
+        <Card name={unitInfo.name[card.i]} canton={unitInfo.canton[card.i]} bfs={data.core.units[card.i]}
+          meta={metaA} file={fileA} col={colA} index={card.i} source={data.sources.get(metaA.source)}
+          reach={card.reach} onclose={() => (sel = null)} />
+      </div>
+    {/if}
+
+    {#if !mapReady && !loadError}
+      <div class="status" role="status">Loading map…</div>
+    {/if}
+    {#if loadError}
+      <div class="status err" role="alert">Could not load data: {loadError}</div>
+    {/if}
+  </main>
 </div>
 
 <style>
-  .app { position: fixed; inset: 0; }
+  .app { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+  .top {
+    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 14px;
+    padding-top: env(safe-area-inset-top); box-sizing: content-box; background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .brand strong { font-weight: 600; letter-spacing: 0.01em; }
+  .mark { width: 10px; height: 10px; background: var(--accent); align-self: center; flex: none; }
+  .sub { color: var(--muted); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .modes button { padding: 4px 12px; }
+  .presets {
+    flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--panel); border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .presets .caps { margin-right: 4px; flex: none; }
+  .chip {
+    flex: none; padding: 3px 10px; border: 1px solid var(--border-strong); border-radius: 999px; background: none; cursor: pointer;
+    font-size: 0.8rem; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+
+  .stage { flex: 1; min-height: 0; position: relative; }
+  .pane { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--panel); }
+  .pane[hidden] { display: none; }
+  .phead { flex: none; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .mapbox { position: relative; flex: 1; min-height: 0; }
   .map { position: absolute; inset: 0; }
+  .plegend { flex: none; padding: 8px 10px 8px; border-top: 1px solid var(--border); }
+  .maptip {
+    position: absolute; z-index: 5; pointer-events: none; transform: translate(14px, 14px); background: var(--panel);
+    border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 5px 8px; font-size: 0.78rem; white-space: nowrap;
+    box-shadow: var(--shadow);
+  }
+  .k { display: inline-block; width: 1.3em; color: var(--muted); font-weight: 500; }
+  .muted { color: var(--muted); }
+  .loading { padding: 16px; }
+  .lab { margin-bottom: 4px; }
+
   .status {
     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); color: var(--muted);
-    padding: 10px 16px; border-radius: 10px; box-shadow: var(--shadow); z-index: 5; max-width: 90vw;
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); z-index: 40; max-width: 90vw;
   }
-  .status.err { color: var(--reach-line); }
+  .status.err { color: var(--text); }
 
-  .card-wrap { position: absolute; z-index: 6; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
-
-  .panel {
-    position: absolute; z-index: 4; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--border);
-    border-radius: var(--radius) var(--radius) 0 0; box-shadow: var(--shadow); max-height: 46vh; display: flex; flex-direction: column;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .panel.open { max-height: 82vh; }
-  .handle {
-    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 6px 16px 6px; border: 0; background: none;
-    text-align: left; cursor: pointer; flex: none;
-  }
-  .grip { grid-column: 1 / -1; justify-self: center; width: 38px; height: 5px; border-radius: 3px; background: var(--border); }
-  .brand { font-weight: 700; letter-spacing: 0.01em; }
-  .summary { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-  .body { overflow-y: auto; padding: 0 16px 12px; overscroll-behavior: contain; }
-  section { padding: 8px 0; }
-  section + section { border-top: 1px solid var(--border); }
-  .extra { display: none; }
-  .panel.open .extra { display: block; }
-
-  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-  .flabel { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-  select {
-    width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); font-size: 16px;
-  }
-  .row { display: flex; flex-direction: column; gap: 6px; }
-  .seg { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--panel-2); }
-  .seg button { flex: 1; padding: 7px 6px; border: 0; background: none; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
-  .seg button + button { border-left: 1px solid var(--border); }
-  .seg button[aria-checked='true'] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
-  .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+  /* controls (single mode) */
+  .controls { display: flex; flex-direction: column; background: var(--panel); z-index: 4; }
+  .handle { display: none; }
+  .body { overflow-y: auto; padding: 0 14px 12px; overscroll-behavior: contain; }
+  section { min-width: 0; }
+  .body section { padding: 10px 0; }
+  .body section + section { border-top: 1px solid var(--border); }
+  .legend-wrap { margin-top: 10px; }
+  .row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
   .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-  .time input { flex: 1; accent-color: var(--reach-line); min-width: 0; height: 28px; }
+  .time input { flex: 1; accent-color: var(--accent); min-width: 0; height: 24px; }
   .play {
-    width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--reach-line); color: #fff; display: grid; place-items: center;
-    cursor: pointer; flex: none;
+    width: 28px; height: 28px; border-radius: var(--radius); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text);
+    display: grid; place-items: center; cursor: pointer; flex: none;
   }
   .play svg { fill: currentColor; }
-  .tval { font-variant-numeric: tabular-nums; font-weight: 650; min-width: 4.2em; text-align: right; }
-  .note { margin: 6px 0 0; font-size: 0.85rem; }
-  .muted { color: var(--muted); }
+  .tval { min-width: 4.2em; text-align: right; }
+  .note { margin: 6px 0 0; font-size: 0.8rem; }
+  .note .foot { display: block; margin-top: 3px; }
+  .side { background: var(--panel); border-left: 1px solid var(--border); padding: 12px 14px; overflow-y: auto; }
+  .sblock { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .hint { margin: 0; }
+  .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
 
-  @media (max-width: 899px) {
-    :global(.maplibregl-ctrl-top-right) { display: none; }
-    .handle { padding: 4px 16px 2px; }
-    .brand { font-size: 0.95rem; }
-    section { padding: 6px 0; }
-    .field { flex-direction: row; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .field .flabel { flex: none; }
-    .field select { flex: 1; min-width: 0; padding: 6px 8px; }
-    .row { flex-direction: row; align-items: center; gap: 10px; }
-    .row .flabel { flex: none; }
-    .hubname { display: none; }
-    .row .seg { flex: 1; min-width: 0; }
-    .seg button { padding: 6px 4px; font-size: 0.85rem; }
-    .time { margin-top: 6px; }
-    .panel:not(.open) .detail { display: none; }
-  }
+  /* ---------------- desktop / tablet */
   @media (min-width: 900px) {
-    .panel {
-      top: 16px; left: 16px; bottom: auto; right: auto; width: 360px; max-height: calc(100% - 32px); border-radius: var(--radius);
-      border: 1px solid var(--border);
+    .single .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 290px; }
+    .single .controls { border-right: 1px solid var(--border); min-height: 0; }
+    .single .body { padding-top: 4px; }
+    .single .pa { background: var(--map-bg); }
+
+    .compare .stage {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(340px, 1.35fr) minmax(300px, 1fr);
+      gap: 1px; background: var(--border); overflow-y: auto;
     }
-    .panel.open { max-height: calc(100% - 32px); }
-    .handle { cursor: default; pointer-events: none; padding-top: 12px; }
-    .grip, .summary { display: none; }
-    .extra { display: block; }
-    .card-wrap { left: auto; right: 56px; top: 16px; width: 340px; margin: 0; }
+    .compare .pane { container-type: inline-size; }
+    .compare .ps { grid-column: 1 / -1; padding: 10px 14px 12px; }
+    @container (min-width: 620px) {
+      .pbody { flex-direction: row; }
+      .plegend { width: 250px; border-top: 0; border-left: 1px solid var(--border); overflow-y: auto; }
+    }
+  }
+
+  /* ---------------- phone */
+  @media (max-width: 899px) {
+    .top { height: 40px; padding: 0 10px; padding-top: env(safe-area-inset-top); }
+    .sub { display: none; }
+    .modes button { padding: 3px 9px; font-size: 0.78rem; }
+    .presets { padding: 5px 10px; }
+
+    .single .pa { position: absolute; inset: 0; }
+    .single .controls {
+      position: absolute; left: 0; right: 0; bottom: 0; border-top: 1px solid var(--border-strong); max-height: 48%;
+      padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+    }
+    .single .controls.open { max-height: 86%; }
+    .handle {
+      display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 2px; border: 0; background: none; cursor: pointer; flex: none;
+    }
+    .grip { width: 34px; height: 4px; border-radius: 2px; background: var(--border-strong); }
+    .summary { color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+    .body section { padding: 7px 0; }
+    .legend-wrap { margin-top: 6px; }
+    .extra { display: none; }
+    .controls.open .extra { display: block; }
+    .row { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+    .reach .seg button { padding: 4px 7px; }
+    .controls:not(.open) .detail { display: none; }
+    :global(.single .maplibregl-ctrl-top-right) { display: none; }
+
+    .compare .stage { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .compare .pane { border-bottom: 1px solid var(--border); }
+    .compare .mapbox { flex: none; height: 250px; }
+    .compare .plegend { padding: 6px 10px 8px; }
+    .compare .ps { padding: 10px 10px calc(16px + env(safe-area-inset-bottom)); }
+    :global(.compare .maplibregl-ctrl-top-right) { display: none; }
   }
 </style>

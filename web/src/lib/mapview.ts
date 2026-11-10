@@ -1,20 +1,21 @@
 // MapLibre map without a basemap: municipalities, lakes and canton outlines from our own TopoJSON.
+// Colours are computed in the app (classification, muting) and handed over per unit as feature-state.
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { StartData } from './data';
-import { ramp, token } from './theme';
+import { token } from './theme';
 
 export const CH_BOUNDS: [number, number, number, number] = [5.956, 45.818, 10.492, 47.808];
 
 function hatchImage(bg: string, line: string): ImageData {
-  const size = 8;
+  const size = 6;
   const c = document.createElement('canvas');
   c.width = c.height = size * 2;
   const g = c.getContext('2d')!;
   g.fillStyle = bg;
   g.fillRect(0, 0, c.width, c.height);
   g.strokeStyle = line;
-  g.lineWidth = 2;
+  g.lineWidth = 1.5;
   g.beginPath();
   // 45° lines that tile seamlessly
   for (let k = -1; k <= 2; k++) {
@@ -25,19 +26,24 @@ function hatchImage(bg: string, line: string): ImageData {
   return g.getImageData(0, 0, c.width, c.height);
 }
 
+export interface MapEvents {
+  onSelect: (unitIndex: number | null) => void;
+  onHover?: (unitIndex: number | null, point: { x: number; y: number } | null) => void;
+}
+
 export class MapView {
   map: maplibregl.Map;
   ready: Promise<void>;
   private ids: number[]; // feature id per core unit index
-  private colour: Int8Array;
-  private dim: Float32Array;
+  private colour: (string | null | undefined)[];
   private sel: number | null = null;
+  private hov: number | null = null;
+  private isReady = false;
 
-  constructor(container: HTMLElement, data: StartData, onSelect: (unitIndex: number | null) => void) {
+  constructor(container: HTMLElement, data: StartData, ev: MapEvents, opts: { nav?: boolean } = {}) {
     const index = new Map(data.core.units.map((u, i) => [Number(u), i]));
     this.ids = data.core.units.map(Number);
-    this.colour = new Int8Array(this.ids.length).fill(-2);
-    this.dim = new Float32Array(this.ids.length).fill(-1);
+    this.colour = new Array(this.ids.length);
 
     this.map = new maplibregl.Map({
       container,
@@ -55,26 +61,39 @@ export class MapView {
     });
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation();
-    this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    if (opts.nav !== false) this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     this.map.addControl(
-      new maplibregl.AttributionControl({ compact: true, customAttribution: 'Boundaries: BFS – generalized boundaries; data: see card' }),
+      new maplibregl.AttributionControl({ compact: true, customAttribution: 'Boundaries: BFS generalized boundaries' }),
       'bottom-right',
     );
 
     this.ready = new Promise((resolve) => {
       this.map.on('load', () => {
         this.addLayers(data);
+        this.isReady = true;
         resolve();
       });
     });
 
-    this.map.on('click', (e) => {
-      const f = this.map.queryRenderedFeatures(e.point, { layers: ['gem-fill'] })[0];
-      const i = f ? index.get(Number(f.id)) : undefined;
-      onSelect(i ?? null);
-    });
-    this.map.on('mousemove', 'gem-fill', () => (this.map.getCanvas().style.cursor = 'pointer'));
-    this.map.on('mouseleave', 'gem-fill', () => (this.map.getCanvas().style.cursor = ''));
+    const at = (p: maplibregl.Point) => {
+      if (!this.isReady) return undefined;
+      const f = this.map.queryRenderedFeatures(p, { layers: ['gem-fill'] })[0];
+      return f ? index.get(Number(f.id)) : undefined;
+    };
+    this.map.on('click', (e) => ev.onSelect(at(e.point) ?? null));
+    if (ev.onHover) {
+      const onHover = ev.onHover;
+      this.map.on('mousemove', (e) => {
+        const i = at(e.point);
+        this.map.getCanvas().style.cursor = i === undefined ? '' : 'pointer';
+        onHover(i ?? null, i === undefined ? null : { x: e.point.x, y: e.point.y });
+      });
+      this.map.on('mouseout', () => onHover(null, null));
+    }
+  }
+
+  private fillColour() {
+    return ['coalesce', ['feature-state', 'fc'], token('--nodata-fill')] as unknown as maplibregl.ExpressionSpecification;
   }
 
   private addLayers(d: StartData) {
@@ -84,41 +103,33 @@ export class MapView {
     m.addSource('lakes', { type: 'geojson', data: d.lakes, tolerance: 0.25 });
     m.addImage('hatch', hatchImage(token('--nodata-fill'), token('--nodata-line')), { pixelRatio: 2 });
 
-    const r = ramp();
-    m.addLayer({
-      id: 'gem-fill', type: 'fill', source: 'gem',
-      paint: {
-        'fill-color': ['match', ['coalesce', ['feature-state', 'c'], -1], 0, r[0], 1, r[1], 2, r[2], 3, r[3], 4, r[4], token('--nodata-fill')],
-        'fill-antialias': false,
-      },
-    });
+    m.addLayer({ id: 'gem-fill', type: 'fill', source: 'gem', paint: { 'fill-color': this.fillColour(), 'fill-antialias': false } });
     m.addLayer({
       id: 'gem-hatch', type: 'fill', source: 'gem',
-      paint: { 'fill-pattern': 'hatch', 'fill-opacity': ['case', ['<', ['coalesce', ['feature-state', 'c'], 0], 0], 1, 0], 'fill-antialias': false },
-    });
-    m.addLayer({
-      id: 'gem-veil', type: 'fill', source: 'gem',
-      paint: { 'fill-color': token('--map-bg'), 'fill-opacity': ['coalesce', ['feature-state', 'dim'], 0], 'fill-antialias': false },
+      paint: { 'fill-pattern': 'hatch', 'fill-opacity': ['case', ['boolean', ['feature-state', 'nd'], false], 1, 0], 'fill-antialias': false },
     });
     m.addLayer({ id: 'lakes', type: 'fill', source: 'lakes', paint: { 'fill-color': token('--water') } });
     m.addLayer({
       id: 'gem-line', type: 'line', source: 'gem',
       paint: {
         'line-color': token('--gem-line'),
-        'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.15, 9, 0.6, 12, 1.2],
-        'line-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 9, 0.8],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.12, 9, 0.5, 12, 1],
+        'line-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.45, 9, 0.8],
       },
     });
     m.addLayer({
       id: 'kt-line', type: 'line', source: 'kt',
-      paint: { 'line-color': token('--kt-line'), 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.8, 10, 2] },
+      paint: { 'line-color': token('--kt-line'), 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 10, 1.6], 'line-opacity': 0.85 },
+    });
+    // hover and selection: a dark line on a light casing, readable on every class colour
+    const on = ['any', ['boolean', ['feature-state', 'sel'], false], ['boolean', ['feature-state', 'hov'], false]];
+    m.addLayer({
+      id: 'gem-hl-casing', type: 'line', source: 'gem',
+      paint: { 'line-color': token('--sel-casing'), 'line-width': ['case', on, ['case', ['boolean', ['feature-state', 'sel'], false], 4.5, 3.5], 0] as never },
     });
     m.addLayer({
-      id: 'gem-sel', type: 'line', source: 'gem',
-      paint: {
-        'line-color': token('--sel-line'),
-        'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2.5, 0],
-      },
+      id: 'gem-hl', type: 'line', source: 'gem',
+      paint: { 'line-color': token('--sel-line'), 'line-width': ['case', on, ['case', ['boolean', ['feature-state', 'sel'], false], 2.2, 1.4], 0] as never },
     });
   }
 
@@ -126,42 +137,65 @@ export class MapView {
   applyTheme() {
     const m = this.map;
     if (!m.getLayer('gem-fill')) return;
-    const r = ramp();
     m.setPaintProperty('bg', 'background-color', token('--map-bg'));
-    m.setPaintProperty('gem-fill', 'fill-color', ['match', ['coalesce', ['feature-state', 'c'], -1], 0, r[0], 1, r[1], 2, r[2], 3, r[3], 4, r[4], token('--nodata-fill')]);
-    m.setPaintProperty('gem-veil', 'fill-color', token('--map-bg'));
+    m.setPaintProperty('gem-fill', 'fill-color', this.fillColour());
     m.setPaintProperty('lakes', 'fill-color', token('--water'));
     m.setPaintProperty('gem-line', 'line-color', token('--gem-line'));
     m.setPaintProperty('kt-line', 'line-color', token('--kt-line'));
-    m.setPaintProperty('gem-sel', 'line-color', token('--sel-line'));
+    m.setPaintProperty('gem-hl', 'line-color', token('--sel-line'));
+    m.setPaintProperty('gem-hl-casing', 'line-color', token('--sel-casing'));
     m.updateImage('hatch', hatchImage(token('--nodata-fill'), token('--nodata-line')));
   }
 
-  /** Colour index per unit (-1 = no data, hatched). Only changed units are sent to MapLibre. */
-  setColours(colour: Int8Array) {
+  /** Fill colour per unit (null = no data, hatched). Only changed units are sent to MapLibre. */
+  setColours(colour: (string | null)[]) {
     for (let i = 0; i < this.ids.length; i++) {
-      if (colour[i] !== this.colour[i]) {
-        this.map.setFeatureState({ source: 'gem', id: this.ids[i] }, { c: colour[i] });
-        this.colour[i] = colour[i];
+      const c = colour[i];
+      if (c !== this.colour[i]) {
+        this.map.setFeatureState({ source: 'gem', id: this.ids[i] }, c === null ? { fc: null, nd: true } : { fc: c, nd: false });
+        this.colour[i] = c;
       }
     }
   }
 
-  /** Veil opacity per unit (0 = full colour). */
-  setDim(dim: Float32Array) {
-    for (let i = 0; i < this.ids.length; i++) {
-      if (dim[i] !== this.dim[i]) {
-        this.map.setFeatureState({ source: 'gem', id: this.ids[i] }, { dim: dim[i] });
-        this.dim[i] = dim[i];
-      }
-    }
-  }
-
-  setSelected(i: number | null) {
+  private flag(key: 'sel' | 'hov', i: number | null) {
     const id = i === null ? null : this.ids[i];
-    if (id === this.sel) return;
-    if (this.sel !== null) this.map.setFeatureState({ source: 'gem', id: this.sel }, { sel: false });
-    if (id !== null) this.map.setFeatureState({ source: 'gem', id }, { sel: true });
-    this.sel = id;
+    const cur = key === 'sel' ? this.sel : this.hov;
+    if (id === cur) return;
+    if (cur !== null) this.map.setFeatureState({ source: 'gem', id: cur }, { [key]: false });
+    if (id !== null) this.map.setFeatureState({ source: 'gem', id }, { [key]: true });
+    if (key === 'sel') this.sel = id;
+    else this.hov = id;
   }
+  setSelected(i: number | null) {
+    this.flag('sel', i);
+  }
+  setHover(i: number | null) {
+    this.flag('hov', i);
+  }
+
+  /** Screen position of a unit's label point (for tooltips driven from another view). */
+  project(lngLat: [number, number]) {
+    return this.map.project(lngLat);
+  }
+}
+
+/** Keep two maps on the same centre and zoom, both ways, without feedback loops. */
+export function syncCameras(a: maplibregl.Map, b: maplibregl.Map): () => void {
+  let busy = false;
+  const follow = (src: maplibregl.Map, dst: maplibregl.Map) => () => {
+    if (busy) return;
+    busy = true;
+    dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom() });
+    busy = false;
+  };
+  const ab = follow(a, b);
+  const ba = follow(b, a);
+  a.on('move', ab);
+  b.on('move', ba);
+  ab();
+  return () => {
+    a.off('move', ab);
+    b.off('move', ba);
+  };
 }

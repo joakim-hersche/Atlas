@@ -19,10 +19,10 @@ const my = (lat: number) => (180 - (180 / Math.PI) * Math.log(Math.tan(Math.PI /
 
 // line style per kind: road 0, rail 1, bus/boat/cableway straight line 2, walk 3
 const STYLE: Record<number, { w: number; dash: number[] }> = {
-  0: { w: 0.9, dash: [] },
-  1: { w: 2.4, dash: [] },
-  2: { w: 1.1, dash: [4, 3] },
-  3: { w: 1.0, dash: [1, 2.5] },
+  0: { w: 0.7, dash: [] },
+  1: { w: 1.5, dash: [] },
+  2: { w: 0.8, dash: [3, 2.5] },
+  3: { w: 0.8, dash: [1, 2] },
 };
 
 export class ReachOverlay {
@@ -141,7 +141,7 @@ export class ReachOverlay {
       const st = STYLE[k] ?? STYLE[0];
       g.setLineDash([]);
       g.strokeStyle = casing;
-      g.lineWidth = st.w * zoomScale + 2;
+      g.lineWidth = st.w * zoomScale + 1.6;
       if (k === 1) g.stroke(paths.get(k)!);
     }
     for (const k of order) {
@@ -154,7 +154,7 @@ export class ReachOverlay {
     g.setLineDash([]);
     if (tips.length && tips.length < 4000) {
       g.fillStyle = line;
-      const r = 1.2 * zoomScale;
+      const r = 1 * zoomScale;
       g.beginPath();
       for (const [x, y] of tips) {
         g.moveTo(x + r, y);
@@ -166,12 +166,12 @@ export class ReachOverlay {
       const x = ax * this.hub[0] + bx;
       const y = ay * this.hub[1] + by;
       g.beginPath();
-      g.arc(x, y, 6, 0, Math.PI * 2);
+      g.arc(x, y, 5.5, 0, Math.PI * 2);
       g.fillStyle = casing;
       g.fill();
       g.beginPath();
-      g.arc(x, y, 4, 0, Math.PI * 2);
-      g.fillStyle = line;
+      g.arc(x, y, 3.5, 0, Math.PI * 2);
+      g.fillStyle = token('--accent');
       g.fill();
     }
   }

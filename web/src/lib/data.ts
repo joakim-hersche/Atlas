@@ -13,6 +13,7 @@ export interface MetricMeta {
   unit: string;
   decimals: number;
   direction: Direction;
+  aggregation: string;
   precision: string;
   coverage: string; // 'national' | 'partial:AG,BE,...'
   source: string;
@@ -121,7 +122,8 @@ export async function loadStart(): Promise<StartData> {
 
 const themeFiles = new Map<string, Promise<ColumnFile>>();
 /** Theme files (D23) are fetched on first use and kept. */
-export function loadTheme(file: string): Promise<ColumnFile> {
+export function loadTheme(file: string, core?: ColumnFile): Promise<ColumnFile> {
+  if (file === 'core' && core) return Promise.resolve(core);
   let p = themeFiles.get(file);
   if (!p) {
     p = getJSON<ColumnFile>(`web/latest/gemeinde/${file}.json`);
@@ -129,6 +131,34 @@ export function loadTheme(file: string): Promise<ColumnFile> {
     themeFiles.set(file, p);
   }
   return p;
+}
+
+/** Switzerland as a whole (level 'schweiz'); not every theme has a national file. */
+const chFiles = new Map<string, Promise<ColumnFile | null>>();
+export function loadCH(file: string): Promise<ColumnFile | null> {
+  let p = chFiles.get(file);
+  if (!p) {
+    p = getOptionalJSON<ColumnFile>(`web/latest/schweiz/${file}.json`).catch(() => null);
+    chFiles.set(file, p);
+  }
+  return p;
+}
+
+export interface UnitRow {
+  id: string;
+  level: string;
+  name: string;
+  kanton?: string;
+  sprachgebiet?: string;
+}
+let unitsP: Promise<UnitRow[]> | null = null;
+/** All units of all levels (names of the language regions, region per municipality). */
+export function loadUnits(): Promise<UnitRow[]> {
+  if (!unitsP) {
+    unitsP = getJSON<UnitRow[]>('web/units.json');
+    unitsP.catch(() => (unitsP = null));
+  }
+  return unitsP;
 }
 
 export function loadReach(hub: string, mode: 'pt' | 'car'): Promise<ReachFile | null> {
