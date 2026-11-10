@@ -139,3 +139,35 @@ estv_median_income:
 bfs_se_language_cities:
   status: cleared
   evidence: "BFS DAM asset 36491975 (su-d-40.02.01.08.31-2024, Hauptsprachen nach Städten 2020-2024 kumuliert) termsOfUse = OPEN-BY 'Open use - Must provide the source' (dam-api.bfs.admin.ch/hub/api/dam/assets/36491975), checked 2026-11-10; the other editions are the same table series."
+
+# --- Gap review requested by persona reviewers (aircraft noise, Steuerfuss, rents, peak-hour car, childcare), 2026-11-10 ---
+
+bazl_aircraft_noise:
+  status: cleared
+  evidence: "STAC collection https://data.geo.admin.ch/api/stac/v1/collections/ch.bazl.laermbelastungskataster-zivilflugplaetze: providers 'Federal Office of Civil Aviation - FOCA' (producer, licensor), license link https://opendata.swiss/en/terms-of-use/#terms_by (rel license, title 'Terms of use'), the same terms as the cleared bafu_noise grids. Open use, source must be provided. Checked 2026-11-10."
+  caveats: "FOCA: the cadastre is an inventory of the noise situation without direct legal effect. The limit values 60 dB(A) day / 55 dB(A) night (ES II) are quoted from the canton Zürich page https://www.zh.ch/de/umwelt-tiere/laerm-schall/fluglaerm.html (read 2026-11-10); the text of Annex 5 LSV was not reachable (fedlex.admin.ch, bazl.admin.ch blocked), so the 50 dB(A) of the second and last night hour is not used."
+
+bfs_amr_rents:
+  status: cleared
+  evidence: "BFS DAM assets 36681060 (Regionale Disparitäten: Ausgewählte Variablen nach Arbeitsmarktregionen 2018) and 36679710 (Durchschnittlicher Mietpreis pro Monat in Franken pro m², Statatlas): termsOfUse code OPEN-BY, 'Open use - Must provide the source' (dam-api.bfs.admin.ch/hub/api/dam/assets/36681060 and /36679710), checked 2026-11-10."
+
+kt_tax_multipliers:
+  status: cleared (canton Zürich only)
+  evidence: "ZH OGD catalogue (zhweb.json, dataset 711 'Steuerfüsse der Zürcher Gemeinden für natürliche und juristische Personen'): both distributions carry license 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired' (open use, reference required), read 2026-11-10."
+  held_back:
+    BL: "data.bl.ch dataset 10580 (Steuerfüsse und Steuersätze nach Gemeinde und Jahr): portal metadata license null and license_url null (explore v2.1 and v2, read 2026-11-10); the opendata.swiss page returns 403. Open use is reported second-hand only. Needs the dataset licence read first-hand."
+    ZG: "data.zg.ch resource 849 (Steuerfüsse der Gemeinden 2007-2026): no licence statement obtained for this resource (opendata.swiss 403)."
+  note: "Steuerfuss is a percentage of the canton's simple tax and is not comparable across cantons."
+
+estv_tax_multipliers_recheck_2026-11-10:
+  status: blocked
+  missing: "Written consent from ESTV (or an ESTV open-data licence statement)."
+  evidence: "ESTV footer 'Rechtliche Grundlage' links https://www.admin.ch/gov/de/start/rechtliches.html (read 2026-11-10, now readable): 'Copyright, Bundesbehörden der Schweizerischen Eidgenossenschaft. [...] Durch das Herunterladen oder Kopieren von Inhalten, Bildern, Fotos oder anderen Dateien werden keinerlei Rechte bezüglich der Inhalte übertragen. [...] Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.' https://www.estv.admin.ch/de/steuerfuesse-abzuege-und-tarife-der-schweiz (capitals xlsx only) and /de/impressum-estv carry no reuse statement. Unchanged."
+
+are_npvm_peak_matrix:
+  status: rejected (no usable data, licence is not the issue)
+  evidence: "Zenodo 10.5281/zenodo.23009199 (CC-BY-4.0): matrices 4_TTC_PW, 4_RITA_ACT_EGT, 4_DIS_PW, 4_JRD are average-weekday (DWV) only (00_NPVM_2023_Datenbezug.pdf). Peak hours (MSP 7-8 h, ASP 17-18 h) are only link volumes (gpkg: volumes and capacity, no travel time) and PTV VISUM version files in Zenodo 10.5281/zenodo.23009742 (CC-BY-4.0; 7_NPVM_2023_MSP_MIV_Umlegung.ver 1.0 GB), which need licensed VISUM software. Checked 2026-11-10."
+
+childcare_places_municipal_recheck_2026-11-10:
+  status: rejected
+  evidence: "No BFS Kinderbetreuung supply statistic at municipality level found (BFS EFG survey 2023 on use, canton level; BFS report 2018). Stadt Zürich quartier data only."
