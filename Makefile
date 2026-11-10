@@ -4,6 +4,7 @@
 #   make geometry  web geometry and label points
 #   make validate  backbone validation report (docs/backbone_report.md)
 #   make observations / metrics / quality   ingest all sources, build all levels, plausibility sweep
+#   make vintages  older boundary states (2000, 2010): geometry and the values published on them
 #   make profile   search (names, postal codes), identity, boundary history, neighbours for the web app
 #   make web-data  copy the data files the web app reads into web/public/data/
 #   make web-app   install pinned npm deps and build the static site (web/dist/)
@@ -13,9 +14,9 @@
 
 PY := uv run python
 
-.PHONY: data backbone geometry validate observations metrics quality web profile reach web-data web-app test clean-interim
+.PHONY: data backbone geometry validate observations metrics quality web profile reach vintages web-data web-app test clean-interim
 
-data: backbone geometry validate observations metrics quality web profile reach
+data: backbone geometry validate observations metrics quality web profile reach vintages
 
 backbone:
 	$(PY) -m pipeline.backbone.build
@@ -44,6 +45,10 @@ profile: web geometry
 
 reach: geometry
 	$(PY) -m pipeline.reach.run
+
+# older boundary states (docs/older_boundaries.md); needs metrics.json (web) and the backbone
+vintages: web
+	$(PY) -m pipeline.build.vintages
 
 # Web app (web/): copy the built data files into web/public/data/, then build the static site to web/dist/
 web-data:

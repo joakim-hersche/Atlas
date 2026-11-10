@@ -1,7 +1,7 @@
 // Copy exactly the data files the skeleton reads from data/out/ into web/public/data/.
 // The source files are built by the pipeline (make web, make profile, make reach, make geometry) and are never
 // edited here. Run: node scripts/copy-data.mjs  (also part of npm run dev / npm run build).
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,7 +54,18 @@ const FILES = dedupe([
   // its absence)
   ['reach/zuerich_pt.json', true],
   ...dirFiles('reach'),
+  // older boundary states (make vintages; optional: without them the boundaries switch is hidden)
+  ['web/vintages.json', false],
+  ...vintageFiles(),
 ]);
+
+/** geometry, units and value files of every older vintage listed in web/vintages.json */
+function vintageFiles() {
+  const ix = join(OUT, 'web/vintages.json');
+  if (!existsSync(ix)) return [];
+  const { vintages = [] } = JSON.parse(readFileSync(ix, 'utf8'));
+  return vintages.flatMap((v) => [v.geometry.path, v.units.path, ...Object.values(v.files).map((f) => f.path)].map((p) => [p, true]));
+}
 
 function dedupe(list) {
   const seen = new Set();
