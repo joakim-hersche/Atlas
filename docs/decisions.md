@@ -105,3 +105,8 @@ Candidate hosts from `cantonal_sources.md` are requested in one batch; the sweep
 - The quality report and the sources page list all known gaps per metric.
 
 **Checkpoint 2 closed: 2026-11-09.** Phase 3 (ingestion and harmonization) starts.
+
+## Phase 3 notes (no owner decision needed)
+
+- **Car reach without OpenStreetMap:** OSM can't be downloaded from the build environment. PT reach uses our own connection-scan routing on the national GTFS; car times come from ARE NPVM 2023 (D11); drawings use swisstopo roads. Validation in `reach_method.md`.
+- **Licence gate:** the web build ships only sources whose terms are cleared (`pipeline/licence_review.yaml`); 12 sources wait for verification (Checkpoint 3, question 1).
