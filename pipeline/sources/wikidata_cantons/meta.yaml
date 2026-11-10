@@ -1,0 +1,11 @@
+source_id: wikidata_cantons
+kind: lookup   # no observations; canton names for search.json / identity.json (pipeline/build/profile.py)
+title: Canton names in German, French, Italian, Romansh and English
+publisher: Wikidata (Wikimedia Foundation)
+url: https://query.wikidata.org/sparql
+license: "Wikidata data CC0 1.0"
+attribution: "Data: Wikidata (CC0)"
+vintage: "current canton items (P31 Q23058), keyed on P300 ISO 3166-2 code"
+years: "snapshot 2026-11"
+outputs: [pipeline/sources/wikidata_cantons/cantons.csv]
+catalog_ids: [wikidata_municipalities]

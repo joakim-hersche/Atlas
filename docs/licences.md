@@ -45,6 +45,13 @@ Terms pages fetched with curl from the allowed hosts; excerpts (URL, date, quote
 
 `pipeline/licence_review.yaml` can only filter whole metrics, so `kt_finance`, `kt_pupils` and `kt_unemployment` stay out until either the non-cleared cantons are dropped in the connector (per-canton filter) or permission is obtained.
 
+### Profile and search lookups (2026-11-10)
+
+| Source | Verdict | Binding terms (URL) | Attribution required |
+|---|---|---|---|
+| `swisstopo_plz` (Amtliches Ortschaftenverzeichnis mit PLZ) | **cleared** | STAC collection `ch.swisstopo-vd.ortschaftenverzeichnis_plz` links "Terms of use" https://www.swisstopo.admin.ch/ogd-conditions → https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices: "The free geodata and geoservices of swisstopo may be used, distributed and made accessible. Furthermore, they may be enriched and processed and also used commercially. A reference to the source is mandatory." (STAC licence field: 'proprietary'; the exceptions with other wording are only swissALTI Regio and swissEO) | "© swisstopo – Amtliches Ortschaftenverzeichnis mit PLZ" |
+| `wikidata_cantons` (canton names de/fr/it/rm/en) | **cleared** | Wikidata data CC0 1.0, as recorded for `wikidata_identity` (www.wikidata.org blocked by the session proxy, page not re-read 2026-11-10) | none required ("Data: Wikidata" given as courtesy) |
+
 ### Attribution obligations for the sources page
 
 - **Federal geodata (FSDI)**: cite each dataset per its own terms; publish processed data under Gemeindebank's own name (FSDI terms 3.3), not as official data.

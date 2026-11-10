@@ -1,0 +1,27 @@
+kanton,qid,label_de,label_fr,label_it,label_rm,label_en,short_de,short_fr,short_it,short_rm,short_en
+AG,Q11972,Kanton Aargau,canton d'Argovie,Argovia,Chantun Argovia,Canton of Aargau,Aargau,Argovie,Argovia,Argovia,Aargau
+AI,Q12094,Kanton Appenzell Innerrhoden,canton d'Appenzell Rhodes-Intérieures,canton Appenzello Interno,Chantun Appenzell Dadens,Canton of Appenzell Innerrhoden,Appenzell Innerrhoden,Appenzell Rhodes-Intérieures,Appenzello Interno,Appenzell Dadens,Appenzell Innerrhoden
+AR,Q12079,Kanton Appenzell Ausserrhoden,canton d'Appenzell Rhodes-Extérieures,Appenzello Esterno,Chantun Appenzell Dadora,Canton of Appenzell Ausserrhoden,Appenzell Ausserrhoden,Appenzell Rhodes-Extérieures,Appenzello Esterno,Appenzell Dadora,Appenzell Ausserrhoden
+BE,Q11911,Kanton Bern,canton de Berne,Canton Berna,Chantun Berna,Canton of Berne,Bern,Berne,Berna,Berna,Berne
+BL,Q12146,Kanton Basel-Landschaft,canton de Bâle-Campagne,Basilea Campagna,Chantun Basilea-Champagna,Canton of Basel-Landschaft,Basel-Landschaft,Bâle-Campagne,Basilea Campagna,Basilea-Champagna,Basel-Landschaft
+BS,Q12172,Kanton Basel-Stadt,canton de Bâle-Ville,Basilea Città,Chantun Basilea-Citad,Canton of Basel-Stadt,Basel-Stadt,Bâle-Ville,Basilea Città,Basilea-Citad,Basel-Stadt
+FR,Q12640,Kanton Freiburg,canton de Fribourg,Friburgo,Chantun Friburg,Canton of Fribourg,Freiburg,Fribourg,Friburgo,Friburg,Fribourg
+GE,Q11917,Kanton Genf,canton de Genève,Canton Ginevra,Chantun Genevra,Canton of Geneva,Genf,Genève,Ginevra,Genevra,Geneva
+GL,Q11922,Kanton Glarus,canton de Glaris,Canton Glarona,Chantun Glaruna,Canton of Glarus,Glarus,Glaris,Glarona,Glaruna,Glarus
+GR,Q11925,Kanton Graubünden,canton des Grisons,canton Grigioni,Chantun Grischun,Canton of the Grisons,Graubünden,Grisons,Grigioni,Grischun,Grisons
+JU,Q12755,Kanton Jura,canton du Jura,Giura,Chantun Giura,Canton of Jura,Jura,Jura,Giura,Giura,Jura
+LU,Q12121,Kanton Luzern,canton de Lucerne,canton Lucerna,Chantun Lucerna,Canton of Lucerne,Luzern,Lucerne,Lucerna,Lucerna,Lucerne
+NE,Q12738,Kanton Neuenburg,canton de Neuchâtel,Canton Neuchâtel,Chantun Neuchâtel,Canton of Neuchâtel,Neuenburg,Neuchâtel,Neuchâtel,Neuchâtel,Neuchâtel
+NW,Q12592,Kanton Nidwalden,canton de Nidwald,canton Nidvaldo,Chantun Sutsilvania,Canton of Nidwalden,Nidwalden,Nidwald,Nidvaldo,Sutsilvania,Nidwalden
+OW,Q12573,Kanton Obwalden,canton d'Obwald,canton Obvaldo,Chantun Sursilvania,Canton of Obwalden,Obwalden,Obwald,Obvaldo,Sursilvania,Obwalden
+SG,Q12746,Kanton St. Gallen,canton de Saint-Gall,San Gallo,Chantun Son Gagl,Canton of St. Gallen,St. Gallen,Saint-Gall,San Gallo,Son Gagl,St. Gallen
+SH,Q12697,Kanton Schaffhausen,canton de Schaffhouse,canton Sciaffusa,Chantun Schaffusa,Canton of Schaffhausen,Schaffhausen,Schaffhouse,Sciaffusa,Schaffusa,Schaffhausen
+SO,Q11929,Kanton Solothurn,canton de Soleure,canton Soletta,Chantun Soloturn,Canton of Solothurn,Solothurn,Soleure,Soletta,Soloturn,Solothurn
+SZ,Q12433,Kanton Schwyz,canton de Schwytz,canton Svitto,Chantun Sviz,Canton of Schwyz,Schwyz,Schwytz,Svitto,Sviz,Schwyz
+TG,Q12713,Kanton Thurgau,canton de Thurgovie,cantone Turgovia,Chantun Turgovia,Canton of Thurgau,Thurgau,Thurgovie,Turgovia,Turgovia,Thurgau
+TI,Q12724,Kanton Tessin,canton du Tessin,Canton Ticino,Chantun Tessin,Canton of Ticino,Tessin,Tessin,Ticino,Tessin,Ticino
+UR,Q12404,Kanton Uri,canton d'Uri,canton Uri,Chantun Uri,Canton of Uri,Uri,Uri,Uri,Uri,Uri
+VD,Q12771,Kanton Waadt,canton de Vaud,canton Vaud,Chantun Vad,Canton of Vaud,Waadt,Vaud,Vaud,Vad,Vaud
+VS,Q834,Kanton Wallis,canton du Valais,canton Vallese,Chantun Vallais,Canton of Valais,Wallis,Valais,Vallese,Vallais,Valais
+ZG,Q11933,Kanton Zug,canton de Zoug,canton Zugo,Chantun Zug,Canton of Zug,Zug,Zoug,Zugo,Zug,Zug
+ZH,Q11943,Kanton Zürich,canton de Zurich,canton Zurigo,Chantun Turitg,Canton of Zurich,Zürich,Zurich,Zurigo,Turitg,Zurich
