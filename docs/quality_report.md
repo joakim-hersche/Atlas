@@ -1,12 +1,12 @@
 # Data quality report
 
-Generated 2026-11-10T08:15 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-10T11:26 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
-Metrics: 725 defined (518 base, 207 derived) · rows: 30,854,312
+Metrics: 725 defined (518 base, 207 derived) · rows: 31,470,182
 
 ## A. Additivity — municipalities vs. published district/canton/national values
 
-Summary: 633 metric×level comparisons, 620 pass, 13 with failures.
+Summary: 633 metric×level comparisons, 611 pass, 22 with failures.
 
 | Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Documented difference | Fail | Max rel. residual |
 |---|---|---|---|---|---|---|---|---|---|
@@ -15,13 +15,22 @@ Summary: 633 metric×level comparisons, 620 pass, 13 with failures.
 | bfs_arealstatistik | bezirk | area_water_ha | 632 | 623 | 0 | 0 | 0 | **9** | 0.590% |
 | bfs_arealstatistik | bezirk | area_wooded_ha | 632 | 619 | 0 | 4 | 0 | **9** | 8.642% |
 | bfs_votes_gemeinde | kanton | vote_valid | 13180 | 8372 | 3419 | 233 | 0 | **6** | 7.078% |
+| bfs_nrw | kanton | nrw_fw_cvp | 279 | 177 | 82 | 15 | 0 | **5** | 2.348% |
+| bfs_nrw | kanton | nrw_fw_fdp | 311 | 211 | 77 | 19 | 0 | **5** | 4.372% |
+| bfs_nrw | kanton | nrw_fw_total | 357 | 245 | 97 | 11 | 0 | **5** | 3.488% |
 | bfs_arealstatistik | bezirk | area_agriculture_ha | 632 | 624 | 0 | 4 | 0 | **4** | 0.649% |
 | bfs_arealstatistik | bezirk | area_unproductive_ha | 632 | 619 | 0 | 9 | 0 | **4** | 2.764% |
+| bfs_nrw | kanton | nrw_fw_sp | 303 | 201 | 77 | 22 | 0 | **4** | 5.170% |
+| bfs_nrw | schweiz | nrw_fw_fdp | 14 | 0 | 1 | 4 | 0 | **4** | 3.642% |
+| bfs_nrw | kanton | nrw_ballots_invalid | 357 | 261 | 92 | 1 | 0 | **3** | 2.941% |
 | bfs_votes_gemeinde | kanton | vote_no | 13180 | 8520 | 3288 | 219 | 0 | **3** | 0.763% |
 | bfs_census_1970_2000 | kanton | vz_rel_other_christian | 104 | 92 | 4 | 6 | 0 | **2** | 1.747% |
 | bfs_construction | kanton | con_exp_maintenance | 806 | 9 | 738 | 57 | 0 | **2** | 2.935% |
-| bfs_nrw | kanton | nrw_ballots_invalid | 357 | 248 | 79 | 0 | 0 | **2** | 2.941% |
+| bfs_nrw | kanton | nrw_fw_csp | 29 | 18 | 8 | 1 | 0 | **2** | 2.916% |
+| bfs_nrw | kanton | nrw_fw_other | 277 | 195 | 75 | 5 | 0 | **2** | 4.537% |
+| bfs_nrw | kanton | nrw_fw_sep | 7 | 0 | 2 | 3 | 0 | **2** | 0.665% |
 | bfs_census_1970_2000 | kanton | vz_rel_no_answer | 104 | 94 | 6 | 3 | 0 | **1** | 0.559% |
+| bfs_nrw | kanton | nrw_fw_svp | 249 | 155 | 74 | 20 | 0 | **1** | 9.098% |
 | bfs_vehicles | kanton | mfz_newreg_bev | 416 | 301 | 113 | 2 | 0 | **1** | 3.265% |
 | bfe_energy | kanton | en_charging_spots | 834 | 815 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_ecar_count | 1592 | 1592 | 0 | 0 | 0 | 0 | 0.000% |
@@ -417,78 +426,69 @@ Summary: 633 metric×level comparisons, 620 pass, 13 with failures.
 | bfs_naturalisation | schweiz | nat_outside_europe | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_naturalisation | schweiz | nat_total | 15 | 14 | 0 | 1 | 0 | 0 | 0.012% |
 | bfs_naturalisation | schweiz | nat_women | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_ballots_blank | 1993 | 1908 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_ballots_changed | 1770 | 1695 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_ballots_invalid | 1993 | 1908 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_ballots_unchanged | 1851 | 1776 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_ballots_valid | 1993 | 1908 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_eligible | 1993 | 1908 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | bezirk | nrw_voters | 1993 | 1908 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_nrw | kanton | nrw_ballots_blank | 357 | 251 | 78 | 0 | 0 | 0 | 0.015% |
-| bfs_nrw | kanton | nrw_ballots_changed | 264 | 166 | 68 | 7 | 0 | 0 | 0.302% |
-| bfs_nrw | kanton | nrw_ballots_unchanged | 333 | 222 | 81 | 7 | 0 | 0 | 0.167% |
-| bfs_nrw | kanton | nrw_ballots_valid | 357 | 233 | 90 | 7 | 0 | 0 | 0.147% |
-| bfs_nrw | kanton | nrw_eligible | 357 | 254 | 69 | 7 | 0 | 0 | 0.115% |
-| bfs_nrw | kanton | nrw_fw_bdp | 44 | 16 | 23 | 3 | 0 | 0 | 0.227% |
-| bfs_nrw | kanton | nrw_fw_csp | 29 | 14 | 6 | 1 | 0 | 0 | 0.052% |
-| bfs_nrw | kanton | nrw_fw_cvp | 279 | 165 | 72 | 11 | 0 | 0 | 0.042% |
-| bfs_nrw | kanton | nrw_fw_edu | 95 | 51 | 31 | 0 | 0 | 0 | 0.301% |
-| bfs_nrw | kanton | nrw_fw_evp | 131 | 66 | 43 | 2 | 0 | 0 | 0.193% |
-| bfs_nrw | kanton | nrw_fw_fdp | 311 | 199 | 69 | 12 | 0 | 0 | 0.029% |
-| bfs_nrw | kanton | nrw_fw_fga | 46 | 33 | 7 | 0 | 0 | 0 | 0.055% |
-| bfs_nrw | kanton | nrw_fw_fps | 48 | 36 | 3 | 0 | 0 | 0 | 0.109% |
-| bfs_nrw | kanton | nrw_fw_glp | 72 | 29 | 33 | 7 | 0 | 0 | 0.051% |
-| bfs_nrw | kanton | nrw_fw_gruene | 179 | 109 | 54 | 1 | 0 | 0 | 0.060% |
-| bfs_nrw | kanton | nrw_fw_ldu | 68 | 44 | 8 | 0 | 0 | 0 | 0.045% |
+| bfs_nrw | bezirk | nrw_ballots_blank | 1993 | 1979 | 14 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_ballots_changed | 1770 | 1757 | 13 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_ballots_invalid | 1993 | 1980 | 13 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_ballots_unchanged | 1851 | 1838 | 13 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_ballots_valid | 1993 | 1979 | 14 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_eligible | 1993 | 1979 | 14 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | bezirk | nrw_voters | 1993 | 1979 | 14 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | kanton | nrw_ballots_blank | 357 | 264 | 93 | 0 | 0 | 0 | 0.020% |
+| bfs_nrw | kanton | nrw_ballots_changed | 264 | 176 | 73 | 16 | 0 | 0 | 0.463% |
+| bfs_nrw | kanton | nrw_ballots_unchanged | 333 | 232 | 86 | 16 | 0 | 0 | 0.167% |
+| bfs_nrw | kanton | nrw_ballots_valid | 357 | 245 | 97 | 16 | 0 | 0 | 0.147% |
+| bfs_nrw | kanton | nrw_eligible | 357 | 267 | 75 | 16 | 0 | 0 | 0.115% |
+| bfs_nrw | kanton | nrw_fw_bdp | 44 | 16 | 24 | 5 | 0 | 0 | 0.227% |
+| bfs_nrw | kanton | nrw_fw_edu | 95 | 51 | 43 | 1 | 0 | 0 | 0.301% |
+| bfs_nrw | kanton | nrw_fw_evp | 131 | 72 | 56 | 3 | 0 | 0 | 0.193% |
+| bfs_nrw | kanton | nrw_fw_fga | 46 | 33 | 10 | 3 | 0 | 0 | 0.059% |
+| bfs_nrw | kanton | nrw_fw_fps | 48 | 38 | 9 | 1 | 0 | 0 | 0.109% |
+| bfs_nrw | kanton | nrw_fw_glp | 72 | 29 | 34 | 10 | 0 | 0 | 0.051% |
+| bfs_nrw | kanton | nrw_fw_gruene | 179 | 114 | 60 | 5 | 0 | 0 | 0.060% |
+| bfs_nrw | kanton | nrw_fw_ldu | 68 | 52 | 15 | 1 | 0 | 0 | 0.045% |
 | bfs_nrw | kanton | nrw_fw_lega | 9 | 9 | 0 | 0 | 0 | 0 | 0.006% |
-| bfs_nrw | kanton | nrw_fw_lps | 53 | 37 | 14 | 1 | 0 | 0 | 0.064% |
+| bfs_nrw | kanton | nrw_fw_lps | 53 | 37 | 15 | 1 | 0 | 0 | 0.064% |
 | bfs_nrw | kanton | nrw_fw_mcr | 6 | 0 | 6 | 0 | 0 | 0 | 0.011% |
-| bfs_nrw | kanton | nrw_fw_mitte | 25 | 11 | 13 | 0 | 0 | 0 | 0.022% |
-| bfs_nrw | kanton | nrw_fw_other | 277 | 188 | 62 | 3 | 0 | 0 | 0.380% |
-| bfs_nrw | kanton | nrw_fw_pda | 83 | 51 | 26 | 0 | 0 | 0 | 0.137% |
-| bfs_nrw | kanton | nrw_fw_poch | 30 | 19 | 5 | 0 | 0 | 0 | 0.045% |
+| bfs_nrw | kanton | nrw_fw_mitte | 25 | 11 | 14 | 0 | 0 | 0 | 0.022% |
+| bfs_nrw | kanton | nrw_fw_pda | 83 | 51 | 32 | 0 | 0 | 0 | 0.137% |
+| bfs_nrw | kanton | nrw_fw_poch | 30 | 22 | 8 | 0 | 0 | 0 | 0.151% |
 | bfs_nrw | kanton | nrw_fw_psa | 6 | 2 | 4 | 0 | 0 | 0 | 0.004% |
-| bfs_nrw | kanton | nrw_fw_rep | 24 | 12 | 3 | 0 | 0 | 0 | 0.014% |
-| bfs_nrw | kanton | nrw_fw_sd | 124 | 72 | 29 | 0 | 0 | 0 | 0.311% |
-| bfs_nrw | kanton | nrw_fw_sep | 7 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | kanton | nrw_fw_rep | 24 | 18 | 6 | 0 | 0 | 0 | 0.064% |
+| bfs_nrw | kanton | nrw_fw_sd | 124 | 80 | 43 | 1 | 0 | 0 | 0.311% |
 | bfs_nrw | kanton | nrw_fw_sol | 21 | 7 | 14 | 0 | 0 | 0 | 0.044% |
-| bfs_nrw | kanton | nrw_fw_sp | 303 | 188 | 70 | 15 | 0 | 0 | 0.018% |
-| bfs_nrw | kanton | nrw_fw_svp | 249 | 143 | 68 | 11 | 0 | 0 | 0.033% |
-| bfs_nrw | kanton | nrw_fw_total | 357 | 233 | 90 | 3 | 0 | 0 | 0.019% |
-| bfs_nrw | kanton | nrw_voters | 357 | 233 | 90 | 7 | 0 | 0 | 0.143% |
-| bfs_nrw | schweiz | nrw_ballots_blank | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | kanton | nrw_voters | 357 | 245 | 97 | 16 | 0 | 0 | 0.143% |
+| bfs_nrw | schweiz | nrw_ballots_blank | 14 | 1 | 8 | 0 | 0 | 0 | 0.000% |
 | bfs_nrw | schweiz | nrw_ballots_changed | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_ballots_invalid | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_ballots_unchanged | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_ballots_valid | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_eligible | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_bdp | 3 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | schweiz | nrw_ballots_invalid | 14 | 0 | 9 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | schweiz | nrw_ballots_unchanged | 13 | 0 | 9 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | schweiz | nrw_ballots_valid | 14 | 0 | 9 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | schweiz | nrw_eligible | 14 | 2 | 7 | 0 | 0 | 0 | 0.000% |
+| bfs_nrw | schweiz | nrw_fw_bdp | 3 | 0 | 1 | 2 | 0 | 0 | 0.001% |
 | bfs_nrw | schweiz | nrw_fw_csp | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_cvp | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_edu | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_evp | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_fdp | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_fga | 12 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_fps | 6 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_glp | 5 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_gruene | 13 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | schweiz | nrw_fw_cvp | 13 | 0 | 4 | 4 | 0 | 0 | 0.046% |
+| bfs_nrw | schweiz | nrw_fw_edu | 13 | 0 | 5 | 0 | 0 | 0 | 0.001% |
+| bfs_nrw | schweiz | nrw_fw_evp | 14 | 0 | 3 | 2 | 0 | 0 | 0.001% |
+| bfs_nrw | schweiz | nrw_fw_fga | 12 | 0 | 1 | 0 | 0 | 0 | 0.004% |
+| bfs_nrw | schweiz | nrw_fw_fps | 6 | 1 | 0 | 0 | 0 | 0 | 0.011% |
+| bfs_nrw | schweiz | nrw_fw_glp | 5 | 0 | 1 | 3 | 0 | 0 | 0.001% |
+| bfs_nrw | schweiz | nrw_fw_gruene | 13 | 0 | 5 | 0 | 0 | 0 | 0.000% |
 | bfs_nrw | schweiz | nrw_fw_ldu | 8 | 0 | 0 | 0 | 0 | 0 | nan% |
 | bfs_nrw | schweiz | nrw_fw_lega | 9 | 0 | 0 | 0 | 0 | 0 | nan% |
 | bfs_nrw | schweiz | nrw_fw_lps | 10 | 0 | 0 | 0 | 0 | 0 | nan% |
 | bfs_nrw | schweiz | nrw_fw_mcr | 5 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_mitte | 1 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_other | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_pda | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | schweiz | nrw_fw_mitte | 1 | 0 | 0 | 1 | 0 | 0 | 0.000% |
+| bfs_nrw | schweiz | nrw_fw_other | 14 | 0 | 5 | 0 | 0 | 0 | 0.001% |
+| bfs_nrw | schweiz | nrw_fw_pda | 14 | 0 | 2 | 1 | 0 | 0 | 0.006% |
 | bfs_nrw | schweiz | nrw_fw_poch | 6 | 0 | 0 | 0 | 0 | 0 | nan% |
 | bfs_nrw | schweiz | nrw_fw_psa | 6 | 0 | 0 | 0 | 0 | 0 | nan% |
 | bfs_nrw | schweiz | nrw_fw_rep | 5 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_sd | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_sep | 7 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | schweiz | nrw_fw_sd | 14 | 0 | 5 | 0 | 0 | 0 | 0.008% |
+| bfs_nrw | schweiz | nrw_fw_sep | 7 | 1 | 0 | 0 | 0 | 0 | 0.005% |
 | bfs_nrw | schweiz | nrw_fw_sol | 8 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_sp | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_svp | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_fw_total | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
-| bfs_nrw | schweiz | nrw_voters | 14 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_nrw | schweiz | nrw_fw_sp | 14 | 0 | 3 | 6 | 0 | 0 | 0.080% |
+| bfs_nrw | schweiz | nrw_fw_svp | 14 | 0 | 3 | 4 | 0 | 0 | 0.023% |
+| bfs_nrw | schweiz | nrw_fw_total | 14 | 0 | 1 | 8 | 0 | 0 | 0.045% |
+| bfs_nrw | schweiz | nrw_voters | 14 | 0 | 9 | 0 | 0 | 0 | 0.000% |
 | bfs_se_language_bezirk | bezirk | lang_se_de | 1741 | 1741 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_se_language_bezirk | bezirk | lang_se_en | 1741 | 1741 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_se_language_bezirk | bezirk | lang_se_fr | 1735 | 1735 | 0 | 0 | 0 | 0 | 0.000% |
@@ -664,7 +664,16 @@ Worst unexplained differences:
 - bfs_census_1970_2000 / kanton / vz_rel_no_answer: [{'unit_id': 'FR', 'period': '1990', 'value_pub': 537.0, 'value_agg': 540.0, 'explained': 0.0}]
 - bfs_census_1970_2000 / kanton / vz_rel_other_christian: [{'unit_id': 'FR', 'period': '1980', 'value_pub': 744.0, 'value_agg': 757.0, 'explained': 0.0}, {'unit_id': 'FR', 'period': '1970', 'value_pub': 358.0, 'value_agg': 364.0, 'explained': 0.0}]
 - bfs_construction / kanton / con_exp_maintenance: [{'unit_id': 'JU', 'period': '1994', 'value_pub': 12945.0, 'value_agg': 12286.0, 'explained': -1039.0}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 10573.0, 'value_agg': 9085.0, 'explained': -1688.0}]
-- bfs_nrw / kanton / nrw_ballots_invalid: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 68.0, 'value_agg': 72.0, 'explained': 2.0}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 120.0, 'value_agg': 132.0, 'explained': 11.0}]
+- bfs_nrw / kanton / nrw_ballots_invalid: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 68.0, 'value_agg': 72.0, 'explained': 2.0}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 120.0, 'value_agg': 132.0, 'explained': 11.0}, {'unit_id': 'BE', 'period': '1987', 'value_pub': 394.0, 'value_agg': 387.0, 'explained': -5.0}]
+- bfs_nrw / kanton / nrw_fw_csp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 3028.0, 'value_agg': 2939.7000175018966, 'explained': 0.0}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 1793.0, 'value_agg': 1747.041578544751, 'explained': 0.0}]
+- bfs_nrw / kanton / nrw_fw_cvp: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 7351.0, 'value_agg': 7182.634275377565, 'explained': 4.245668978789234}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 7118.0, 'value_agg': 6972.472559877706, 'explained': 8.45936726556872}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 6450.0, 'value_agg': 6317.482561394099, 'explained': 4.905698900663455}]
+- bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255869, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.40161152956, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395098, 'explained': 576.7845709381374}]
+- bfs_nrw / kanton / nrw_fw_other: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 7467.0, 'value_agg': 7137.5399986146585, 'explained': 9.295116111977606}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 3739.0, 'value_agg': 3693.379016908547, 'explained': 19.37925026715989}]
+- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.762213659972, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.6738109990624, 'explained': -1113.659691801661}]
+- bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.414646877877, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005553, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634846, 'explained': 445.8648439036694}]
+- bfs_nrw / kanton / nrw_fw_svp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 520.0, 'value_agg': 795.9472029858425, 'explained': 323.25424458201536}]
+- bfs_nrw / kanton / nrw_fw_total: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 23784.0, 'value_agg': 27057.97368113954, 'explained': 4103.58409916491}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 19762.0, 'value_agg': 21206.27255990177, 'explained': 2105.9489065535427}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 25722.0, 'value_agg': 28304.02802366238, 'explained': 3436.876982299561}]
+- bfs_nrw / schweiz / nrw_fw_fdp: [{'unit_id': 'CH', 'period': '2011', 'value_pub': 368951.0, 'value_agg': 352850.84724351397, 'explained': -2662.5573756435297}, {'unit_id': 'CH', 'period': '2019', 'value_pub': 366313.0, 'value_agg': 354529.2895707672, 'explained': -3549.481782607711}, {'unit_id': 'CH', 'period': '2023', 'value_pub': 364053.0, 'value_agg': 354399.6297727488, 'explained': -3842.117491501883}]
 - bfs_vehicles / kanton / mfz_newreg_bev: [{'unit_id': 'SG', 'period': '2025', 'value_pub': 3124.0, 'value_agg': 3124.0, 'explained': -102.0}]
 - bfs_votes_gemeinde / kanton / vote_eligible: [{'unit_id': 'BS', 'period': '2003-05-18#4980', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#4990', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#5000', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}]
 - bfs_votes_gemeinde / kanton / vote_no: [{'unit_id': 'JU', 'period': '1995-03-12#4210', 'value_pub': 2622.0, 'value_agg': 3024.0, 'explained': 382.0}, {'unit_id': 'JU', 'period': '1995-03-12#4190', 'value_pub': 5989.0, 'value_agg': 6983.0, 'explained': 961.0}, {'unit_id': 'JU', 'period': '1996-03-10#4280', 'value_pub': 3838.0, 'value_agg': 4277.0, 'explained': 419.0}]
@@ -724,7 +733,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | mig_emigration_foreign | 6 | 3 | [{'unit_id': '6253', 'year': 2012, 'prev': 183.0, 'value': 809.0, 'precision': 'exact'}, {'unit_id': '5236', 'year': 2013, 'prev': 360.0, 'value': 80.0, 'precision': 'exact'}] |
 | mfz_cars_diesel | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 1710.0, 'value': 7961.0, 'precision': 'exact'}, {'unit_id': '1702', 'year': 2018, 'prev': 7378.0, 'value': 3508.0, 'precision': 'exact'}] |
 | mfz_cars_petrol | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 3589.0, 'value': 10124.0, 'precision': 'exact'}, {'unit_id': '6240', 'year': 2011, 'prev': 4496.0, 'value': 1169.0, 'precision': 'exact'}] |
-| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 638.0, 'precision': 'exact'}] |
+| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4506', 'year': 1998, 'prev': 1011.0, 'value': 373.0, 'precision': 'exact'}] |
 | ent_jobs_retail | 5 | 5 | [{'unit_id': '540', 'year': 2017, 'prev': 121.0, 'value': 586.0, 'precision': 'exact'}, {'unit_id': '412', 'year': 2013, 'prev': 331.0, 'value': 740.0, 'precision': 'exact'}] |
 | vac_new | 5 | 3 | [{'unit_id': '3203', 'year': 2022, 'prev': 365.0, 'value': 103.0, 'precision': 'exact'}, {'unit_id': '3203', 'year': 2017, 'prev': 44.0, 'value': 283.0, 'precision': 'exact'}] |
 | ent_jobs_care_social | 5 | 5 | [{'unit_id': '6633', 'year': 2022, 'prev': 418.0, 'value': 994.0, 'precision': 'exact'}, {'unit_id': '5568', 'year': 2018, 'prev': 81.0, 'value': 331.0, 'precision': 'exact'}] |
@@ -1041,9 +1050,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | ent_workplaces_s1 | 14 | 2011 | 2024 | 1840 / 2110 | {'suppressed': 270} |
 | ent_workplaces_s2 | 14 | 2011 | 2024 | 1824 / 2110 | {'suppressed': 286} |
 | ent_workplaces_s3 | 14 | 2011 | 2024 | 2067 / 2110 | {'suppressed': 43} |
-| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'not_covered': 955, 'no_data': 605, 'not_applicable': 2} |
-| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_applicable': 72, 'no_data': 560, 'not_covered': 700} |
-| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'no_data': 260, 'not_covered': 1610} |
+| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'no_data': 605, 'not_applicable': 2, 'not_covered': 955} |
+| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'not_applicable': 72, 'no_data': 560} |
+| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | fin_tax_revenue_per_capita | 16 | 2010 | 2025 | 240 / 2110 | – |
 | geo_area_lake_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | geo_area_land_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
@@ -1112,7 +1121,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | gws_share_sfh | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | gws_share_wood | 5 | 2021 | 2025 | 2110 / 2110 | – |
 | haz_hectare_residents | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
+| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
 | haz_residents_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_residents_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | – |
@@ -1136,9 +1145,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | kvg_std300_mean_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_median_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_min_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
-| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'no_data': 192, 'suppressed': 24, 'not_covered': 1864} |
+| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'not_covered': 1864, 'no_data': 192, 'suppressed': 24} |
 | land_price_model_m2 | 51 | 1974 | 2024 | 160 / 2110 | {'not_covered': 1950} |
-| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'no_data': 160, 'suppressed': 24, 'not_covered': 1864} |
+| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'not_covered': 1864, 'no_data': 160, 'suppressed': 24} |
 | mfz_bev_share | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars_bev | 16 | 2010 | 2025 | 2110 / 2110 | – |
@@ -1182,66 +1191,68 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nat_share_eu_efta | 15 | 2011 | 2025 | 1660 / 2110 | – |
 | nat_total | 15 | 2011 | 2025 | 2110 / 2110 | – |
 | nat_women | 15 | 2011 | 2025 | 2110 / 2110 | – |
-| nrw_ballots_blank | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'no_data': 70} |
-| nrw_ballots_invalid | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_ballots_unchanged | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_ballots_valid | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_eligible | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
+| nrw_ballots_blank | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'no_data': 65} |
+| nrw_ballots_invalid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_ballots_unchanged | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_ballots_valid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_eligible | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_fw_bdp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
 | nrw_fw_csp | 14 | 1971 | 2023 | 119 / 2110 | {'not_applicable': 1986, 'no_data': 5} |
 | nrw_fw_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
-| nrw_fw_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_applicable': 606, 'no_data': 5} |
-| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'no_data': 5, 'not_applicable': 287} |
-| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_applicable': 27, 'no_data': 5} |
+| nrw_fw_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_published': 5, 'not_applicable': 606} |
+| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_published': 5, 'not_applicable': 287} |
+| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_published': 5, 'not_applicable': 27} |
 | nrw_fw_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1945, 'no_data': 5} |
 | nrw_fw_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
-| nrw_fw_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'no_data': 5, 'not_applicable': 65} |
-| nrw_fw_gruene | 14 | 1971 | 2023 | 2040 / 2110 | {'no_data': 5, 'not_applicable': 65} |
+| nrw_fw_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
+| nrw_fw_gruene | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
 | nrw_fw_ldu | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
 | nrw_fw_lega | 14 | 1971 | 2023 | 100 / 2110 | {'not_applicable': 2005, 'no_data': 5} |
 | nrw_fw_lps | 14 | 1971 | 2023 | 3 / 2110 | {'not_applicable': 2102, 'no_data': 5} |
 | nrw_fw_mcr | 14 | 1971 | 2023 | 45 / 2110 | {'not_applicable': 2060, 'no_data': 5} |
-| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'no_data': 5, 'not_applicable': 7} |
-| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'no_data': 5, 'not_applicable': 164} |
+| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'not_applicable': 7, 'not_published': 5} |
+| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'not_applicable': 164, 'not_published': 5} |
 | nrw_fw_pda | 14 | 1971 | 2023 | 802 / 2110 | {'not_applicable': 1303, 'no_data': 5} |
 | nrw_fw_poch | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
 | nrw_fw_psa | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
 | nrw_fw_rep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
-| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'no_data': 5, 'not_applicable': 1461} |
+| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_published': 5, 'not_applicable': 1461} |
 | nrw_fw_sep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2105, 'no_data': 5} |
 | nrw_fw_sol | 14 | 1971 | 2023 | 369 / 2110 | {'not_applicable': 1736, 'no_data': 5} |
-| nrw_fw_sp | 14 | 1971 | 2023 | 2043 / 2110 | {'no_data': 5, 'not_applicable': 62} |
-| nrw_fw_svp | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_fw_total | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
-| nrw_share_bdp | 3 | 2011 | 2019 | 1600 / 2110 | – |
-| nrw_share_csp | 13 | 1971 | 2023 | 119 / 2110 | – |
-| nrw_share_cvp | 13 | 1971 | 2019 | 2081 / 2110 | – |
-| nrw_share_edu | 13 | 1975 | 2023 | 1499 / 2110 | – |
-| nrw_share_evp | 14 | 1971 | 2023 | 1818 / 2110 | – |
-| nrw_share_fdp | 14 | 1971 | 2023 | 2078 / 2110 | – |
-| nrw_share_fga | 12 | 1979 | 2023 | 160 / 2110 | – |
-| nrw_share_fps | 6 | 1987 | 2007 | 488 / 2110 | – |
-| nrw_share_glp | 5 | 2007 | 2023 | 2040 / 2110 | – |
-| nrw_share_gruene | 13 | 1975 | 2023 | 2040 / 2110 | – |
-| nrw_share_ldu | 8 | 1971 | 1999 | 759 / 2110 | – |
-| nrw_share_lega | 9 | 1991 | 2023 | 100 / 2110 | – |
-| nrw_share_lps | 14 | 1971 | 2023 | 3 / 2110 | – |
-| nrw_share_mcr | 5 | 2007 | 2023 | 45 / 2110 | – |
-| nrw_share_mitte | 1 | 2023 | 2023 | 2098 / 2110 | – |
-| nrw_share_other | 14 | 1971 | 2023 | 1941 / 2110 | – |
-| nrw_share_pda | 14 | 1971 | 2023 | 802 / 2110 | – |
-| nrw_share_poch | 6 | 1971 | 1991 | 3 / 2110 | – |
-| nrw_share_psa | 6 | 1971 | 1991 | 100 / 2110 | – |
-| nrw_share_rep | 5 | 1971 | 1987 | 205 / 2110 | – |
-| nrw_share_sd | 14 | 1971 | 2023 | 644 / 2110 | – |
-| nrw_share_sep | 7 | 1975 | 2003 | 328 / 2110 | – |
-| nrw_share_sol | 8 | 1995 | 2023 | 369 / 2110 | – |
-| nrw_share_sp | 14 | 1971 | 2023 | 2043 / 2110 | – |
+| nrw_fw_sp | 14 | 1971 | 2023 | 2043 / 2110 | {'not_applicable': 62, 'not_published': 5} |
+| nrw_fw_svp | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_fw_total | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
+| nrw_share_bdp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_csp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_cvp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_edu | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_evp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_fdp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_fga | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_fps | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_glp | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_gruene | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_ldu | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_left_bloc | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_lega | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_lps | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_mcr | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_mitte | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_other | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_pda | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_poch | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_psa | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_rep | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_right_bloc | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_sd | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_sep | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_sol | 14 | 1971 | 2023 | 2105 / 2110 | – |
+| nrw_share_sp | 14 | 1971 | 2023 | 2105 / 2110 | – |
 | nrw_share_svp | 14 | 1971 | 2023 | 2105 / 2110 | – |
 | nrw_turnout | 14 | 1971 | 2023 | 2105 / 2110 | – |
 | nrw_unchanged_share | 13 | 1975 | 2023 | 2105 / 2110 | – |
-| nrw_voters | 14 | 1971 | 2023 | 2105 / 2110 | {'no_data': 5} |
+| nrw_voters | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | old_age_dependency | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | pa_biotopes_ha | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pa_biotopes_share | 1 | 2026 | 2026 | 2110 / 2110 | – |
@@ -1275,7 +1286,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | pt_stops_rail | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_total | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_tram_metro | 1 | 2026 | 2026 | 2110 / 2110 | – |
-| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'not_covered': 1734, 'no_data': 160} |
+| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'no_data': 160, 'not_covered': 1734} |
 | pup_compulsory_per_1000 | 15 | 2010 | 2024 | 216 / 2110 | – |
 | rail_boardings_daily | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | rail_boardings_weekday | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
@@ -1397,7 +1408,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | udemo_jobs_closures | 11 | 2013 | 2023 | 0 / 2110 | {'no_data': 2110} |
 | udemo_jobs_per_enterprise | 11 | 2013 | 2023 | 1944 / 2110 | – |
 | unemp_per_100_20_64 | 16 | 2010 | 2025 | 120 / 2110 | – |
-| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'suppressed': 213, 'no_data': 280, 'not_covered': 1530} |
+| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'suppressed': 213, 'not_covered': 1530, 'no_data': 280} |
 | vac_dwelling_stock | 16 | 2011 | 2026 | 2110 / 2110 | – |
 | vac_dwellings | 32 | 1995 | 2026 | 2110 / 2110 | – |
 | vac_for_rent | 32 | 1995 | 2026 | 2110 / 2110 | – |
