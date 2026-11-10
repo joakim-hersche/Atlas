@@ -19,7 +19,7 @@
   import YearTools from '../components/YearTools.svelte';
   import SmallMultiples from '../components/SmallMultiples.svelte';
   import '../lib/i18n-mapx';
-  import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
+  import { changeColumn, changeMeta, defaultPeriods, innerLabel, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
   import { ciSpec, crossesClass, intervals, kindOf, rankRange, unstableEither } from '../lib/reliability';
   import { unstableIndices } from '../lib/small.svelte';
   import '../lib/i18n-r3';
@@ -332,7 +332,7 @@
   const legendTitle = $derived.by(() => {
     if (!cmpActive || !metaChg || !app.cmpFrom || !cmpTo) return null;
     const u = metaChg.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaChg);
-    return `${t('ux.chgTitle', { metric: ml(metaRaw), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
+    return `${t('ux.chgTitle', { metric: innerLabel(ml(metaRaw)), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
   });
   /** J8: single-seat cantons at their level: "8 cantons" at canton level, "12 districts in single-seat cantons" below */
   const majorityText = (k: number) => (ld.level === 'kanton' ? `${fmtNumber(k, 0)} ${t('lg.maj')}` : t('r3.majUnits', { n: fmtNumber(k, 0), units: word }));

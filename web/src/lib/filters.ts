@@ -4,7 +4,7 @@
 import type { ColView } from './columns.svelte';
 import { type LevelData, type MetricMeta, type UnitRow } from './data';
 import { emptyFilter, type CatField, type Filter } from './hash';
-import { fmtNumber, sortedValues, wantsLog } from './classify';
+import { fmtNumber, rangeText, sortedValues, wantsLog } from './classify';
 import { ml, t, levelWord, unitName } from './i18n.svelte';
 import { commuteLabel, commuteValues, describeCommute, nearestMetricId, reachTimesData, type CommuteValues } from './commute.svelte';
 
@@ -216,6 +216,6 @@ export function describeFilter(e: FilterEval, nameOf: (field: CatField, id: stri
   const d = m?.decimals ?? 0;
   const lo = f.lo === null ? '' : fmtNumber(f.lo, d);
   const hi = f.hi === null ? '' : fmtNumber(f.hi, d);
-  const rng = f.lo !== null && f.hi !== null ? `${lo}–${hi}` : f.lo !== null ? `≥ ${lo}` : f.hi !== null ? `≤ ${hi}` : t('f.any');
+  const rng = f.lo !== null && f.hi !== null ? rangeText(lo, hi) : f.lo !== null ? `≥ ${lo}` : f.hi !== null ? `≤ ${hi}` : t('f.any');
   return `${m ? ml(m) : f.metric} ${rng}`;
 }

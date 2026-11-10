@@ -93,7 +93,7 @@ export function kindOf(precision: string, hasCi: boolean): Kind | null {
 
 // ---------------------------------------------------------------- small numbers (D32, M9) for any period
 /** The small-number rule of a metric as metrics.json ships it (`reliability`). A base or count given as a
- *  list is the sum of those metrics (e.g. a share of yes + no votes). */
+ *  list, or as ids joined by "+", is the sum of those metrics (e.g. a share of yes + no votes). */
 export interface SmallRule {
   base?: string | string[] | null;
   count?: string | string[] | null;
@@ -105,7 +105,9 @@ export interface SmallRule {
 
 /** Ids of the metrics a rule reads (base and count terms). */
 export function ruleTerms(rule: SmallRule | null | undefined): { base: string[]; count: string[] } {
-  const ids = (x: string | string[] | null | undefined) => (x ? (Array.isArray(x) ? x : [x]) : []);
+  // a sum is shipped as a list or as "vote_yes+vote_no"
+  const ids = (x: string | string[] | null | undefined) =>
+    x ? (Array.isArray(x) ? x : x.split('+')).map((id) => id.trim()).filter(Boolean) : [];
   return { base: ids(rule?.base), count: ids(rule?.count) };
 }
 

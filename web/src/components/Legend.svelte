@@ -10,7 +10,7 @@
   import { app } from '../lib/state.svelte';
   import {
     axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
-    type Method, type Scale, fixedLabels } from '../lib/classify';
+    type Method, type Scale, fixedLabels, rangeText } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -191,7 +191,7 @@
       {#each classes as c, k}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
-          <span class="rng num">{fixedL ? fixedL[k].label : c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
+          <span class="rng num">{fixedL ? fixedL[k].label : c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${rangeText(fmtTick(c.lo, meta), fmtTick(c.hi, meta))}`}</span>
           <span class="cn num">{fmtNumber(c.n, 0)}</span>
         </div>
       {/each}

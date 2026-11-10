@@ -22,6 +22,7 @@ describe('small numbers for any period (B1)', () => {
 
   it('sums a base given as several metrics (yes + no votes)', () => {
     expect(ruleTerms({ base: ['vote_yes', 'vote_no'], count: null })).toEqual({ base: ['vote_yes', 'vote_no'], count: [] });
+    expect(ruleTerms({ base: 'vote_yes+vote_no', count: 'births' })).toEqual({ base: ['vote_yes', 'vote_no'], count: ['births'] });
     expect(sumColumns([[40, 10, null], [50, 200, 3]])).toEqual([90, 210, null]);
     expect(sumColumns([])).toBeNull();
   });

@@ -6,7 +6,7 @@
   // A break in the series (change of method, metrics.json `series_breaks`) is a small dashed tick between
   // the last point before it and the first one on the new basis, named in the title.
   import { breakNotes, breakTickX, periodX, seriesBreaksOf } from '../lib/breaks';
-  import { fmtNumber, fmtTick } from '../lib/classify';
+  import { fmtNumber, fmtTick, rangeText } from '../lib/classify';
   import { loadSeries, type MetricMeta } from '../lib/data';
   import { app } from '../lib/state.svelte';
   import { t } from '../lib/i18n.svelte';
@@ -87,7 +87,7 @@
         {#if path.base !== null}<line class="zero" x1="0" x2={width} y1={path.base} y2={path.base} />{/if}
         {#each path.ticks as k (k.p)}<line class="brk" x1={k.x} x2={k.x} y1="0" y2={height} />{/each}
         <path d={path.d} /><circle cx={path.cx} cy={path.cy} r="2" /></svg>
-      <span class="rng num">{path.hi > path.lo ? `${fmtTick(path.lo, meta)}–${fmtTick(path.hi, meta)}` : fmtTick(path.lo, meta)}</span>
+      <span class="rng num">{path.hi > path.lo ? rangeText(fmtTick(path.lo, meta), fmtTick(path.hi, meta)) : fmtTick(path.lo, meta)}</span>
     {/if}
   </span>
 {/if}

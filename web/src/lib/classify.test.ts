@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildScale, divergeCentre, isDiverging, N_CLASSES, quantile, rankOf, sortedValues } from './classify';
+import { buildScale, divergeCentre, isDiverging, N_CLASSES, quantile, rankOf, sortedValues, rangeText } from './classify';
 import { divRamp, seqRamp } from './theme';
 import type { MetricMeta } from './data';
 
@@ -186,5 +186,13 @@ describe('rankOf', () => {
   });
   it('has no rank for a unit without a value', () => {
     expect(rankOf([10, null], 1, 'higher_better')).toBeNull();
+  });
+});
+
+describe('class range labels', () => {
+  it('keep negative bounds apart from the dash', () => {
+    expect(rangeText('10', '20')).toBe('10–20');
+    expect(rangeText('−14.5', '−6.5')).toBe('−14.5\u2009–\u2009−6.5');
+    expect(rangeText('−1.1', '0')).toBe('−1.1\u2009–\u20090');
   });
 });

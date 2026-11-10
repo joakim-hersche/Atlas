@@ -60,12 +60,17 @@ export function pooledSpan(meta: MetricMeta): string {
 // ---------------------------------------------------------------- change between two years
 export type ChangeMode = 'abs' | 'pct';
 
+/** A metric label inside a French sentence starts lower case ("Variation de densité de population", E5); not
+ *  acronyms. English keeps the capital (proper adjectives: "Swiss", "German"), German capitalises nouns. */
+export const innerLabel = (name: string) => (app.lang === 'fr' && /^\p{Lu}\p{Ll}/u.test(name) ? name[0].toLowerCase() + name.slice(1) : name);
+
 /** The metric describing a change between two periods (a synthetic metric: diverging scale around 0,
  *  no better/worse direction). `abs` is in the metric's unit (percentage points for a share), `pct` in
  *  percent of the earlier value. */
 export function changeMeta(meta: MetricMeta, mode: ChangeMode, from: string, to: string): MetricMeta {
   const isPct = meta.unit.startsWith('%');
-  const label = t(mode === 'abs' ? 'yc.labelAbs' : 'yc.labelPct', { metric: ml(meta), from, to });
+  const inner = innerLabel(ml(meta));
+  const label = t(mode === 'abs' ? 'yc.labelAbs' : 'yc.labelPct', { metric: inner, from, to });
   const common = { ...meta, id: `${meta.id}__chg_${mode}`, label_en: label, label_de: label, label_fr: label, direction: 'neutral' as const,
     aggregation: `change:${meta.id}`, headline: null, description: null, latest_title: null, per_vote: false, pooled: null };
   if (mode === 'pct') return { ...common, unit: '%', unit_de: '%', unit_fr: '%', decimals: 1 };
