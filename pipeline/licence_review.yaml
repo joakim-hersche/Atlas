@@ -93,17 +93,18 @@ wikidata_cantons:
 
 estv_tax_burden:
   status: blocked
-  missing: "A reuse statement that covers the ESTV tax calculator exports (income-tax-values)."
+  missing: "Written consent from ESTV (steuerstatistik@estv.admin.ch). The binding notice the calculator links to requires prior written consent for reproduction. Cleared substitute: bfs_ssv_tax_burden, bfs_atlas_tax_burden."
+  binding_terms: "https://www.admin.ch/gov/de/start/rechtliches.html (-> /de/rechtliches), read 2026-11-10: 'Copyright, Bundesbehörden der Schweizerischen Eidgenossenschaft. [...] Durch das Herunterladen oder Kopieren von Inhalten, Bildern, Fotos oder anderen Dateien werden keinerlei Rechte bezüglich der Inhalte übertragen. [...] Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.'"
   evidence: "Held back, not refused. Calculator footer 'Rechtliches' links only https://www.admin.ch/gov/de/start/rechtliches.html (proxy 403, unreadable). No reuse text on https://www.estv.admin.ch/de/steuerbelastung-in-den-gemeinden, https://www.estv.admin.ch/de/impressum-estv, the Steckbrief 'Steuerbelastung in der Schweiz' (12.06.2025), the calculator bundle or the exported xlsx (sheet 'Export' only). The quote 'Wiedergabe unter Angabe der Quelle für Nutzung gestattet' is the colophon of the direct federal tax statistics files (estv_dbst, sheet 'Erläuterungen', © ESTV Oktober 2025), not of these exports. The only Steuerbelastung colophon found (2012 PDF, © BFS 2013) reads 'Abdruck – ausser für kommerzielle Nutzung – unter Angabe der Quelle gestattet' and covers that publication only. Checked 2026-11-10."
 
 estv_tax_multipliers:
   status: blocked
-  missing: "A reuse statement that covers the ESTV tax calculator export income-tax-rates."
+  missing: "Written consent from ESTV. Binding notice (admin.ch Rechtliches, read 2026-11-10) requires prior written consent for reproduction: 'Copyright, Bundesbehörden der Schweizerischen Eidgenossenschaft. [...] Durch das Herunterladen oder Kopieren von Inhalten, Bildern, Fotos oder anderen Dateien werden keinerlei Rechte bezüglich der Inhalte übertragen. [...] Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen.'"
   evidence: "Same calculator and terms link as estv_tax_burden. https://www.estv.admin.ch/de/steuerfuesse-abzuege-und-tarife-der-schweiz and its file steuerfuesse-np-1995-2026.xlsx (capitals only) carry no reuse statement. Checked 2026-11-10."
 
 bag_premiums:
   status: blocked
-  missing: "The licence of opendata.swiss dataset health-insurance-premiums (where priminfo says the data is published)."
+  missing: "The licence of opendata.swiss dataset health-insurance-premiums (still 403). The generic admin.ch notice linked from the BAG footer (read 2026-11-10) requires prior written consent, so only a dataset-specific open licence would clear it."
   evidence: "https://www.priminfo.admin.ch/de/downloads/aktuell: 'Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar' -> https://opendata.swiss/de/dataset/health-insurance-premiums (403 from the session). priminfo has no imprint/terms page (404); BAG pages link 'Rechtliches' to admin.ch (403). Cached PDFs/xlsx carry no licence. Checked 2026-11-10."
 
 bfs_rents:
