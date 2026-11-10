@@ -15,9 +15,11 @@
     marks?: Map<string, PeriodMark>;
     /** the default period (null value); newer periods may exist when they are incomplete */
     latest?: string;
+    /** boundary note after the range (default: harmonised to the reference state) */
+    harm?: string;
     children?: Snippet;
   }
-  let { periods, value, onchange, marks, latest: latestProp, children }: Props = $props();
+  let { periods, value, onchange, marks, latest: latestProp, harm, children }: Props = $props();
 
   const last = $derived(periods[periods.length - 1]);
   const latest = $derived(latestProp && periods.includes(latestProp) ? latestProp : last);
@@ -47,7 +49,7 @@
   <output class="num yv">{periods[idx]}</output>
   <button type="button" class="latest" disabled={value === null} onclick={() => onchange(null)}>{t('yr.latest')}</button>
 </div>
-<p class="range foot"><span class="num">{periods[0]}–{last}</span> · {t('yr.harm')}{#if children}{@render children()}{/if}</p>
+<p class="range foot"><span class="num">{periods[0]}–{last}</span> · {harm ?? t('yr.harm')}{#if children}{@render children()}{/if}</p>
 {#if ticks.length}
   <p class="foot mkn">
     <span class="mi" aria-hidden="true"></span>{here ? t('yc.markNow', { text: here.text }) : t('yc.marks')}

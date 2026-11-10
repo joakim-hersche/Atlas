@@ -2,7 +2,8 @@
   // Shell: header (search, navigation, language), data bootstrap and hash routing. Each route is a view
   // in src/views/: 'map' (default), 'compare' (Compare metrics: two synced maps + scatter), 'profile'
   // (one place, #v=profile&id=261 or id=kanton:ZH), 'places' (Compare places, #v=places&ids=261,351),
-  // 'regress' (regression panel, D34; keys in lib/regmodel.ts) and 'sources' (#v=sources&src=<source_id>).
+  // 'regress' (regression panel, D34; keys in lib/regmodel.ts), 'sources' (#v=sources&src=<source_id>) and
+  // 'vintage' (municipalities of an older state, #v=vintage&vin=2000; docs/older_boundaries.md).
   import { onMount, untrack } from 'svelte';
   import MapView from './views/MapView.svelte';
   import SourcesView from './views/SourcesView.svelte';
@@ -13,6 +14,7 @@
   import { LEVELS, loadBase, loadLevel, unitCounts, type Base, type LevelData } from './lib/data';
   import { loadFrench, t, levelWord } from './lib/i18n.svelte';
   import { hrefFor } from './lib/nav';
+  import { tv } from './lib/vintage-strings.svelte';
   import { app, syncHash } from './lib/state.svelte';
   import { sanitizeState } from './lib/sanitize';
   import { viewUrl } from './lib/embed';
@@ -27,6 +29,8 @@
   const profileMod = () => (profileP ??= import('./views/ProfileView.svelte'));
   const placesMod = () => (placesP ??= import('./views/PlacesView.svelte'));
   const regressMod = () => (regressP ??= import('./views/RegressView.svelte'));
+  let vintageP: Promise<typeof import('./views/VintageView.svelte')> | undefined;
+  const vintageMod = () => (vintageP ??= import('./views/VintageView.svelte'));
 
   const DESKTOP = '(min-width: 900px)';
   const MAP_ROUTES = ['map', 'compare', 'regress'];
@@ -70,7 +74,7 @@
     if (b) untrack(() => sanitizeState(b));
   });
 
-  const route = $derived(PAGES.includes(app.route) || app.route === 'compare' || app.route === 'regress' ? app.route : 'map');
+  const route = $derived(PAGES.includes(app.route) || app.route === 'compare' || app.route === 'regress' || app.route === 'vintage' ? app.route : 'map');
   const isMap = $derived(MAP_ROUTES.includes(route));
 
   // geometry and headline values of the map level (only the map views need it; other levels on first use)
@@ -112,7 +116,8 @@
   const unitsText = $derived(
     ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelWord(ld.level)}` : gemCount !== null ? `${fmtNumber(gemCount, 0)} ${levelWord('gemeinde')}` : '',
   );
-  const current = $derived(route === 'profile' ? null : route);
+  // an older-boundaries map (vintage) is the map page on another municipality state
+  const current = $derived(route === 'profile' ? null : route === 'vintage' ? 'map' : route);
   /** first render time, for the performance check (window.__firstRender) */
   function rendered() {
     (window as unknown as { __firstRender: number }).__firstRender ??= performance.now() - t0;
@@ -129,14 +134,14 @@
 
 <svelte:window onpointerdown={outsideMenu} onkeydown={(e) => e.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:embed={app.embed} class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map'} class:page={!isMap}>
+<div class="app" class:embed={app.embed} class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map' || route === 'vintage'} class:page={!isMap && route !== 'vintage'}>
   {#if !app.embed}
   <a class="skip" href="#main" onclick={skipToMain}>{t('nav.skip')}</a>
   <header class="top">
     <a class="brand" href={hrefFor('map')} title="ATLAS — {t('nav.map')}">
       <span class="mark" aria-hidden="true"></span>
       <strong>ATLAS</strong>
-      <span class="sub">{unitsText ? t('brand.sub', { units: unitsText }) : t('brand.subNo')}</span>
+      <span class="sub">{route === 'vintage' ? tv('vin.brand', { y: app.params.vin ?? '' }) : unitsText ? t('brand.sub', { units: unitsText }) : t('brand.subNo')}</span>
     </a>
     <div class="right">
       <Search variant="header" collapsed={!desktop} onpick={openPlace} />
@@ -175,6 +180,8 @@
       {#await placesMod() then M}<M.default {base} {desktop} />{/await}
     {:else if route === 'sources'}
       <SourcesView {base} />
+    {:else if route === 'vintage'}
+      {#await vintageMod() then M}<M.default {base} {desktop} onrendered={rendered} />{/await}
     {:else if ld}
       {#if route === 'compare'}
         {#await compareMod() then M}<M.default {base} {ld} {cols} {desktop} onrendered={rendered} />{/await}
