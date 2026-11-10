@@ -200,6 +200,37 @@ export interface Base {
 const geoFiles = new Map<string, Promise<Topology>>();
 const loadTopo = (name: string) => cached(geoFiles, name, () => getJSON<Topology>(`geo/${name}.topojson`));
 
+// ---------------------------------------------------------------- fine boundaries (zoomed in)
+/** Levels with a fine file geo/<level>_fine.topojson (pipeline/build/geometry_fine.py); loaded only once the
+ *  map is zoomed in (lib/mapview.ts FINE_ZOOM), never at start. A missing file resolves to null. */
+export const FINE_LEVELS: ReadonlySet<string> = new Set(['gemeinde', 'bezirk', 'kanton']);
+const fineTopo = new Map<string, Promise<Topology | null>>();
+const loadFineTopo = (level: string) => cached(fineTopo, level, () => getOptionalJSON<Topology>(`geo/${level}_fine.topojson`));
+const fineUnits = new Map<string, Promise<FeatureCollection | null>>();
+/** Fine outlines of a level as features with id = unit index, the same ids as LevelData.geo. */
+export function loadFine(level: string): Promise<FeatureCollection | null> {
+  return cached(fineUnits, level, async () => {
+    const [t, ld] = await Promise.all([loadFineTopo(level), loadLevel(level)]);
+    if (!t) return null;
+    const features = [];
+    for (const f of topo<{ id: string | number }>(t, level).features) {
+      const i = ld.index.get(String(f.properties.id));
+      if (i === undefined) continue;
+      f.id = i;
+      features.push(f);
+    }
+    return { type: 'FeatureCollection', features } as FeatureCollection;
+  });
+}
+const fineLines = new Map<string, Promise<FeatureCollection | null>>();
+/** Fine outlines of a level without unit ids (canton lines drawn over any level). */
+export function loadFineLines(level: string): Promise<FeatureCollection | null> {
+  return cached(fineLines, level, async () => {
+    const t = await loadFineTopo(level);
+    return t ? (topo(t, level) as FeatureCollection) : null;
+  });
+}
+
 let baseP: Promise<Base> | null = null;
 /** Metric catalog, sources, canton outlines and lakes: loaded once at start. */
 export function loadBase(): Promise<Base> {

@@ -42,6 +42,10 @@ const FILES = dedupe([
   ['geo/agglomeration.topojson', false],
   ['geo/arbeitsmarktgebiet.topojson', false],
   ['geo/stadt_land.topojson', false],
+  // finer outlines of municipalities, districts and cantons, loaded only when the map is zoomed in (make geometry)
+  ['geo/gemeinde_fine.topojson', false],
+  ['geo/bezirk_fine.topojson', false],
+  ['geo/kanton_fine.topojson', false],
   ['web/metrics.json', true],
   ['web/sources.json', true],
   ['web/units.json', true],

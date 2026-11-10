@@ -1,7 +1,7 @@
 # Gemeindebank build entry points.
 #   make data      fetch (cached) + build everything the web app needs
 #   make backbone  register, mutations, split weights, crosswalk
-#   make geometry  web geometry and label points
+#   make geometry  web geometry, label points and the fine boundaries for zoomed-in maps
 #   make validate  backbone validation report (docs/backbone_report.md)
 #   make observations / metrics / quality   ingest all sources, build all levels, plausibility sweep
 #   make vintages  older boundary states (2000, 2010): geometry and the values published on them
@@ -24,6 +24,7 @@ backbone:
 
 geometry: backbone
 	$(PY) -m pipeline.build.geometry
+	$(PY) -m pipeline.build.geometry_fine
 
 validate: backbone
 	$(PY) -m pipeline.backbone.validate

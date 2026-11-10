@@ -40,7 +40,7 @@
   import { majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, loadFine, loadFineLines, FINE_LEVELS, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter, type MatchResult } from '../lib/filters';
@@ -223,7 +223,7 @@
   $effect(() => {
     const fc = regional && regionGeo?.level === regional ? regionGeo.fc : null;
     void ld;
-    if (mapReady) view!.setRegions(fc);
+    if (mapReady) view!.setRegions(fc, fc ? regional : null);
   });
   // pooled multi-year rate of this annual metric, or the annual metric of this pooled one
   const pooledAlt = $derived(
@@ -672,7 +672,7 @@
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
       ...(app.embed ? {} : { onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full }),
       onLabels: () => (app.labels = !app.labels), labelsLabel: () => t('lb.toggle'), labelsOn: () => app.labels,
-    });
+    }, { fine: { units: loadFine, lines: loadFineLines, levels: FINE_LEVELS } });
     refLayer = new RefLayer(view.map, mapEl);
     refLayer.setVisible(app.labels);
     // U17: city and lake names only once the polygons are drawn

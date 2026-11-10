@@ -98,6 +98,20 @@ export function geomBounds(g: Geometry | null): [number, number, number, number]
   return Number.isFinite(x0) ? [x0, y0, x1, y1] : null;
 }
 
+/** Finer boundaries for zoomed-in views (geo/<level>_fine.topojson, built by pipeline/build/geometry_fine.py). */
+export interface FineGeo {
+  /** the level's fine units with feature id = unit index, or null when there is no fine file for it */
+  units: (level: string) => Promise<FeatureCollection | null>;
+  /** the level's fine outlines (no ids needed), or null */
+  lines: (level: string) => Promise<FeatureCollection | null>;
+  /** levels that have a fine file */
+  levels: ReadonlySet<string>;
+}
+/** The fine geometry replaces the generalized one from this zoom on (about 100 m per pixel: the 500 m
+ *  vertex spacing of the generalized outlines starts to show); it goes back below FINE_ZOOM - FINE_HYST. */
+export const FINE_ZOOM = 9;
+const FINE_HYST = 0.4;
+
 export interface MapEvents {
   onSelect: (unitIndex: number | null) => void;
   /** U16: a tap or click with the unit under it and the point (the view may snap it to a nearby label point);
@@ -153,8 +167,20 @@ export class UnitMap {
   private symbolsOn = false;
   private symbolStyle: 'filled' | 'hollow' = 'filled';
   private ctls: ButtonControl[] = [];
+  // fine boundaries (opt-in): what the 'units', 'kt' and 'regions' sources hold now, and the generalized originals
+  private fineGeo: FineGeo | null = null;
+  private fineOn = false;
+  private fineSeq = 0;
+  private fineFailed = false;
+  private fineRetryAt = 0;
+  private coarseUnits: FeatureCollection = EMPTY;
+  private coarseKt: FeatureCollection = EMPTY;
+  private regionsFc: FeatureCollection | null = null;
+  private regionsLevel: string | null = null;
 
-  constructor(container: HTMLElement, base: Base, ev: MapEvents, opts: { nav?: boolean } = {}) {
+  constructor(container: HTMLElement, base: Base, ev: MapEvents, opts: { nav?: boolean; fine?: FineGeo } = {}) {
+    this.fineGeo = opts.fine ?? null;
+    this.coarseKt = base.kanton;
     this.map = new maplibregl.Map({
       container,
       style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': token('--map-bg') } }] },
@@ -190,7 +216,7 @@ export class UnitMap {
       this.map.addControl(c, 'top-right');
     }
     this.map.addControl(
-      new maplibregl.AttributionControl({ compact: true, customAttribution: 'Boundaries: BFS generalized boundaries' }),
+      new maplibregl.AttributionControl({ compact: true, customAttribution: this.fineGeo ? 'Boundaries: BFS generalized boundaries; zoomed in: © swisstopo swissBOUNDARIES3D' : 'Boundaries: BFS generalized boundaries' }),
       'bottom-right',
     );
 
@@ -198,6 +224,7 @@ export class UnitMap {
       this.map.on('load', () => {
         this.addLayers(base);
         this.isReady = true;
+        if (this.fineGeo) this.map.on('zoom', () => this.syncFine());
         // start with the attribution collapsed to its (i) button
         container.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
         resolve();
@@ -314,10 +341,83 @@ export class UnitMap {
 
   /** Regional values (D21): municipal borders hidden, the outlines of the native regions drawn instead.
    *  null = normal municipal borders. */
-  setRegions(fc: FeatureCollection | null) {
+  setRegions(fc: FeatureCollection | null, level: string | null = null) {
     if (!this.isReady) return;
-    (this.map.getSource('regions') as maplibregl.GeoJSONSource).setData(fc ?? EMPTY);
+    if (fc === this.regionsFc && level === this.regionsLevel) return;
+    this.regionsFc = fc;
+    this.regionsLevel = fc ? level : null;
+    this.put('regions', fc ?? EMPTY);
     this.map.setLayoutProperty('unit-line', 'visibility', fc ? 'none' : 'visible');
+    if (!this.fineOn) return void this.syncFine();
+    if (!this.wantFine()) return this.resetFine();
+    // fine stays on; only the outlines change (a fine version of them replaces the generalized one when loaded)
+    const seq = ++this.fineSeq;
+    if (this.regionsLevel) {
+      this.fineGeo!.units(this.regionsLevel).then((r) => {
+        if (r && seq === this.fineSeq && this.regionsFc === fc) this.put('regions', r);
+      }).catch(() => {});
+    }
+  }
+
+  /** Fine boundaries are used when zoomed in, for levels that have them, and, with regional outlines
+   *  drawn, only when those are fine too (else the outlines would drift off the polygons). */
+  private wantFine(): boolean {
+    const f = this.fineGeo;
+    if (!f || this.fineFailed || !this.level || !f.levels.has(this.level)) return false;
+    if (this.regionsLevel && !f.levels.has(this.regionsLevel)) return false;
+    return this.map.getZoom() >= (this.fineOn ? FINE_ZOOM - FINE_HYST : FINE_ZOOM);
+  }
+
+  /** Back to the generalized geometry (level or regions changed); fine is loaded again if still wanted. */
+  private resetFine() {
+    if (!this.fineGeo) return;
+    this.fineSeq++;
+    if (this.fineOn) {
+      this.fineOn = false;
+      this.put('units', this.coarseUnits);
+      this.put('kt', this.coarseKt);
+      if (this.regionsFc) this.put('regions', this.regionsFc);
+    }
+    this.syncFine();
+  }
+
+  private put(source: string, data: FeatureCollection) {
+    (this.map.getSource(source) as maplibregl.GeoJSONSource | undefined)?.setData(data);
+  }
+
+  /** Swap generalized and fine geometry of units, canton lines and regional outlines at the zoom threshold.
+   *  Feature ids are unit indices in both, so feature-state (colours, selection, hover) carries over; the
+   *  old tiles stay on screen until the new ones are ready, so the swap does not flash. */
+  private async syncFine() {
+    if (!this.isReady || !this.fineGeo || this.wantFine() === this.fineOn || Date.now() < this.fineRetryAt) return;
+    const f = this.fineGeo;
+    const seq = ++this.fineSeq;
+    const level = this.level;
+    if (!this.fineOn) {
+      let units: FeatureCollection | null, kt: FeatureCollection | null, regions: FeatureCollection | null;
+      try {
+        [units, kt, regions] = await Promise.all([
+          f.units(level), f.lines('kanton'), this.regionsLevel ? f.units(this.regionsLevel) : Promise.resolve(null),
+        ]);
+      } catch {
+        this.fineRetryAt = Date.now() + 5000; // network hiccup: stay generalized, try again in a few seconds
+        return;
+      }
+      if (seq !== this.fineSeq) return; // superseded: zoomed out again, level or regions changed
+      if (!units || !kt || (this.regionsLevel && !regions)) {
+        this.fineFailed = true; // no fine files (sample data): never ask again
+        return;
+      }
+      this.put('units', units);
+      this.put('kt', kt);
+      if (regions) this.put('regions', regions);
+      this.fineOn = true;
+    } else {
+      this.put('units', this.coarseUnits);
+      this.put('kt', this.coarseKt);
+      if (this.regionsFc) this.put('regions', this.regionsFc);
+      this.fineOn = false;
+    }
   }
 
   /** Show another spatial level (geometry with feature id = unit index). */
@@ -328,6 +428,8 @@ export class UnitMap {
     (this.map.getSource('units') as maplibregl.GeoJSONSource).setData(ld.geo);
     (this.map.getSource('sym') as maplibregl.GeoJSONSource).setData(EMPTY);
     this.level = ld.level;
+    this.coarseUnits = ld.geo;
+    this.resetFine();
     this.n = ld.units.length;
     this.colour = new Array(this.n);
     this.dim = new Array(this.n).fill(false);
