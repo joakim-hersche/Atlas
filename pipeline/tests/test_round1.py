@@ -63,8 +63,9 @@ def test_zero_when_needs_a_real_value():
     k = d.set_index(["level", "unit_id", "metric_id"])
     assert k.loc[("gemeinde", "3034", "nrw_share_left_bloc"), "status"] == "not_applicable"   # Rehetobel
     assert k.loc[("kanton", "AR", "nrw_share_left_bloc"), "status"] == "not_applicable"
-    assert k.loc[("kanton", "AR", "nrw_share_svp"), "status"] == "ok"
+    assert k.loc[("kanton", "AR", "nrw_share_svp"), "status"] == "majority_election"   # D37: value kept, not compared
     assert 30.8 <= k.loc[("kanton", "BE", "nrw_share_svp"), "value"] <= 31.0
+    assert k.loc[("kanton", "AR", "nrw_share_svp"), "value"] > 0
 
 
 @need_metrics
