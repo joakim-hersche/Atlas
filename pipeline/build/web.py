@@ -74,6 +74,11 @@ def _period_key(p: str):
     return (p[:4], p)
 
 
+def fmtp(p: str) -> str:
+    """Period for notes: a vote period 'YYYY-MM-DD#id' without its internal id."""
+    return str(p).split("#")[0]
+
+
 def build_units() -> list[dict]:
     m = membership()
     labels = json.loads(out_path("geo", "labels.json").read_text(encoding="utf-8"))
@@ -657,11 +662,15 @@ def run() -> dict:
         for mid, gm in g.groupby("metric_id"):
             d = int(meta.loc[mid, "decimals"]) + (1 if str(meta.loc[mid, "unit"]).strip() == "%" else 0)
             vals = [None] * len(ids)
-            status, prec, notes = {}, {}, {}
+            status, prec, notes, maj = {}, {}, {}, {}
             for u, v, st, pr, pv, nt in zip(gm["unit_id"], gm["value"], gm["status"], gm["precision"],
                                             gm["provenance"], gm["note"]):
                 i = idx[u]
-                vals[i] = _round(v, d)
+                if st == "majority_election":   # D37: value kept apart, so it is in no class, rank or statistic
+                    if _round(v, d) is not None:
+                        maj[str(i)] = _round(v, d)
+                else:
+                    vals[i] = _round(v, d)
                 if st != "ok":
                     status[i] = STATUS_CODES.get(st, 1)
                 if isinstance(pr, str) and pr != "exact":
@@ -669,12 +678,17 @@ def run() -> dict:
                 if isinstance(nt, str) and (st != "ok" or OK_NOTE.search(nt)):
                     notes[i] = public_text(nt)
             col = {"period": gm["period"].iloc[0], "v": vals,
-                   **({"s": status} if status else {}), **({"p": prec} if prec else {})}
+                   **({"s": status} if status else {}), **({"p": prec} if prec else {}), **({"m": maj} if maj else {})}
             col.update(_notes_fields(notes))
             fl = flags.get(mid)
             if fl:
                 col["f"] = {str(i): b for i, b in fl.items()}
             cols[mid] = col
+        # a level with values in other periods but none for the metric's default period: an explicit gap
+        for mid in lp.loc[(lp["level"] == lvl) & ~lp["metric_id"].isin(list(cols)), "metric_id"]:
+            nt = public_text(f"no value for {fmtp(dflt_of[mid])} at this level (newest here: {fmtp(avail[(mid, lvl)])})")
+            cols[mid] = {"period": dflt_of[mid], "v": [None] * len(ids), "s": {str(i): STATUS_CODES["no_data"] for i in range(len(ids))},
+                         "notes": [nt], "n": {str(i): 0 for i in range(len(ids))}}
         # D23: one core file (headline metrics) loaded at start, one file per theme on demand
         groups: dict[str, dict] = {}
         for mid, col in cols.items():
@@ -684,13 +698,16 @@ def run() -> dict:
                 {"level": lvl, "units": ids, "metrics": gcols, "status_codes": STATUS_CODES,
                  "precision_codes": PRECISION_CODES, "flag_bits": FLAG_BITS}, "latest", lvl, f"{fname}.json")
 
-    # time series per metric (municipality, district, canton, Switzerland); votes get one file per vote
+    _dump(written_stats, "default_periods.json")
+    # time series per metric (municipality, district, canton, Switzerland); votes get one file per vote.
+    # D37: party shares / blocs / leaning carry the single-seat cantons apart: value null in `levels`, the
+    # value in `m` {level: {unit: {period index: value}}} and the flag in `f` {level: {unit: {index: bits}}}
     lv = ", ".join(f"'{x}'" for x in SERIES_LEVELS)
     n_series = 0
     for (mid,) in con.execute("SELECT DISTINCT metric_id FROM m").fetchall():
         if str(mid).startswith("vote_"):
             continue
-        g = con.execute(f"SELECT level, unit_id, period, value FROM m WHERE metric_id = ? AND level IN ({lv})",
+        g = con.execute(f"SELECT level, unit_id, period, value, status FROM m WHERE metric_id = ? AND level IN ({lv})",
                         [mid]).df()
         periods = sorted(g["period"].unique(), key=_period_key)
         if len(periods) < 2:
@@ -698,14 +715,28 @@ def run() -> dict:
         pidx = {p: i for i, p in enumerate(periods)}
         d = int(meta.loc[mid, "decimals"]) + (1 if str(meta.loc[mid, "unit"]).strip() == "%" else 0)
         out = {"metric": mid, "periods": periods, "levels": {}}
+        mset = mid in maj_ids
         for lvl_, gl in g.groupby("level"):
             series = {}
+            mv: dict = {}
             for uid, gu in gl.groupby("unit_id"):
                 row = [None] * len(periods)
-                for p, v in zip(gu["period"], gu["value"]):
-                    row[pidx[p]] = _round(v, d)
+                for p, v, st in zip(gu["period"], gu["value"], gu["status"]):
+                    if st == "majority_election":
+                        if _round(v, d) is not None:
+                            mv.setdefault(uid, {})[str(pidx[p])] = _round(v, d)
+                    else:
+                        row[pidx[p]] = _round(v, d)
                 series[uid] = row
             out["levels"][lvl_] = series
+            if mset:
+                if mv:
+                    out.setdefault("m", {})[lvl_] = mv
+                fl: dict = {}
+                for _, u, per in majority_rows(gl.assign(metric_id=mid), lvl_, majority, meta):
+                    fl.setdefault(u, {})[str(pidx[per])] = FLAG_BITS["majority_election"]
+                if fl:
+                    out.setdefault("f", {})[lvl_] = fl
         _dump(out, "series", f"{mid}.json")
         n_series += 1
     # votes: one file per vote with yes share and turnout for every level, plus votes/index.json (B)
