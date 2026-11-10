@@ -46,7 +46,7 @@ TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomer
 LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canton", "schweiz": "national"}
 # notes of ok values worth showing (fallback provenance, provisional results, reach details)
 OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published|proportional-representation|"
-                     r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|demographic balance", re.I)
+                     r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|demographic balance|series break", re.I)
 PUBLIC_TEXT = [(re.compile(r"\bPARTLY_UNVERIFIED\b"), "partly not yet confirmed"),
                (re.compile(r"\bUNVERIFIED\b"), "not yet confirmed"),
                (re.compile(r"\s*\(?brief rule 5\)?", re.I), "")]
@@ -702,6 +702,11 @@ def run() -> dict:
     from pipeline.build import curation as cur_mod
     cur_cfg = cur_mod.load()
     cur_cov = curation_coverage(con, mem_all)
+    # precision of the values actually shown (round 2: social assistance 2024/25 is modelled by BFS
+    # weighting, so card and statistics must say the same); boundary estimates do not change the label
+    prec_shown = dict(con.execute("""SELECT m.metric_id, mode(m.precision) FROM m JOIN lp ON m.metric_id = lp.metric_id
+                                     AND m.level = lp.level AND m.period = lp.p
+                                     WHERE m.status = 'ok' AND m.precision <> 'boundary_estimate' GROUP BY 1""").fetchall())
     cur_rows = []
     catalog = []
     all_levels = ["gemeinde", "bezirk", "kanton", *TYPOLOGY_COLS, "schweiz"]
@@ -727,7 +732,7 @@ def run() -> dict:
             "label_fr": lab.get("label_fr"), "unit": md["unit"], "unit_de": lab.get("unit_de"), "unit_fr": lab.get("unit_fr"),
             "description_de": lab.get("description_de"), "description_fr": lab.get("description_fr"),
             "decimals": int(md["decimals"]), "direction": md["direction"],
-            "aggregation": md["aggregation"], "precision": md["precision"], "coverage": coverage,
+            "aggregation": md["aggregation"], "precision": prec_shown.get(r.metric_id, md["precision"]), "coverage": coverage,
             "native_level": md["native_level"],
             "coverage_meta": md["coverage"],
             "coverage_detail": {"level": cv_level, "period": dflt, "n": int(cnt["n_ok"].sum()) if len(cnt) else 0,

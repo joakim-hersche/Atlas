@@ -230,5 +230,49 @@ def _energiestadt() -> pd.DataFrame:
     return o
 
 
+# per-resident metrics computed from a reporter count (a break in the count breaks them too)
+DERIVED_FROM = {"en_elec_consumption_per_capita": "en_elec_consumption_mwh",
+                "en_renelec_per_capita": "en_renelec_production_mwh", "en_pv_kwp_per_capita": "en_pv_installed_kwp"}
+SPIKE, STEP = 0.07, 0.10
+
+
+def breaks(obs: pd.DataFrame) -> tuple[set, dict]:
+    """Publisher data breaks in the monthly Energie Reporter series (audit round 2), from the national rows:
+    a spike/dip (the month differs by more than 7 % from the mean of both neighbours, in the same direction
+    from each) is dropped; a step of more than 10 % against the previous month that persists is kept with
+    a note (which side of the step is right cannot be told from the data)."""
+    ch = obs[(obs["level"] == "schweiz") & (obs["status"] == "ok") & obs["period"].str.fullmatch(r"\d{4}-\d{2}")]
+    drop, step = set(), {}
+    for mid, g in ch.groupby("metric_id"):
+        g = g.sort_values("period").reset_index(drop=True)
+        v, prv, nxt = g["value"], g["value"].shift(1), g["value"].shift(-1)
+        r = v / ((prv + nxt) / 2) - 1
+        spike = (r.abs() > SPIKE) & ((v - prv) * (v - nxt) > 0)
+        for per in g.loc[spike, "period"]:
+            drop.add((mid, per))
+        ch_ = v / prv - 1
+        for per, x in zip(g.loc[(ch_.abs() > STEP) & ~spike & ~spike.shift(1, fill_value=False), "period"],
+                          ch_[(ch_.abs() > STEP) & ~spike & ~spike.shift(1, fill_value=False)]):
+            step[(mid, per)] = x
+    for d, b in DERIVED_FROM.items():
+        drop |= {(d, p) for (m, p) in set(drop) if m == b}
+        step.update({(d, p): x for (m, p), x in list(step.items()) if m == b})
+    return drop, step
+
+
 def observations() -> pd.DataFrame:
-    return pd.concat([_reporter(), _solar(), _energiestadt()], ignore_index=True)[OBS_COLUMNS]
+    rep = _reporter()
+    drop, step = breaks(rep)
+    key = list(zip(rep["metric_id"], rep["period"]))
+    bad = pd.Series([k in drop for k in key], index=rep.index)
+    rep.loc[bad, ["value"]] = np.nan
+    rep.loc[bad, "status"] = "no_data"
+    rep.loc[bad, "note"] = "left out: publisher data break (the national total jumps against both neighbouring months)"
+    st = pd.Series([step.get(k) for k in key], index=rep.index)
+    has = st.notna() & (rep["status"] == "ok")
+    rep.loc[has, "note"] = [f"series break at the publisher: national total {x * 100:+.0f} % against the previous month"
+                            for x in st[has]]
+    # compiled by the publisher from several registers with its own estimates: shown as modelled (audit round 2)
+    rep.loc[rep["precision"] == "exact", "precision"] = "modelled"
+    print("energie reporter breaks: dropped", sorted(drop), "steps", {k: round(v, 3) for k, v in step.items()})
+    return pd.concat([rep, _solar(), _energiestadt()], ignore_index=True)[OBS_COLUMNS]
