@@ -5,7 +5,7 @@
   import Card from '../components/Card.svelte';
   import Legend from '../components/Legend.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
-  import RangeFilter from '../components/RangeFilter.svelte';
+  import FilterPanel from '../components/FilterPanel.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
@@ -15,7 +15,8 @@
     gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow,
   } from '../lib/data';
-  import { T_MAX, type ReachMode } from '../lib/hash';
+  import { catOptions, combine, evalFilter } from '../lib/filters';
+  import { T_MAX, type CatField, type ReachMode } from '../lib/hash';
   import { CH_BOUNDS, UnitMap, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
@@ -123,32 +124,16 @@
     if (d === 'symbols' && !app.size) app.size = 'pop_total';
   }
 
-  // ------------------------------------------------------------------ filters (population)
-  const popIdx = $derived(app.filters.findIndex((f) => f.kind === 'num' && f.metric === 'pop_total'));
-  const popF = $derived(popIdx >= 0 ? app.filters[popIdx] : null);
-  const pop = $derived(ld.core.metrics['pop_total']?.v ?? []);
-  const popRange = $derived.by(() => {
-    const v = sortedValues(pop);
-    return v.length ? { min: v[0], max: v[v.length - 1] } : { min: 0, max: 1 };
-  });
-  const popLo = $derived(popF?.kind === 'num' ? popF.lo : null);
-  const popHi = $derived(popF?.kind === 'num' ? popF.hi : null);
-  function setPop(lo: number | null, hi: number | null) {
-    const rest = app.filters.filter((f) => !(f.kind === 'num' && f.metric === 'pop_total'));
-    app.filters = lo === null && hi === null ? rest : [{ kind: 'num', metric: 'pop_total', lo, hi }, ...rest];
-  }
-  const filtered = $derived(popLo !== null || popHi !== null);
-  const match = $derived.by(() => {
-    const m = new Uint8Array(nUnits);
-    let n = 0;
-    for (let i = 0; i < nUnits; i++) {
-      const x = pop[i];
-      const ok = !filtered || (x !== null && (popLo === null || x >= popLo) && (popHi === null || x <= popHi));
-      m[i] = ok ? 1 : 0;
-      n += m[i];
-    }
-    return { m, n };
-  });
+  // ------------------------------------------------------------------ filters
+  const hubName = (slug: string) => hubs.find((h) => h.slug === slug)?.name ?? slug;
+  const evals = $derived(
+    app.filters.map((f) =>
+      evalFilter(f, { ld, rows: unitRows, metas, hubName, col: (id) => cols.get(ld, id, app.year) }),
+    ),
+  );
+  const match = $derived(combine(evals, nUnits));
+  const filtered = $derived(match.active > 0);
+  const catOpts = (field: CatField) => catOptions(field, unitRows);
 
   // ------------------------------------------------------------------ reach
   const reachOn = $derived(app.reach !== 'off');
@@ -434,9 +419,10 @@
       </section>
 
       <section class="extra">
-        <RangeFilter label="Population filter" min={popRange.min} max={popRange.max} lo={popLo} hi={popHi} onchange={setPop}
-          count={match.n} total={nUnits} />
-        <p class="foot">BFS STATPOP {ld.core.metrics['pop_total']?.period ?? ''}. Non-matching {word} are muted, not hidden.</p>
+        <div class="caps lab">Filters</div>
+        <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
+          options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
+          defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} />
       </section>
 
       {#if !desktop && colA && !whyA}
