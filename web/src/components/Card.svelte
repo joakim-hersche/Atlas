@@ -78,32 +78,32 @@
 
 <style>
   .card {
-    background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow);
+    background: var(--panel); border: 1px solid var(--ink); border-top: 3px solid var(--ink);
     padding: 10px 12px; width: 100%;
   }
   .card.docked { box-shadow: none; border: 0; padding: 0; background: none; }
   .top { display: flex; align-items: baseline; gap: 8px; }
-  h2 { margin: 0; font-size: 1.05rem; line-height: 1.2; font-weight: 600; }
+  h2 { margin: 0; font-size: 1.1rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
   .sub { color: var(--muted); font-size: 0.78rem; flex: 1; min-width: 0; font-family: var(--font-mono); }
   .close {
-    border: 1px solid var(--border); background: none; width: 26px; height: 26px; border-radius: var(--radius); font-size: 1.05rem; line-height: 1;
-    cursor: pointer; flex: none; align-self: start; color: var(--muted);
+    border: 1px solid var(--ink); background: none; width: 26px; height: 26px; font-size: 1.05rem; line-height: 1;
+    cursor: pointer; flex: none; align-self: start; color: var(--text);
   }
-  .mlabel { margin: 6px 0 0; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mlabel { margin: 8px 0 0; color: var(--text); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
   .valrow { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; margin-top: 1px; }
-  .val { font-size: 1.2rem; font-weight: 500; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .val { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .yr { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
   .rank { flex-basis: 100%; font-size: 0.8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .reason { color: var(--text); }
   .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
-  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
   .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: 0.72rem; color: var(--faint); }
   .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); }
   .tag.warn { color: var(--text); }
   .reach { display: flex; gap: 8px; align-items: baseline; font-size: 0.82rem; }
   .rl { color: var(--muted); }
-  .rv { font-weight: 500; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .rv { font-weight: 700; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .rv.within { color: var(--accent); }
   .short { display: none; }
   @media (min-width: 900px) {
@@ -114,7 +114,7 @@
     h2 { font-size: 0.98rem; }
     .close { width: 24px; height: 24px; }
     .mlabel { display: none; }
-    .val { font-size: 1rem; }
+    .val { font-size: 1.15rem; }
     .rank { flex-basis: auto; font-size: 0.78rem; margin: 0; }
     .rank::before { content: '· '; color: var(--muted); }
     .long { display: none; }

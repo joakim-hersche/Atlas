@@ -143,23 +143,23 @@
 <style>
   .legend { font-size: 0.8rem; min-width: 0; }
   .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; margin-bottom: 4px; }
-  .unit { color: var(--text); font-weight: 500; min-width: 0; flex: 1 1 120px; }
+  .unit { color: var(--text); font-weight: 600; min-width: 0; flex: 1 1 120px; }
   .seg { flex: none; margin-left: auto; }
   .per { color: var(--muted); font-weight: 400; }
   .seg button { padding: 2px 7px; font-size: 0.72rem; }
   .plot { width: 100%; }
   svg { display: block; overflow: visible; }
-  .base { stroke: var(--border-strong); stroke-width: 1; }
-  .brk { stroke: var(--text); stroke-width: 0.75; stroke-dasharray: 2 2; opacity: 0.55; }
+  .base { stroke: var(--ink); stroke-width: 1; }
+  .brk { stroke: var(--text); stroke-width: 0.75; stroke-dasharray: 2 2; opacity: 0.7; }
   .zero { stroke: var(--text); stroke-width: 1; }
   .md { fill: var(--text); }
-  .mdl { font: 500 10px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+  .mdl { font: 700 10px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
   .tk { stroke: var(--plot-axis); }
-  .tl { font: 10px var(--font-mono); fill: var(--muted); }
+  .tl { font: 10px var(--font-mono); fill: var(--text); }
   .classes { display: grid; gap: 0 3px; margin-top: 2px; }
   .cls { display: flex; flex-direction: column; min-width: 0; }
   .sw { height: 4px; margin-bottom: 2px; }
-  .rng { font-size: 0.66rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rng { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cn { font-size: 0.7rem; color: var(--text); }
   .meta { margin: 5px 0 0; color: var(--muted); font-size: 0.74rem; }
   .foot { margin: 2px 0 0; }

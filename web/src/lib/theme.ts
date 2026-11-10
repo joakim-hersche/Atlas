@@ -1,24 +1,10 @@
 // Colour tokens shared by CSS and the map. CSS owns the UI values (app.css); the map reads them.
-// Dark when the host sets data-theme="dark", or when no explicit theme is set and the OS is dark.
-const mq = window.matchMedia('(prefers-color-scheme: dark)');
-const root = document.documentElement;
-const listeners = new Map<() => void, MutationObserver>();
+// The site is light only (decision D29: white Swiss style). `dark` is kept as a constant so the
+// call sites stay simple; it never matches and never fires.
 export const dark = {
-  get matches(): boolean {
-    const t = root.getAttribute('data-theme');
-    return t === 'dark' || (t !== 'light' && mq.matches);
-  },
-  addEventListener(_type: 'change', cb: () => void) {
-    mq.addEventListener('change', cb);
-    const mo = new MutationObserver(cb);
-    mo.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-    listeners.set(cb, mo);
-  },
-  removeEventListener(_type: 'change', cb: () => void) {
-    mq.removeEventListener('change', cb);
-    listeners.get(cb)?.disconnect();
-    listeners.delete(cb);
-  },
+  matches: false as boolean,
+  addEventListener(_type: 'change', _cb: () => void) {},
+  removeEventListener(_type: 'change', _cb: () => void) {},
 };
 
 export function token(name: string): string {

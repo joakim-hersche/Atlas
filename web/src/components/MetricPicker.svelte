@@ -109,39 +109,39 @@
   .picker { position: relative; min-width: 0; }
   .btn {
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; text-align: left; cursor: pointer;
-    background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--panel); border: 1px solid var(--ink);
   }
-  .btn:hover { border-color: var(--accent); }
+  .btn:hover { box-shadow: inset 0 0 0 1px var(--ink); }
   .tag {
     flex: none; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; width: 18px; height: 18px; display: grid;
-    place-items: center; border-radius: 2px; background: var(--text); color: var(--panel);
+    place-items: center; background: var(--accent); color: var(--accent-text); font-family: var(--font-sans); font-weight: 700;
   }
   .lbl { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.2; }
   .theme { font-size: 0.62rem; }
-  .name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chev { flex: none; color: var(--muted); }
+  .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chev { flex: none; color: var(--text); }
   .pop {
     position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: max(100%, 360px); max-width: calc(100vw - 16px);
-    background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow);
+    background: var(--panel); border: 1px solid var(--ink); border-top: 3px solid var(--ink);
     display: flex; flex-direction: column; max-height: min(460px, 70vh);
   }
   .search { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--border); }
   .search input {
-    flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius);
-    background: var(--panel-2); font-size: 16px;
+    flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink);
+    background: var(--panel); font-size: 16px;
   }
-  .x { border: 0; background: none; width: 32px; font-size: 1.2rem; cursor: pointer; color: var(--muted); }
+  .x { border: 0; background: none; width: 32px; font-size: 1.2rem; cursor: pointer; color: var(--text); }
   .list { overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
-  .grp { padding: 10px 10px 3px; font-size: 0.64rem; position: sticky; top: 0; background: var(--panel); }
+  .grp { padding: 12px 10px 4px; font-size: 0.66rem; position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--rule); }
   .opt {
     display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 5px 10px; border: 0; background: none;
     text-align: left; cursor: pointer; align-items: baseline;
   }
-  .opt.active { background: var(--accent-soft); }
-  .opt[aria-selected='true'] .ol { color: var(--accent); font-weight: 500; }
+  .opt.active { background: var(--panel-2); }
+  .opt[aria-selected='true'] .ol { color: var(--accent); font-weight: 600; }
   .opt[aria-selected='true'] { box-shadow: inset 2px 0 0 var(--accent); }
   .ol { min-width: 0; }
-  .om { flex: none; color: var(--faint); font-size: 0.72rem; font-family: var(--font-mono); max-width: 45%; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .om { flex: none; color: var(--muted); font-size: 0.72rem; font-family: var(--font-mono); max-width: 45%; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .empty { padding: 10px; color: var(--muted); margin: 0; }
   .hint { padding: 8px 10px 0; margin: 0; }
   @media (max-width: 899px) {
