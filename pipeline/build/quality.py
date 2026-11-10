@@ -39,12 +39,17 @@ def _state_from_period(period: str, default: dt.date) -> dt.date:
     except ValueError:
         pass
     return default
-# (metric_a, metric_b, description, relative tolerance) – same quantity from different sources
+# Same quantity from different sources. lag: b's period = a's period + lag (years);
+# periods: explicit (period_a, period_b) pair; min_year: compare from this year on.
 CROSS_CHECKS = [
-    ("pop_total", "bil_pop_dec", "STATPOP population vs. demographic balance stock at 31 Dec", 0.001),
-    ("hh_persons", "pop_total", "Persons in private households vs. STATPOP population (institutions explain the gap)", 0.10),
-    ("gws_dwellings", "vac_dwelling_stock", "GWS dwellings vs. dwelling stock in the vacancy count (stock = GWS of the previous year)", 0.05),
-    ("geo_area_land_ha", "area_total_ha", "Land area (swissBOUNDARIES3D, without lakes) vs. land-use statistics total area", 0.05),
+    dict(a="pop_total", b="bil_pop_dec", tol=0.001, min_year=2011,
+         desc="STATPOP population vs. demographic balance stock at 31 Dec (2011+; 2010 is ESPOP-based in the balance)"),
+    dict(a="hh_persons", b="pop_total", tol=0.10,
+         desc="Persons in private households vs. STATPOP population (institutions explain the gap)"),
+    dict(a="gws_dwellings", b="vac_dwelling_stock", tol=0.001, lag=1,
+         desc="GWS dwellings of year t vs. dwelling stock in the vacancy count of year t+1 (BFS's own denominator)"),
+    dict(a="geo_area_land_ha", b="area_total_ha", tol=0.05, periods=("2026", "2013/18"),
+         desc="Land area (swissBOUNDARIES3D 2026, without lakes) vs. land-use statistics total area 2013/18"),
 ]
 
 
@@ -62,9 +67,27 @@ def _may_be_negative(m: dict) -> bool:
     return m.get("allow_negative") is True or any(k in i for k in ("net_", "_net", "balance", "change"))
 
 
+_POP_CACHE: dict[int, pd.Series] = {}
+
+
+def _pop_by_hist(year: int) -> pd.Series:
+    """Population per municipality version (histId) from STATPOP geodata, years 2010–2025."""
+    from pipeline.sources.bfs_statpop_geodata.fetch import FIRST_LV95_YEAR, LAST_YEAR, municipalities
+    y = min(max(year, FIRST_LV95_YEAR), LAST_YEAR)
+    if y not in _POP_CACHE:
+        d = pd.read_parquet(municipalities(y))
+        h = "GDEHISTID" if "GDEHISTID" in d.columns else "GDE_HISTID"
+        _POP_CACHE[y] = d.set_index(d[h].astype("int64"))["BBTOT"].astype(float)
+    return _POP_CACHE[y]
+
+
 def transfer_effect(metric_rows: pd.DataFrame, source_state: dt.date, level: str) -> pd.Series:
     """Per canton or district: value of territory whose canton/district differs between
-    source_state and the reference state (positive = gained on current boundaries)."""
+    source_state and the reference state (positive = gained on current boundaries).
+
+    When the moved municipality merged into a larger one (Clavaleyres → Murten, Vellerat →
+    Courrendlin), only its share of the merged target moved: the share is estimated from
+    STATPOP population of the predecessor versions (nearest year 2010–2025; an estimate)."""
     col = {"kanton": "canton", "bezirk": "district_nr"}[level]
     mv, _ = load_backbone()
     cw = pd.read_parquet(interim_path("backbone", f"crosswalk_{REFERENCE_DATE.isoformat()}.parquet"))
@@ -72,11 +95,20 @@ def transfer_effect(metric_rows: pd.DataFrame, source_state: dt.date, level: str
     now_v = versions_at(mv, REFERENCE_DATE)[["hist_id", col]].rename(columns={col: "u_now"})
     m = cw.merge(then_v, left_on="from_hist_id", right_on="hist_id").merge(
         now_v, left_on="to_hist_id", right_on="hist_id", suffixes=("", "_now"))
+    allpred = cw.merge(then_v, left_on="from_hist_id", right_on="hist_id")
     m = m[m["u_then"].astype(str) != m["u_now"].astype(str)]
     if m.empty:
         return pd.Series(dtype=float)
     vals = metric_rows.set_index("unit_id")["value"]
-    m["v"] = m["to_bfs_nr"].astype(str).map(vals) * m["weight"]
+    pop = _pop_by_hist(source_state.year)
+    allpred["p"] = allpred["from_hist_id"].map(pop).fillna(0) * allpred["weight"]
+    tot = allpred.groupby("to_hist_id")["p"].sum()
+    m["p"] = m["from_hist_id"].map(pop).fillna(0) * m["weight"]
+    frac = (m["p"] / m["to_hist_id"].map(tot).replace(0, np.nan))
+    # single predecessor (pure transfer) -> whole target moved
+    n_pred = allpred.groupby("to_hist_id")["from_hist_id"].nunique()
+    frac = frac.where(m["to_hist_id"].map(n_pred) > 1, 1.0).fillna(1.0)
+    m["v"] = m["to_bfs_nr"].astype(str).map(vals) * frac
     gain = m.groupby(m["u_now"].astype(str))["v"].sum()
     loss = m.groupby(m["u_then"].astype(str))["v"].sum()
     return gain.sub(loss, fill_value=0)
@@ -99,13 +131,28 @@ class Store:
         return self.con.execute(body.replace("{M}", f"read_parquet('{self.path}')")).df()
 
 
+def _pseudo_owner(unit_id: str, canton_by_nr: dict) -> str:
+    """Canton (or district) a pseudo-unit belongs to: '<owner>:<code>' or a vote code 9KK0/9KK2."""
+    u = str(unit_id)
+    if ":" in u:
+        return u.split(":", 1)[0]
+    if u.isdigit() and len(u) == 4 and u.startswith("9"):
+        return canton_by_nr.get(int(u[1:3]), "")
+    return ""
+
+
 def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame) -> pd.DataFrame:
     sums = set(meta.loc[(meta["aggregation"] == "sum") & (meta["kind"] == "base"), "id"])
-    native = obs[(obs["provenance"] == "native") & obs["metric_id"].isin(sums) & (obs["status"] == "ok")]
+    native = obs[(obs["provenance"] == "native") & obs["metric_id"].isin(sums) & (obs["status"] == "ok")
+                 & obs["level"].isin(["kanton", "bezirk", "schweiz"])]
+    kt = pd.read_parquet(interim_path("backbone", "canton.parquet"))
+    canton_by_nr = dict(zip(kt["canton_id"].astype(int), kt["canton"]))
+    pseudo = obs[(obs["level"] == "pseudo") & (obs["status"] == "ok")].copy()
+    pseudo["owner"] = pseudo["unit_id"].map(lambda u: _pseudo_owner(u, canton_by_nr))
     rows = []
     for (sid, lvl, metric), nat in native.groupby(["source_id", "level", "metric_id"]):
         agg = metrics_all.rows(lvl, metric)
-        j = nat.merge(agg[["unit_id", "period", "value", "n_missing"]], on=["unit_id", "period"],
+        j = nat.merge(agg[["unit_id", "period", "value", "n_missing", "n_units"]], on=["unit_id", "period"],
                       suffixes=("_pub", "_agg"))
         if j.empty:
             continue
@@ -115,9 +162,18 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
             state0 = dt.date.fromisoformat(nat["vintage"].iloc[0])
             gem = metrics_all.rows("gemeinde", metric)
             for per, jj in j.groupby("period"):
-                state = _state_from_period(per, state0) if sid in STATE_FROM_PERIOD else state0
+                # published canton results refer to the territory of the vote/election date;
+                # district results are on the source's own state (E2)
+                state = _state_from_period(per, state0) if (sid in STATE_FROM_PERIOD and lvl == "kanton") else state0
                 eff = transfer_effect(gem[gem["period"] == per], state, lvl)
                 j.loc[jj.index, "explained"] = jj["unit_id"].astype(str).map(eff).fillna(0).values
+        if lvl in ("kanton", "bezirk") and len(pseudo):
+            # amounts the source assigns to a canton/district but to no municipality (E1)
+            ps = pseudo[(pseudo["source_id"] == sid) & (pseudo["metric_id"] == metric)]
+            if len(ps):
+                psum = ps.groupby(["owner", "period"])["value"].sum()
+                key = list(zip(j["unit_id"].astype(str), j["period"]))
+                j["explained"] = j["explained"] - pd.Series([psum.get(k, 0.0) for k in key], index=j.index)
         if lvl == "schweiz":
             # persons the source could not attribute to a municipality are in the national total
             un = obs[(obs["source_id"] == sid) & (obs["level"] == "unallocated") & (obs["metric_id"] == metric)]
@@ -128,11 +184,18 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
         tol = float(md.get("additivity_tolerance")) if isinstance(md.get("additivity_tolerance"), (int, float)) and md.get("additivity_tolerance") == md.get("additivity_tolerance") else TOL_REL
         note = md.get("additivity_note") if isinstance(md.get("additivity_note"), str) else ""
         documented = (j["residual"].abs() > 0.5) & (j["rel"] > TOL_REL) & (j["rel"] <= tol)
-        bad = j[(j["residual"].abs() > 0.5) & ((j["rel"] > tol) | j["rel"].isna())]
+        rnd = md.get("additivity_rounding") if isinstance(md.get("additivity_rounding"), (int, float)) else None
+        if rnd and rnd == rnd:  # each municipal cell rounded to `rnd` units (E4)
+            n_units = agg.set_index(["unit_id", "period"])["n_units"]
+            lim = pd.Series([n_units.get(k, 1) for k in zip(j["unit_id"], j["period"])], index=j.index) * rnd / 2
+            documented |= (j["residual"].abs() > 0.5) & (j["residual"].abs() <= lim)
+        # published values the source itself estimated (precision modelled) (E5)
+        documented |= (j["residual"].abs() > 0.5) & (j["precision"] == "modelled")
+        bad = j[(j["residual"].abs() > 0.5) & ~documented & ((j["rel"] > TOL_REL) | j["rel"].isna())]
         rows.append({"source_id": sid, "level": lvl, "metric_id": metric, "n_compared": len(j),
                      "n_exact": int((j["diff"].abs() <= 0.5).sum()),
                      "n_explained_canton_transfer": int(((j["diff"].abs() > 0.5) & (j["residual"].abs() <= 0.5)).sum()),
-                     "n_within_tol": int(((j["residual"].abs() > 0.5) & (j["rel"] <= TOL_REL)).sum()),
+                     "n_within_tol": int(((j["residual"].abs() > 0.5) & (j["rel"] <= TOL_REL) & ~documented).sum()),
                      "n_documented": int(documented.sum()), "note": note,
                      "n_fail": len(bad), "max_rel_residual": float(j["rel"].max(skipna=True) or 0),
                      "worst": bad.reindex(bad["rel"].sort_values(ascending=False).index).head(3)[
@@ -159,7 +222,8 @@ def check_ranges(metrics_all: "Store", meta: pd.DataFrame) -> pd.DataFrame:
 
 
 def check_jumps(metrics_all: "Store", meta: pd.DataFrame) -> pd.DataFrame:
-    counts = meta.loc[(meta["aggregation"] == "sum") & (meta["kind"] == "base"), "id"].tolist()
+    vol = meta["volatile"].fillna(False).astype(bool) if "volatile" in meta else False
+    counts = meta.loc[(meta["aggregation"] == "sum") & (meta["kind"] == "base") & ~vol, "id"].tolist()
     lst = ", ".join("'" + i + "'" for i in counts)
     f = metrics_all.sql(f"""WITH g AS (
             SELECT metric_id, unit_id, CAST(period AS INTEGER) AS year, value, precision,
@@ -194,13 +258,22 @@ def check_coverage(metrics_all: "Store", meta: pd.DataFrame) -> pd.DataFrame:
 
 def check_cross_source(metrics_all: pd.DataFrame) -> pd.DataFrame:
     out = []
-    for a, b, desc, tol in CROSS_CHECKS:
+    for c in CROSS_CHECKS:
+        a, b, desc, tol = c["a"], c["b"], c["desc"], c["tol"]
         A = metrics_all.rows("gemeinde", a)
         B = metrics_all.rows("gemeinde", b)
-        A, B = A[A["status"] == "ok"], B[B["status"] == "ok"]
+        A, B = A[A["status"] == "ok"].copy(), B[B["status"] == "ok"].copy()
         if A.empty or B.empty:
             out.append({"check": desc, "result": "not run (metric missing)"})
             continue
+        if "periods" in c:
+            A = A[A["period"] == c["periods"][0]]
+            B = B[B["period"] == c["periods"][1]].assign(period=c["periods"][0])
+        if c.get("lag"):
+            B = B[B["period"].str.fullmatch(r"\d{4}")]
+            B["period"] = (B["period"].astype(int) - c["lag"]).astype(str)
+        if c.get("min_year"):
+            A = A[A["period"].str[:4].astype(int) >= c["min_year"]]
         j = A.merge(B, on=["unit_id", "period"], suffixes=("_a", "_b"))
         j["rel"] = (j["value_a"] - j["value_b"]).abs() / j["value_a"].abs().replace(0, np.nan)
         out.append({"check": desc, "result": f"{int((j['rel'] <= tol).sum())} of {len(j)} within {tol:.1%}",
@@ -213,7 +286,7 @@ def run() -> str:
     allm = Store(interim_path("metrics_all.parquet"))
     obs = duckdb.connect().execute(
         f"SELECT * FROM read_parquet('{interim_path('observation.parquet')}') "
-        "WHERE provenance = 'native' OR level = 'unallocated'").df()
+        "WHERE provenance = 'native' OR level IN ('unallocated', 'pseudo')").df()
     A = check_additivity(allm, obs, meta)
     B = check_ranges(allm, meta)
     C = check_jumps(allm, meta)
@@ -246,7 +319,8 @@ def run() -> str:
         L += ["No published higher-level values available yet."]
     L += ["", "## B. Ranges", ""]
     L += ([f"- **{r.metric_id}**: {r.issues} — e.g. {r.examples}" for r in B.itertuples()] or ["All shares within 0–100, no negative counts."])
-    L += ["", f"## C. Year-on-year jumps (> {JUMP_REL:.0%} and > {JUMP_MIN_ABS} units)", ""]
+    L += ["", f"## C. Year-on-year jumps (> {JUMP_REL:.0%} and > {JUMP_MIN_ABS} units)", "",
+          "Metrics marked `volatile` (lumpy series such as construction investment) are excluded.", ""]
     if len(C):
         L += ["| Metric | Flags | Series | Largest |", "|---|---|---|---|"]
         L += [f"| {r.metric_id} | {r.n_flags} | {r.n_series} | {r.top[:2]} |" for r in C.sort_values("n_flags", ascending=False).itertuples()]
