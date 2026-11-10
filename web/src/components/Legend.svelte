@@ -39,10 +39,14 @@
     warn?: { text: string; action?: string; onaction?: () => void; action2?: string; onaction2?: () => void } | null;
     /** B2: values hidden as small numbers (counted apart from units without data, with a way to show them) */
     nHidden?: number;
+    /** B3: meaning of the two ends of a diverging scale (default: the vote and leaning maps' own) */
+    sides?: { left: string; right: string } | null;
+    /** level shown (J8: single-seat cantons below canton level are counted in units of that level) */
+    level?: string;
     /** a small legend over the map (phone with the sheet folded, embeds): unit, the coloured axis, nothing else */
     mini?: boolean;
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [], mask = null, title = null, warn = null, mini = false, nHidden = 0 }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [], mask = null, title = null, warn = null, mini = false, nHidden = 0, sides = null, level = '' }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
@@ -174,7 +178,9 @@
     </svg>
   </div>
 
-  {#if scale.fixed && meta.id === 'vote_yes_share'}
+  {#if sides}
+    <div class="sides"><span>← {sides.left}</span><span>{sides.right} →</span></div>
+  {:else if scale.fixed && meta.id === 'vote_yes_share'}
     <div class="sides"><span>← {tr('lg.no')}</span><span>{tr('lg.yes')} →</span></div>
   {:else if scale.fixed && meta.id === 'nrw_leaning'}
     <div class="sides"><span>← {tr('lg.leftLean')}</span><span>{tr('lg.rightLean')} →</span></div>
@@ -197,7 +203,7 @@
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if nHidden > 0}<span> · <span class="hatch"></span> {tr('r3.hiddenN', { n: fmtNumber(nHidden, 0) })}
       <button type="button" class="link" onclick={() => (app.unstable = 'show')}>{tr('r3.showThem')}</button></span>{/if}
-    {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> <span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}<Term k="majority_election" />
+    {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> {#if level && level !== 'kanton'}{tr('r3.majUnits', { n: fmtNumber(nMaj, 0), units: unitWord })}{:else}<span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}{/if}<Term k="majority_election" />
       <button type="button" class="link" onclick={() => (app.maj = true)}>{tr('lg.majInclude')}</button></span>
     {:else if nMajIn > 0}<span class="majl"> · {tr('lg.majIncluded', { n: fmtNumber(nMajIn, 0) })}
       <button type="button" class="link" onclick={() => (app.maj = false)}>{tr('lg.majExclude')}</button></span>{/if}

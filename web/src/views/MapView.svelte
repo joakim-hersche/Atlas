@@ -40,7 +40,7 @@
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
-  import { FLAG, majorityMask, precisionText } from '../lib/data';
+  import { FLAG, majorityCount, majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, loadFine, loadFineLines, FINE_LEVELS, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -333,6 +333,17 @@
     if (!cmpActive || !metaChg || !app.cmpFrom || !cmpTo) return null;
     const u = metaChg.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaChg);
     return `${t('ux.chgTitle', { metric: ml(metaRaw), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
+  });
+  /** J8: single-seat cantons at their level: "8 cantons" at canton level, "12 districts in single-seat cantons" below */
+  const majorityText = (k: number) => (ld.level === 'kanton' ? `${fmtNumber(k, 0)} ${t('lg.maj')}` : t('r3.majUnits', { n: fmtNumber(k, 0), units: word }));
+  /** B3: what the two ends of a diverging scale mean (legend and PNG) */
+  const sides = $derived.by<{ left: string; right: string } | null>(() => {
+    if (!scaleA?.diverging) return null;
+    if (metaA.id === 'vote_yes_share') return scaleA.fixed ? { left: t('lg.no'), right: t('lg.yes') } : null;
+    if (metaA.id === 'nrw_leaning') return { left: t('lg.leftLean'), right: t('lg.rightLean') };
+    if (metaA.id === 'vote_yes_share_diff') return { left: t('r3.lessYes'), right: t('r3.moreYes') };
+    if (cmpActive) return { left: t('r3.down'), right: t('r3.up') };
+    return null;
   });
   /** U13: sparse metrics (partial coverage): the warning goes on top of the legend, with a zoom to the data */
   const sparse = $derived.by(() => {
@@ -1026,8 +1037,22 @@
       const lc = refLayer?.snapshot(img.width, img.height, img.width / Math.max(1, mapEl.clientWidth));
       if (lc) layers.push(lc);
       const sLeg = spatialLegendItems();
-      const legend: LegendItem[] = sLeg ?? legendItems(scaleA, metaA);
-      if (!sLeg && scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
+      const legend: LegendItem[] = (sLeg ?? legendItems(scaleA, metaA)).slice();
+      /** class swatches (a continuous scale draws a gradient instead; the pattern rows after them stay) */
+      const nClass = legend.length;
+      // B3: every pattern on the map is explained, with its count (no data, hidden small numbers, single-seat cantons)
+      const notes: string[] = [];
+      if (!sLeg) {
+        const nMaj = native ? 0 : majorityCount(colA);
+        const nH = native ? 0 : nHidden;
+        const nGap = (native ? native.v.length : nUnits) - scaleA.n - nMaj - nH;
+        const w = native?.word ?? word;
+        if (nGap > 0) legend.push({ colour: null, label: `${t('lg.noData')} (${fmtNumber(nGap, 0)} ${w})` });
+        if (nH > 0) legend.push({ colour: null, label: t('r3.hiddenN', { n: fmtNumber(nH, 0) }) });
+        if (nMaj > 0) legend.push({ colour: null, pattern: 'dots', label: `${majorityText(nMaj)}` });
+        if (nH > 0) notes.push(t('r3.pngHidden'));
+        if (regional) notes.push(t('rg.note', { level: levelName(regional, false) }));
+      }
       if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
       if (filtered) legend.push({ colour: token('--muted-fill') || '#ececec', label: t('ex.notMatching') });
       if (reachOn && reachMask && !reachFilter) legend.push({ colour: lighten(scaleA.classColours[2] ?? '#6290bb', 0.78), label: t('ux.notReached', { t: Math.round(app.t) }) });
@@ -1036,20 +1061,24 @@
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
         : null;
       const src = base.sources.get(metaA.source);
-      const sub = [unitOf(metaA), fmtPeriod(colA.period, true), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
+      // B3: the classification actually drawn (fixed classes of a vote or leaning map are not quantiles)
+      const clsText = sLeg ? '' : scaleA.fixed ? t('r3.clsFixed') : t(`lg.m.${scaleA.method}`);
+      const sub = [metaA.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaA), fmtPeriod(colA.period, true), levelName(ld.level), clsText].filter(Boolean).join(' · ');
       const extra: string[] = [];
-      if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
-      if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
+      if (filtered) extra.push(`${t('tab.filters')}${colon()}${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
+      if (reachOn) extra.push(`${t('rc.from')} ${hub.name}${colon()}${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
       const blob = await figurePNG({
         layers, scale: img.width / Math.max(1, mapEl.clientWidth), title: spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : spatialMode === 'lisa' ? t('sp.legendTitle', { metric: ml(metaA) }) : ml(metaA), subtitle: [sub, ...extra].join('\n'),
-        legend: gradient ? [] : legend, gradient,
+        legend: gradient ? legend.slice(nClass) : legend, gradient,
+        sides: !sLeg && sides ? { ...sides, leftColour: token('--div-n3') || undefined, rightColour: token('--div-p3') || undefined } : null,
+        notes,
         credits: [
-          `${t('lg.source')}: ${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
+          `${t('lg.source')}${colon()}${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
           `${t('ex.boundaries')} · ${t('ex.made')}`,
         ],
         link: t('ex.view', { url: location.href }),
       });
-      downloadBlob(blob, `atlas-${slug(ml(metaA))}-${slug(colA.period)}.png`);
+      downloadBlob(blob, `atlas-${slug(cmpActive ? `${ml(metaRaw)} ${t('yc.change')}` : ml(metaA))}-${slug(colA.period)}.png`);
     } finally {
       pngBusy = false;
     }
@@ -1287,7 +1316,7 @@
           {:else if scaleA && colA}
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle} warn={legendWarn}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} nHidden={native ? 0 : nHidden} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} nHidden={native ? 0 : nHidden} {sides} level={ld.level} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
           {:else if refA === undefined}
@@ -1468,7 +1497,7 @@
             <div class="fl-t">{ml(metaA)}</div>
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} nHidden={native ? 0 : nHidden} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} nHidden={native ? 0 : nHidden} {sides} level={ld.level} />
           {/if}
         </div>
       {/if}

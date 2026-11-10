@@ -23,6 +23,13 @@ const EN: Record<string, string> = {
   'r3.rgHidden': 'Small-number values are hidden on the map, so they are left out here too ({n}).',
   'r3.rgShown': 'Small-number values are shown on the map; here they are left out only if you tick the box.',
   'r3.csvHidden': 'small numbers hidden',
+  "r3.lessYes": "fewer yes votes than Switzerland",
+  "r3.moreYes": "more yes votes than Switzerland",
+  "r3.down": "decrease",
+  "r3.up": "increase",
+  "r3.clsFixed": "fixed classes",
+  "r3.majUnits": "{n} {units} in single-seat cantons (majority election), not compared",
+  "r3.pngHidden": "Hatched “hidden”: values resting on small numbers (one person more or less moves them a lot), left out of the classes.",
 };
 
 const DE: Record<string, string> = {
@@ -41,6 +48,13 @@ const DE: Record<string, string> = {
   'r3.rgHidden': 'Werte mit kleinen Zahlen sind auf der Karte ausgeblendet und fehlen deshalb auch hier ({n}).',
   'r3.rgShown': 'Werte mit kleinen Zahlen sind auf der Karte sichtbar; hier fehlen sie nur, wenn Sie das Kästchen ankreuzen.',
   'r3.csvHidden': 'kleine Zahlen ausgeblendet',
+  "r3.lessYes": "weniger Ja als die Schweiz",
+  "r3.moreYes": "mehr Ja als die Schweiz",
+  "r3.down": "Abnahme",
+  "r3.up": "Zunahme",
+  "r3.clsFixed": "feste Klassen",
+  "r3.majUnits": "{n} {units} in Kantonen mit einem Sitz (Majorzwahl), nicht verglichen",
+  "r3.pngHidden": "Schraffiert «ausgeblendet»: Werte, die auf kleinen Zahlen beruhen (eine Person mehr oder weniger verschiebt sie stark), nicht in den Klassen.",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -59,6 +73,13 @@ export const FR_R3: Record<string, string> = {
   'r3.rgHidden': `Les valeurs à petits nombres sont masquées sur la carte, elles sont donc aussi exclues ici ({n}).`,
   'r3.rgShown': `Les valeurs à petits nombres sont affichées sur la carte${n}; ici, elles ne sont exclues que si vous cochez la case.`,
   'r3.csvHidden': 'petits nombres masqués',
+  "r3.lessYes": "moins de oui que la Suisse",
+  "r3.moreYes": "plus de oui que la Suisse",
+  "r3.down": "baisse",
+  "r3.up": "hausse",
+  "r3.clsFixed": "classes fixes",
+  "r3.majUnits": "{n} {units} dans des cantons à un siège (élection majoritaire), non comparées",
+  "r3.pngHidden": "Hachuré « masqué » : valeurs reposant sur de petits nombres (une personne de plus ou de moins les déplace fortement), exclues des classes.",
 };
 
 addStrings(EN, DE);
