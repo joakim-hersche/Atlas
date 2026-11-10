@@ -192,7 +192,8 @@
           <span class="why">{e.gap} · {fmtPeriod(e.period)}</span>
         {:else}
           {#if mark}<span class="mk">{mark.text}</span>{/if}
-          <span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}</span>
+          <span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span>
+          {#each e.flags as f}<span class="why">{f}</span>{/each}
           <span class="yr">{fmtPeriod(e.period)}{#if e.rank}{' · '}{t('pl.rank', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{tiedText(e.rank)}{/if}</span>
           {#if e.rank}<PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />{/if}
         {/if}
@@ -296,6 +297,7 @@
   td.ext { box-shadow: inset 3px 0 0 var(--border); }
   .nd { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
   .why { display: block; font-size: 0.72rem; margin-top: 2px; }
+  .fl { font-size: 0.6rem; color: var(--accent); margin-left: 2px; }
   .morer td { border-left: 0; padding: 6px 0 2px; }
   .more { border: 1px solid var(--ink); background: none; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; position: sticky; left: 0; }
   .more[aria-expanded='true'] { background: var(--ink); color: var(--ink-text); }

@@ -38,6 +38,12 @@ export function interpolate(stops: string[], t: number): string {
   return rgbToHex([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]);
 }
 
+/** Tint a colour toward white, keeping its hue (unstable small-number values drawn lighter). */
+export function lighten(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex([r + (255 - r) * amount, g + (255 - g) * amount, b + (255 - b) * amount]);
+}
+
 /** Desaturate a colour and pull it toward the map surface (for filtered-out or unreached units). */
 export function mute(hex: string, surface: string, amount: number): string {
   const [r, g, b] = hexToRgb(hex);

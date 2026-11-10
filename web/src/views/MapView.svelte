@@ -22,8 +22,8 @@
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
-    type MetricMeta, type ReachFile, type UnitRow,
+    flagMarks, flagsOf, isUnstable, gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
   import { T_MAX, type CatField, type ReachMode } from '../lib/hash';
@@ -35,7 +35,7 @@
   import { profileHref, sourceHref } from '../lib/nav';
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
   import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachReason, type ReachKind } from '../lib/pt';
-  import { divRamp, mute, seqRamp, token } from '../lib/theme';
+  import { divRamp, lighten, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
     base: Base;
@@ -96,10 +96,35 @@
           unit: 'pp', unit_de: 'Pp.', unit_fr: 'pp', aggregation: 'change:vote_yes_share', direction: 'neutral', decimals: 1, headline: null }
       : metaRaw,
   );
-  const refA = $derived(
+  const refDiff = $derived(
     vdiff && refRaw && chA
       ? { ...refRaw, meta: metaA, col: { ...refRaw.col, v: refRaw.col.v.map((x) => (x === null ? null : Math.round((x - chA!.value) * 100) / 100)) } }
       : refRaw,
+  );
+  // small numbers (D32): units whose value rests on a small base or count (flag bits 1/2)
+  const unstableIdx = $derived.by(() => {
+    const r = refRaw;
+    if (!r?.col.f) return [] as number[];
+    const out: number[] = [];
+    for (const k of Object.keys(r.col.f)) if (isUnstable(r.file, r.col.f[k]) && r.col.v[+k] !== null) out.push(+k);
+    return out;
+  });
+  // 'hide': unstable values become gaps with their reason (classes, ranks and statistics leave them out)
+  const refA = $derived.by(() => {
+    const r = refDiff;
+    if (!r || app.unstable !== 'hide' || !unstableIdx.length) return r;
+    const v = r.col.v.slice();
+    const notes = [...(r.col.notes ?? []), t('fl.hidden')];
+    const n = { ...(r.col.n ?? {}) };
+    for (const i of unstableIdx) {
+      v[i] = null;
+      n[String(i)] = notes.length - 1;
+    }
+    return { ...r, col: { ...r.col, v, n, notes } };
+  });
+  // pooled multi-year rate of this annual metric, or the annual metric of this pooled one
+  const pooledAlt = $derived(
+    metaRaw.pooled ? metas.get(metaRaw.pooled.of) ?? null : (base.metrics.find((m) => m.pooled?.of === metaRaw.id && m.levels.includes(ld.level)) ?? null),
   );
   const colA = $derived(refA?.col);
   const scaleA = $derived.by(() => {
@@ -383,6 +408,7 @@
     });
   });
 
+  const lightSet = $derived(app.unstable === 'light' && unstableIdx.length ? new Set(unstableIdx) : null);
   const colours = $derived.by(() => {
     if (!scaleA || whyA) return ld.units.map(() => null);
     const surface = token('--map-bg');
@@ -391,6 +417,7 @@
       const c = out[i];
       if (c === null) continue;
       if (!match.m[i]) out[i] = mute(c, surface, 0.88);
+      else if (lightSet && lightSet.has(i)) out[i] = lighten(c, 0.62);
       else if (reachCol) {
         const x = reachCol.v[i];
         if (!(x !== null && x <= app.t)) out[i] = mute(c, surface, 0.72);
@@ -493,10 +520,13 @@
   const rankCols = $derived.by(() => {
     const out: RankColumn[] = [];
     const seen = new Set<string>();
-    const push = (key: string, tag: string, ref: { meta: MetricMeta; col: { v: (number | null)[]; period: string } } | null | undefined, label?: string) => {
+    const push = (key: string, tag: string, ref: { meta: MetricMeta; col: Column; file?: ColumnFile | null } | null | undefined, label?: string) => {
       if (!ref || seen.has(key)) return;
       seen.add(key);
-      out.push({ key, tag, meta: ref.meta, v: ref.col.v, period: ref.col.period, label });
+      const f = ref.file ?? null;
+      const col = ref.col;
+      const marks = col.f ? (i: number) => flagMarks(f, flagsOf(f, col, i)) : undefined;
+      out.push({ key, tag, meta: ref.meta, v: ref.col.v, period: ref.col.period, label, marks });
     };
     if (!whyA) push(metaA.id, 'Shade', refA);
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
@@ -533,6 +563,7 @@
       if (rc) layers.push(rc);
       const legend: LegendItem[] = legendItems(scaleA, metaA);
       if (scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
+      if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
       if (filtered) legend.push({ colour: mute(scaleA.classColours[2] ?? '#6290bb', token('--map-bg'), 0.88), label: t('ex.notMatching') });
       const lo = scaleA.lo, hi = scaleA.hi;
       const gradient = scaleA.method === 'continuous'
@@ -668,6 +699,9 @@
           </div>
         {/if}
         {#if refRaw?.voteMissing}<p class="foot">{t('vt.missing')}</p>{/if}
+        {#if pooledAlt && !whyA}
+          <p class="foot pl"><button type="button" class="link" onclick={() => (app.metric = pooledAlt!.id)}>{t(metaRaw.pooled ? 'fl.annual' : 'fl.pooled', { label: ml(pooledAlt) })}</button></p>
+        {/if}
         <div class="legend-wrap">
           {#if whyA}
             <p class="why">{whyA}</p>
@@ -678,6 +712,16 @@
             <p class="why">No values for {colA.period} at this level.</p>
           {:else if refA === undefined}
             <p class="foot">{t('status.loading')}</p>
+          {/if}
+          {#if unstableIdx.length && !whyA}
+            <div class="ur">
+              <span class="foot">{t('fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
+              <div class="seg" role="radiogroup" aria-label={t('fl.show')}>
+                {#each ['show', 'light', 'hide'] as const as o}
+                  <button type="button" role="radio" aria-checked={app.unstable === o} onclick={() => (app.unstable = o)}>{t(`fl.opt.${o}`)}</button>
+                {/each}
+              </div>
+            </div>
           {/if}
           {#if scaleA && colA && !whyA}
             <p class="exrow"><button type="button" class="exb" onclick={mapPNG} disabled={pngBusy} title={t('ex.pngT')}>{pngBusy ? t('ex.pngWait') : t('ex.pngMap')}</button></p>
@@ -870,6 +914,9 @@
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
   .exrow { margin: 6px 0 0; }
   .vd { margin-top: 6px; }
+  .ur { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin-top: 6px; }
+  .ur .seg button { padding: 2px 7px; font-size: 0.72rem; }
+  .pl { margin: 4px 0 0; }
   .vd button { padding: 3px 8px; font-size: 0.74rem; }
   .exb { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
   .exb:disabled { opacity: 0.5; cursor: progress; }

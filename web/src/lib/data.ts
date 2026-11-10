@@ -3,6 +3,7 @@ import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
 import { t, levelWord } from './i18n.svelte';
 import { periodTitles } from './classify';
+import { app } from './state.svelte';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
 
@@ -367,6 +368,38 @@ export function flagsOf(file: ColumnFile | null, col: Column, i: number): number
 export function hasFlag(file: ColumnFile | null, flags: number, name: FlagName): boolean {
   const bit = file?.flag_bits?.[name] ?? FLAG[name];
   return (flags & bit) !== 0;
+}
+
+/** Unstable small-number value (base or count below the metric's reliability rule). */
+export const isUnstable = (file: ColumnFile | null, flags: number) =>
+  flags !== 0 && (hasFlag(file, flags, 'small_base') || hasFlag(file, flags, 'small_count'));
+
+/** Short markers of a unit's flags, for tables and cards: △ small numbers, M majority election,
+ *  ° published value used, p provisional. */
+export function flagMarks(file: ColumnFile | null, flags: number): string {
+  if (!flags) return '';
+  let out = '';
+  if (isUnstable(file, flags)) out += '△';
+  if (hasFlag(file, flags, 'majority_election')) out += 'M';
+  if (hasFlag(file, flags, 'published_value')) out += '°';
+  if (hasFlag(file, flags, 'provisional')) out += 'p';
+  return out;
+}
+
+/** Full sentences for a unit's flags (card, profile), in the UI language. */
+export function flagTexts(file: ColumnFile | null, flags: number, meta: MetricMeta): string[] {
+  if (!flags) return [];
+  const out: string[] = [];
+  if (isUnstable(file, flags)) {
+    const r = meta.reliability;
+    const lang: string = app.lang;
+    const rule = r ? ((lang === 'de' ? r.rule_de : lang === 'fr' ? r.rule_fr : null) ?? r.rule_en ?? null) : null;
+    out.push(`△ ${t('fl.small')}${rule ? ` (${rule})` : ''}`);
+  }
+  if (hasFlag(file, flags, 'majority_election')) out.push(`M ${t('fl.majority')}`);
+  if (hasFlag(file, flags, 'published_value')) out.push(`° ${t('fl.published')}`);
+  if (hasFlag(file, flags, 'provisional')) out.push(`p ${t('fl.provisional')}`);
+  return out;
 }
 
 export function precisionOf(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta): string {

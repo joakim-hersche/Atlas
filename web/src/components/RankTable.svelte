@@ -13,6 +13,8 @@
     label?: string;
     v: (number | null)[];
     period: string;
+    /** flag markers of a unit's value (△ small numbers, M, °, p), when the column has flags */
+    marks?: (i: number) => string;
   }
   interface Props {
     columns: RankColumn[];
@@ -93,11 +95,15 @@
     for (const c of columns) {
       const lb = c.label ?? ml(c.meta);
       head.push(c.meta.unit ? `${lb} [${c.meta.unit}]` : lb, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
+      if (c.marks) head.push(`${lb} – ${t('ex.flags')}`);
     }
     const out: Cell[][] = [head];
     for (const i of sorted) {
       const r: Cell[] = [ids?.[i] ?? '', names[i], cantons[i] || ''];
-      for (const c of columns) r.push(c.v[i] ?? null, c.period, sourceName ? sourceName(c.meta.source) : c.meta.source);
+      for (const c of columns) {
+        r.push(c.v[i] ?? null, c.period, sourceName ? sourceName(c.meta.source) : c.meta.source);
+        if (c.marks) r.push(c.marks(i));
+      }
       out.push(r);
     }
     return out;
@@ -141,7 +147,7 @@
           <tr class:sel={i === sel} onclick={() => onselect(i)}>
             <td class="n num" title={rn?.tie ? t('rt.tie') : undefined}>{rn ? `${rn.tie ? '=' : ''}${rn.r}` : '–'}</td>
             <td class="nm"><button type="button" class="rowbtn" onclick={(e) => { e.stopPropagation(); onselect(i); }}>{names[i]}</button>{#if showCanton && cantons[i]}<span class="kt">{cantons[i]}</span>{/if}</td>
-            {#each columns as c (c.key)}<td class="v num">{fmt(c.v[i], c.meta)}</td>{/each}
+            {#each columns as c (c.key)}<td class="v num">{fmt(c.v[i], c.meta)}{#if c.marks}{@const mk = c.marks(i)}{#if mk}<sup class="fl" title={t('fl.key')}>{mk}</sup>{/if}{/if}</td>{/each}
           </tr>
         {/each}
       </tbody>
@@ -155,7 +161,7 @@
     <button type="button" onclick={copy} title={t('ex.copyT')}>{t('ex.copy')}</button>
     {#if copied}<span class="ok" role="status">{copied}</span>{/if}
   </div>
-  <p class="foot">{t('rt.foot', { units: unitWord })} {t('ex.note', { n: fmtNumber(rows.length, 0) })}</p>
+  <p class="foot">{t('rt.foot', { units: unitWord })} {t('ex.note', { n: fmtNumber(rows.length, 0) })}{#if columns.some((c) => c.marks)}{' '}{t('fl.key')}{/if}</p>
 </div>
 
 <style>
@@ -186,4 +192,5 @@
   .ex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
   .ex button { border: 1px solid var(--ink); background: var(--panel); padding: 4px 10px; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: var(--text); }
   .ok { font-size: 0.74rem; color: var(--text); }
+  .fl { font-size: 0.6rem; color: var(--accent); margin-left: 1px; font-family: var(--font-sans); }
 </style>

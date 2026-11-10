@@ -401,7 +401,8 @@
       <div class="mv nd"><span class="hatch"></span> {t('p.noData')}<span class="yr">{fmtPeriod(e.period)}</span></div>
       <div class="mr reason">{e.gap}</div><div class="ms"></div>
     {:else}
-      <div class="mv"><span class="v">{fmtValue(e.value, m)}</span><span class="yr">{fmtPeriod(e.period)}</span></div>
+      <div class="mv"><span class="v">{fmtValue(e.value, m)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span><span class="yr">{fmtPeriod(e.period)}</span>
+        {#each e.flags as f}<span class="fx">{f}</span>{/each}{#if e.note}<span class="fx">{e.note}</span>{/if}</div>
       <div class="mr">
         {#if e.rank}
           <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}{tiedText(e.rank)}</span>
@@ -630,6 +631,8 @@
   .mv { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
   .v { font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .yr { font-size: 0.7rem; color: var(--muted); }
+  .fl { font-size: 0.62rem; color: var(--accent); margin-left: 2px; }
+  .fx { font-size: 0.68rem; color: var(--text); text-align: right; line-height: 1.25; max-width: 16em; }
   .nd { color: var(--muted); font-size: 0.8rem; flex-direction: row; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
   .nd .yr { flex-basis: 100%; text-align: right; }
   .mr { display: flex; flex-direction: column; font-size: 0.74rem; line-height: 1.3; min-width: 0; }

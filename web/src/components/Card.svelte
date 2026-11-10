@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ml, t, tiedText } from '../lib/i18n.svelte';
-  import { gapReason, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
+  import { flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
   interface Reach {
@@ -54,6 +54,10 @@
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
+  /** flags of the value (small numbers, majority election, published value, provisional) */
+  const flags = $derived(value !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);
+  /** provenance note of a shown value (e.g. "published canton value; …") */
+  const note = $derived(value !== null ? noteOf(col, index) : null);
 </script>
 
 <div class="card" class:docked role="dialog" aria-label={name}>
@@ -81,6 +85,8 @@
       <span class="rank reason">{gapReason(file, col, index, meta, canton)}</span>
     </div>
   {/if}
+  {#each flags as f}<p class="flag">{f}</p>{/each}
+  {#if note}<p class="flag">{note}</p>{/if}
   {#each extra as x}
     <div class="extra"><span class="xl">{x.label}</span><span class="xv num">{x.value}</span></div>
   {/each}
@@ -154,6 +160,7 @@
   .yr { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
   .rank { flex-basis: 100%; font-size: 0.8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .reason { color: var(--text); }
+  .flag { margin: 3px 0 0; font-size: 0.76rem; color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; line-height: 1.3; }
   .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
   .extra { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8rem; margin-top: 4px; }
