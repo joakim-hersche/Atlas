@@ -115,7 +115,7 @@
   td.v { text-align: right; padding-left: 6px; white-space: nowrap; }
   td.n, th.n { width: 1%; color: var(--muted); padding-right: 6px; text-align: right; font-size: 0.72rem; }
   th.n { font-weight: 700; color: var(--text); padding: 4px 6px 4px 0; }
-  td.nm { max-width: 11em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.nm { max-width: 13em; line-height: 1.25; overflow-wrap: anywhere; }
   .rowbtn { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 500; text-align: left; }
   .kt { color: var(--muted); font-size: 0.7rem; margin-left: 4px; }
   tbody tr { cursor: pointer; }
