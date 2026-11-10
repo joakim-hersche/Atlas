@@ -1,5 +1,6 @@
 <script lang="ts">
   // Reach controls: hub picker, mode (off / public transport / car), time slider and Play.
+  import { t as tr } from '../lib/i18n.svelte';
   import type { Snippet } from 'svelte';
   import type { Hub } from '../lib/data';
   import { T_MAX, type ReachMode } from '../lib/hash';
@@ -23,29 +24,29 @@
 
 <div class="reach">
   <div class="row">
-    <label class="caps hl" for="hub-select">Reach from</label>
+    <label class="caps hl" for="hub-select">{tr('rc.from')}</label>
     <select id="hub-select" class="hub" value={hub} onchange={(e) => onhub(e.currentTarget.value)}>
       {#each hubs as h}<option value={h.slug}>{h.name}</option>{/each}
     </select>
-    <div class="seg" role="radiogroup" aria-label="Reach mode">
-      <button type="button" role="radio" aria-checked={mode === 'off'} onclick={() => onmode('off')}>Off</button>
-      <button type="button" role="radio" aria-checked={mode === 'pt'} title="Public transport" onclick={() => onmode('pt')}>
-        <span class="long">Public transport</span><span class="short">PT</span>
+    <div class="seg" role="radiogroup" aria-label={tr('rc.mode')}>
+      <button type="button" role="radio" aria-checked={mode === 'off'} onclick={() => onmode('off')}>{tr('rc.off')}</button>
+      <button type="button" role="radio" aria-checked={mode === 'pt'} title={tr('rc.pt')} onclick={() => onmode('pt')}>
+        <span class="long">{tr('rc.pt')}</span><span class="short">{tr('common.pt')}</span>
       </button>
       <button type="button" role="radio" aria-checked={mode === 'car'} disabled={!carAvailable}
-        title={carAvailable ? 'Car' : 'Car reach is not in this build'} onclick={() => onmode('car')}>Car</button>
+        title={carAvailable ? tr('common.car') : tr('rc.noCar')} onclick={() => onmode('car')}>{tr('common.car')}</button>
     </div>
   </div>
   {#if mode !== 'off'}
     <div class="time">
-      <button type="button" class="play" onclick={onplay} aria-label={playing ? 'Pause' : 'Play'}>
+      <button type="button" class="play" onclick={onplay} aria-label={playing ? tr('rc.pause') : tr('rc.play')}>
         {#if playing}
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>
         {:else}
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 2v12l10-6z" /></svg>
         {/if}
       </button>
-      <input type="range" min="0" max={T_MAX} step="1" value={t} aria-label="Travel time in minutes"
+      <input type="range" min="0" max={T_MAX} step="1" value={t} aria-label={tr('rc.minutes')}
         oninput={(e) => ont(+e.currentTarget.value)} />
       <output class="tval num">{Math.round(t)} min</output>
     </div>

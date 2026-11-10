@@ -23,7 +23,7 @@
   import { CH_BOUNDS, UnitMap, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
-  import { t } from '../lib/i18n.svelte';
+  import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
   import { currentLevelNote, switchLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { refOf } from '../lib/places';
@@ -62,9 +62,9 @@
 
   const metas = $derived(base.metas);
   const li = $derived(levelInfo(ld.level));
-  const word = $derived(li.label.toLowerCase());
-  const aOne = $derived(`${/^[aeiou]/.test(li.one) ? 'an' : 'a'} ${li.one}`);
-  const nUnits = $derived(ld.units.length);
+  const word = $derived(levelWord(ld.level));
+  const one = $derived(levelName(ld.level, false));
+    const nUnits = $derived(ld.units.length);
 
   // ------------------------------------------------------------------ shade metric
   const metaA = $derived<MetricMeta>(metas.get(app.metric) ?? metas.get('pop_total')!);
@@ -353,10 +353,10 @@
 
   // ------------------------------------------------------------------ tabs and ranking
   const PHONE_TABS = [
-    { id: 'map', label: 'Map' },
-    { id: 'filters', label: 'Filters' },
-    { id: 'rank', label: 'Ranking' },
-    { id: 'stats', label: 'Statistics' },
+    { id: 'map', label: 'tab.map' },
+    { id: 'filters', label: 'tab.filters' },
+    { id: 'rank', label: 'tab.rank' },
+    { id: 'stats', label: 'tab.stats' },
   ];
   const phoneTab = $derived(PHONE_TABS.some((t) => t.id === app.tab) ? app.tab! : 'map');
   const deskTab = $derived(app.tab === 'rank' ? 'rank' : 'stats');
@@ -376,10 +376,10 @@
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
     for (const e of evals) {
       if (e.status !== 'active' || !e.col) continue;
-      if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, `${e.filter.mode === 'pt' ? 'PT' : 'Car'} to ${e.hubName}`);
+      if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, t('mv.to', { mode: t(e.filter.mode === 'pt' ? 'common.pt' : 'common.car'), hub: e.hubName ?? '' }));
       else push(e.col.meta.id, 'Filter', e.col);
     }
-    if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, `${reachMode === 'pt' ? 'PT' : 'Car'} to ${hub.name}`);
+    if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, t('mv.to', { mode: t(reachMode === 'pt' ? 'common.pt' : 'common.car'), hub: hub.name }));
     return out;
   });
   const rankRows = $derived.by(() => {
@@ -398,7 +398,7 @@
     if (selIdx === null || !refA || whyA) return null;
     let reach = null;
     if (reachOn) {
-      const label = reachMode === 'pt' ? 'Public transport' : 'Car';
+      const label = reachMode === 'pt' ? t('rc.pt') : t('common.car');
       if (reachRef && reachCol) {
         const x = reachCol.v[selIdx];
         reach = {
@@ -407,22 +407,22 @@
           within: x !== null && x <= app.t,
         };
       } else {
-        const reason = ld.level !== 'gemeinde' ? 'per municipality only' : reachRef === null ? 'held back in this build' : 'loading…';
+        const reason = ld.level !== 'gemeinde' ? t('mv.perGem') : reachRef === null ? t('mv.heldBack') : t('status.loading');
         reach = { label, short: label, hub: hub.name, minutes: null, reason, within: false };
       }
     }
     const i = selIdx;
-    const sub = ld.level === 'gemeinde' ? `${ld.canton[i]} · BFS ${ld.units[i]}` : ld.level === 'kanton' ? li.one : `${li.one}${ld.canton[i] ? ` · ${ld.canton[i]}` : ''}`;
+    const sub = ld.level === 'gemeinde' ? `${ld.canton[i]} · BFS ${ld.units[i]}` : ld.level === 'kanton' ? one : `${one}${ld.canton[i] ? ` · ${ld.canton[i]}` : ''}`;
     const extra = [];
     if (sizeMeta && sizeRef && sizeMeta.id !== metaA.id) {
       const x = sizeRef.col.v[i];
-      extra.push({ label: `Size: ${sizeMeta.label_en}`, value: x === null ? 'no data' : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
+      extra.push({ label: `${t('mv.size')}: ${ml(sizeMeta)}`, value: x === null ? t('lg.noData') : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
     }
     return { i, reach, sub, extra };
   });
   const tip = $derived.by(() => {
     if (hover === null || !hoverAt || !colA) return null;
-    const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? 'no data' : fmtValue(x, m));
+    const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? t('lg.noData') : fmtValue(x, m));
     const rows = [fmt(colA.v[hover], metaA)];
     if (sizeMeta && sizeRef && sizeMeta.id !== metaA.id) rows.push(`○ ${fmt(sizeRef.col.v[hover], sizeMeta)}`);
     return rows;
@@ -432,9 +432,9 @@
 {#snippet rankSnip()}
   {#if rankCols.length}
     <RankTable columns={rankCols} rows={rankRows} names={ld.name} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
-      sel={selIdx} unitWord={filtered ? `matching ${word}` : word} onselect={selectFromList} />
+      sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} />
   {:else}
-    <p class="foot">{whyA ?? 'Loading…'}</p>
+    <p class="foot">{whyA ?? t('status.loading')}</p>
   {/if}
 {/snippet}
 {#snippet statsSnip()}
@@ -442,23 +442,23 @@
     <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
       source={base.sources.get(metaA.source)} unitWord={word} />
   {:else}
-    <p class="foot">{whyA ?? 'Loading…'}</p>
+    <p class="foot">{whyA ?? t('status.loading')}</p>
   {/if}
 {/snippet}
 
 <main class="stage">
-  <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label="Map controls">
+  <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label={t('mv.controls')}>
     <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
       <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="20" height="12" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
       <span class="summary">
-        {(filtered ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'More')}
+        {(filtered ? `${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })} · ` : '') + (sheetOpen ? t('mv.less') : t('mv.more'))}
       </span>
     </button>
     {#if !desktop}
-      <div class="tabs sheet-tabs" role="tablist" aria-label="Panel">
+      <div class="tabs sheet-tabs" role="tablist" aria-label={t('mv.panel')}>
         {#each PHONE_TABS as tb}
           <button type="button" role="tab" aria-selected={phoneTab === tb.id} onclick={() => openTab(tb.id)}>
-            {tb.label}{#if tb.id === 'filters' && app.filters.length}&nbsp;<span class="badge num">{app.filters.length}</span>{/if}
+            {t(tb.label)}{#if tb.id === 'filters' && app.filters.length}&nbsp;<span class="badge num">{app.filters.length}</span>{/if}
           </button>
         {/each}
       </div>
@@ -467,7 +467,7 @@
       {#if desktop || phoneTab === 'map'}
       <section>
         <div class="row2 lab">
-          <span class="caps">Shade by</span>
+          <span class="caps">{t('mv.shade')}</span>
         </div>
         <MetricPicker metrics={base.metrics} level={ld.level} value={metaA.id} onpick={(id) => (app.metric = id)} />
         <div class="legend-wrap">
@@ -479,32 +479,32 @@
           {:else if colA && !scaleA}
             <p class="why">No values for {colA.period} at this level.</p>
           {:else if refA === undefined}
-            <p class="foot">Loading…</p>
+            <p class="foot">{t('status.loading')}</p>
           {/if}
         </div>
         {#if yearPeriods.length > 1 && !whyA}
           <div class="yr" class:extra={!app.year}>
             <YearSlider periods={yearPeriods} value={app.year} onchange={(y) => (app.year = y)}>
-              {#if refA?.noSeries}{' · '}<span class="warn">no time series for this metric in this build; latest shown</span>
-              {:else if refA?.yearMissing}{' · '}<span class="warn">no {refA.yearMissing} value; latest shown</span>
-              {:else if yearEmpty}{' · '}<span class="warn">no value for {app.year} at this level</span>{/if}
+              {#if refA?.noSeries}{' · '}<span class="warn">{t('mv.noSeries')}</span>
+              {:else if refA?.yearMissing}{' · '}<span class="warn">{t('mv.noYearVal', { y: refA.yearMissing })}</span>
+              {:else if yearEmpty}{' · '}<span class="warn">{t('mv.noYearLevel', { y: app.year ?? '' })}</span>{/if}
             </YearSlider>
           </div>
         {:else if app.year && !whyA}
-          <p class="foot yr">Year {app.year}: this metric has no time series {li.series ? '' : 'at this level '}— latest shown.
-            <button type="button" class="link" onclick={() => (app.year = null)}>Back to latest</button></p>
+          <p class="foot yr">{t(li.series ? 'mv.yearNoSeries' : 'mv.yearNoSeriesLevel', { y: app.year })}
+            <button type="button" class="link" onclick={() => (app.year = null)}>{t('mv.backLatest')}</button></p>
         {/if}
       </section>
 
       <section class="extra">
         <div class="row2">
-          <span class="caps">Size by</span>
-          <div class="seg" role="radiogroup" aria-label="Map type">
-            <button type="button" role="radio" aria-checked={!symbolsMode} onclick={() => setDisplay('choropleth')}>Choropleth</button>
-            <button type="button" role="radio" aria-checked={symbolsMode} onclick={() => setDisplay('symbols')}>Symbols</button>
+          <span class="caps">{t('mv.sizeBy')}</span>
+          <div class="seg" role="radiogroup" aria-label={t('mv.mapType')}>
+            <button type="button" role="radio" aria-checked={!symbolsMode} onclick={() => setDisplay('choropleth')}>{t('mv.choro')}</button>
+            <button type="button" role="radio" aria-checked={symbolsMode} onclick={() => setDisplay('symbols')}>{t('mv.symbols')}</button>
           </div>
         </div>
-        <MetricPicker metrics={base.metrics} level={ld.level} value={sizeMeta?.id ?? ''} none={symbolsMode ? undefined : 'None'}
+        <MetricPicker metrics={base.metrics} level={ld.level} value={sizeMeta?.id ?? ''} none={symbolsMode ? undefined : t('mv.none')}
           onpick={(id) => (app.size = id || null)} />
         {#if whyS}
           <p class="why sp">{whyS}</p>
@@ -514,12 +514,12 @@
               nDrawn={sizeData.syms.length} nMissing={sizeData.nMissing} nNonPositive={sizeData.nNonPositive} unitWord={word} />
           </div>
         {:else if sizeMeta}
-          <p class="foot sp">Loading…</p>
+          <p class="foot sp">{t('status.loading')}</p>
         {/if}
         <p class="foot sp">
-          {#if symbolsMode}Circles at each {li.one}'s label point take the shade colour; the polygons are grey.
-          {:else if sizeMeta}Rings over the shaded map. “Symbols” draws filled circles in the shade colour instead.
-          {:else}Optional: a second metric as circle size.{/if}
+          {#if symbolsMode}{t('mv.symHint')}
+          {:else if sizeMeta}{t('mv.ringHint')}
+          {:else}{t('mv.sizeHint')}{/if}
         </p>
       </section>
 
@@ -527,16 +527,16 @@
         <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable}
           onhub={(slug) => { stop(); app.hub = slug; }} onmode={setReach} ont={(v) => { stop(); app.t = v; }} onplay={play}>
           {#if reachError}
-            Reach data could not be loaded: {reachError}
+            {t('mv.reachErr', { e: reachError })}
           {:else if reachFile === undefined || reachRef === undefined}
-            Loading network…
+            {t('mv.loadingNet')}
           {:else if reachFile === null}
-            No {reachMode === 'car' ? 'car' : 'public transport'} network for {hub.name} in this build.
+            {t(reachMode === 'car' ? 'mv.noCarNet' : 'mv.noPtNet', { hub: hub.name })}
           {:else}
-            {#if reachedCount !== null}<span class="num">{fmtNumber(reachedCount, 0)}</span> municipalities within {Math.round(app.t)} min{filtered ? ' (among the filtered)' : ''}; others shown desaturated.
-            {:else if ld.level !== 'gemeinde'}Travel times are per municipality: the network is drawn, units are not highlighted at this level.
-            {:else}Municipality times are held back in this build; only the network is drawn.{/if}
-            <span class="foot detail">{reachMode === 'pt' ? `Weekday departure ${reachFile.departure ?? ''} from ${hub.name}, wait at the hub included. Own routing on the national GTFS timetable.` : 'Average weekday, ARE NPVM 2023.'}</span>
+            {#if reachedCount !== null}{t(filtered ? 'mv.reachedF' : 'mv.reached', { n: fmtNumber(reachedCount, 0), t: Math.round(app.t) })}
+            {:else if ld.level !== 'gemeinde'}{t('mv.reachLevel')}
+            {:else}{t('mv.reachHeld')}{/if}
+            <span class="foot detail">{reachMode === 'pt' ? t('mv.ptNote', { dep: reachFile.departure ?? '', hub: hub.name }) : t('mv.carNote')}</span>
           {/if}
         </ReachControls>
       </section>
@@ -544,7 +544,7 @@
       {/if}
       {#if desktop || phoneTab === 'filters'}
       <section>
-        <div class="caps lab">Filters</div>
+        <div class="caps lab">{t('tab.filters')}</div>
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
           options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
           defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} />
@@ -580,18 +580,18 @@
   </section>
 
   {#if desktop}
-    <aside class="side" aria-label="Statistics">
+    <aside class="side" aria-label={t('tab.stats')}>
       {#if card && refA && colA}
-        <div class="caps lab">Selected {li.one}</div>
+        <div class="caps lab">{t('mv.selected', { one })}</div>
         <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
           profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
       {:else}
-        <p class="foot hint">Tap or click {aOne} for its value, rank and percentile.</p>
+        <p class="foot hint">{t('mv.hint')}</p>
       {/if}
-      <div class="tabs side-tabs" role="tablist" aria-label="Side panel">
-        <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>Ranking</button>
-        <button type="button" role="tab" aria-selected={deskTab === 'stats'} onclick={() => (app.tab = null)}>Statistics</button>
+      <div class="tabs side-tabs" role="tablist" aria-label={t('mv.side')}>
+        <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>{t('tab.rank')}</button>
+        <button type="button" role="tab" aria-selected={deskTab === 'stats'} onclick={() => (app.tab = null)}>{t('tab.stats')}</button>
       </div>
       <div class="sblock">
         {#if deskTab === 'rank'}{@render rankSnip()}{:else}{@render statsSnip()}{/if}
@@ -608,7 +608,7 @@
   {/if}
 
   {#if !mapReady}
-    <div class="status" role="status">Loading map…</div>
+    <div class="status" role="status">{t('status.loadingMap')}</div>
   {/if}
 </main>
 

@@ -13,7 +13,7 @@
   import { fmtNumber } from './lib/classify';
   import { ColumnStore } from './lib/columns.svelte';
   import { LEVELS, loadBase, loadLevel, type Base, type LevelData } from './lib/data';
-  import { levelName, t } from './lib/i18n.svelte';
+  import { levelName, t, levelWord } from './lib/i18n.svelte';
   import { app, syncHash } from './lib/state.svelte';
 
   const DESKTOP = '(min-width: 900px)';
@@ -83,7 +83,7 @@
     if (menuOpen && menuEl && !menuEl.contains(e.target as Node)) menuOpen = false;
   }
   const unitsText = $derived(
-    ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelName(ld.level).toLowerCase()}` : `2’110 ${levelName('gemeinde').toLowerCase()}`,
+    ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelWord(ld.level)}` : `2’110 ${levelWord('gemeinde')}`,
   );
   const current = $derived(route === 'profile' ? null : route);
   /** first render time, for the performance check (window.__firstRender) */
@@ -91,6 +91,13 @@
     (window as unknown as { __firstRender: number }).__firstRender ??= performance.now() - t0;
   }
 </script>
+
+{#snippet langSwitch()}
+  <div class="seg lang" role="radiogroup" aria-label={t('nav.lang')}>
+    <button type="button" role="radio" aria-checked={app.lang === 'en'} lang="en" title="English" onclick={() => (app.lang = 'en')}>EN</button>
+    <button type="button" role="radio" aria-checked={app.lang === 'de'} lang="de" title="Deutsch" onclick={() => (app.lang = 'de')}>DE</button>
+  </div>
+{/snippet}
 
 <svelte:window onpointerdown={outsideMenu} onkeydown={(e) => e.key === 'Escape' && (menuOpen = false)} />
 
@@ -110,6 +117,7 @@
           {/each}
         </nav>
         <button type="button" class="plain" aria-pressed={current === 'sources'} onclick={() => goRoute('sources')}>{t('nav.sources')}</button>
+        {@render langSwitch()}
       {:else}
         <div class="menu" bind:this={menuEl}>
           <button type="button" class="menubtn" aria-haspopup="true" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
@@ -121,6 +129,7 @@
               {#each [...NAV, 'sources'] as r}
                 <button type="button" aria-current={current === r ? 'page' : undefined} onclick={() => goRoute(r)}>{navLabel(r)}</button>
               {/each}
+              <div class="dlang">{@render langSwitch()}</div>
             </div>
           {/if}
         </div>
@@ -174,6 +183,10 @@
   }
   .plain[aria-pressed='true'] { background: var(--ink); color: var(--ink-text); text-decoration: none; }
   .menu { position: relative; }
+  .lang button { padding: 5px 8px; font-size: 0.76rem; }
+  .dlang { padding: 8px 14px 6px; border-top: 1px solid var(--border); margin-top: 3px; }
+  .drop .dlang .lang button { display: inline-block; width: auto; padding: 6px 14px; font-size: 0.85rem; }
+  .drop .dlang .lang button[aria-checked='true'] { background: var(--ink); color: var(--ink-text); }
   .menubtn {
     display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--ink); background: var(--panel);
     font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;

@@ -1,6 +1,7 @@
 <script lang="ts">
   // Year slider for metrics with a time series. null = latest. Values of past years come from the
   // series files, on the current (2026) boundaries like everything else.
+  import { t } from '../lib/i18n.svelte';
   import type { Snippet } from 'svelte';
 
   interface Props {
@@ -20,13 +21,13 @@
 </script>
 
 <div class="year">
-  <span class="caps">Year</span>
-  <input type="range" min="0" max={periods.length - 1} step="1" value={idx} aria-label="Year" aria-valuetext={periods[idx]}
+  <span class="caps">{t('yr.year')}</span>
+  <input type="range" min="0" max={periods.length - 1} step="1" value={idx} aria-label={t('yr.year')} aria-valuetext={periods[idx]}
     oninput={(e) => set(+e.currentTarget.value)} />
   <output class="num yv">{periods[idx]}</output>
-  <button type="button" class="latest" disabled={value === null} onclick={() => onchange(null)}>Latest</button>
+  <button type="button" class="latest" disabled={value === null} onclick={() => onchange(null)}>{t('yr.latest')}</button>
 </div>
-<p class="range foot"><span class="num">{periods[0]}–{latest}</span> · harmonized to the 2026 boundaries{#if children}{@render children()}{/if}</p>
+<p class="range foot"><span class="num">{periods[0]}–{latest}</span> · {t('yr.harm')}{#if children}{@render children()}{/if}</p>
 
 <style>
   .year { display: flex; align-items: center; gap: 8px; }

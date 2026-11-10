@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import { addStrings } from '../lib/i18n.svelte';
+  import { addStrings, levelWord } from '../lib/i18n.svelte';
   addStrings(
     {
       'p.back': 'Map',
@@ -151,7 +151,7 @@
   import PctBar from '../components/PctBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, PRECISION_TEXT, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
+  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
   import { isDe, levelName, ml, t, themeName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
   import {
@@ -230,7 +230,7 @@
   const row = $derived(rows?.get(ref));
   const name = $derived(pl && idx !== null ? pl.name[idx] : (row?.name ?? unit.id));
   const blocks = $derived(themeBlocks(base, unit.level));
-  const unitsWord = $derived(levelName(unit.level).toLowerCase());
+  const unitsWord = $derived(levelWord(unit.level));
 
   function entry(m: MetricMeta): Entry | null | undefined {
     if (!pl || idx === null) return undefined;
@@ -347,7 +347,7 @@
   const names = (xs: [string, string][]) => xs.map(([id, n]) => `${n} (${id})`).join(', ');
 
   const publisher = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
-  const precisionLabel = (p: string) => PRECISION_TEXT[p] ?? p;
+  const precisionLabel = precisionText;
   function jump(id: string) {
     document.getElementById(id)?.scrollIntoView({ block: 'start' });
   }

@@ -1,6 +1,7 @@
 <script lang="ts">
   // Ranking table: the matching units with the shade, size and filter metrics as columns.
   // Sortable by any column (missing values always last); tapping a row selects the unit.
+  import { ml, t } from '../lib/i18n.svelte';
   import { fmtNumber, fmtPeriod } from '../lib/classify';
   import type { MetricMeta } from '../lib/data';
 
@@ -65,18 +66,18 @@
 </script>
 
 <div class="rank">
-  <p class="cap"><span class="num">{fmtNumber(rows.length, 0)}</span> {unitWord}{rows.length ? ', sorted by ' + (key === 'name' ? 'name' : (columns.find((c) => c.key === key)?.label ?? columns.find((c) => c.key === key)?.meta.label_en)) : ''}. Tap a row to select it on the map.</p>
+  <p class="cap"><span class="num">{fmtNumber(rows.length, 0)}</span> {unitWord}{rows.length ? t('rt.sorted', { by: key === 'name' ? t('rt.nameL') : (columns.find((c) => c.key === key)?.label ?? ml(columns.find((c) => c.key === key)?.meta)) }) : ''}. {t('rt.tap')}</p>
   <div class="wrap">
     <table>
       <thead>
         <tr>
           <th class="n">#</th>
-          <th class="nm" aria-sort={key === 'name' ? (desc ? 'descending' : 'ascending') : 'none'}><button type="button" onclick={() => sortBy('name')}>Name{arrow('name')}</button></th>
+          <th class="nm" aria-sort={key === 'name' ? (desc ? 'descending' : 'ascending') : 'none'}><button type="button" onclick={() => sortBy('name')}>{t('rt.name')}{arrow('name')}</button></th>
           {#each columns as c (c.key)}
-            <th class="v" title="{c.meta.label_en} ({c.meta.unit || 'value'}, {fmtPeriod(c.period)})" aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
+            <th class="v" title="{ml(c.meta)} ({c.meta.unit || t('fp.value')}, {fmtPeriod(c.period)})" aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
               <button type="button" onclick={() => sortBy(c.key)}>
-                <span class="tg">{c.tag}</span>
-                <span class="lb">{c.label ?? c.meta.label_en}{arrow(c.key)}</span>
+                <span class="tg">{t(`rt.tag.${c.tag}`)}</span>
+                <span class="lb">{c.label ?? ml(c.meta)}{arrow(c.key)}</span>
                 <span class="un">{c.meta.unit || '–'}</span>
               </button>
             </th>
@@ -95,9 +96,9 @@
     </table>
   </div>
   {#if shown.length < sorted.length}
-    <button type="button" class="more" onclick={() => (limit += 400)}>Show {fmtNumber(Math.min(400, sorted.length - shown.length), 0)} more of {fmtNumber(sorted.length - shown.length, 0)}</button>
+    <button type="button" class="more" onclick={() => (limit += 400)}>{t('rt.more', { n: fmtNumber(Math.min(400, sorted.length - shown.length), 0), of: fmtNumber(sorted.length - shown.length, 0) })}</button>
   {/if}
-  <p class="foot">Ranks are by the sorted column among the listed {unitWord}; – = no data (always listed last).</p>
+  <p class="foot">{t('rt.foot', { units: unitWord })}</p>
 </div>
 
 <style>

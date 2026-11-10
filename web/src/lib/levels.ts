@@ -2,7 +2,7 @@
 // not exist at the new level, the map falls back to the nearest available headline metric of the same
 // theme (else population) and says so in a one-line note, instead of showing an empty map.
 import type { Base, MetricMeta } from './data';
-import { levelName, ml, t } from './i18n.svelte';
+import { levelName, ml, t, levelWord } from './i18n.svelte';
 import { app } from './state.svelte';
 
 /** Nearest headline metric available at `level`: same theme first (closest in the headline order),
@@ -24,7 +24,7 @@ export function fallbackMetric(base: Base, cur: MetricMeta | undefined, level: s
 
 export function switchLevel(base: Base, level: string): void {
   if (level === app.level) return;
-  const word = levelName(level).toLowerCase();
+  const word = levelWord(level);
   const notes: string[] = [];
   const swap = (id: string | null, key: 'level.note' | 'level.noteSize'): string | null => {
     const m = id ? base.metas.get(id) : undefined;

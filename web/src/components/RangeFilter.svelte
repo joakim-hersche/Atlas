@@ -1,6 +1,7 @@
 <script lang="ts">
   // Dual-range slider with typed min/max inputs. Log scale for skewed positive metrics (population
   // spans 4 orders of magnitude), linear otherwise. lo/hi are null when that side is unbounded.
+  import { t } from '../lib/i18n.svelte';
   import { fmtNumber } from '../lib/classify';
 
   interface Props {
@@ -102,7 +103,7 @@
       <input type="text" inputmode="decimal" placeholder={ph(max)} value={hi === null ? '' : String(hi)}
         onchange={(e) => typed('hi', e.currentTarget.value)} />
     </label>
-    <button type="button" class="reset" disabled={!active} onclick={() => set(null, null)}>Clear</button>
+    <button type="button" class="reset" disabled={!active} onclick={() => set(null, null)}>{t('common.clear')}</button>
   </div>
 </div>
 

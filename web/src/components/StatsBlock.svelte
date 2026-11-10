@@ -1,7 +1,8 @@
 <script lang="ts">
   // Summary statistics of the shaded metric across municipalities, plus the selected unit.
+  import { t } from '../lib/i18n.svelte';
   import { sourceHref } from '../lib/nav';
-  import { partialCantons, type MetricMeta, type Source } from '../lib/data';
+  import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues } from '../lib/classify';
 
   interface Props {
@@ -35,40 +36,40 @@
 </script>
 
 <div class="stats">
-  <div class="caps">Distribution across {unitWord}</div>
-  <div class="unit">{meta.unit || 'value'} · {fmtPeriod(period)}</div>
+  <div class="caps">{t('st.dist', { units: unitWord })}</div>
+  <div class="unit">{meta.unit || t('fp.value')} · {fmtPeriod(period)}</div>
   {#if s.length}
     <table>
       <tbody>
-        <tr><th>n with data</th><td class="num">{fmtNumber(s.length, 0)} <span class="muted">of {fmtNumber(v.length, 0)}</span></td></tr>
-        <tr><th>Mean <span class="muted">(unweighted)</span></th><td class="num">{f(mean(s))}</td></tr>
-        <tr><th>Median</th><td class="num">{f(quantile(s, 0.5))}</td></tr>
+        <tr><th>{t('st.n')}</th><td class="num">{fmtNumber(s.length, 0)} <span class="muted">{t('st.of', { n: fmtNumber(v.length, 0) })}</span></td></tr>
+        <tr><th>{t('st.mean')} <span class="muted">({t('st.unweighted')})</span></th><td class="num">{f(mean(s))}</td></tr>
+        <tr><th>{t('st.median')}</th><td class="num">{f(quantile(s, 0.5))}</td></tr>
         <tr><th>P10 / P90</th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
         <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') || !cantons[ext.lo] || cantons[ext.lo] === names[ext.lo] ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
         <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') || !cantons[ext.hi] || cantons[ext.hi] === names[ext.hi] ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
-        <tr><th>Switzerland</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
+        <tr><th>{t('st.ch')}</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
       </tbody>
     </table>
     <p class="foot">
-      <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {meta.precision}{cov ? ` · partial: ${cov.length} of 26 cantons` : ''}{ch ? '' : ' · no national value published'}
+      <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? ` · ${t('p.partial', { n: cov.length })}` : ''}{ch ? '' : ` · ${t('st.noCH')}`}
     </p>
   {/if}
 
   {#if sel !== null}
     <div class="selblock">
-      <div class="caps">Selected</div>
+      <div class="caps">{t('st.selected')}</div>
       <div class="sname"><strong>{names[sel]}</strong> <span class="muted">{cantons[sel]}</span></div>
       {#if v[sel] !== null && rank}
         <table>
           <tbody>
-            <tr><th>Value</th><td class="num strong">{f(v[sel]!)}</td></tr>
-            <tr><th>Rank</th><td class="num">{fmtNumber(rank.rank, 0)} <span class="muted">of {fmtNumber(rank.n, 0)}{meta.direction === 'lower_better' ? ', 1 = lowest' : ', 1 = highest'}</span></td></tr>
-            <tr><th>Percentile</th><td class="num">P{fmtNumber(Math.round(rank.pct), 0)}</td></tr>
+            <tr><th>{t('st.value')}</th><td class="num strong">{f(v[sel]!)}</td></tr>
+            <tr><th>{t('st.rank')}</th><td class="num">{fmtNumber(rank.rank, 0)} <span class="muted">{t('st.of', { n: fmtNumber(rank.n, 0) })}, {meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')}</span></td></tr>
+            <tr><th>{t('st.pct')}</th><td class="num">P{fmtNumber(Math.round(rank.pct), 0)}</td></tr>
           </tbody>
         </table>
         <div class="pbar" aria-hidden="true"><span style="left:{rank.pct}%"></span></div>
       {:else}
-        <p class="muted">No value for this unit.</p>
+        <p class="muted">{t('st.noValue')}</p>
       {/if}
     </div>
   {/if}

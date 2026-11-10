@@ -2,6 +2,7 @@
   // Metric picker: headline metrics grouped by theme; typing searches every metric (accent- and
   // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
+  import { levelName, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
   import { levelInfo, type MetricMeta } from '../lib/data';
 
   interface Props {
@@ -17,9 +18,9 @@
   const MAP_LEVELS = ['gemeinde', 'bezirk', 'kanton', 'grossregion', 'sprachgebiet', 'agglomeration', 'arbeitsmarktgebiet', 'stadt_land'];
   const ok = (m: MetricMeta) => m.levels.includes(level);
   function why(m: MetricMeta) {
-    if (m.aggregation === 'not_aggregatable') return 'not aggregatable';
+    if (m.aggregation === 'not_aggregatable') return t('mp.notAgg');
     const at = m.levels.filter((l) => MAP_LEVELS.includes(l));
-    return at.length === 1 ? `${levelInfo(at[0]).label.toLowerCase()} only` : `not for ${levelInfo(level).label.toLowerCase()}`;
+    return at.length === 1 ? t('mp.only', { level: levelWord(at[0]) }) : t('mp.notFor', { level: levelWord(level) });
   }
 
   let open = $state(false);
@@ -43,7 +44,7 @@
       items = keyed
         .filter((k) => words.every((w) => k.key.includes(w)))
         .map((k) => k.m)
-        .sort((a, b) => Number(ok(b)) - Number(ok(a)) || (a.headline ?? 1e9) - (b.headline ?? 1e9) || a.label_en.localeCompare(b.label_en))
+        .sort((a, b) => Number(ok(b)) - Number(ok(a)) || (a.headline ?? 1e9) - (b.headline ?? 1e9) || ml(a).localeCompare(ml(b)))
         .slice(0, 120);
     }
     const groups = new Map<string, MetricMeta[]>();
@@ -85,17 +86,17 @@
   <button type="button" class="btn" aria-haspopup="listbox" aria-expanded={open} onclick={toggle}>
     {#if tag}<span class="tag">{tag}</span>{/if}
     <span class="lbl">
-      <span class="theme caps">{current?.theme ?? (none ? 'Off' : '')}</span>
-      <span class="name">{current?.label_en ?? (value || none || '')}</span>
+      <span class="theme caps">{current ? themeName(current.theme) : none ? t('rc.off') : ''}</span>
+      <span class="name">{current ? ml(current) : value || none || ''}</span>
     </span>
     <svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" /></svg>
   </button>
   {#if open}
-    <div class="pop" role="dialog" aria-label="Choose a metric">
+    <div class="pop" role="dialog" aria-label={t('mp.choose')}>
       <div class="search">
-        <input bind:this={input} bind:value={q} type="search" placeholder="Search {nAvail} metrics" aria-label="Search metrics"
+        <input bind:this={input} bind:value={q} type="search" placeholder={t('mp.search', { n: nAvail })} aria-label={t('mp.searchL')}
           oninput={() => (active = 0)} onkeydown={key} />
-        <button type="button" class="x" aria-label="Close" onclick={() => (open = false)}>×</button>
+        <button type="button" class="x" aria-label={t('common.close')} onclick={() => (open = false)}>×</button>
       </div>
       <div class="list" role="listbox" aria-label="Metrics">
         {#if none && !q}
@@ -104,29 +105,29 @@
           </button>
         {/if}
         {#if !list.length}
-          <p class="empty">No metric matches “{q}”.</p>
+          <p class="empty">{t('mp.none', { q })}</p>
         {/if}
         {#each list as [theme, ms]}
-          <div class="grp caps">{theme}</div>
+          <div class="grp caps">{themeName(theme)}</div>
           {#each ms as m}
             {@const k = flat.indexOf(m)}
             {#if ok(m)}
               <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
                 onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
-                <span class="ol">{m.label_en}</span>
+                <span class="ol">{ml(m)}</span>
                 <span class="om">{m.unit || '–'} · {m.latest}{m.coverage.startsWith('partial:') ? ' · partial' : ''}</span>
               </button>
             {:else}
-              <div role="option" class="opt off" aria-disabled="true" aria-selected="false" title="Not available for {levelInfo(level).label.toLowerCase()}">
-                <span class="ol">{m.label_en}</span>
+              <div role="option" class="opt off" aria-disabled="true" aria-selected="false" title={t('mp.notFor', { level: levelWord(level) })}>
+                <span class="ol">{ml(m)}</span>
                 <span class="om">{why(m)}</span>
               </div>
             {/if}
           {/each}
         {/each}
-        {#if !q}<p class="hint foot">Headline metrics shown. Type to search all {nAvail}.</p>{/if}
+        {#if !q}<p class="hint foot">{t('mp.headline', { n: nAvail })}</p>{/if}
         {#if nAvail < usable.length}
-          <p class="hint foot">{usable.length - nAvail} metrics are not available for {levelInfo(level).label.toLowerCase()}: medians, indices and travel times cannot be aggregated, and some sources publish one level only.</p>
+          <p class="hint foot">{t('mp.unavail', { n: usable.length - nAvail, level: levelWord(level) })}</p>
         {/if}
       </div>
     </div>

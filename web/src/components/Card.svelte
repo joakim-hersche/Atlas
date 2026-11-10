@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { gapReason, partialCantons, precisionOf, PRECISION_TEXT, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
+  import { ml, t } from '../lib/i18n.svelte';
+  import { gapReason, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
   interface Reach {
@@ -40,32 +41,32 @@
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
-  const precision = $derived(PRECISION_TEXT[precisionOf(file, col, index, meta)] ?? precisionOf(file, col, index, meta));
+  const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
 </script>
 
-<div class="card" class:docked role="dialog" aria-label="{name} quick card">
+<div class="card" class:docked role="dialog" aria-label={name}>
   <div class="top">
     <div class="ttl"><h2>{name}</h2> <span class="sub">{sub}</span></div>
     {#if profile}<a class="prof" href={profile}>{profileLabel}&nbsp;→</a>{/if}
-    <button type="button" class="close" aria-label="Close" onclick={onclose}>×</button>
+    <button type="button" class="close" aria-label={t('common.close')} onclick={onclose}>×</button>
   </div>
-  <p class="mlabel">{meta.label_en}</p>
+  <p class="mlabel">{ml(meta)}</p>
   {#if value !== null}
     <div class="valrow">
       <span class="val">{fmtValue(value, meta)}</span>
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
-          Rank {fmtNumber(rank.rank, 0)} of {fmtNumber(rank.n, 0)} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · among ${unitWord} with data` : ''}
-          <span class="muted">({meta.direction === 'lower_better' ? '1 = lowest' : '1 = highest'})</span></span>
+          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
+          <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span></span>
         </span>
       {/if}
     </div>
   {:else}
     <div class="valrow">
-      <span class="val nodata"><span class="hatch"></span>No data</span>
+      <span class="val nodata"><span class="hatch"></span>{t('p.noData')}</span>
       <span class="yr">{fmtPeriod(col.period)}</span>
       <span class="rank reason">{gapReason(file, col, index, meta, canton)}</span>
     </div>
@@ -76,7 +77,7 @@
   <div class="foot">
     <span class="tags">
       <span class="tag">{precision}</span>
-      {#if cov}<span class="tag warn">partial: {cov.length} of 26 cantons</span>{/if}
+      {#if cov}<span class="tag warn">{t('p.partial', { n: cov.length })}</span>{/if}
       {#if sourceLink}<a class="tag src" href={sourceLink} title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</a>
       {:else}<span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>{/if}
     </span>

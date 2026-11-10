@@ -2,18 +2,13 @@
 // A unit with no value for a filtered metric does not match; those are counted separately so the
 // UI can say how many were excluded for missing data (D21: gaps are shown, never hidden).
 import type { ColView } from './columns.svelte';
-import { levelInfo, type LevelData, type MetricMeta, type UnitRow } from './data';
+import { type LevelData, type MetricMeta, type UnitRow } from './data';
 import type { CatField, Filter } from './hash';
 import { sortedValues, wantsLog } from './classify';
+import { levelName, t, levelWord } from './i18n.svelte';
 
-export const CAT_LABEL: Record<CatField, string> = {
-  kanton: 'Canton',
-  sprachgebiet: 'Language region',
-  gemeindetyp: 'Municipality type',
-  stadt_land: 'Urban / rural',
-  agglomeration: 'Agglomeration',
-  grossregion: 'Major region',
-};
+/** Label of a categorical filter field in the UI language. */
+export const catLabel = (f: CatField): string => t(`cat.${f}`);
 
 export interface CatOption {
   id: string;
@@ -76,15 +71,15 @@ export function catOptions(field: CatField, rows: UnitRow[] | null): CatOption[]
 
 export function evalFilter(f: Filter, cx: FilterContext): FilterEval {
   const n = cx.ld.units.length;
-  const word = levelInfo(cx.ld.level).label.toLowerCase();
+  const word = levelWord(cx.ld.level);
   const base = { filter: f, pass: null, miss: null, nPass: n, nMissing: 0 };
   if (f.kind === 'cat') {
     const vals = catValues(f.field, cx.ld, cx.rows);
     if (!vals) {
-      if (cx.ld.level === 'gemeinde' && !cx.rows) return { ...base, status: 'loading', note: 'Loading…' };
-      return { ...base, status: 'inactive', note: `Applies to municipalities${f.field === 'kanton' ? ', districts and cantons' : ''}; not to ${word}.` };
+      if (cx.ld.level === 'gemeinde' && !cx.rows) return { ...base, status: 'loading', note: t('f.loading') };
+      return { ...base, status: 'inactive', note: t(f.field === 'kanton' ? 'f.catOnlyKt' : 'f.catOnlyGem', { units: word }) };
     }
-    if (!f.values.length) return { ...base, status: 'inactive', note: 'Choose one or more values.' };
+    if (!f.values.length) return { ...base, status: 'inactive', note: t('f.chooseValues') };
     const want = new Set(f.values);
     const pass = new Uint8Array(n);
     let nPass = 0;
@@ -104,7 +99,7 @@ export function evalFilter(f: Filter, cx: FilterContext): FilterEval {
   let hubName: string | undefined;
   if (f.kind === 'reach') {
     hubName = cx.hubName(f.hub);
-    if (cx.ld.level !== 'gemeinde') return { ...base, status: 'inactive', note: `Travel times are per municipality; not available for ${word}.`, hubName };
+    if (cx.ld.level !== 'gemeinde') return { ...base, status: 'inactive', note: t('f.reachGem', { units: word }), hubName };
     id = `reach_${f.mode}_${f.hub}`;
     lo = null;
     hi = f.max;
@@ -114,11 +109,11 @@ export function evalFilter(f: Filter, cx: FilterContext): FilterEval {
     hi = f.hi;
   }
   const meta = cx.metas.get(id);
-  if (!meta) return { ...base, status: 'inactive', note: 'Not in this build.', hubName };
+  if (!meta) return { ...base, status: 'inactive', note: t('f.notInBuild'), hubName };
   const c = cx.col(id);
-  if (c === undefined) return { ...base, status: 'loading', note: 'Loading…', hubName };
+  if (c === undefined) return { ...base, status: 'loading', note: t('f.loading'), hubName };
   if (c === null) {
-    const note = meta.aggregation === 'not_aggregatable' ? `Not aggregatable to ${word}.` : `Not published for ${word}.`;
+    const note = t(meta.aggregation === 'not_aggregatable' ? 'f.notAgg' : 'f.notPub', { units: word });
     return { ...base, status: 'inactive', note, hubName };
   }
   const v = c.col.v;
