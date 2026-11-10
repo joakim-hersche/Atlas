@@ -12,6 +12,9 @@
   import { divRamp, seqRamp, token } from '../lib/theme';
   import { defaultPeriods, pooledSpan } from '../lib/yearcmp.svelte';
   import { unitOf } from '../lib/classify';
+  import { unstableIndices } from '../lib/small.svelte';
+  import { app } from '../lib/state.svelte';
+  import '../lib/i18n-r3';
 
   interface Props {
     base: Base;
@@ -28,8 +31,10 @@
     mask: Uint8Array | null;
     onpick: (p: string[]) => void;
     onclose: () => void;
+    /** the map shows a change between two years (the panels show each year's values: say so) */
+    change?: boolean;
   }
-  let { base, ld, cols, meta, periods, picked, pooled, method, mask, onpick, onclose }: Props = $props();
+  let { base, ld, cols, meta, periods, picked, pooled, method, mask, onpick, onclose, change = false }: Props = $props();
 
   const MAX = 9;
   const shown = $derived.by(() => {
@@ -38,7 +43,15 @@
   });
 
   // ---------------------------------------------------------------- shared scale and the panels' data
-  const panels = $derived(shown.map((p) => ({ p, ref: cols.get(ld, meta.id, p) })));
+  // B2: the panels follow the map's small-number setting: hidden values are gaps, counted apart from no data
+  const panels = $derived(shown.map((p) => {
+    const ref = cols.get(ld, meta.id, p);
+    const hid = ref && app.unstable === 'hide' ? unstableIndices(cols, ld, meta, ref) : [];
+    if (!ref || !hid.length) return { p, ref, hidden: 0 };
+    const v = ref.col.v.slice();
+    for (const i of hid) v[i] = null;
+    return { p, ref: { ...ref, col: { ...ref.col, v } }, hidden: hid.length };
+  }));
   /** the pooled values, or (until they are loaded) the values of the panels that are in */
   const ref = $derived.by(() => {
     if (pooled && pooled.length) return pooled;
@@ -196,6 +209,7 @@
     <div class="hd">
       <h2 tabindex="-1" bind:this={titleEl}>{t('sm.title')}</h2>
       <p class="mt">{ml(meta)} <span class="un">· {unitOf(meta)}</span></p>
+      {#if change}<p class="mt chg">{t('r3.smNote')}</p>{/if}
     </div>
     <button type="button" class="x" aria-label={t('sm.close')} title={t('sm.close')} onclick={onclose}>×</button>
   </header>
@@ -214,7 +228,7 @@
       {#each panels as pn, k (pn.p)}
         <figure>
           <figcaption><strong class="num">{fmtPeriod(pn.p)}</strong>
-            {#if pn.ref}<span class="foot num">n = {fmtNumber(nVals(pn.ref.col.v), 0)}</span>{:else if pn.ref === undefined}<span class="foot">{t('sm.loading')}</span>{/if}
+            {#if pn.ref}<span class="foot num">n = {fmtNumber(nVals(pn.ref.col.v), 0)}{pn.hidden ? ` · ${t('r3.smHidden', { h: fmtNumber(pn.hidden, 0) })}` : ''}</span>{:else if pn.ref === undefined}<span class="foot">{t('sm.loading')}</span>{/if}
           </figcaption>
           <div class="cv" role="img" aria-label={t('sm.canvas', { metric: ml(meta), year: pn.p })}>
             <canvas bind:this={canvases[k]} aria-hidden="true"></canvas>
@@ -251,6 +265,7 @@
   header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
   h2 { margin: 0; font-size: var(--fs-lead); }
   .mt { margin: 2px 0 0; font-size: var(--fs-small); font-weight: 600; }
+  .mt.chg { font-weight: 400; color: var(--text-2); font-size: var(--fs-meta); }
   .un { font-weight: 400; color: var(--muted); }
   h2:focus { outline: none; }
   .x { flex: none; width: var(--ctl-h); height: var(--ctl-h); border: 1px solid var(--ink); background: var(--panel); font-size: var(--fs-stat); line-height: 1; cursor: pointer; }

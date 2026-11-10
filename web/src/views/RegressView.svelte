@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // Regression panel (D34, option B): OLS in the browser on the units of the current level.
   // Outcome and 1–6 explanatory variables (optional log10), language-region or canton controls,
   // population weights, flagged values left out on request, the active filters as the sample.
@@ -513,7 +514,7 @@
       ['view', location.href],
     ];
     for (const [k, v] of meta) rows.push([k, v]);
-    downloadCSV(rows, `gemeindebank-regression-${stamp()}-coefficients.csv`);
+    downloadCSV(rows, `atlas-regression-${stamp()}-coefficients.csv`);
   }
   function residCSV() {
     if (!ok || !yInfo || !perUnit) return;
@@ -521,7 +522,7 @@
     ok.rows.forEach((i, r) => {
       rows.push([ld.units[i], names[i], ld.canton[i] || null, ok.y[r], ok.res.fitted[r], ok.res.resid[r], yInfo!.ref.col.v[i], weights ? weights.v[i] : null]);
     });
-    downloadCSV(rows, `gemeindebank-regression-${stamp()}-residuals.csv`);
+    downloadCSV(rows, `atlas-regression-${stamp()}-residuals.csv`);
   }
   let pngBusy = $state(false);
   async function mapPNG() {
@@ -550,7 +551,7 @@
         credits: [...credits, `${t('ex.boundaries')} · ${t('ex.made')}`],
         link: t('ex.view', { url: location.href }),
       });
-      downloadBlob(blob, `gemeindebank-regression-${stamp()}-residuals.png`);
+      downloadBlob(blob, `atlas-regression-${stamp()}-residuals.png`);
     } finally {
       pngBusy = false;
     }
@@ -610,6 +611,7 @@
       <label class="chk"><input type="checkbox" checked={spec.weights} onchange={(e) => update({ weights: e.currentTarget.checked })} /> {t('rg.weights')}</label>
       {#if spec.weights && weights && yRef}<p class="vnote">{t('rg.weightsT', { p: fmtPeriod(weights.period), y: fmtPeriod(yRef.col.period) })}</p>{/if}
       <label class="chk"><input type="checkbox" checked={spec.drop} onchange={(e) => update({ drop: e.currentTarget.checked })} /> {t('rg.drop')}</label>
+      {#if ok && ok.flaggedSmall && !spec.drop && app.unstable === 'hide'}<p class="hint r3">{t('r3.rgShown')} ({fmtNumber(ok.flaggedSmall, 0)} △)</p>{/if}
 
       <div class="caps sp">{t('rg.se')}<Term k="clustered_se" /></div>
       <div class="seg" role="radiogroup" aria-label={t('rg.se')}>
@@ -805,6 +807,7 @@
   .seg button { padding: 4px 9px; font-size: var(--fs-meta); }
   .chk { display: flex; align-items: flex-start; gap: 6px; font-size: var(--fs-small); margin: 4px 0; cursor: pointer; }
   .chk input { margin-top: 2px; }
+  .hint.r3 { margin: 2px 0 6px 20px; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-2); }
   .fbar .chk { margin: 0; }
   .muted { color: var(--muted); }
   .err { margin: 0; border-left: 3px solid var(--ink); padding-left: 8px; font-size: var(--fs-small); }

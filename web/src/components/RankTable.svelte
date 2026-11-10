@@ -15,6 +15,8 @@
     period: string;
     /** flag markers of a unit's value (△ small numbers, M, °, p), when the column has flags */
     marks?: (i: number) => string;
+    /** B2: said in the export header when the map hides some of this column's values (small numbers) */
+    hiddenNote?: string;
   }
   interface Props {
     columns: RankColumn[];
@@ -39,10 +41,14 @@
 
   const PAGE = 100;
   let sortKey = $state<string | null>(null);
-  let desc = $state(true);
+  /** null = the natural order of the sorted column: names A–Z, metrics best first (F11: a lower-is-better
+   *  metric starts with its lowest value), neutral metrics highest first */
+  let descSet = $state<boolean | null>(null);
+  const naturalDesc = (k: string) => (k === 'name' ? false : columns.find((c) => c.key === k)?.meta.direction !== 'lower_better');
   let limit = $state(PAGE);
 
   const key = $derived(sortKey && (sortKey === 'name' || columns.some((c) => c.key === sortKey)) ? sortKey : (columns[0]?.key ?? 'name'));
+  const desc = $derived(descSet ?? naturalDesc(key));
   const sorted = $derived.by(() => {
     const out = rows.slice();
     if (key === 'name') {
@@ -65,10 +71,10 @@
     return sorted.slice(0, Math.max(limit, p + 1));
   });
   function sortBy(k: string) {
-    if (k === key) desc = !desc;
+    if (k === key) descSet = !desc;
     else {
       sortKey = k;
-      desc = k !== 'name';
+      descSet = null;
     }
     limit = PAGE;
   }
@@ -96,7 +102,9 @@
     const head: Cell[] = ['id', t('rt.name'), t('cat.kanton')];
     for (const c of columns) {
       const lb = c.label ?? ml(c.meta);
-      head.push(c.meta.unit ? `${lb} [${unitOf(c.meta)}]` : lb, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
+      // B3: the unit spelled out ("percentage points" for a difference or change), and what the map hides
+      const u = c.meta.unit === 'pp' ? t('ux.ppFirst') : unitOf(c.meta);
+      head.push(`${lb}${u ? ` [${u}]` : ''}${c.hiddenNote ? ` (${c.hiddenNote})` : ''}`, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
       if (c.marks) head.push(`${lb} – ${t('ex.flags')}`);
     }
     const out: Cell[][] = [head];
@@ -113,7 +121,7 @@
   let copied = $state<string | null>(null);
   function csv() {
     const k = columns.find((c) => c.key === key);
-    downloadCSV(table(), `gemeindebank-${slug(k ? (k.label ?? ml(k.meta)) : 'ranking')}.csv`);
+    downloadCSV(table(), `atlas-${slug(k ? (k.label ?? ml(k.meta)) : 'ranking')}.csv`);
   }
   async function copy() {
     const ok = await copyText(toTSV(table()));

@@ -732,3 +732,6 @@ Object.assign(FR, FR_MAPX);
 // usability and design review fixes (ux.*, sp2.*): defined with their English and German strings
 import { FR_UX } from './i18n-ux';
 Object.assign(FR, FR_UX);
+// review round 3 fixes (r3.*): defined with their English and German strings
+import { FR_R3 } from './i18n-r3';
+Object.assign(FR, FR_R3);

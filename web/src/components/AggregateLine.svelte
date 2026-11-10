@@ -5,7 +5,9 @@
   import { ml, t } from '../lib/i18n.svelte';
   import { fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
   import type { ColView } from '../lib/columns.svelte';
-  import type { MetricMeta } from '../lib/data';
+  import { isUnstable, type MetricMeta } from '../lib/data';
+  import { app } from '../lib/state.svelte';
+  import '../lib/i18n-r3';
   import { aggregate } from '../lib/aggregate';
   import MetricPicker from './MetricPicker.svelte';
 
@@ -21,8 +23,12 @@
     getCol: (id: string) => ColView | null | undefined;
     unitWord: string;
     onpick: (id: string) => void;
+    /** B2: units of the shade metric hidden on the map as small numbers (the aggregate still counts them) */
+    hiddenIdx?: number[];
+    /** the shade metric (hiddenIdx belongs to it) */
+    shadeId?: string;
   }
-  let { metrics, metas, level, nUnits, mask, nMatch, metricId, getCol, unitWord, onpick }: Props = $props();
+  let { metrics, metas, level, nUnits, mask, nMatch, metricId, getCol, unitWord, onpick, hiddenIdx = [], shadeId = '' }: Props = $props();
 
   const meta = $derived(metas.get(metricId));
   const own = $derived(meta ? getCol(meta.id) : null);
@@ -35,6 +41,19 @@
     return t('ag.rule.ratio', { num: labelOf(res.num!), den: labelOf(res.den!) });
   });
   const kindLabel = $derived(res?.status === 'ok' ? (res.kind === 'sum' ? t('ag.sum') : res.kind === 'ratio' ? t('ag.ratio') : t('ag.wmean', { w: ml(metas.get(res.weight!)) || res.weight! })) : '');
+  /** matching units the map hides as small numbers but the aggregate includes (counts and sums need them all) */
+  const nHiddenIn = $derived.by(() => {
+    if (app.unstable !== 'hide' || !meta || !res || res.status !== 'ok') return 0;
+    let k = 0;
+    if (meta.id === shadeId) {
+      for (const i of hiddenIdx) if (mask[i]) k++;
+      return k;
+    }
+    const f = own?.col.f;
+    if (!f) return 0;
+    for (const key of Object.keys(f)) if (mask[+key] && isUnstable(own!.file, f[key]) && own!.col.v[+key] !== null) k++;
+    return k;
+  });
   const naText = $derived.by(() => {
     if (!res || res.status !== 'na') return '';
     const key = res.reason === 'noData' || res.reason === 'noParts' ? `ag.${res.reason}` : `ag.na.${res.reason}`;
@@ -60,6 +79,7 @@
       · {fmtPeriod(own ? own.col.period : meta.latest)}
       {#if res.periodNote} · ({res.periodNote}){/if}
     </p>
+    {#if nHiddenIn > 0}<p class="note hid">{t(res.kind === 'wmean' ? 'r3.agHiddenMean' : 'r3.agHidden', { n: fmtNumber(nHiddenIn, 0), units: unitWord })}</p>{/if}
   {/if}
 </div>
 
@@ -72,5 +92,6 @@
   .unit { font-size: var(--fs-small); }
   .sub { font-size: var(--fs-meta); color: var(--muted); }
   .note { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--muted); }
+  .hid { color: var(--text); }
   .na { margin: 6px 0 0; font-size: var(--fs-meta); color: var(--text); }
 </style>

@@ -50,7 +50,10 @@ export interface MetricMeta {
   /** level -> reason (English) why the metric has no values there */
   unavailable_levels?: Record<string, string> | null;
   /** small-number rule (flag bits 1/2) */
-  reliability?: { count: string | null; base: string | null; min_count: number; min_base: number; rule_en?: string; rule_de?: string; rule_fr?: string } | null;
+  reliability?: {
+    count: string | string[] | null; base: string | string[] | null; min_count: number | null; min_base: number | null; years?: number | null;
+    rule_en?: string; rule_de?: string; rule_fr?: string;
+  } | null;
   /** pooled multi-year rate of an annual metric */
   pooled?: { of: string; years: number } | null;
   /** NRW: cantons with a majority election per election year (flag bit 4); only party shares, blocs, leaning (D37) */

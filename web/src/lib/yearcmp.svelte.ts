@@ -67,7 +67,7 @@ export function changeMeta(meta: MetricMeta, mode: ChangeMode, from: string, to:
   const isPct = meta.unit.startsWith('%');
   const label = t(mode === 'abs' ? 'yc.labelAbs' : 'yc.labelPct', { metric: ml(meta), from, to });
   const common = { ...meta, id: `${meta.id}__chg_${mode}`, label_en: label, label_de: label, label_fr: label, direction: 'neutral' as const,
-    aggregation: `change:${meta.id}`, headline: null, description: null, latest_title: null, per_vote: false, pooled: null, reliability: null };
+    aggregation: `change:${meta.id}`, headline: null, description: null, latest_title: null, per_vote: false, pooled: null };
   if (mode === 'pct') return { ...common, unit: '%', unit_de: '%', unit_fr: '%', decimals: 1 };
   if (isPct) return { ...common, unit: 'pp', unit_de: 'Pp.', unit_fr: 'pp', decimals: Math.max(1, meta.decimals) };
   return { ...common, decimals: meta.decimals };

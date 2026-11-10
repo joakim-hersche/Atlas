@@ -4,6 +4,7 @@
 import type { MetricMeta } from './data';
 import { fmtNumber, type RankInfo } from './classify';
 import { app } from './state.svelte';
+import { frTypo } from './typo';
 
 type Dict = Record<string, string>;
 
@@ -948,8 +949,9 @@ export function loadFrench(): Promise<unknown> {
 
 export function t(key: string, vars?: Record<string, string | number>): string {
   const s = (app.lang === 'de' ? DE[key] : app.lang === 'fr' ? fr?.FR[key] : undefined) ?? EN[key] ?? key;
-  if (!vars) return s;
-  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+  const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`)) : s;
+  // B8 (E8): one French typography for every string (narrow no-break space before : ; ! ? %, curly apostrophes)
+  return app.lang === 'fr' ? frTypo(out, 'fr') : out;
 }
 
 export const isDe = () => app.lang === 'de';
@@ -958,7 +960,7 @@ export const isDe = () => app.lang === 'de';
 export function ml(m: MetricMeta | undefined | null): string {
   if (!m) return '';
   if (app.lang === 'de' && m.label_de) return m.label_de;
-  if (app.lang === 'fr' && m.label_fr) return m.label_fr;
+  if (app.lang === 'fr' && m.label_fr) return frTypo(m.label_fr, 'fr');
   return m.label_en;
 }
 
@@ -966,7 +968,7 @@ export function ml(m: MetricMeta | undefined | null): string {
 export function mdesc(m: MetricMeta | undefined | null): string | null {
   if (!m) return null;
   if (app.lang === 'de' && m.description_de) return m.description_de;
-  if (app.lang === 'fr' && m.description_fr) return m.description_fr;
+  if (app.lang === 'fr' && m.description_fr) return frTypo(m.description_fr, 'fr');
   return m.description;
 }
 

@@ -20,7 +20,10 @@
   import SmallMultiples from '../components/SmallMultiples.svelte';
   import '../lib/i18n-mapx';
   import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
-  import { ciSpec, crossesClass, intervals, kindOf, rankRange } from '../lib/reliability';
+  import { ciSpec, crossesClass, intervals, kindOf, rankRange, unstableEither } from '../lib/reliability';
+  import { unstableIndices } from '../lib/small.svelte';
+  import '../lib/i18n-r3';
+  import { colon, pctSep } from '../lib/typo';
   import { RefLayer, loadRefData } from '../lib/reflayer';
   import VotePicker from '../components/VotePicker.svelte';
   import VoteResult from '../components/VoteResult.svelte';
@@ -37,7 +40,7 @@
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
-  import { majorityMask, precisionText } from '../lib/data';
+  import { FLAG, majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, loadFine, loadFineLines, FINE_LEVELS, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -141,19 +144,26 @@
       : refRaw,
   );
   // small numbers (D32): units whose value rests on a small base or count (flag bits 1/2)
+  // B1: the latest values carry the build's flags; a past year (series file) is judged by the metric's own rule on
+  // the base and count values of that year (lib/small.svelte.ts). A change is unstable when either year is.
   const unstableIdx = $derived.by(() => {
-    const r = refRaw;
-    if (!r?.col.f || cmpActive) return [] as number[];
-    const out: number[] = [];
-    for (const k of Object.keys(r.col.f)) if (isUnstable(r.file, r.col.f[k]) && r.col.v[+k] !== null) out.push(+k);
-    return out;
+    const to = unstableIndices(cols, ld, metaRaw, refRaw);
+    if (!cmpActive || !refChg) return to;
+    return unstableEither(to, unstableIndices(cols, ld, metaRaw, cmpFromRef), refChg.col.v);
   });
-  // 'hide': unstable values become gaps with their reason (classes, ranks and statistics leave them out)
+  // 'hide': unstable values become gaps with their reason (classes, ranks and statistics leave them out);
+  // 'show' / 'light': a computed column (change, past year) gets the flag bit so the card and ranking mark it
   const refA = $derived.by(() => {
     const r = refDiff;
-    if (!r || app.unstable !== 'hide' || !unstableIdx.length) return r;
+    if (!r || !unstableIdx.length) return r;
+    if (app.unstable !== 'hide') {
+      if (r.file) return r;
+      const f = { ...(r.col.f ?? {}) };
+      for (const i of unstableIdx) f[String(i)] = (f[String(i)] ?? 0) | FLAG.small_base;
+      return { ...r, col: { ...r.col, f } };
+    }
     const v = r.col.v.slice();
-    const notes = [...(r.col.notes ?? []), t('fl.hidden')];
+    const notes = [...(r.col.notes ?? []), t(cmpActive ? 'r3.hiddenChg' : 'fl.hidden', { from: app.cmpFrom ?? '', to: cmpTo ?? '' })];
     const n = { ...(r.col.n ?? {}) };
     for (const i of unstableIdx) {
       v[i] = null;
@@ -161,6 +171,8 @@
     }
     return { ...r, col: { ...r.col, v, n, notes } };
   });
+  /** values hidden as small numbers (told apart from units without data, B2) */
+  const nHidden = $derived(app.unstable === 'hide' ? unstableIdx.length : 0);
   // ------------------------------------------------------------------ spatial statistics (Moran's I, clusters, bivariate)
   let spOpen = $state(app.spatial !== 'off');
   $effect(() => {
@@ -332,12 +344,18 @@
     for (let i = 0; i < nUnits; i++) if (colA.v[i] !== null) idx.push(i);
     return { n, idx };
   });
-  const legendWarn = $derived(
-    sparse
-      ? { text: t('ux.sparse', { n: fmtNumber(sparse.n, 0), total: fmtNumber(nUnits, 0), units: word, pct: `${fmtNumber((100 * sparse.n) / nUnits, 0)} %` }),
-          action: t('ux.zoomData'), onaction: () => zoomTo(sparse!.idx) }
-      : null,
-  );
+  // B2: values hidden as small numbers are not "no data": the banner tells them apart and offers to show them
+  const legendWarn = $derived.by(() => {
+    if (!sparse) return null;
+    const vars = { n: fmtNumber(sparse.n, 0), total: fmtNumber(nUnits, 0), units: word, pct: `${fmtNumber((100 * sparse.n) / nUnits, 0)}${pctSep()}%` };
+    const zoom = { action: t('ux.zoomData'), onaction: () => zoomTo(sparse!.idx) };
+    if (!nHidden) return { text: t('ux.sparse', vars), ...zoom };
+    const g = nUnits - sparse.n - nHidden;
+    return {
+      text: t(g > 0 ? 'r3.sparseHidden' : 'r3.sparseHiddenOnly', { ...vars, h: fmtNumber(nHidden, 0), g: fmtNumber(g, 0) }),
+      action: t('r3.showThem'), onaction: () => (app.unstable = 'show'), action2: zoom.action, onaction2: zoom.onaction,
+    };
+  });
   const smPooled = $derived(app.multi !== null && yearPeriods.length > 1 ? pooledValues(metaRaw, ld.level) : undefined);
 
   // reliability of survey and modelled values: the published 95 % interval (companion metric <id>_ci), else a badge
@@ -943,7 +961,10 @@
       const marks = col.f ? (i: number) => flagMarks(f, flagsOf(f, col, i)) : undefined;
       out.push({ key, tag, meta: ref.meta, v: ref.col.v, period: ref.col.period, label, marks });
     };
-    if (!whyA) push(metaA.id, 'Shade', refA);
+    if (!whyA) {
+      push(metaA.id, 'Shade', refA);
+      if (nHidden && out.length) out[out.length - 1].hiddenNote = t('r3.csvHidden');
+    }
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
     for (const e of evals) {
       if (e.status === 'active' && e.values && e.filter.kind === 'commute') {
@@ -1028,7 +1049,7 @@
         ],
         link: t('ex.view', { url: location.href }),
       });
-      downloadBlob(blob, `gemeindebank-${slug(ml(metaA))}-${slug(colA.period)}.png`);
+      downloadBlob(blob, `atlas-${slug(ml(metaA))}-${slug(colA.period)}.png`);
     } finally {
       pngBusy = false;
     }
@@ -1102,6 +1123,8 @@
       notes.push(t(ld.units[i] === 'JU' ? 'card.juMoutier' : 'card.beMoutier'));
     const stx = spatialText(i);
     if (stx) extra.push({ label: t('sp.title'), value: stx });
+    // B1: a change is flagged when either year rests on small numbers
+    if (cmpActive && app.unstable !== 'hide' && unstableIdx.includes(i)) notes.push(t('r3.chgEither', { from: app.cmpFrom ?? '', to: cmpTo ?? '' }));
     // reliability of this unit's value: its 95 % interval, or the survey / modelled sentence
     let ci = null;
     let relText: string | null = null;
@@ -1264,7 +1287,7 @@
           {:else if scaleA && colA}
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle} warn={legendWarn}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} nHidden={native ? 0 : nHidden} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
           {:else if refA === undefined}
@@ -1272,7 +1295,7 @@
           {/if}
           {#if unstableIdx.length && !whyA && !spatialMode}
             <div class="ur">
-              <span class="foot">{t('fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
+              <span class="foot">{t(cmpActive ? 'r3.urChg' : 'fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
               <div class="seg" role="radiogroup" aria-label={t('fl.show')}>
                 {#each ['show', 'light', 'hide'] as const as o}
                   <button type="button" role="radio" aria-checked={app.unstable === o} onclick={() => (app.unstable = o)}>{t(`fl.opt.${o}`)}</button>
@@ -1374,7 +1397,7 @@
           {#snippet extra()}
             <AggregateLine metrics={base.metrics} {metas} level={ld.level} {nUnits} mask={match.m} nMatch={match.n}
               metricId={app.agg ?? app.metric} getCol={(id) => cols.get(ld, id, app.year)} unitWord={word}
-              onpick={(id) => (app.agg = id === app.metric ? null : id)} />
+              onpick={(id) => (app.agg = id === app.metric ? null : id)} hiddenIdx={cmpActive ? [] : unstableIdx} shadeId={metaRaw.id} />
           {/snippet}
         </FilterPanel>
       </section>
@@ -1394,7 +1417,7 @@
       <div class="map" bind:this={mapEl}></div>
       {#if app.multi !== null}
         <SmallMultiples {base} {ld} {cols} meta={metaRaw} periods={yearPeriods} picked={app.multi} pooled={smPooled} method={app.cls}
-          mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} />
+          mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} change={cmpActive} />
       {/if}
       {#if !app.embed}
       {#if desktop && !app.embed && !sideOpen}
@@ -1445,7 +1468,7 @@
             <div class="fl-t">{ml(metaA)}</div>
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} nHidden={native ? 0 : nHidden} />
           {/if}
         </div>
       {/if}
