@@ -54,6 +54,7 @@
       'p.fromStation': 'Public transport from {st} station towards each hub, in minutes.',
       'p.fromStationOut': 'No station in this municipality: public transport from {st}, the nearest station, towards each hub, in minutes.',
       'p.noStation': 'No stop in this municipality: station times are not available.',
+      'p.fromStop': 'Public transport from {st}, the main stop (no rail station serves more residents), towards each hub, in minutes.',
       'p.theHub': 'the hub',
       'p.reachDate': 'Timetable of {d}.',
       'p.reachNone': '–',
@@ -130,6 +131,7 @@
       'p.fromStation': 'ÖV ab Bahnhof {st} zu jedem Zentrum, in Minuten.',
       'p.fromStationOut': 'Kein Bahnhof in dieser Gemeinde: ÖV ab {st}, dem nächsten Bahnhof, zu jedem Zentrum, in Minuten.',
       'p.noStation': 'Keine Haltestelle in dieser Gemeinde: keine Bahnhofzeiten.',
+      'p.fromStop': 'ÖV ab {st}, der wichtigsten Haltestelle (kein Bahnhof erschliesst mehr Einwohner), zu jedem Zentrum, in Minuten.',
       'p.theHub': 'das Zentrum',
       'p.reachDate': 'Fahrplan vom {d}.',
       'p.reachNone': '–',
@@ -185,7 +187,7 @@
     hideAltNames, loadHistory, loadIdentity, loadNeighbours, loadReachTimes, loadRows, loadSearch, parseRef, refOf,
     type HistoryFile, type Identity, type NeighboursFile, type ReachTimes, type SearchIndex,
   } from '../lib/places';
-  import { methodText } from '../lib/pt';
+  import { mainStation, methodText, reasonAt } from '../lib/pt';
   import { entryOf, loadPlaceLevel, similarPlaces, SIMILAR_METRICS, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
   import { app } from '../lib/state.svelte';
 
@@ -380,13 +382,18 @@
       }))
       .sort((a, b) => (hasSt ? (a.st ?? 1e9) - (b.st ?? 1e9) : 0) || (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
   });
-  const station = $derived(reach && reachK >= 0 ? (reach.main_station?.[reachK] ?? null) : null);
+  const stationInfo = $derived(reach && reachK >= 0 ? mainStation(reach, unit.id) : null);
+  // reasons are per hub (reasons[measure][hub][unit]); the same reason for several hubs is listed once
   const reachWhy = $derived.by(() => {
     if (!reach?.reasons || reachK < 0) return [];
     const out: { what: string; why: string }[] = [];
     for (const [key, what] of [['pt_station', t('pt.st')], ['pt', t(hasSt ? 'pt.dd' : 'rc.pt')], ['car', t('common.car')]] as const) {
-      const why = reach.reasons[key]?.[String(reachK)];
-      if (why) out.push({ what, why });
+      const byWhy = new Map<string, string[]>();
+      for (const [slug, hub] of reach.hubs) {
+        const why = reasonAt(reach, key, slug, reachK);
+        if (why) byWhy.set(why, [...(byWhy.get(why) ?? []), hub]);
+      }
+      for (const [why, hubs] of byWhy) out.push({ what: `${what} (${hubs.join(', ')})`, why });
     }
     return out;
   });
@@ -520,7 +527,7 @@
             {#if unit.level !== 'gemeinde'}
               <p class="foot">{t('p.reachHigher', { one: levelName(unit.level, false) })}</p>
             {:else if reachRows}
-              {#if hasSt}<p class="st">{station ? t(station[2] === false ? 'p.fromStationOut' : 'p.fromStation', { st: station[0] }) : t('p.noStation')}</p>{/if}
+              {#if hasSt}<p class="st">{stationInfo ? t(stationInfo.mode ? 'p.fromStop' : stationInfo.outside ? 'p.fromStationOut' : 'p.fromStation', { st: stationInfo.name }) : t('p.noStation')}</p>{/if}
               <table class="reach">
                 <thead><tr><th>{t('p.reachHub')}</th>
                   {#if hasSt}<th class="n" title={t('pt.st')}>{t('p.reachSt')}</th><th class="n" title={t('pt.dd')}>{t('p.reachDoor')}</th>

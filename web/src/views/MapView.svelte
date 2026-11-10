@@ -34,7 +34,7 @@
   import { levelsOf, requestLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
-  import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
+  import { hasStation, kindLabel, mainStation, methodText, nearestHubOf, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
   import { divRamp, lighten, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -271,7 +271,7 @@
   // reach_times.json: main station names, method texts and reasons for missing times (D31)
   let rt = $state.raw<ReachTimes | null>(null);
   $effect(() => {
-    if ((reachOn || app.filters.some((f) => f.kind === 'reach')) && !rt) loadReachTimes().then((x) => (rt = x)).catch(() => {});
+    if ((reachOn || app.filters.some((f) => f.kind === 'reach') || /_nearest_hub$/.test(metaA.id)) && !rt) loadReachTimes().then((x) => (rt = x)).catch(() => {});
   });
   const rtIndex = $derived(rt ? new Map(rt.units.map((u, k) => [u, k])) : undefined);
   const reachCol = $derived(reachRef?.col ?? null);
@@ -672,6 +672,12 @@
       if (cm) extra.push({ label: ml(cm), value: x === null ? t('lg.noData') : `${fmtValue(x, cm)} (${centreRef.col.period})` });
     }
     const notes: string[] = [];
+    // D39: a nearest-hub figure names its hub and says which hubs count
+    if (/^reach_(ptst|pt|car)_nearest_hub$/.test(metaA.id) && ld.level === 'gemeinde') {
+      const h = nearestHubOf(rt, metaA.id, ld.units[i], rtIndex);
+      if (h) extra.push({ label: t('pt.nearestHub'), value: h });
+      notes.push(t('pt.nearestSet'));
+    }
     // D37 / D16: canton Jura on today's boundaries includes Moutier (voted in canton Bern until 2025)
     if (ld.level === 'kanton' && (ld.units[i] === 'JU' || ld.units[i] === 'BE') && (metaA.id.startsWith('nrw_') || metaA.id.startsWith('vote_')))
       notes.push(t(ld.units[i] === 'JU' ? 'card.juMoutier' : 'card.beMoutier'));
