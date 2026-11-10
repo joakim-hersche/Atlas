@@ -5,6 +5,7 @@ Outputs
   data/interim/reach/validation.json        PT spot checks and GTFS vs NPVM PT agreement
   data/out/reach/<hub>_<mode>.json          growing-network line files
   data/out/reach/index.json                 file list with sizes
+  data/out/reach/spread.json, <hub>_spread.json   P10 / median / P90 over the morning, both directions (spread.py)
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 from pipeline.common import interim_path, out_path
-from pipeline.reach import draw, npvm, pt
+from pipeline.reach import draw, npvm, pt, spread
 from pipeline.reach.csa import Network
 from pipeline.reach.gtfs_prep import REVERSE_DAYS, SERVICE_DATE, build as prep, outdir
 from pipeline.reach.hubs import HUBS, nearest_hubs
@@ -70,6 +71,7 @@ def validate_to_hub(ptres: pd.DataFrame, stations: pd.DataFrame, hubs) -> dict:
     out = {"spot_checks_to_hub": []}
     st = ptres[ptres.method == "gtfs_rcsa_mainstation"].set_index(["hub", "bfs_nr"])
     dd = ptres[ptres.method == "gtfs_rcsa_popweighted"].set_index(["hub", "bfs_nr"])
+    fo = ptres[ptres.method == "gtfs_fcsa_mainstation"].set_index(["hub", "bfs_nr"])
     for slug, bfs, label, (lo, hi) in SPOT_TO_HUB:
         if (slug, bfs) not in st.index:
             continue
@@ -77,6 +79,9 @@ def validate_to_hub(ptres: pd.DataFrame, stations: pd.DataFrame, hubs) -> dict:
         out["spot_checks_to_hub"].append({
             "hub": slug, "from": label, "bfs_nr": bfs, "main_station": r.main_station,
             "station_min": r.minutes, "p10": r.minutes_p10, "p90": r.minutes_p90,
+            "with_wait": [r.minutes_wait_p10, r.minutes_incl_wait, r.minutes_wait_p90],
+            "from_hub": ([fo.loc[(slug, bfs)][c] for c in ("minutes_p10", "minutes", "minutes_p90")]
+                         if (slug, bfs) in fo.index else None),
             "door_to_door_min": dd.loc[(slug, bfs)].minutes if (slug, bfs) in dd.index else None,
             "expected": [lo, hi], "ok": bool(lo <= r.minutes <= hi) if r.minutes == r.minutes else False})
     nv = npvm.municipality_times("pt", stations, to_hub=True)
@@ -247,6 +252,7 @@ def main(slugs: list[str] | None = None):
                                     "hubs": [{"slug": h[0], "name": h[1], "didok": h[2], "nearest_set": h[0] in nearest}
                                              for h in HUBS],
                                     "files": allf}, ensure_ascii=False, indent=1))
+    spread.build(pd.read_parquet(p), hubs)
     vp = interim_path("reach", "validation.json")
     val["hubs_in_run"] = [h[0] for h in hubs]
     vp.write_text(json.dumps(val, ensure_ascii=False, indent=1, default=float))

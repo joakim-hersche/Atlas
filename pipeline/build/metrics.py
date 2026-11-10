@@ -8,13 +8,22 @@ Rules
 - Base metrics with aggregation 'sum' are summed from municipalities to every level. A unit gets a
   value only if all its municipalities have one; otherwise the gap carries the real reason
   ("3 of 352 municipalities without a value: 3 suppressed (small numbers)").
-- 'weighted_mean:<w>' uses metric <w> of the same period as weight.
+- 'weighted_mean:<w>' uses metric <w> as weight, of the same period or, where <w> has no value for that
+  period, of its nearest period (audit round 2, M5: climate normals '1991-2020', monthly energy data).
+- Suppression tolerance (audit round 2, M1): a sum or weighted mean whose only gaps are municipalities
+  suppressed for small numbers, together holding at most SUPPRESSED_MAX (1 %) of the unit's residents
+  (STATPOP, nearest year), is computed from the published municipalities and kept as an estimate (note
+  'estimate: ...'). The published value of the unit, where there is one, is preferred.
 - 'not_aggregatable' stays at its native level; values the source publishes at higher levels are
   passed through (provenance native, note "published value").
 - Published fallback (review round 1, defect 6): where the sum (or weighted mean) of municipalities is
   incomplete and the source publishes a value for that unit (provenance native), the published value
   is used: status ok, provenance native, note "published <level> value; municipal values incomplete
   (...)". The plausibility sweep (pipeline.build.quality) compares only provenance 'aggregated' rows.
+  Only a published value on the current boundaries is used (audit round 2, M2): a canton or district row
+  whose territory changed between the row's state and the reference date (e.g. BE and JU before Moutier
+  moved on 2026-01-01) is not a fallback; the gap keeps its reason. Pass-through values of such units
+  (medians, district survey values) are kept with a note naming the boundary state.
 - Optional metrics.yaml key `zero_when: [<status>, ...]` on a base metric: rows with one of these
   statuses count as 0 in sums and ratio terms (a party that did not stand; a municipality counted with
   a neighbour). They count as 0 **only next to a real value**: a sum whose contributing rows are all
@@ -24,6 +33,10 @@ Rules
   and elections, lakes outside municipalities in the boundary data; D17) are added to the canton,
   major-region and Swiss sums, as the source counts them. Owner canton: unit id '<KT>:<code>' or a
   4-digit code 9KKx (KK = canton number). Completeness is judged on the municipalities only.
+  Level 'unallocated' rows (national sums of what no municipality holds) add their remainder over the
+  pseudo rows to the Swiss sum (audit round 2, M3: migration 'Ohne Angabe', vehicles without a canton).
+  District and typology sums of such metrics carry the note 'excludes amounts not allocatable to a
+  municipality'.
 - Derived 'ratio:<a>[+<b>...]/<c>[+...][*<factor>]' and 'change:<metric>:<years>' are computed at every
   level from that level's base values, so ratios are re-computed, never averaged. A ratio that cannot
   be computed gets a gap row with the status and note of its first missing input.
@@ -61,6 +74,8 @@ GAP_RANK = ("CASE status WHEN 'not_applicable' THEN 1 WHEN 'suppressed' THEN 2 W
             "WHEN 'not_covered' THEN 4 WHEN 'no_data' THEN 5 ELSE 9 END")
 LEVEL_WORD = {"bezirk": "district", "kanton": "canton", "schweiz": "national", "grossregion": "major-region"}
 UNIT_WORD = {"gemeinde": "municipalities"}
+SUPPRESSED_MAX = 0.01        # M1: suppressed municipalities may hold at most 1 % of a unit's residents
+POP_METRIC = "pop_total"     # reference population for the tolerance (STATPOP, 31 Dec)
 
 
 def _terms(expr: str) -> list[str]:
@@ -79,6 +94,67 @@ def pseudo_owner(unit_id: str, canton_by_nr: dict) -> str:
     if u.isdigit() and len(u) == 4 and u.startswith("9"):
         return canton_by_nr.get(int(u[1:3]), "")
     return ""
+
+
+def period_year(p: str) -> int | None:
+    """Year a period refers to: the last 4-digit year in it ('2022-2024' -> 2024, '1991-2020' -> 2020,
+    '2026-10' -> 2026, '2020/25' -> 2020)."""
+    ys = [int(y) for y in re.findall(r"(?<!\d)(1[89]\d\d|20\d\d)(?!\d)", str(p))]
+    return max(ys) if ys else None
+
+
+def nearest_periods(periods: list[str], available: list[str]) -> dict[str, str]:
+    """period -> the same period if available, else the available period with the nearest year (later on ties)."""
+    av = [(period_year(a), a) for a in available if period_year(a) is not None]
+    out = {}
+    for p in periods:
+        if p in available:
+            out[p] = p
+            continue
+        y = period_year(p)
+        if y is None or not av:
+            continue
+        out[p] = min(av, key=lambda t: (abs(t[0] - y), -t[0], t[1]))[1]
+    return out
+
+
+def changed_units(dates) -> pd.DataFrame:
+    """(level, unit_id, date): cantons and districts whose territory on `date` differs from the reference
+    state (a municipality, followed through the crosswalk, belonged to another canton / district)."""
+    import datetime as _dt
+    from pipeline.backbone.crosswalk import load_backbone, versions_at
+    from pipeline.common import REFERENCE_DATE
+    mv, _ = load_backbone()
+    cw = pd.read_parquet(interim_path("backbone", f"crosswalk_{REFERENCE_DATE.isoformat()}.parquet"))
+    ref = membership().set_index("bfs_nr")[["kanton", "bezirk"]]
+    rows = []
+    for d in sorted(set(dates)):
+        if d is None or d >= REFERENCE_DATE:
+            continue
+        v = versions_at(mv, d)[["hist_id", "canton", "district_nr"]]
+        x = v.merge(cw[["from_hist_id", "to_bfs_nr"]], left_on="hist_id", right_on="from_hist_id").join(ref, on="to_bfs_nr")
+        kc = x[x["canton"].astype(str) != x["kanton"].astype(str)]
+        for k in set(kc["canton"].astype(str)) | set(kc["kanton"].astype(str)):
+            rows.append(("kanton", k, d))
+        bc = x[x["district_nr"].astype(str) != x["bezirk"].astype(str)]
+        for b in set(bc["district_nr"].astype(str)) | set(bc["bezirk"].astype(str)):
+            rows.append(("bezirk", b, d))
+    return pd.DataFrame(rows, columns=["level", "unit_id", "date"])
+
+
+def native_state_date(vintage, period: str):
+    """State of a published (native) row: its vintage when the connector names an older state, else the end
+    of the period's year (a value 'for 2025' is on the 2025 boundaries), capped at the reference date."""
+    import datetime as _dt
+    from pipeline.common import REFERENCE_DATE
+    try:
+        v = _dt.date.fromisoformat(str(vintage)[:10])
+    except ValueError:
+        v = REFERENCE_DATE
+    if v < REFERENCE_DATE:
+        return v
+    y = period_year(period)
+    return min(REFERENCE_DATE, _dt.date(y, 12, 31)) if y else REFERENCE_DATE
 
 
 def _missing_note(prefix: str = "") -> str:

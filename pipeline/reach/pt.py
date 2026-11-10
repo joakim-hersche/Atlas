@@ -71,9 +71,14 @@ def ea_matrix(net: Network, src: list[int]) -> np.ndarray:
     return out
 
 
-def journey_times(ea: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def journey_times(ea: np.ndarray, cap_unreached: bool = False) -> tuple[np.ndarray, np.ndarray]:
     """ea: (N_SCAN, n) earliest arrivals. Returns (journey, incl_wait) for the first N_DEP rows,
-    in seconds, INF-like large values where unreached."""
+    in seconds, INF-like large values where unreached.
+
+    The latest departure LD is searched up to the last scan (09:30). Where the arrival stays the same up to
+    that scan the vehicle leaves later and the true journey is unknown (EA - 09:30 is only an upper bound,
+    typically a rural stop with a gap of two hours or more). cap_unreached=True sets the journey of those
+    departures to inf (incl_wait stays valid); the hub-outward spread uses it, the older methods do not."""
     n_scan = ea.shape[0]
     ld = np.empty_like(ea)
     ld[-1] = n_scan - 1
@@ -81,7 +86,8 @@ def journey_times(ea: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         ld[k] = np.where(ea[k] == ea[k + 1], ld[k + 1], k)
     t = T_FIRST + 60 * np.arange(n_scan)[:, None]
     unreached = ea >= INF
-    journey = np.where(unreached, np.inf, ea - (T_FIRST + 60 * ld)).astype(float)
+    journey = np.where(unreached | (cap_unreached & (ld == n_scan - 1)), np.inf,
+                       ea - (T_FIRST + 60 * ld)).astype(float)
     wait = np.where(unreached, np.inf, ea - t).astype(float)
     return journey[:N_DEP], wait[:N_DEP]
 
@@ -113,8 +119,9 @@ def reverse_journey_times(ld: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def reverse_summary(journey: np.ndarray, wait: np.ndarray):
-    """Per station: median journey, median incl. wait, P10, P90 (seconds) and the first deadline used
-    (minutes after midnight). journey/wait rows are the deadlines 07:30 .. 10:30.
+    """Per station: median journey, median incl. wait, P10, P90 (seconds), the first deadline used
+    (minutes after midnight), and P10, P90 of the journey incl. wait (the 7-tuple SUMMARY_FIELDS).
+    journey/wait rows are the deadlines 07:30 .. 10:30.
 
     Window: the deadlines 07:30-08:30 that can be met (deadlines before the earliest possible arrival
     have no journey and are left out). If the hub cannot be reached by 08:30 at all (far hubs: the
@@ -135,10 +142,31 @@ def reverse_summary(journey: np.ndarray, wait: np.ndarray):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         out = [np.nanmedian(jj, axis=0), np.nanmedian(ww, axis=0), np.nanpercentile(jj, 10, axis=0),
-               np.nanpercentile(jj, 90, axis=0)]
+               np.nanpercentile(jj, 90, axis=0), np.nanpercentile(ww, 10, axis=0), np.nanpercentile(ww, 90, axis=0)]
     out = [np.where(np.isnan(x) | ~reach, np.inf, x) for x in out]
     late = np.where(reach & ~in_win, (R_FIRST // 60) + R_WIN0 + start, np.nan)
-    return (*out, late)
+    return (*out[:4], late, *out[4:])
+
+
+# per-station summary tuple (seconds; inf = not reached; late = start minute of a shifted window or NaN)
+SUMMARY_FIELDS = ("median", "median_incl_wait", "p10", "p90", "window_start_min", "wait_p10", "wait_p90")
+
+
+def _pct_inf(x: np.ndarray, q: float) -> np.ndarray:
+    """Percentile along axis 0 where inf marks 'not reached': inf if the value would depend on an unreached row."""
+    big = 1e9
+    y = np.where(np.isfinite(x), x, big)
+    r = np.percentile(y, q, axis=0)
+    return np.where(np.percentile(y, q, axis=0, method="higher") >= big, np.inf, r)
+
+
+def forward_summary(journey: np.ndarray, wait: np.ndarray) -> tuple:
+    """Hub-outward counterpart of reverse_summary: per station the median journey, median incl. wait, P10, P90
+    over the 61 departures 07:30-08:30 (rows of journey_times()), no shifted window (late = NaN), and P10, P90
+    of the journey incl. wait. Seconds; inf where not reached (a station reached at some departures only has
+    inf in the percentiles that need an unreached departure)."""
+    return (np.median(journey, axis=0), np.median(wait, axis=0), _pct_inf(journey, 10), _pct_inf(journey, 90),
+            np.full(journey.shape[1], np.nan), _pct_inf(wait, 10), _pct_inf(wait, 90))
 
 
 RAIL_TYPES = set(range(100, 118)) | {2}
@@ -361,34 +389,152 @@ def popweighted_rows(slug: str, med_station: np.ndarray, med_wait_station: np.nd
 COLS = ["hub", "mode", "bfs_nr", "minutes", "minutes_incl_wait", "status", "method", "pop_share_with_stop"]
 
 
+SPREAD_COLS = ["minutes_p10", "minutes_p90", "minutes_wait_p10", "minutes_wait_p90"]
+
+
+class AccessIndex:
+    """The hectare -> stop links (access_links) in arrays, to take the population-weighted municipality
+    median of several per-station time vectors in one pass (door-to-door median, P10, P90 ...)."""
+
+    def __init__(self, access: pd.DataFrame):
+        a = access.dropna(subset=["bfs_nr"])
+        if not a.RELI.is_monotonic_increasing:
+            a = a.sort_values("RELI", kind="stable")
+        reli = a.RELI.to_numpy()
+        self.starts = np.r_[0, np.flatnonzero(reli[1:] != reli[:-1]) + 1]
+        idx = a.idx.to_numpy(float)
+        self.has = ~np.isnan(idx)
+        self.ii = np.where(self.has, idx, 0).astype(int)
+        self.walk = a.walk_s.to_numpy(float)
+        self.bfs = a.bfs_nr.to_numpy()[self.starts].astype(int)
+        self.pop = a.BBTOT.to_numpy(float)[self.starts]
+        self.has_stop = np.add.reduceat(self.has.astype(np.int32), self.starts) > 0
+        order = np.argsort(self.bfs, kind="stable")
+        cuts = np.r_[0, np.flatnonzero(np.diff(self.bfs[order])) + 1, len(order)]
+        self.groups = {int(self.bfs[order[c0]]): order[c0:c1] for c0, c1 in zip(cuts[:-1], cuts[1:])}
+
+    def hectare_times(self, station_s: np.ndarray) -> np.ndarray:
+        """Per hectare the best (walk + station time) over the stops within reach, seconds (inf: none reached)."""
+        v = np.where(self.has, station_s[self.ii] + self.walk, np.inf)
+        return np.minimum.reduceat(v, self.starts)
+
+    def municipality(self, station_s: np.ndarray, gem_ids: np.ndarray) -> pd.DataFrame:
+        """Population-weighted median over the inhabited hectares of every municipality (same rule as
+        popweighted_rows: hectares with a stop within 1.5 km only; unreached hectares count as +inf; a municipality
+        where fewer than half of those residents reach the hub has no value). Columns bfs_nr, minutes
+        (round(s / 60, 1), NaN without value), status, share (residents with a stop in reach)."""
+        j = self.hectare_times(station_s)
+        rows = []
+        for b in gem_ids:
+            g = self.groups.get(int(b))
+            if g is None:
+                rows.append((int(b), np.nan, "no populated hectare", np.nan))
+                continue
+            pop_all = self.pop[g].sum()
+            c = g[self.has_stop[g]]
+            share = self.pop[c].sum() / pop_all if pop_all else 0.0
+            if len(c) == 0:
+                rows.append((int(b), np.nan, "no PT within walking distance", 0.0))
+                continue
+            fin = np.isfinite(j[c])
+            if self.pop[c][fin].sum() < 0.5 * self.pop[c].sum():
+                rows.append((int(b), np.nan, "unreached", round(share, 4)))
+                continue
+            rows.append((int(b), round(weighted_median(j[c], self.pop[c]) / 60, 1), "ok", round(share, 4)))
+        return pd.DataFrame(rows, columns=["bfs_nr", "minutes", "status", "share"])
+
+
+def doortodoor_spread(ai: AccessIndex, summary: tuple, gem_ids: np.ndarray) -> pd.DataFrame:
+    """Door-to-door P10 / P90 (journey, and journey incl. wait) per municipality, minutes: every hectare takes
+    min over its stops of (walk + the stop's P10 or P90), then the population-weighted median over hectares,
+    like the median itself (so P10 <= median <= P90 holds). The per-hectare minimum of the stops' percentiles is
+    an approximation of the percentile of the per-minute minimum (it can only be slightly too high at P10 and
+    too low at P90 where two stops alternate). Index bfs_nr; columns SPREAD_COLS."""
+    _med, _medw, p10, p90, _late, w10, w90 = summary
+    out = {}
+    for col, arr in zip(SPREAD_COLS, (p10, p90, w10, w90)):
+        out[col] = ai.municipality(arr, gem_ids).set_index("bfs_nr").minutes
+    return pd.DataFrame(out)
+
+
 def towards_hub_results(net: Network, slug: str, summary: tuple, access: pd.DataFrame,
-                        gem_ids: np.ndarray, mains: pd.DataFrame, by_day: dict | None = None) -> pd.DataFrame:
+                        gem_ids: np.ndarray, mains: pd.DataFrame, by_day: dict | None = None,
+                        ai: AccessIndex | None = None) -> pd.DataFrame:
     """D31: station time (main station -> hub) and door-to-door towards the hub, morning arrivals.
-    summary = (median, median incl. wait, P10, P90, late-window start) per station, as from
-    reverse_summary() or combine_days(); by_day = {date: per-station median (s)} for the record."""
-    med, medw, p10, p90, late = summary
+    summary = SUMMARY_FIELDS per station (median, median incl. wait, P10, P90, late-window start, P10 and P90
+    incl. wait), as from reverse_summary() or combine_days(); by_day = {date: per-station median (s)}.
+    Columns minutes_p10/p90 (journey) and minutes_wait_p10/p90 (journey incl. wait) are filled for both methods."""
+    med, medw, p10, p90, late, w10, w90 = summary
+    ms = mains.set_index("bfs_nr")
+    rows = []
+    nan2 = (np.nan, np.nan)
+    for bfs in gem_ids:
+        b = int(bfs)
+        if b not in ms.index:
+            rows.append((slug, "pt", b, np.nan, np.nan, "no stop within 2 km", "gtfs_rcsa_mainstation", np.nan,
+                         None, None, None, np.nan, np.nan, np.nan, None, np.nan, None, *nan2))
+            continue
+        r = ms.loc[b]
+        i = int(r.idx)
+        ok = np.isfinite(med[i])
+        st = "ok" if ok else "no arrival at the hub by 10:30"
+
+        def m(x):
+            return round(x[i] / 60, 1) if ok and np.isfinite(x[i]) else np.nan
+        rows.append((slug, "pt", b, m(med), m(medw), st, "gtfs_rcsa_mainstation", np.nan,
+                     r["name"], str(r.didok), bool(r.inside), m(p10), m(p90),
+                     late[i], r["mode"], r.pop_share,
+                     ";".join(f"{k}:{v[i] / 60:.0f}" if np.isfinite(v[i]) else f"{k}:-" for k, v in (by_day or {}).items())
+                     or None, m(w10), m(w90)))
+    d = pd.DataFrame(rows, columns=COLS + ["main_station", "main_didok", "main_inside", "minutes_p10", "minutes_p90",
+                                           "window_start_min", "main_mode", "main_pop_share", "minutes_by_day",
+                                           "minutes_wait_p10", "minutes_wait_p90"])
+    pw = pd.DataFrame(popweighted_rows(slug, med, medw, access, gem_ids, method="gtfs_rcsa_popweighted",
+                                       unreached="no arrival at the hub by 10:30"), columns=COLS)
+    sp = doortodoor_spread(ai or AccessIndex(access), summary, gem_ids)
+    pw = pw.merge(sp, left_on="bfs_nr", right_index=True, how="left")
+    pw.loc[pw.status != "ok", SPREAD_COLS] = np.nan
+    return pd.concat([d, pw], ignore_index=True)
+
+
+def from_hub_results(slug: str, summary: tuple, gem_ids: np.ndarray, mains: pd.DataFrame, ai: AccessIndex,
+                     by_day: dict | None = None) -> pd.DataFrame:
+    """Hub-outward counterpart of towards_hub_results, with the same definitions (D31) mirrored: station time =
+    journey from the hub station to the municipality's main station, departures from the hub 07:30-08:30 (median
+    day of the three weekdays), journey = arrival - latest departure giving that arrival (no initial wait);
+    door-to-door = hectares walking from the best stop within 1.5 km. Methods gtfs_fcsa_mainstation and
+    gtfs_fcsa_popweighted; columns as in towards_hub_results (window_start_min is NaN)."""
+    med, medw, p10, p90, late, w10, w90 = summary
     ms = mains.set_index("bfs_nr")
     rows = []
     for bfs in gem_ids:
         b = int(bfs)
         if b not in ms.index:
-            rows.append((slug, "pt", b, np.nan, np.nan, "no stop within 2 km", "gtfs_rcsa_mainstation", np.nan,
-                         None, None, None, np.nan, np.nan, np.nan, None, np.nan, None))
+            rows.append((slug, "pt", b, np.nan, np.nan, "no stop within 2 km", "gtfs_fcsa_mainstation", np.nan,
+                         None, None, None, np.nan, np.nan, np.nan, None, np.nan, None, np.nan, np.nan))
             continue
         r = ms.loc[b]
         i = int(r.idx)
-        st = "ok" if np.isfinite(med[i]) else "no arrival at the hub by 10:30"
-        rows.append((slug, "pt", b, round(med[i] / 60, 1) if st == "ok" else np.nan,
-                     round(medw[i] / 60, 1) if st == "ok" else np.nan, st, "gtfs_rcsa_mainstation", np.nan,
-                     r["name"], str(r.didok), bool(r.inside),
-                     round(p10[i] / 60, 1) if st == "ok" else np.nan, round(p90[i] / 60, 1) if st == "ok" else np.nan,
-                     late[i], r["mode"], r.pop_share,
-                     ";".join(f"{k}:{v[i] / 60:.0f}" if np.isfinite(v[i]) else f"{k}:-" for k, v in (by_day or {}).items())
-                     or None))
+        ok = np.isfinite(med[i])
+
+        def m(x):
+            return round(x[i] / 60, 1) if ok and np.isfinite(x[i]) else np.nan
+        rows.append((slug, "pt", b, m(med), m(medw), "ok" if ok else NO_MORNING_FROM, "gtfs_fcsa_mainstation",
+                     np.nan, r["name"], str(r.didok), bool(r.inside), m(p10), m(p90), np.nan, r["mode"],
+                     r.pop_share, ";".join(f"{k}:{v[i] / 60:.0f}" if np.isfinite(v[i]) else f"{k}:-"
+                                           for k, v in (by_day or {}).items()) or None, m(w10), m(w90)))
     d = pd.DataFrame(rows, columns=COLS + ["main_station", "main_didok", "main_inside", "minutes_p10", "minutes_p90",
-                                           "window_start_min", "main_mode", "main_pop_share", "minutes_by_day"])
-    pw = pd.DataFrame(popweighted_rows(slug, med, medw, access, gem_ids, method="gtfs_rcsa_popweighted",
-                                       unreached="no arrival at the hub by 10:30"), columns=COLS)
+                                           "window_start_min", "main_mode", "main_pop_share", "minutes_by_day",
+                                           "minutes_wait_p10", "minutes_wait_p90"])
+    base = ai.municipality(med, gem_ids).set_index("bfs_nr")
+    sp = doortodoor_spread(ai, summary, gem_ids)
+    wm = ai.municipality(medw, gem_ids).set_index("bfs_nr").minutes
+    pw = pd.DataFrame({"hub": slug, "mode": "pt", "bfs_nr": base.index, "minutes": base.minutes.to_numpy(),
+                       "minutes_incl_wait": wm.reindex(base.index).to_numpy(),
+                       "status": base.status.replace({"unreached": NO_MORNING_FROM}).to_numpy(),
+                       "method": "gtfs_fcsa_popweighted", "pop_share_with_stop": base.share.to_numpy()})
+    pw = pw.merge(sp, left_on="bfs_nr", right_index=True, how="left")
+    pw.loc[pw.status != "ok", SPREAD_COLS + ["minutes_incl_wait"]] = np.nan
     return pd.concat([d, pw], ignore_index=True)
 
 
@@ -443,14 +589,14 @@ def day_networks(primary: Network) -> dict:
 
 
 def combine_days(per_day: list[tuple]) -> tuple:
-    """Per station, the summary (median, incl. wait, P10, P90, late start) of the day whose median is the
+    """Per station, the summary (SUMMARY_FIELDS) of the day whose median is the
     median of the daily medians (3 days: the middle one; unreached = inf sorts last). Choosing one day
     keeps P10/P90 and the late window consistent with the value, and drops a day with works."""
     meds = np.vstack([p[0] for p in per_day])
     k = meds.shape[0]
     pick = np.argsort(meds, axis=0, kind="stable")[(k - 1) // 2]
     cols = np.arange(meds.shape[1])
-    return tuple(np.vstack([p[j] for p in per_day])[pick, cols] for j in range(5))
+    return tuple(np.vstack([p[j] for p in per_day])[pick, cols] for j in range(len(per_day[0])))
 
 
 def hub_reverse(days: dict, didok: int) -> tuple[tuple, dict]:
@@ -471,6 +617,32 @@ def hub_reverse(days: dict, didok: int) -> tuple[tuple, dict]:
     return combine_days(per_day), by_day
 
 
+NO_MORNING_FROM = "no departure from the hub 07:30-09:30 reaches it by 18:00"
+
+
+def hub_forward(days: dict, didok: int, primary: tuple | None = None) -> tuple[tuple, dict]:
+    """Hub-outward summaries (forward scans, departures 07:30-08:30) on every reverse day, mapped to the primary
+    station index, then the median day per station (combine_days), like hub_reverse. primary = (journey, wait)
+    of the primary service day when already computed (journey_times(ea, cap_unreached=True))."""
+    from pipeline.reach.gtfs_prep import SERVICE_DATE
+    per_day, by_day = [], {}
+    for d, (n, m) in days.items():
+        if d == SERVICE_DATE and primary is not None:
+            j, w = primary
+        else:
+            j, w = journey_times(ea_matrix(n, hub_sources(n, didok)), cap_unreached=True)
+        summ = forward_summary(j, w)
+        ok = m >= 0
+        mapped = []
+        for k, x in enumerate(summ):
+            y = np.full(len(m), np.nan if k == 4 else np.inf)
+            y[ok] = x[m[ok]]
+            mapped.append(y)
+        per_day.append(tuple(mapped))
+        by_day[d.isoformat()] = mapped[0]
+    return combine_days(per_day), by_day
+
+
 def run(hubs=HUBS, save_station_times: bool = True):
     import time
     net = Network.load(outdir())
@@ -480,6 +652,7 @@ def run(hubs=HUBS, save_station_times: bool = True):
     gem_ids = gem["id"].astype(int).to_numpy()
     res, rep, timing = [], {}, {}
     mains = main_stations(net, gem_ids, access, [h[2] for h in HUBS])
+    ai = AccessIndex(access)
     days = day_networks(net)
     for slug, name, didok in hubs:
         src = hub_sources(net, didok)
@@ -488,12 +661,13 @@ def run(hubs=HUBS, save_station_times: bool = True):
         summ, by_day = hub_reverse(days, didok)
         t1 = time.time()
         if save_station_times:
-            m_, mw_, p10_, p90_, late_ = summ
+            m_, mw_, p10_, p90_, late_, w10_, w90_ = summ
             pd.DataFrame({"idx": net.stations.idx, "median_journey_s": m_, "median_incl_wait_s": mw_,
                           "p10_s": p10_, "p90_s": p90_, "window_start_min": late_,
+                          "wait_p10_s": w10_, "wait_p90_s": w90_,
                           **{f"median_journey_s_{k}": v for k, v in by_day.items()}}
                          ).to_parquet(interim_path("reach", "pt_station_times_to_hub", f"{slug}.parquet"))
-        tw = towards_hub_results(net, slug, summ, access, gem_ids, mains, by_day)
+        tw = towards_hub_results(net, slug, summ, access, gem_ids, mains, by_day, ai)
         res.append(tw)
         okt = tw[(tw.method == "gtfs_rcsa_mainstation") & (tw.status == "ok")]
         print(f"{slug}: towards hub ({len(days)} days, {t1 - t0:.0f} s), {len(okt)} main stations reach it, "
@@ -509,7 +683,18 @@ def run(hubs=HUBS, save_station_times: bool = True):
             st.to_parquet(interim_path("reach", "pt_station_times", f"{slug}.parquet"))
         r = municipality_results(net, slug, ea, journey, wait, access, gem_ids)
         res.append(r)
-        timing[slug] = {"reverse_s": round(t1 - t0, 1), "forward_s": round(time.time() - t1, 1)}
+        t2 = time.time()
+        # hub-outward station time and door-to-door with the same definitions and spread (median day of three)
+        fsumm, fby_day = hub_forward(days, didok, (journey_times(ea, cap_unreached=True)[0], wait))
+        if save_station_times:
+            m_, mw_, p10_, p90_, _late, w10_, w90_ = fsumm
+            pd.DataFrame({"idx": net.stations.idx, "median_journey_s": m_, "median_incl_wait_s": mw_,
+                          "p10_s": p10_, "p90_s": p90_, "wait_p10_s": w10_, "wait_p90_s": w90_,
+                          **{f"median_journey_s_{k}": v for k, v in fby_day.items()}}
+                         ).to_parquet(interim_path("reach", "pt_station_times_from_hub", f"{slug}.parquet"))
+        res.append(from_hub_results(slug, fsumm, gem_ids, mains, ai, fby_day))
+        timing[slug] = {"reverse_s": round(t1 - t0, 1), "forward_s": round(t2 - t1, 1),
+                        "forward_spread_s": round(time.time() - t2, 1)}
         ok = r[(r.method == "gtfs_csa_station") & (r.status == "ok")]
         print(f"{slug}: sources {src}, representative departure 07:30+{k} min, "
               f"{len(ok)} municipalities reached, median {ok.minutes.median():.0f} min")

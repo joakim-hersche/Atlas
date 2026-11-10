@@ -27,3 +27,4 @@ web/public/data/
 
 # Agent worktrees (local only)
 .claude/worktrees/
+data/out/release/
