@@ -24,3 +24,6 @@ data/out/web/
 data/out/reach/
 web/public/data/
 .tmp/
+
+# Agent worktrees (local only)
+.claude/worktrees/
