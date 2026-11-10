@@ -34,6 +34,8 @@ export const FR: Dict = {
   'fl.small': `petits nombres${n}: valeur instable`,
   'fl.majority': `élection majoritaire (un siège)${n}: parts des partis non comparables avec les cantons à la proportionnelle`,
   'fl.published': 'valeur publiée par la source (la somme des communes est incomplète)',
+  'fl.estimate': 'estimation : quelques communes masquées pour petits nombres (au plus 1 % des habitants) manquent',
+  'fl.special': 'cas particulier',
   'fl.provisional': 'valeur provisoire',
   'fl.hidden': `masqué${n}: petits nombres (valeur instable)`,
   'fl.show': 'Valeurs instables',

@@ -45,6 +45,8 @@ export interface MetricMeta {
   profile_levels?: string[];
   /** D38: curation verdict per level ('show' | 'note' | 'hide') and its reason */
   curation?: Record<string, { v: string; why: string }> | null;
+  /** M9: plausibility cap; values above `max` carry flag bit 64 (special) */
+  special?: { max: number; rule_en?: string; rule_de?: string; rule_fr?: string } | null;
   /** level -> reason (English) why the metric has no values there */
   unavailable_levels?: Record<string, string> | null;
   /** small-number rule (flag bits 1/2) */
@@ -406,7 +408,7 @@ export function noteOf(col: Column, i: number): string | null {
   return k !== undefined && col.notes?.[k] ? col.notes[k] : null;
 }
 
-export const FLAG = { small_base: 1, small_count: 2, majority_election: 4, published_value: 8, provisional: 16 } as const;
+export const FLAG = { small_base: 1, small_count: 2, majority_election: 4, published_value: 8, provisional: 16, estimate: 32, special: 64 } as const;
 export type FlagName = keyof typeof FLAG;
 /** Flag bitmask of unit i (0 = none). Bits follow the file's flag_bits, else the contract defaults. */
 export function flagsOf(file: ColumnFile | null, col: Column, i: number): number {
@@ -417,9 +419,10 @@ export function hasFlag(file: ColumnFile | null, flags: number, name: FlagName):
   return (flags & bit) !== 0;
 }
 
-/** Unstable small-number value (base or count below the metric's reliability rule). */
+/** Unstable small-number value (base or count below the metric's reliability rule), or a special case
+ *  distorted by how the source counts (audit round 2, M9: e.g. car fleets); both are left out together. */
 export const isUnstable = (file: ColumnFile | null, flags: number) =>
-  flags !== 0 && (hasFlag(file, flags, 'small_base') || hasFlag(file, flags, 'small_count'));
+  flags !== 0 && (hasFlag(file, flags, 'small_base') || hasFlag(file, flags, 'small_count') || hasFlag(file, flags, 'special'));
 
 /** Short markers of a unit's flags, for tables and cards: △ small numbers, M majority election,
  *  ° published value used, p provisional. */
@@ -430,6 +433,7 @@ export function flagMarks(file: ColumnFile | null, flags: number): string {
   if (hasFlag(file, flags, 'majority_election')) out += 'M';
   if (hasFlag(file, flags, 'published_value')) out += '°';
   if (hasFlag(file, flags, 'provisional')) out += 'p';
+  if (hasFlag(file, flags, 'estimate')) out += '≈';
   return out;
 }
 
@@ -437,7 +441,13 @@ export function flagMarks(file: ColumnFile | null, flags: number): string {
 export function flagTexts(file: ColumnFile | null, flags: number, meta: MetricMeta): string[] {
   if (!flags) return [];
   const out: string[] = [];
-  if (isUnstable(file, flags)) {
+  if (hasFlag(file, flags, 'special')) {
+    const s = meta.special;
+    const lang: string = app.lang;
+    const why = s ? ((lang === 'de' ? s.rule_de : lang === 'fr' ? s.rule_fr : null) ?? s.rule_en ?? null) : null;
+    out.push(`△ ${t('fl.special')}${why ? `: ${why}` : ''}`);
+  }
+  if (isUnstable(file, flags) && !hasFlag(file, flags, 'special')) {
     const r = meta.reliability;
     const lang: string = app.lang;
     const rule = r ? ((lang === 'de' ? r.rule_de : lang === 'fr' ? r.rule_fr : null) ?? r.rule_en ?? null) : null;
@@ -446,6 +456,7 @@ export function flagTexts(file: ColumnFile | null, flags: number, meta: MetricMe
   if (hasFlag(file, flags, 'majority_election')) out.push(`M ${t('fl.majority')}`);
   if (hasFlag(file, flags, 'published_value')) out.push(`° ${t('fl.published')}`);
   if (hasFlag(file, flags, 'provisional')) out.push(`p ${t('fl.provisional')}`);
+  if (hasFlag(file, flags, 'estimate')) out.push(`≈ ${t('fl.estimate')}`);
   return out;
 }
 
