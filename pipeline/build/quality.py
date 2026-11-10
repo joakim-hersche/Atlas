@@ -343,9 +343,36 @@ def run() -> str:
     L += ["", "## E. Cross-source consistency", ""]
     L += [f"- {r.check}: {r.result}" + (f" — worst: {r.worst}" if isinstance(getattr(r, 'worst', None), list) else "")
           for r in E.itertuples()]
+    L += curation_section()
     path = ROOT / "docs" / "quality_report.md"
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return str(path)
+
+
+def curation_section() -> list[str]:
+    """H. Map curation (D38): verdicts per level from the last web build (data/interim/curation_verdicts.csv)."""
+    p = interim_path("curation_verdicts.csv")
+    L = ["", "## H. Map curation (D38, `pipeline/curation.yaml`)", ""]
+    if not p.exists():
+        return L + ["Not built yet (run `make web`)."]
+    v = pd.read_csv(p)
+    L += ["Verdicts from the last web build: shown, shown with a partial-coverage note, hidden as a map at that "
+          "level (still on profiles), or hidden entirely (duplicates, confidence intervals). Rule: show at ≥ 80 % of "
+          "units and of residents; note at ≥ 25 % of units, ≥ 50 % of residents and ≥ 20 units; levels with fewer "
+          "than 20 units only when complete. Full list with reasons: `data/interim/curation_verdicts.csv`.", ""]
+    t = v.groupby(["level", "verdict"]).size().unstack(fill_value=0)
+    cols = [c for c in ("show", "note", "hide", "hidden") if c in t.columns]
+    order = [l for l in ("gemeinde", "bezirk", "kanton", "grossregion", "sprachgebiet", "agglomeration",
+                         "arbeitsmarktgebiet", "stadt_land", "gemeindetyp") if l in t.index]
+    L += ["| Level | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
+    L += [f"| {l} | " + " | ".join(str(int(t.loc[l, c])) for c in cols) + " |" for l in order]
+    L += [f"| **all** | " + " | ".join(str(int(t[c].sum())) for c in cols) + " |"]
+    shown = v[v["verdict"].isin(["show", "note"])].groupby("metric_id").size()
+    none = sorted(set(v["metric_id"]) - set(shown.index))
+    L += ["", f"Metrics with no map at any level: {len(none)} (by theme: "
+          + ", ".join(f"{k} {n}" for k, n in v[v["metric_id"].isin(none)].drop_duplicates("metric_id")
+                      .groupby("theme").size().sort_values(ascending=False).items()) + ")."]
+    return L
 
 
 if __name__ == "__main__":

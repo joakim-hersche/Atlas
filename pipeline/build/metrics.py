@@ -412,6 +412,23 @@ def run() -> str:
                           AND b.metric_id = n.metric_id AND b.period = n.period
                      WHERE n.metric_id IN ({_q(notagg)})""")
     parts.append("SELECT * FROM native_only")
+    # survey counts published only by district (Structural Survey languages): canton = sum of its districts,
+    # where every district has a value on the current boundaries and the source has no canton value
+    bez_sums = meta.loc[(meta["kind"] == "base") & (meta["aggregation"] == "sum") & (meta["native_level"] == "bezirk"), "id"].tolist()
+    if bez_sums:
+        con.execute("""CREATE TABLE bez_kt AS SELECT DISTINCT bezirk, kanton FROM mem
+                       WHERE bezirk NOT IN ('nan', '<NA>', 'None')""")
+        con.execute("CREATE TABLE bez_n AS SELECT kanton, COUNT(*) AS n FROM bez_kt GROUP BY 1")
+        parts.append(f"""
+            SELECT d.kanton AS unit_id, 'kanton' AS level, o.metric_id, o.period, SUM(o.value) AS value, 'ok' AS status,
+                   {PREC_NAME.format(r=PREC_RANK.replace('precision', 'o.precision'))} AS precision, 'aggregated' AS provenance,
+                   COUNT(*) AS n_units, 0 AS n_missing, 'sum of the published district values' AS note
+            FROM native_only o JOIN bez_kt d ON o.unit_id = d.bezirk JOIN bez_n k ON k.kanton = d.kanton
+            WHERE o.level = 'bezirk' AND o.status = 'ok' AND o.metric_id IN ({_q(bez_sums)})
+              AND (o.note IS NULL OR o.note NOT LIKE '%boundaries of%')
+              AND NOT EXISTS (SELECT 1 FROM native_only x WHERE x.level = 'kanton' AND x.unit_id = d.kanton
+                              AND x.metric_id = o.metric_id AND x.period = o.period)
+            GROUP BY d.kanton, o.metric_id, o.period, k.n HAVING COUNT(DISTINCT o.unit_id) = k.n""")
     # one part at a time (a single UNION of all parts exceeds the memory cap)
     con.execute("CREATE TABLE base_all AS " + parts[0])
     for part in parts[1:]:
