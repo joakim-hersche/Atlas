@@ -4,12 +4,14 @@
 #   make geometry  web geometry and label points
 #   make validate  backbone validation report (docs/backbone_report.md)
 #   make observations / metrics / quality   ingest all sources, build all levels, plausibility sweep
+#   make web-data  copy the data files the web app reads into web/public/data/
+#   make web-app   install pinned npm deps and build the static site (web/dist/)
 #   make test      unit tests
 # Set GB_REFRESH=1 to re-download sources; GB_REFERENCE_DATE=YYYY-MM-DD to change the target state.
 
 PY := uv run python
 
-.PHONY: data backbone geometry validate observations metrics quality web reach test clean-interim
+.PHONY: data backbone geometry validate observations metrics quality web reach web-data web-app test clean-interim
 
 data: backbone geometry validate observations metrics quality web reach
 
@@ -36,6 +38,13 @@ web: metrics geometry
 
 reach: geometry
 	$(PY) -m pipeline.reach.run
+
+# Web app (web/): copy the built data files into web/public/data/, then build the static site to web/dist/
+web-data:
+	cd web && node scripts/copy-data.mjs
+
+web-app:
+	cd web && npm ci && npm run build
 
 test:
 	uv run pytest -q pipeline/tests

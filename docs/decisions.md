@@ -124,3 +124,13 @@ Owner: "No emails. Go with your recommendation." Options from `checkpoint3.md`:
 - **D28 Births:** BEVNAT (1969+) is the births, marriages and divorces series. The demographic balance keeps migration and natural change; its births metric is hidden from the picker.
 
 **Checkpoint 3 closed: 2026-11-10.** Phase 4 (web app) starts with the Checkpoint 4 skeleton.
+
+## Phase 4 — Checkpoint 4 (2026-11-10, awaiting owner review)
+
+Skeleton built in `web/` (TypeScript, Vite, Svelte, MapLibre GL, D27) and published as a private preview: https://claude.ai/artifact/QWE95eJd2pbcCzUieHosCY
+- Map of all 2,110 municipalities shaded by any of the headline metrics (quantiles, colour-vision-safe scale, gaps hatched with their reason per D21).
+- Population filter (dual slider + typed min/max, live count, non-matching dimmed).
+- Reach from Zürich HB, public transport and car: time slider, Play animation (reduced motion jumps to the end), reached municipalities highlighted.
+- Quick card on tap: value, year, rank, precision and source tags, travel time.
+- First load ≈ 0.95 MB gzipped (JS 300 KB incl. MapLibre, data 630 KB); first render about 1 s in testing.
+GitHub Pages deployment follows once the feel is agreed (needs a workflow on the default branch).
