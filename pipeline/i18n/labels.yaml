@@ -1023,3 +1023,12 @@ lang_sec_en_share: {label_fr: "Langue principale anglais, récent (relevé struc
 lang_sec_en_share_ci: {label_fr: "Langue principale anglais (RS villes) : intervalle de confiance de la part", unit_en: "± pp", unit_de: "± pp", unit_fr: "± pp"}
 lang_sec_other_share: {label_fr: "Langue principale autres langues, récent (relevé structurel, villes)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 lang_sec_other_share_ci: {label_fr: "Langue principale autres langues (RS villes) : intervalle de confiance de la part", unit_en: "± pp", unit_de: "± pp", unit_fr: "± pp"}
+
+# --- bazl_aircraft_noise ---
+aircraft_noise_residents: {label_fr: "Habitants dans le calcul du bruit des avions (grille hectométrique)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+aircraft_day_60_residents: {label_fr: "Habitants dans la courbe de bruit des avions de 60 dB(A) le jour", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+aircraft_night_55_residents: {label_fr: "Habitants dans la courbe de bruit des avions de 55 dB(A) à la première heure de nuit", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+aircraft_igw2_residents: {label_fr: "Habitants dans les courbes de bruit des avions dès les valeurs limites du degré de sensibilité II", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+aircraft_share_day_60: {label_fr: "Part des habitants dans la courbe de bruit des avions de 60 dB(A) le jour", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+aircraft_share_night_55: {label_fr: "Part des habitants dans la courbe de bruit des avions de 55 dB(A) à la première heure de nuit", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+aircraft_share_igw2: {label_fr: "Part des habitants dans les courbes de bruit des avions dès les valeurs limites du degré II", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
