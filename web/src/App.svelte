@@ -563,7 +563,7 @@
           <div class="map" bind:this={mapElA}></div>
           {#if hoverAt?.pane === 'a' && tipRows && hover !== null && desktop}
             <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
-              <strong>{unitInfo.name[hover]}</strong> <span class="muted">{unitInfo.canton[hover]}</span>
+              <strong>{unitInfo.name[hover]}</strong>{#if !unitInfo.name[hover].includes('(')}&nbsp;<span class="muted">{unitInfo.canton[hover]}</span>{/if}
               {#each tipRows as r}<div class="num">{#if r.k}<span class="k">{r.k}</span>{/if}{r.v}</div>{/each}
             </div>
           {/if}
@@ -588,7 +588,7 @@
           <div class="map" bind:this={mapElB}></div>
           {#if hoverAt?.pane === 'b' && tipRows && hover !== null && desktop}
             <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
-              <strong>{unitInfo.name[hover]}</strong> <span class="muted">{unitInfo.canton[hover]}</span>
+              <strong>{unitInfo.name[hover]}</strong>{#if !unitInfo.name[hover].includes('(')}&nbsp;<span class="muted">{unitInfo.canton[hover]}</span>{/if}
               {#each tipRows as r}<div class="num">{#if r.k}<span class="k">{r.k}</span>{/if}{r.v}</div>{/each}
             </div>
           {/if}

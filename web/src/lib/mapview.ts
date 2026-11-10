@@ -71,6 +71,8 @@ export class MapView {
       this.map.on('load', () => {
         this.addLayers(data);
         this.isReady = true;
+        // start with the attribution collapsed to its (i) button
+        container.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
         resolve();
       });
     });

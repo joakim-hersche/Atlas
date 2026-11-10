@@ -21,7 +21,8 @@
   let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false }: Props = $props();
 
   let w = $state(300);
-  const H = $derived(compact ? 34 : 46);
+  const vertical = $derived(!compact && w < 300);
+  const H = $derived(compact ? 34 : vertical ? 58 : 46);
   const PAD = 6;
 
   const s = $derived(sortedValues(v));
@@ -79,7 +80,7 @@
 
 <div class="legend" class:compact>
   <div class="head">
-    <span class="unit">{unitText}<span class="per"> · {fmtPeriod(period)}</span>{#if log}<span class="per"> · log scale</span>{/if}</span>
+    <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ' · log scale' : ''}</span></span>
     <div class="seg" role="radiogroup" aria-label="Classification">
       {#each ['quantile', 'equal', 'continuous'] as const as m}
         <button type="button" role="radio" aria-checked={method === m} title={METHOD_LABEL[m]} onclick={() => onmethod(m)}>
@@ -115,7 +116,7 @@
   </div>
 
   {#if classes.length && !compact}
-    <div class="classes" style="grid-template-columns: repeat({classes.length}, 1fr)">
+    <div class="classes" class:vertical style="grid-template-columns: repeat({vertical ? 1 : classes.length}, 1fr)">
       {#each classes as c}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
@@ -141,8 +142,9 @@
 
 <style>
   .legend { font-size: 0.8rem; min-width: 0; }
-  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
-  .unit { color: var(--text); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; margin-bottom: 4px; }
+  .unit { color: var(--text); font-weight: 500; min-width: 0; flex: 1 1 120px; }
+  .seg { flex: none; margin-left: auto; }
   .per { color: var(--muted); font-weight: 400; }
   .seg button { padding: 2px 7px; font-size: 0.72rem; }
   .plot { width: 100%; }
@@ -151,7 +153,7 @@
   .brk { stroke: var(--text); stroke-width: 0.75; stroke-dasharray: 2 2; opacity: 0.55; }
   .zero { stroke: var(--text); stroke-width: 1; }
   .md { fill: var(--text); }
-  .mdl { font: 500 10px var(--font-mono); fill: var(--muted); }
+  .mdl { font: 500 10px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
   .tk { stroke: var(--plot-axis); }
   .tl { font: 10px var(--font-mono); fill: var(--muted); }
   .classes { display: grid; gap: 0 3px; margin-top: 2px; }
@@ -163,4 +165,9 @@
   .foot { margin: 2px 0 0; }
   .partial { color: var(--text); }
   .compact .head { margin-bottom: 2px; }
+  .classes.vertical { gap: 0; margin-top: 6px; }
+  .vertical .cls { flex-direction: row; align-items: center; gap: 8px; padding: 2px 0; border-bottom: 1px solid var(--border); }
+  .vertical .sw { width: 14px; height: 10px; margin: 0; flex: none; }
+  .vertical .rng { flex: 1; font-size: 0.72rem; color: var(--text); }
+  .vertical .cn { color: var(--muted); }
 </style>
