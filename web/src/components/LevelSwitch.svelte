@@ -67,7 +67,10 @@
 
 <style>
   .lvl { position: relative; display: inline-flex; max-width: 100%; }
-  .seg { max-width: 100%; }
+  /* narrow map panes (desktop 900–1100 px): the control scrolls sideways instead of covering the zoom buttons */
+  .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button { flex: none; }
   .seg button { padding: 5px 10px; font-size: 0.8rem; font-weight: 600; }
   .more { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
   .ml { max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; }
