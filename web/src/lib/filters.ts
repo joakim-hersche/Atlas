@@ -3,7 +3,7 @@
 // UI can say how many were excluded for missing data (D21: gaps are shown, never hidden).
 import type { ColView } from './columns.svelte';
 import { type LevelData, type MetricMeta, type UnitRow } from './data';
-import type { CatField, Filter } from './hash';
+import { emptyFilter, type CatField, type Filter } from './hash';
 import { fmtNumber, sortedValues, wantsLog } from './classify';
 import { ml, t, levelWord, unitName } from './i18n.svelte';
 import { commuteLabel, commuteValues, describeCommute, nearestMetricId, reachTimesData, type CommuteValues } from './commute.svelte';
@@ -185,7 +185,8 @@ export interface MatchResult {
 
 export function combine(evals: FilterEval[], n: number): MatchResult {
   const m = new Uint8Array(n).fill(1);
-  const act = evals.filter((e) => e.status === 'active' && e.pass);
+  // a range with neither end set filters nothing (it would only drop the units without a value)
+  const act = evals.filter((e) => e.status === 'active' && e.pass && !emptyFilter(e.filter));
   let count = 0;
   let nMissingOnly = 0;
   for (let i = 0; i < n; i++) {

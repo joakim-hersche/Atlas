@@ -5,8 +5,11 @@
 // Year comparisons: yc=<earlier year> (change since that year, up to the slider year y), ym=p (percent instead of
 // absolute), fx=1 (class limits fixed across all years), smy=2010,2015,2020 (small multiples of those periods);
 // lb=0 hides the city and lake names on the map.
+// Reach as a filter: ro=1 (only the places within t minutes of the hub count: match count, ranking, aggregate;
+// written only while reach is on).
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
+// Empty conditions (f=n:<id>:: or f=c:<field>:) are left out of the link.
 // Commute filters: f=m:<sum|max|any|near|diff>:<ptst|pt|car>:<hub,hub>:<lo>:<hi> (minutes; lib/commute.svelte.ts).
 // Filtered aggregate: ag=<metric id> (default: the shade metric). Ranking table: xc=<metric,metric> extra columns,
 // rmin=<population> minimum size, rmf=1 flag the smaller units instead of hiding them.
@@ -58,6 +61,8 @@ export interface ViewState {
   only: boolean;
   /** public transport on the map: 'st' station time towards the hub (default), 'dd' door to door */
   ptm: 'st' | 'dd';
+  /** reach acts as a filter: only the places within `t` minutes count ('ro=1') */
+  ronly: boolean;
   /** federal vote shown by the per-vote metrics (vote id; null = the latest vote) */
   vote: string | null;
   /** yes share shown as the difference from the national result */
@@ -101,7 +106,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur', 'ag', 'xc', 'rmin', 'rmf', 'sp', 'fdr', 'embed', 'yc', 'ym', 'fx', 'smy', 'lb']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur', 'ag', 'xc', 'rmin', 'rmf', 'sp', 'fdr', 'embed', 'yc', 'ym', 'fx', 'smy', 'lb', 'mj', 'ro']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -126,6 +131,11 @@ function parseFilter(raw: string): Filter | null {
     return { kind: 'commute', op: p[1] as CommuteOp, mode: p[2], hubs, lo: numOrNull(p[4]), hi: numOrNull(p[5]) };
   }
   return null;
+}
+
+/** A condition that filters nothing: a range with neither end, or a category with no value chosen. */
+export function emptyFilter(f: Filter): boolean {
+  return (f.kind === 'num' && f.lo === null && f.hi === null) || (f.kind === 'cat' && !f.values.length);
 }
 
 function filterKey(f: Filter): string {
@@ -180,6 +190,7 @@ export function parseHash(hash: string): ViewState {
     lang: LANGS.includes(get('lang') as Lang) ? (get('lang') as Lang) : get('embed') === '1' ? 'en' : storedLang(),
     only: get('only') === '1',
     ptm: get('ptm') === 'dd' ? 'dd' : 'st',
+    ronly: get('ro') === '1',
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
     vdiff: get('vd') === '1',
     maj: get('mj') === '1',
@@ -255,7 +266,8 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.fixed) add('fx', '1');
   if (s.multi) add('smy', s.multi.join(','));
   if (!s.labels) add('lb', '0');
-  for (const f of s.filters) add('f', filterKey(f));
+  // U3: conditions without a range or values do nothing: they stay in the panel but not in the link
+  for (const f of s.filters) if (!emptyFilter(f)) add('f', filterKey(f));
   if (s.agg) add('ag', s.agg);
   if (s.xcols.length) add('xc', s.xcols.join(','));
   if (s.rmin) add('rmin', String(Math.round(s.rmin)));
@@ -265,6 +277,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
     add('reach', s.reach);
     add('t', String(Math.round(s.t)));
     if (s.reach === 'pt' && s.ptm === 'dd') add('ptm', 'dd');
+    if (s.ronly) add('ro', '1');
   }
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);
@@ -275,12 +288,18 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   return out.length ? '#' + out.map(([k, v]) => `${k}=${enc(v)}`).join('&') : '';
 }
 
-export function writeHash(s: Omit<ViewState, 'preset'>): void {
+/** U2: what makes a step the Back button returns from: the page (route, unit), the level, the shaded metric and
+ *  the selected unit. Sliders, years, filters and other tweaks replace the current entry. */
+export function historyKey(s: { route: string; params: Record<string, string>; level: string; metric: string | null; sel: string | null }): string {
+  return [routeKey(s), s.level, s.metric ?? DEFAULT_METRIC, s.sel ?? ''].join('|');
+}
+
+/** Write the state to the hash: a new history entry when historyKey changes (unless `replace`), else in place. */
+export function writeHash(s: Omit<ViewState, 'preset'>, replace = false): void {
   const h = serializeHash(s);
   if (h !== location.hash && !(h === '' && location.hash === '')) {
     const url = h === '' ? location.pathname + location.search : h;
-    // a new page (route or unit) gets its own history entry; view tweaks replace the current one
-    if (routeKey(s) !== routeKey(parseHash(location.hash))) history.pushState(null, '', url);
+    if (!replace && historyKey(s) !== historyKey(parseHash(location.hash))) history.pushState(null, '', url);
     else history.replaceState(null, '', url);
   }
 }

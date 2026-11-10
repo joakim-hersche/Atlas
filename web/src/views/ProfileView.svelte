@@ -174,6 +174,7 @@
   // reason, D21), neighbours, similar places, travel times to the hubs and the boundary history.
   // Data loads on demand: the level's core file (+ geography for area), other theme files when opened.
   import Locator from '../components/Locator.svelte';
+  import Search from '../components/Search.svelte';
   import SimilarPlaces from '../components/SimilarPlaces.svelte';
   import Term from '../components/Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
@@ -459,7 +460,11 @@
     {#if err}
       <p role="alert">{err}</p>
     {:else if pl && idx === null}
-      <p>{t('p.notFound', { id: ref })}</p>
+      <div class="nf">
+        <h1>{t('p.notFound', { id: ref })}</h1>
+        <p>{t('ux.searchInstead')}</p>
+        <Search onpick={(r) => app.go('profile', { id: r })} />
+      </div>
     {:else}
       <header class="ph">
         <div class="hmain">
@@ -624,6 +629,9 @@
 
   .ph { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; padding-bottom: 18px; border-bottom: 3px solid var(--rule); }
   .lvl { color: var(--muted); }
+  .nf { max-width: 480px; margin: var(--sp-8) 0; }
+  .nf h1 { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: -0.01em; }
+  .nf p { margin: var(--sp-4) 0 var(--sp-2); }
   h1 { margin: 2px 0 2px; font-size: 2.6rem; line-height: 1.05; letter-spacing: -0.03em; font-weight: 700; }
   .alt { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
   .lc { font-size: 0.66rem; font-weight: 700; color: var(--text); letter-spacing: 0.04em; }

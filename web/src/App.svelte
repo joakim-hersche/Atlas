@@ -7,6 +7,7 @@
   import MapView from './views/MapView.svelte';
   import SourcesView from './views/SourcesView.svelte';
   import Search from './components/Search.svelte';
+  import ShareButton from './components/ShareButton.svelte';
   import { initRadioGroups } from './lib/a11y';
   import { fmtNumber } from './lib/classify';
   import { ColumnStore } from './lib/columns.svelte';
@@ -17,6 +18,7 @@
   import { sanitizeState } from './lib/sanitize';
   import { viewUrl } from './lib/embed';
   import './lib/i18n-spatial';
+  import './lib/i18n-ux';
 
   // pages other than the map load on first use (code splitting: the first load carries the map only)
   let compareP: Promise<typeof import('./views/CompareView.svelte')> | undefined;
@@ -42,7 +44,10 @@
   const t0 = performance.now();
 
   // unknown level in a link: fall back to municipalities
-  if (!LEVELS.some((l) => l.id === app.level && l.geometry)) app.level = 'gemeinde';
+  if (!LEVELS.some((l) => l.id === app.level && l.geometry)) {
+    app.notice = t('ux.badLevel', { id: app.level });
+    app.level = 'gemeinde';
+  }
 
   onMount(() => {
     const mq = window.matchMedia(DESKTOP);
@@ -112,7 +117,8 @@
   const unitsText = $derived(
     ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelWord(ld.level)}` : gemCount !== null ? `${fmtNumber(gemCount, 0)} ${levelWord('gemeinde')}` : '',
   );
-  const current = $derived(route === 'profile' ? null : route);
+  // U18: a profile belongs to the place pages (Compare places)
+  const current = $derived(route === 'profile' ? 'places' : route);
   /** first render time, for the performance check (window.__firstRender) */
   function rendered() {
     (window as unknown as { __firstRender: number }).__firstRender ??= performance.now() - t0;
@@ -147,8 +153,10 @@
           {/each}
         </nav>
         <a class="plain" href={navHref('sources')} aria-current={current === 'sources' ? 'page' : undefined}>{t('nav.sources')}</a>
+        <ShareButton />
         {@render langSwitch()}
       {:else}
+        <ShareButton variant="icon" />
         <div class="menu" bind:this={menuEl}>
           <button type="button" class="menubtn" aria-haspopup="true" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
             <span>{current ? navLabel(current) : t('nav.menu')}</span>
@@ -166,6 +174,15 @@
       {/if}
     </div>
   </header>
+  {/if}
+
+  {#if app.notice && !app.embed}
+    <div class="notice" role="status">
+      <span>{app.notice}</span>
+      <button type="button" aria-label={t('common.dismiss')} onclick={() => (app.notice = null)}>
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" /></svg>
+      </button>
+    </div>
   {/if}
 
   {#if base && cols}
@@ -244,6 +261,12 @@
     padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); z-index: 40; max-width: 90vw;
   }
   .status.err { color: var(--text); }
+  .notice {
+    flex: none; display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--gutter);
+    border-bottom: var(--rule-edge); background: var(--surface-2); font-size: var(--fs-small); line-height: var(--lh-small); position: relative; z-index: 45;
+  }
+  .notice span { flex: 1; min-width: 0; }
+  .notice button { flex: none; width: var(--ctl-h); height: var(--ctl-h); display: grid; place-items: center; border: 0; background: none; cursor: pointer; color: var(--text); }
   .embed-open {
     position: absolute; right: 8px; bottom: 8px; z-index: 60; background: var(--panel); color: var(--text); border: 1px solid var(--ink);
     padding: 5px 10px; font-size: 0.78rem; font-weight: 700; text-decoration: none;

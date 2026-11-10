@@ -19,12 +19,46 @@
 :root {
   /* Light only (D29): white Swiss style, black type, hairline and heavy black rules, red as the single accent. */
   color-scheme: light;
+
+  /* ---- type scale (D1): size / line height; weights set where used. Nothing below 11 px, running text >= 13 px */
+  --fs-cap: 11px;   --lh-cap: 14px;    /* uppercase labels, 700, +0.06em */
+  --fs-meta: 12px;  --lh-meta: 16px;   /* footnotes, sources, units (text-3) */
+  --fs-small: 13px; --lh-small: 18px;  /* notes, table cells, secondary running text */
+  --fs-body: 14px;  --lh-body: 20px;   /* running text and controls (500) */
+  --fs-lead: 16px;  --lh-lead: 22px;   /* metric name, card title (600) */
+  --fs-stat: 20px;  --lh-stat: 24px;   /* headline values (700) */
+  --fs-h2: 28px;    --lh-h2: 32px;     /* page section titles (700, -0.01em) */
+  --fs-h1: 40px;    --lh-h1: 44px;     /* page title (700, -0.02em) */
+  --fs-input: 16px; /* text inputs on touch screens (iOS does not zoom at 16 px) */
+
+  /* ---- spacing: 4 px base */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-6: 24px; --sp-8: 32px; --sp-12: 48px;
+  --gutter: 16px;   /* panel side padding */
+  --sec-top: 24px; --sec-bottom: 16px;
+
+  /* ---- controls (D8): 32 px on desktop, 40 px on touch screens */
+  --ctl-h: 32px;
+  --ctl-h-sm: 28px;
+
+  /* ---- rules (D9): heavy 3 px black (page header, section start), 1 px black (component edge), 1 px grey (rows) */
+  --rule-heavy: 3px solid #000;
+  --rule-edge: 1px solid #000;
+  --rule-row: 1px solid #d6d6d6;
+
+  /* ---- colour tokens (brief B) */
+  --text-2: #3d3d3d;
+  --text-3: #595959;
+  --surface-2: #f4f4f4;
+  --muted-fill: #ececec;  /* filtered-out units: one flat fill (D5) */
+  --seq-1: #d3e0ec; --seq-2: #9dbad5; --seq-3: #6290bb; --seq-4: #356799; --seq-5: #173f68;
+  --div-n3: #b5602a; --div-n2: #e0965f; --div-n1: #f3cfae; --div-0: #e6e8eb; --div-p1: #b3c8dc; --div-p2: #6290bb; --div-p3: #244f7c;
+
   --bg: #ffffff;
   --panel: #ffffff;
   --panel-2: #f4f4f4;
   --text: #000000;
-  --muted: #3d3d3d;       /* 11.0:1 on white */
-  --faint: #595959;       /* 7.0:1 on white */
+  --muted: #3d3d3d;       /* = text-2, 11.0:1 on white */
+  --faint: #595959;       /* = text-3, 7.0:1 on white */
   --border: #d6d6d6;
   --border-strong: #000000;
   --rule: #000000;
@@ -33,16 +67,16 @@
   --accent-text: #ffffff;
   --ink: #000000;         /* selected controls: black fill */
   --ink-text: #ffffff;
-  --focus: #d52b1e;
+  --focus: #000000;      /* D4: focus ring black, not red */
   --map-bg: #ffffff;
   --water: #f1f6f9;       /* lakes: paler than the lightest class (#d3e0ec), with an outline */
   --water-line: #6f8fa6;
   --lake-label: #3d6079;  /* lake names (6.1:1 on the lake fill) */
   --gem-line: #ffffff;
   --kt-line: #000000;
-  --sel-line: #d52b1e;
+  --sel-line: #000000;   /* D4: selection black 2.5 px on a 4.5 px white casing */
   --sel-casing: #ffffff;
-  --nodata-fill: #f0f0f0;
+  --nodata-fill: #f4f4f4;
   --nodata-line: #9a9a9a;
   --sym-ground: #eeeeee;  /* polygons under proportional symbols */
   --sym-line: #ffffff;
@@ -102,3 +136,8 @@ button, select, input { font: inherit; color: inherit; }
 
 .reach-canvas, .ref-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 ::placeholder { color: var(--muted); opacity: 1; }
+
+/* touch screens: every control at least 40 x 40 (U16) */
+@media (max-width: 899px), (pointer: coarse) {
+  :root { --ctl-h: 40px; --ctl-h-sm: 40px; }
+}

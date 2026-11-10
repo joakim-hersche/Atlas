@@ -42,17 +42,17 @@
     availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
-  import { catOptions, combine, evalFilter } from '../lib/filters';
-  import { T_MAX, type CatField, type ReachMode } from '../lib/hash';
+  import { catOptions, combine, evalFilter, type MatchResult } from '../lib/filters';
+  import { DEFAULT_HUB, T_MAX, type CatField, type ReachMode } from '../lib/hash';
   import { CH_BOUNDS, UnitMap, geomBounds, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
-  import { app } from '../lib/state.svelte';
+  import { app, replaceNext } from '../lib/state.svelte';
   import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
   import { levelsOf, requestLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
   import { hasStation, kindLabel, mainStation, methodText, nearestHubOf, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
-  import { divRamp, lighten, mute, seqRamp, token } from '../lib/theme';
+  import { divRamp, lighten, seqRamp, token } from '../lib/theme';
 
   interface Props {
     base: Base;
@@ -419,8 +419,8 @@
       evalFilter(f, { ld, rows: unitRows, metas, hubName, col: (id) => cols.get(ld, id, app.year) }),
     ),
   );
-  const match = $derived(combine(evals, nUnits));
-  const filtered = $derived(match.active > 0);
+  /** the stacked filter conditions alone */
+  const fmatch = $derived(combine(evals, nUnits));
   const catOpts = (field: CatField) => catOptions(field, unitRows);
 
   // ------------------------------------------------------------------ reach
@@ -447,10 +447,34 @@
     let n = 0;
     for (let i = 0; i < reachCol.v.length; i++) {
       const x = reachCol.v[i];
-      if (x !== null && x <= app.t && match.m[i]) n++;
+      if (x !== null && x <= app.t && fmatch.m[i]) n++;
     }
     return n;
   });
+  /** 1 = reached within the slider time (null: no travel times at this level / hub) */
+  const reachMask = $derived.by(() => {
+    if (!reachCol) return null;
+    const m = new Uint8Array(nUnits);
+    const lim = app.t;
+    for (let i = 0; i < nUnits; i++) {
+      const x = reachCol.v[i];
+      if (x !== null && x <= lim) m[i] = 1;
+    }
+    return m;
+  });
+  /** U1: "only places within N min" makes reach a filter (match count, ranking, aggregate, statistics) */
+  const reachFilter = $derived(app.ronly && reachOn && !!reachMask);
+  const match = $derived.by<MatchResult>(() => {
+    if (!reachFilter || !reachMask) return fmatch;
+    const m = new Uint8Array(nUnits);
+    let n = 0;
+    for (let i = 0; i < nUnits; i++) {
+      m[i] = fmatch.m[i] & reachMask[i];
+      n += m[i];
+    }
+    return { m, n, nMissingOnly: fmatch.nMissingOnly, active: fmatch.active + 1 };
+  });
+  const filtered = $derived(match.active > 0);
   // car networks can be held back by the licence gate: the index lists the files of this build
   const carAvailable = $derived(carFiles ? carFiles.has(hub.slug) : reachNets[`${hub.slug}_car`] !== null);
   onMount(() => {
@@ -459,9 +483,22 @@
       if (ix.hubs?.length) {
         hubs = ix.hubs;
         const known = new Set(ix.hubs.map((h) => h.slug));
-        if (!known.has(app.hub)) app.hub = ix.hubs[0].slug;
-        const fs = app.filters.filter((f) => f.kind !== 'reach' || known.has(f.hub));
-        if (fs.length !== app.filters.length) app.filters = fs;
+        // U4: a starting point or reach condition from a link that does not exist: say so and clean the link
+        const notes: string[] = [];
+        if (!known.has(app.hub)) {
+          const fb = known.has(DEFAULT_HUB) ? DEFAULT_HUB : ix.hubs[0].slug;
+          notes.push(t('ux.badHub', { id: app.hub, hub: ix.hubs.find((h) => h.slug === fb)?.name ?? fb }));
+          app.hub = fb;
+        }
+        const fs = app.filters.filter((f) => (f.kind !== 'reach' || known.has(f.hub)) && (f.kind !== 'commute' || f.hubs.every((h) => known.has(h))));
+        if (fs.length !== app.filters.length) {
+          notes.push(t('ux.badFilter', { n: app.filters.length - fs.length }));
+          app.filters = fs;
+        }
+        if (notes.length) {
+          replaceNext();
+          app.notice = [app.notice, ...notes].filter(Boolean).join(' ');
+        }
       }
       carFiles = new Set(ix.files.filter((f) => f.mode === 'car').map((f) => f.hub));
     });
@@ -483,7 +520,10 @@
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
   // a selection or hub from a link that does not exist here is dropped (the hash follows)
   $effect(() => {
-    if (app.sel !== null && !ld.index.has(app.sel)) app.sel = null;
+    if (app.sel !== null && !ld.index.has(app.sel)) {
+      replaceNext();
+      app.sel = null;
+    }
   });
   function select(i: number | null) {
     app.sel = i === null ? null : ld.units[i];
@@ -604,17 +644,15 @@
   const lightSet = $derived(app.unstable === 'light' && unstableIdx.length ? new Set(unstableIdx) : null);
   const colours = $derived.by(() => {
     if (!scaleA || whyA) return ld.units.map(() => null);
-    const surface = token('--map-bg');
+    const outFill = token('--muted-fill') || '#ececec';
     const out = (spatialColours ?? scaleA.unitColour).slice();
     for (let i = 0; i < out.length; i++) {
       const c = out[i];
       if (c === null || c === undefined) continue;
-      if (!match.m[i]) out[i] = mute(c, surface, 0.88);
+      // D5 / U1: filtered out = one flat fill; not reached (reach shown, not filtering) = a pale tint of its class
+      if (!match.m[i]) out[i] = outFill;
       else if (lightSet && lightSet.has(i)) out[i] = lighten(c, 0.62);
-      else if (reachCol) {
-        const x = reachCol.v[i];
-        if (!(x !== null && x <= app.t)) out[i] = mute(c, surface, 0.72);
-      }
+      else if (reachMask && !reachMask[i]) out[i] = lighten(c, 0.78);
     }
     return out;
   });
@@ -799,7 +837,8 @@
       const legend: LegendItem[] = sLeg ?? legendItems(scaleA, metaA);
       if (!sLeg && scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
       if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
-      if (filtered) legend.push({ colour: mute(scaleA.classColours[2] ?? '#6290bb', token('--map-bg'), 0.88), label: t('ex.notMatching') });
+      if (filtered) legend.push({ colour: token('--muted-fill') || '#ececec', label: t('ex.notMatching') });
+      if (reachOn && reachMask && !reachFilter) legend.push({ colour: lighten(scaleA.classColours[2] ?? '#6290bb', 0.78), label: t('ux.notReached', { t: Math.round(app.t) }) });
       const lo = scaleA.lo, hi = scaleA.hi;
       const gradient = !sLeg && scaleA.method === 'continuous'
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
@@ -923,7 +962,19 @@
   const fullHref = $derived(app.embed ? viewUrl(false) : '');
 </script>
 
+{#snippet reachHead()}
+  {#if reachOn && reachedCount !== null}
+    <p class="rhead">
+      {#if reachFilter}{t('ux.rankReachOn', { t: Math.round(app.t), hub: hub.name, what: kindLabel(reachKind, station, true) })}
+        <button type="button" class="link" onclick={() => (app.ronly = false)}>{t('ux.showAll')}</button>
+      {:else}{t('ux.rankReach', { n: fmtNumber(reachedCount, 0), t: Math.round(app.t), hub: hub.name, what: kindLabel(reachKind, station, true) })}
+        <button type="button" class="link" onclick={() => (app.ronly = true)}>{t('ux.onlyThese')}</button>
+      {/if}
+    </p>
+  {/if}
+{/snippet}
 {#snippet rankSnip()}
+  {@render reachHead()}
   {#if rankCols.length}
     <RankOptions metrics={base.metrics} {metas} level={ld.level} xcols={app.xcols} rmin={app.rmin} rflag={app.rflag}
       hasPop={popRef !== null} nBelow={belowMin.size} unitWord={word}
@@ -1076,6 +1127,7 @@
       <section class="reach">
         <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable} {station} ptm={app.ptm}
           onptm={(m) => (app.ptm = m)}
+          only={app.ronly} ononly={ld.level === 'gemeinde' ? (v) => (app.ronly = v) : undefined}
           onhub={(slug) => { stop(); app.hub = slug; }} onmode={setReach} ont={(v) => { stop(); app.t = v; }} onplay={play}>
           {#if reachError}
             {t('mv.reachErr', { e: reachError })}
@@ -1203,6 +1255,8 @@
     border: 1px solid var(--ink); padding: 6px 9px; font-size: 0.8rem; white-space: nowrap;
   }
   .muted { color: var(--muted); }
+  .rhead { margin: 0 0 var(--sp-2); font-size: var(--fs-small); line-height: var(--lh-small); padding-left: var(--sp-2); border-left: 3px solid var(--ink); }
+  .rhead .link { margin-left: var(--sp-1); }
   .lab { margin-bottom: 6px; }
   .why { margin: 0; font-size: 0.8rem; }
   .yr { margin-top: 10px; }

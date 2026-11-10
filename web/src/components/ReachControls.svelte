@@ -22,8 +22,11 @@
     station?: boolean;
     ptm?: 'st' | 'dd';
     onptm?: (m: 'st' | 'dd') => void;
+    /** U1: reach as a filter ("only places within N min") */
+    only?: boolean;
+    ononly?: (v: boolean) => void;
   }
-  let { hubs, hub, mode, t, playing, carAvailable, onhub, onmode, ont, onplay, children, station = false, ptm = 'st', onptm }: Props = $props();
+  let { hubs, hub, mode, t, playing, carAvailable, onhub, onmode, ont, onplay, children, station = false, ptm = 'st', onptm, only = false, ononly }: Props = $props();
 </script>
 
 <div class="reach">
@@ -63,6 +66,11 @@
         oninput={(e) => ont(+e.currentTarget.value)} />
       <output class="tval num">{Math.round(t)} min</output>
     </div>
+    {#if ononly}
+      <button type="button" class="only" aria-pressed={only} title={tr('ux.onlyT')} onclick={() => ononly(!only)}>
+        <span class="box" aria-hidden="true"></span>{tr('ux.only', { t: Math.round(t) })}
+      </button>
+    {/if}
     {#if children}<div class="note">{@render children()}</div>{/if}
   {/if}
 </div>
@@ -89,6 +97,13 @@
   .play svg { fill: currentColor; }
   .tval { min-width: 4.2em; text-align: right; }
   .note { margin: 6px 0 0; font-size: 0.8rem; }
+  .only {
+    display: inline-flex; align-items: center; gap: var(--sp-2); min-height: var(--ctl-h); margin-top: var(--sp-2); padding: 0 var(--sp-3) 0 var(--sp-2);
+    border: 1px solid var(--ink); background: var(--panel); color: var(--text); font-size: var(--fs-body); font-weight: 500; cursor: pointer;
+  }
+  .only .box { width: 14px; height: 14px; border: 1px solid var(--ink); flex: none; background: var(--panel); }
+  .only[aria-pressed='true'] { background: var(--ink); color: var(--ink-text); }
+  .only[aria-pressed='true'] .box { background: var(--ink-text); box-shadow: inset 0 0 0 3px var(--ink); }
   @media (max-width: 899px) {
     .hl { flex-basis: auto; }
     .hub { font-size: 16px; padding: 2px 24px 2px 6px; font-weight: 500; }
