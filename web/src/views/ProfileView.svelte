@@ -174,6 +174,7 @@
   // reason, D21), neighbours, similar places, travel times to the hubs and the boundary history.
   // Data loads on demand: the level's core file (+ geography for area), other theme files when opened.
   import Locator from '../components/Locator.svelte';
+  import SimilarPlaces from '../components/SimilarPlaces.svelte';
   import Term from '../components/Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
   import PctBar from '../components/PctBar.svelte';
@@ -188,7 +189,8 @@
     type HistoryFile, type Identity, type NeighboursFile, type ReachTimes, type SearchIndex,
   } from '../lib/places';
   import { mainStation, methodText, reasonAt } from '../lib/pt';
-  import { entryOf, loadPlaceLevel, similarPlaces, SIMILAR_METRICS, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
+  import { entryOf, loadPlaceLevel, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
+  import { inShort } from '../lib/summary';
   import { app } from '../lib/state.svelte';
 
   interface Props {
@@ -368,7 +370,7 @@
     return ids.map((id) => ({ ref: refOf(unit.level, id), name: placeName(unit.level, id, rows!.get(refOf(unit.level, id))?.name ?? id), kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
   });
-  const similar = $derived(pl && idx !== null ? similarPlaces(pl, idx) : null);
+  const short = $derived(pl && idx !== null ? inShort({ pl, idx, base, reach, placeName: name }) : []);
   // D31: station time towards the hub first (when the build has it), then door to door, then car
   const hasSt = $derived(!!reach?.pt_station);
   const reachK = $derived(reach && unit.level === 'gemeinde' ? reach.units.indexOf(unit.id) : -1);
@@ -496,6 +498,16 @@
         {/if}
       </header>
 
+      {#if short.length}
+        <section class="short" aria-labelledby="in-short">
+          <h2 id="in-short">{t('is.title')}</h2>
+          <ul>
+            {#each short as f}<li>{f.text}{#if f.note}{' '}<span class="sn">({f.note})</span>{/if}</li>{/each}
+          </ul>
+          <p class="foot">{t('is.foot')}</p>
+        </section>
+      {/if}
+
       <nav class="toc" aria-label={t('p.contents')}>
         {#each blocks as b}<button type="button" onclick={() => jump(slug(b.theme))}>{themeName(b.theme)}</button>{/each}
         <button type="button" onclick={() => jump('pf-side')}>{t('p.neighbours')} · {t('p.similar')}</button>
@@ -566,18 +578,7 @@
 
           <section>
             <h2>{t('p.similar')}</h2>
-            {#if similar && similar.list.length && pl}
-              <p class="dh foot">{t('p.distH')}</p>
-              <ol class="sim">
-                {#each similar.list as s}
-                  <li><a href={profileHref(refOf(unit.level, pl.units[s.i]))}>{placeName(unit.level, pl.units[s.i], pl.name[s.i])}</a>{#if pl.canton[s.i] && unit.level === 'gemeinde'}<span class="muted"> {pl.canton[s.i]}</span>{/if}
-                    <span class="d num" title={t('p.distT')}>{fmtNumber(s.d, 2)}</span></li>
-                {/each}
-              </ol>
-              <p class="foot">{t('p.similarNote', { units: unitsWord, list: similar.used.map((id) => ml(base.metas.get(id))).join(', ') })}<Term k="z_score_similarity" /></p>
-            {:else if similar}
-              <p class="foot">{t('p.similarNone')}</p>
-            {/if}
+            {#if pl && idx !== null}<SimilarPlaces {base} {pl} {idx} {rows} {reach} />{/if}
           </section>
 
           <section>
@@ -647,6 +648,13 @@
   .btn.ink { background: var(--ink); color: var(--ink-text); }
   .loc { margin: 4px 0 0; align-self: start; }
 
+  .short { padding: 0 0 10px; border-bottom: 1px solid var(--rule); }
+  .short h2 { border-bottom: 0; padding-bottom: 4px; }
+  .short ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; font-size: 0.9rem; line-height: 1.4; }
+  .short li { padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .sn { color: var(--muted); font-size: 0.76rem; }
+  .short .foot { margin: 6px 0 0; }
+
   .toc { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
   .toc button { border: 0; background: none; padding: 2px 0; margin-right: 8px; font-size: 0.78rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
@@ -710,6 +718,7 @@
     .facts > div:nth-child(n + 3) { border-top: 1px solid var(--border); }
     .fv { font-size: 1.2rem; }
     .cols { grid-template-columns: 1fr; gap: 0; }
+    .short ul { grid-template-columns: 1fr; }
     .mrow {
       grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'l v' 'r s';
       gap: 3px 10px; align-items: start;

@@ -7,7 +7,7 @@ Feature requests from persona review round 1 (`docs/review_round1.md`) that are 
   - "Within N min of any hub" or of the nearest hub (mathematician).
   - Public transport minus car time (mathematician).
 - [ ] **Travel-time detail:** spread over the morning (P10/median/P90) and both directions (mathematician).
-- [ ] **Custom similarity:** choose metrics and weights, and show what drives each match. Consider Mahalanobis or PCA (mathematician).
+- [x] **Custom similarity:** choose metrics and weights, and show what drives each match. Consider Mahalanobis or PCA (mathematician).
 - [ ] **Year comparisons**
   - Change between two years as a metric (economist).
   - Fixed class breaks across years and series-break markers (statistician).
@@ -22,7 +22,7 @@ Feature requests from persona review round 1 (`docs/review_round1.md`) that are 
 - [ ] **Older boundaries:** view data on older boundaries (e.g. 2000) as well as harmonised (geographer).
 - [ ] **Filtered aggregate:** weighted result for the filtered set, e.g. "French-speaking CH: X % yes" (journalist).
 - [ ] **Embedding:** embeddable view (iframe) of any saved URL state (journalist).
-- [ ] **Casual users:** plain-language "In short" summary per place; "places like X near Y" (casual user).
+- [x] **Casual users:** plain-language "In short" summary per place; "places like X near Y" (casual user).
 - [ ] **Ranking table:** add any metric as a column; minimum-size filter or flag for small municipalities (analyst, economist).
 - [ ] **Open data and repo**
   - Data release: observation Parquet, metrics CSV with licence columns, GeoPackage.
