@@ -1,0 +1,14 @@
+source_id: bfs_amr_rents
+title: Average net rent per m2 by labour market area (BFS regional disparities indicators, Structural Survey)
+publisher: "BFS (Federal Statistical Office), Indikatoren regionaler Disparitäten"
+url: https://disseminate.stats.swiss/rest/data/CH1.RDISP,DF_RDISP_2,1.0.0/.SA1048V..
+urls:
+  flow: "SDMX CH1.RDISP DF_RDISP_2 1.0.0, indicator SA1048V 'Monatlicher Netto-Mietzins pro m² (in CHF)' (BFS asset https://statistik.admin.ch/de/asset/36681060)"
+  map: "Statatlas map 'Durchschnittlicher Mietpreis pro Monat in Franken pro m²' (asset 36679710, https://mapexplorer.bfs.admin.ch/?lang=de#c=indicator&i=ch_21_03.sa1048v); same values (Zürich 2024: 23.8)"
+license: "OPEN-BY – Freie Nutzung, Quellenangabe ist Pflicht (DAM assets 36681060 and 36679710, termsOfUse code OPEN-BY, checked 2026-11-10)"
+attribution: "Source: BFS – Indikatoren regionaler Disparitäten (Strukturerhebung, Gebäude- und Wohnungsstatistik)"
+vintage: "Labour market areas 2018 (101, BAE2018 = backbone level arbeitsmarktgebiet), survey years 2012-2024 (data state 26.06.2026)"
+years: "2012-2024 (2010 and 2011 are empty in the flow)"
+precision: "survey (sample); confidence interval delivered as rent_amr_chf_m2_ci"
+caveats: "Regional value (labour market area), not a municipality rent: the Structural Survey sample is too small for most municipalities. Net rents of occupied rented dwellings (existing tenancies, not asking rents), without service and heating charges. BFS withholds values with a coefficient of variation above 10 % (none missing in 2012-2024). Time series breaks: 2015 (questionnaire change) and 2018 (method, weighting, outlier detection; BFS status B on every area in 2018). 11 values carry status U (low reliability). The confidence level of the CI measure is not stated in the data."
+catalog_ids: [bfs_amr_rents]
