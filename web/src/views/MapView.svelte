@@ -12,6 +12,12 @@
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
   import YearSlider from '../components/YearSlider.svelte';
+  import YearTools from '../components/YearTools.svelte';
+  import SmallMultiples from '../components/SmallMultiples.svelte';
+  import '../lib/i18n-mapx';
+  import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues } from '../lib/yearcmp.svelte';
+  import { ciSpec, crossesClass, intervals, kindOf, rankRange } from '../lib/reliability';
+  import { RefLayer, loadRefData } from '../lib/reflayer';
   import VotePicker from '../components/VotePicker.svelte';
   import VoteResult from '../components/VoteResult.svelte';
   import { loadVoteFile, loadVoteIndex, voteIdOf, type VoteIndex } from '../lib/votes';
@@ -22,7 +28,7 @@
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    flagMarks, flagsOf, isUnstable, gapReason, precisionOf, availableAt, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -69,6 +75,7 @@
   let panelEl = $state<HTMLElement>();
   let view: UnitMap | null = null;
   let overlay: ReachOverlay | null = null;
+  let refLayer: RefLayer | null = null;
 
   const metas = $derived(base.metas);
   /** unit names in the UI language (typology units carry official names per language) */
@@ -92,21 +99,38 @@
   const voteShown = $derived(refRaw && metaRaw.per_vote ? voteIdOf(refRaw.col.period) : null);
   const voteEntry = $derived(voteIx && voteShown ? (voteIx.votes.find((v) => v.id === voteShown) ?? null) : null);
   const vdiff = $derived(app.vdiff && metaRaw.id === 'vote_yes_share' && !!chA && !!refRaw);
+  const yearPeriods = $derived(seriesPeriods(metaRaw, ld.level));
+  // change between two years (hash yc / ym): a synthetic metric with a diverging scale around 0
+  const cmpWanted = $derived(app.cmpFrom !== null && !whyA && yearPeriods.length > 1 && !metaRaw.per_vote && !attachedFrom(metaRaw, ld.level));
+  const cmpTo = $derived(refRaw?.col.period ?? null);
+  const cmpFromRef = $derived(cmpWanted ? cols.get(ld, metaRaw.id, app.cmpFrom) : null);
+  const cmpOrder = $derived(cmpTo !== null && app.cmpFrom !== null && metaRaw.periods.indexOf(app.cmpFrom) >= 0 && metaRaw.periods.indexOf(app.cmpFrom) < metaRaw.periods.indexOf(cmpTo));
+  const cmpActive = $derived(
+    !!cmpWanted && !!refRaw && !!cmpFromRef && !refRaw.noSeries && !cmpFromRef.noSeries && !cmpFromRef.yearMissing && cmpOrder && !vdiff,
+  );
+  const cmpProblem = $derived.by(() => {
+    if (!cmpWanted || cmpActive) return null;
+    if (cmpFromRef === undefined || refRaw === undefined) return t('yc.loading');
+    if (cmpFromRef === null || cmpFromRef?.noSeries || refRaw?.noSeries) return t('yc.noSeries');
+    return t('yc.invalid', { y: app.cmpFrom ?? '', to: cmpTo ?? '' });
+  });
+  const metaChg = $derived(cmpActive ? changeMeta(metaRaw, app.cmpMode, app.cmpFrom!, cmpTo!) : null);
   const metaA = $derived<MetricMeta>(
-    vdiff
+    metaChg ? metaChg : vdiff
       ? { ...metaRaw, id: 'vote_yes_share_diff', label_en: t('vt.diffLabelEn'), label_de: t('vt.diffLabelDe'), label_fr: t('vt.diffLabelFr'),
           unit: 'pp', unit_de: 'Pp.', unit_fr: 'pp', aggregation: 'change:vote_yes_share', direction: 'neutral', decimals: 1, headline: null }
       : metaRaw,
   );
+  const refChg = $derived(cmpActive && metaChg ? { ...refRaw!, meta: metaChg, file: null, col: changeColumn(cmpFromRef!.col, refRaw!.col, app.cmpMode) } : null);
   const refDiff = $derived(
-    vdiff && refRaw && chA
+    refChg ? refChg : vdiff && refRaw && chA
       ? { ...refRaw, meta: metaA, col: { ...refRaw.col, v: refRaw.col.v.map((x) => (x === null ? null : Math.round((x - chA!.value) * 100) / 100)) } }
       : refRaw,
   );
   // small numbers (D32): units whose value rests on a small base or count (flag bits 1/2)
   const unstableIdx = $derived.by(() => {
     const r = refRaw;
-    if (!r?.col.f) return [] as number[];
+    if (!r?.col.f || cmpActive) return [] as number[];
     const out: number[] = [];
     for (const k of Object.keys(r.col.f)) if (isUnstable(r.file, r.col.f[k]) && r.col.v[+k] !== null) out.push(+k);
     return out;
@@ -144,15 +168,43 @@
   const scaleA = $derived.by(() => {
     if (!colA) return null;
     const s = sortedValues(colA.v);
-    return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA)) : null;
+    return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA), fixedRef ?? undefined) : null;
   });
-  const yearPeriods = $derived(seriesPeriods(metaRaw, ld.level));
-  /** the period shown is newer than the default and incomplete (contract F): its coverage label */
-  const incomplete = $derived.by(() => {
-    const ip = refA ? metaRaw.incomplete_periods?.[refA.col.period] : undefined;
-    if (!ip) return null;
-    const l = app.lang === 'de' ? ip.label_de : app.lang === 'fr' ? ip.label_fr : null;
-    return l ?? ip.label_en ?? `${fmtNumber(ip.n, 0)} / ${fmtNumber(ip.of, 0)}`;
+  // class limits fixed across years (hash fx): from all years pooled, so the slider does not re-classify
+  const fixedOn = $derived(app.fixed && !cmpActive && !vdiff && !whyA && yearPeriods.length > 1);
+  const pooledRef = $derived(fixedOn ? pooledValues(metaRaw, ld.level) : null);
+  const fixedRef = $derived(pooledRef ?? null);
+  const periodNotes = $derived(periodMarks(metaRaw));
+  const legendNotes = $derived.by(() => {
+    const out: string[] = [];
+    if (cmpActive) out.push(ml(metaA));
+    if (fixedOn) {
+      if (pooledRef === undefined) out.push(t('yc.fixedWait'));
+      else if (pooledRef) out.push(t('yc.fixedNote', { span: pooledSpan(metaRaw) }));
+    }
+    return out;
+  });
+  const smPooled = $derived(app.multi !== null && yearPeriods.length > 1 ? pooledValues(metaRaw, ld.level) : undefined);
+
+  // reliability of survey and modelled values: the published 95 % interval (companion metric <id>_ci), else a badge
+  const ciS = $derived(!whyA && !cmpActive && !vdiff ? ciSpec(metaRaw, metas, ld.level) : null);
+  const ciRef = $derived(ciS ? cols.get(ld, ciS.meta.id, app.year) : null);
+  const ivs = $derived(ciS && ciRef && refA && ciRef.col.period === refA.col.period ? intervals(refA.col.v, ciRef.col.v, ciS.relative) : null);
+  const relLegend = $derived.by(() => {
+    if (whyA || cmpActive || vdiff) return null;
+    const k = kindOf(metaRaw.precision, !!ivs);
+    if (!k) return null;
+    let extra: string | null = null;
+    if (ivs && scaleA) {
+      let n = 0, crossing = 0;
+      for (const iv of ivs) {
+        if (!iv) continue;
+        n++;
+        if (crossesClass(scaleA, iv)) crossing++;
+      }
+      extra = t('rl.cross', { n: fmtNumber(n, 0), m: fmtNumber(nUnits, 0), k: fmtNumber(crossing, 0) });
+    }
+    return { kind: k, text: t(`rl.${k}`), extra };
   });
   /** a count (sum) as a choropleth favours large units: suggest circles */
   const countHint = $derived(metaA.aggregation === 'sum' && app.display === 'choropleth' && app.size !== metaA.id && !whyA);
@@ -202,6 +254,29 @@
     return () => (live = false);
   });
 
+  // national change between the two years (from the series row of Switzerland)
+  let chCmp = $state.raw<{ value: number; period: string } | null>(null);
+  $effect(() => {
+    const on = cmpActive;
+    const id = metaRaw.id;
+    const a = app.cmpFrom;
+    const b = cmpTo;
+    const mode = app.cmpMode;
+    let live = true;
+    chCmp = null;
+    if (!on || !a || !b) return;
+    loadSeries(id).then((s) => {
+      if (!s || !live) return;
+      const row = s.levels.schweiz?.CH;
+      const xa = row?.[s.periods.indexOf(a)];
+      const xb = row?.[s.periods.indexOf(b)];
+      if (xa === null || xa === undefined || xb === null || xb === undefined) return;
+      const x = mode === 'abs' ? xb - xa : xa === 0 ? null : ((xb - xa) / Math.abs(xa)) * 100;
+      if (x !== null) chCmp = { value: x, period: `${a}→${b}` };
+    }).catch(() => {});
+    return () => (live = false);
+  });
+
   // ------------------------------------------------------------------ size (proportional symbols)
   const symbolsMode = $derived(app.display === 'symbols');
   const sizeMeta = $derived<MetricMeta | undefined>(metas.get(app.size ?? (symbolsMode ? 'pop_total' : '')));
@@ -243,7 +318,35 @@
   });
   function setDisplay(d: 'choropleth' | 'symbols') {
     app.display = d;
+    autoSym = null;
+    if (d === 'choropleth') keepChoro = true;
     if (d === 'symbols' && !app.size) app.size = 'pop_total';
+  }
+  // Counts (sums) are drawn as proportional circles by default, since shading would favour large units.
+  // Picking a count in the shade picker switches to circles sized by it; picking another metric switches
+  // back. Choosing "Shaded" once keeps shading for counts. Links (hash) are never changed.
+  let autoSym = $state<string | null>(null);
+  let keepChoro = false;
+  function pickShade(id: string) {
+    const m = metas.get(id);
+    const isCount = !!m && m.aggregation === 'sum' && !m.per_vote && availableAt(m, ld.level);
+    if (autoSym && !isCount) {
+      if (app.size === autoSym) app.size = null;
+      app.display = 'choropleth';
+      autoSym = null;
+    }
+    app.metric = id;
+    if (isCount && !keepChoro && (app.display === 'choropleth' || autoSym)) {
+      app.size = id;
+      app.display = 'symbols';
+      autoSym = id;
+    }
+  }
+  function shadeInstead() {
+    keepChoro = true;
+    if (app.size === autoSym) app.size = null;
+    app.display = 'choropleth';
+    autoSym = null;
   }
 
   // ------------------------------------------------------------------ filters
@@ -330,7 +433,11 @@
       onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
       onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full,
+      onLabels: () => (app.labels = !app.labels), labelsLabel: () => t('lb.toggle'), labelsOn: () => app.labels,
     });
+    refLayer = new RefLayer(view.map, mapEl);
+    refLayer.setVisible(app.labels);
+    loadRefData(base).then((d) => refLayer?.setData(d)).catch(() => {});
     overlay = new ReachOverlay(view.map, mapEl);
     view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
     view.map.on('movestart', (e) => {
@@ -486,6 +593,13 @@
     if (mapReady) overlay!.setVisible(on);
   });
   $effect(() => {
+    const on = app.labels;
+    if (mapReady) {
+      refLayer!.setVisible(on);
+      view!.relabel();
+    }
+  });
+  $effect(() => {
     const now = app.t;
     if (mapReady) overlay!.setTime(now);
   });
@@ -584,6 +698,8 @@
       const layers = [img];
       const rc = reachOn ? (mapEl.querySelector('canvas.reach-canvas') as HTMLCanvasElement | null) : null;
       if (rc) layers.push(rc);
+      const lc = refLayer?.snapshot(img.width, img.height, img.width / Math.max(1, mapEl.clientWidth));
+      if (lc) layers.push(lc);
       const legend: LegendItem[] = legendItems(scaleA, metaA);
       if (scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
       if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
@@ -659,7 +775,18 @@
       const x = sizeRef.col.v[i];
       extra.push({ label: `${t('mv.size')}: ${ml(sizeMeta)}`, value: x === null ? t('lg.noData') : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
     }
-    return { i, reach, sub, extra };
+    // reliability of this unit's value: its 95 % interval, or the survey / modelled sentence
+    let ci = null;
+    let relText: string | null = null;
+    if (!cmpActive && !vdiff && refA) {
+      const iv = ivs?.[i] ?? null;
+      if (iv && scaleA) ci = { ...iv, rank: rankRange(refA.col.v, ivs!, i, metaRaw.direction), crosses: crossesClass(scaleA, iv) };
+      else {
+        const k = kindOf(precisionOf(refA.file, refA.col, i, metaA), !!ivs);
+        relText = ivs && refA.col.v[i] !== null ? t('rl.noCi') : k === 'survey' || k === 'modelled' ? t(`rl.${k}`) : null;
+      }
+    }
+    return { i, reach, sub, extra, ci, relText };
   });
   const tip = $derived.by(() => {
     if (hover === null || !hoverAt || !colA) return null;
@@ -683,7 +810,7 @@
 {#snippet statsSnip()}
   {#if voteIx && voteEntry && !whyA}<VoteResult index={voteIx} entry={voteEntry} />{/if}
   {#if colA && !whyA}
-    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={names} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : chA} sel={null}
+    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={names} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : cmpActive ? chCmp : chA} sel={null}
       source={base.sources.get(metaA.source)} unitWord={word} mask={filtered ? match.m : null} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
@@ -714,7 +841,7 @@
         <div class="row2 lab">
           <span class="caps">{t('mv.shade')}</span>
         </div>
-        <MetricPicker metrics={base.metrics} level={ld.level} value={metaRaw.id} onpick={(id) => (app.metric = id)} />
+        <MetricPicker metrics={base.metrics} level={ld.level} value={metaRaw.id} onpick={pickShade} />
         {#if metaRaw.per_vote && voteIx && voteShown}
           <VotePicker index={voteIx} value={voteShown} onpick={(id) => (app.vote = voteIdOf(metaRaw.latest) === id ? null : id)} />
         {/if}
@@ -734,7 +861,7 @@
             <p class="why">{whyA}</p>
           {:else if scaleA && colA}
             <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
           {:else if refA === undefined}
@@ -753,6 +880,10 @@
           {#if scaleA && colA && !whyA}
             <p class="exrow"><button type="button" class="exb" onclick={mapPNG} disabled={pngBusy} title={t('ex.pngT')}>{pngBusy ? t('ex.pngWait') : t('ex.pngMap')}</button></p>
           {/if}
+          {#if autoSym && autoSym === metaRaw.id && symbolsMode && !whyA}
+            <p class="hintc">{t('sym.auto', { metric: ml(metaRaw) })}
+              <button type="button" class="link" onclick={shadeInstead}>{t('sym.back')}</button></p>
+          {/if}
           {#if countHint}
             <p class="hintc">{t('mv.countHint', { metric: ml(metaA) })}
               <button type="button" class="link" onclick={countAsSymbols}>{t('mv.countBtn')}</button></p>
@@ -760,12 +891,14 @@
         </div>
         {#if yearPeriods.length > 1 && !whyA}
           <div class="yr" class:extra={!app.year}>
-            <YearSlider periods={yearPeriods} value={app.year} onchange={(y) => (app.year = y)}>
+            <YearSlider periods={yearPeriods} value={app.year} marks={periodNotes} latest={metaRaw.latest} onchange={(y) => (app.year = y)}>
               {#if refA?.noSeries}{' · '}<span class="warn">{t('mv.noSeries')}</span>
               {:else if refA?.yearMissing}{' · '}<span class="warn">{t('mv.noYearVal', { y: refA.yearMissing })}</span>
               {:else if yearEmpty}{' · '}<span class="warn">{t('mv.noYearLevel', { y: app.year ?? '' })}</span>{/if}
-              {#if incomplete}{' · '}<span class="warn">{incomplete}</span>{/if}
             </YearSlider>
+            <YearTools periods={yearPeriods} to={refRaw?.col.period ?? yearPeriods[yearPeriods.length - 1]} from={app.cmpFrom} mode={app.cmpMode} fixed={app.fixed}
+              problem={cmpProblem} onfrom={(y) => (app.cmpFrom = y)} onmode={(m) => (app.cmpMode = m)} onfixed={(v) => (app.fixed = v)}
+              onmulti={() => (app.multi = defaultPeriods(yearPeriods))} />
           </div>
         {:else if app.year && !whyA}
           <p class="foot yr">{t(li.series ? 'mv.yearNoSeries' : 'mv.yearNoSeriesLevel', { y: app.year })}
@@ -782,7 +915,7 @@
           </div>
         </div>
         <MetricPicker metrics={base.metrics} level={ld.level} value={sizeMeta?.id ?? ''} none={symbolsMode ? undefined : t('mv.none')}
-          onpick={(id) => (app.size = id || null)} />
+          onpick={(id) => { autoSym = null; app.size = id || null; }} />
         {#if whyS}
           <p class="why sp">{whyS}</p>
         {:else if sizeMeta && sizeData && sizeRef}
@@ -842,6 +975,10 @@
   <section class="pane">
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
+      {#if app.multi !== null}
+        <SmallMultiples {base} {ld} {cols} meta={metaRaw} periods={yearPeriods} picked={app.multi} pooled={smPooled} method={app.cls}
+          mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} />
+      {/if}
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
@@ -850,7 +987,8 @@
         <div class="card-wrap">
           <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
             source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} compact onclose={() => (app.sel = null)}
-            profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
+            profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional}
+            ci={card.ci} relText={card.relText} />
         </div>
       {/if}
       {#if full && scaleA && colA && !whyA}
@@ -875,7 +1013,8 @@
         <div class="caps lab">{t('mv.selected', { one })}</div>
         <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
-          profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
+          profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional}
+          ci={card.ci} relText={card.relText} />
       {:else}
         <p class="foot hint">{t('mv.hint')}</p>
       {/if}
