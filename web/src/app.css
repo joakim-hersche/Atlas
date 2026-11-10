@@ -62,7 +62,7 @@
   --border: #d6d6d6;
   --border-strong: #000000;
   --rule: #000000;
-  --accent: #d52b1e;      /* Swiss red, 4.9:1 on white */
+  --accent: #da291c;      /* Swiss red: screen match of Pantone 485 C (federal CD), 4.9:1 on white */
   --accent-soft: #fbe9e7;
   --accent-text: #ffffff;
   --ink: #000000;         /* selected controls: black fill */
