@@ -148,7 +148,7 @@ MODE_OF_TYPE = [  # (label, GTFS route types: basic + extended)
     ("funicular", {7, 1400}), ("bus", {3, 11} | set(range(200, 210)) | set(range(700, 718)) | set(range(1500, 1508))),
 ]
 MAIN_SIMILAR = 0.5       # stations serving >= half the best coverage compete on departures (drops outlying halts)
-MAIN_RAIL_MIN = 0.5      # rail is preferred when its best station serves >= half of what the best stop serves
+MAIN_RAIL_MIN = 1 / 3    # rail is preferred when its best station serves >= a third of what the best stop serves
 
 
 def station_modes(net: Network) -> pd.Series:
@@ -177,7 +177,7 @@ def main_stations(net: Network, gem_ids: np.ndarray, access: pd.DataFrame | None
     Candidates: the stations served 06:30-18:00 inside the municipality (reference polygon). Coverage
     of a candidate = residents (STATPOP 2025) of the municipality's inhabited hectares within 1.5 km
     straight line of it (the door-to-door access radius). Rail first: if the best rail station
-    covers at least MAIN_RAIL_MIN of what the best stop of any mode covers, only rail stations
+    covers at least MAIN_RAIL_MIN (a third) of what the best stop of any mode covers, only rail stations
     compete. Among the competing stations, those covering at least MAIN_SIMILAR (half) of the best
     coverage remain (this drops outlying halts such as Grafenort, St. Peter-Molinis, Alp Grüm,
     Riazzino) and the one with the most departures 06:30-18:00 (rail departures for rail) wins
