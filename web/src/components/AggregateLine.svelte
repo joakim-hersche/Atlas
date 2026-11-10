@@ -68,9 +68,9 @@
   .top { display: flex; align-items: center; gap: 8px; }
   .pick { flex: 1; min-width: 0; }
   .val { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-  .big { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
-  .unit { font-size: 0.8rem; }
-  .sub { font-size: 0.74rem; color: var(--muted); }
-  .note { margin: 2px 0 0; font-size: 0.72rem; color: var(--muted); }
-  .na { margin: 6px 0 0; font-size: 0.76rem; color: var(--text); }
+  .big { font-size: var(--fs-stat); font-weight: 700; line-height: 1.1; }
+  .unit { font-size: var(--fs-small); }
+  .sub { font-size: var(--fs-meta); color: var(--muted); }
+  .note { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--muted); }
+  .na { margin: 6px 0 0; font-size: var(--fs-meta); color: var(--text); }
 </style>

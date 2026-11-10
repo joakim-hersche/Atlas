@@ -17,7 +17,7 @@
   import { app } from '../lib/state.svelte';
   import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
   import { levelsOf, requestLevel } from '../lib/levels';
-  import { divRamp, mute, seqRamp, token } from '../lib/theme';
+  import { divRamp, seqRamp, token } from '../lib/theme';
 
   interface Props {
     base: Base;
@@ -124,8 +124,9 @@
   );
   const dimmed = (colours: (string | null)[]) => {
     if (!filtered) return colours;
-    const surface = token('--map-bg');
-    return colours.map((c, i) => (c && !match.m[i] ? mute(c, surface, 0.88) : c));
+    // D5: filtered-out units take one flat fill
+    const out = token('--muted-fill') || '#ececec';
+    return colours.map((c, i) => (c && !match.m[i] ? out : c));
   };
 
   function select(i: number | null) {
@@ -327,31 +328,31 @@
   }
   .presets .caps { margin: 0 4px 0 8px; flex: none; }
   .chip {
-    flex: none; padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer;
-    font-size: 0.8rem; font-weight: 500; white-space: nowrap;
+    flex: none; min-height: var(--ctl-h); padding: 0 var(--sp-3); border: 1px solid var(--ink); background: none; cursor: pointer;
+    font-size: var(--fs-body); font-weight: 500; white-space: nowrap; color: var(--text); display: inline-flex; align-items: center;
   }
-  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .chip:hover { background: var(--surface-2); }
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
-  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: dashed; }
+  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: solid; }
 
   .stage { flex: 1; min-height: 0; position: relative; }
   .fbar {
-    flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 5px 16px; font-size: 0.78rem;
+    flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 5px 16px; font-size: var(--fs-meta);
     border-bottom: 1px solid var(--rule); background: var(--panel);
   }
   .ftx { flex: 1 1 240px; min-width: 0; }
-  .fbar .seg button { padding: 2px 8px; font-size: 0.74rem; }
-  .fedit { color: var(--text); font-size: 0.76rem; }
+  .fbar .seg button { padding: 2px 8px; font-size: var(--fs-meta); }
+  .fedit { color: var(--text); font-size: var(--fs-meta); }
   .pane { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--panel); }
   .phead { flex: none; padding: 8px; border-bottom: 1px solid var(--rule); }
   .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .mapbox { position: relative; flex: 1; min-height: 0; }
   .map { position: absolute; inset: 0; }
   .plegend { flex: none; padding: 10px 12px; border-top: 1px solid var(--rule); }
-  .why { margin: 0; font-size: 0.8rem; }
+  .why { margin: 0; font-size: var(--fs-small); }
   .maptip {
     position: absolute; z-index: 5; pointer-events: none; transform: translate(14px, 14px); background: var(--panel);
-    border: 1px solid var(--ink); padding: 6px 9px; font-size: 0.8rem; white-space: nowrap;
+    border: 1px solid var(--ink); padding: 6px 9px; font-size: var(--fs-small); white-space: nowrap;
   }
   .k { display: inline-block; width: 1.3em; color: var(--muted); font-weight: 500; }
   .muted { color: var(--muted); }
@@ -370,7 +371,9 @@
     }
   }
   @media (max-width: 899px) {
-    .presets { padding: 6px 16px; }
+    /* U16: the example chips wrap instead of running off the screen */
+    .presets { padding: var(--sp-2) var(--gutter); flex-wrap: wrap; overflow: visible; row-gap: var(--sp-2); }
+    .presets .caps { margin-left: 0; }
     .stage { overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .pane { border-bottom: 1px solid var(--rule); }
     .mapbox { flex: none; height: 250px; }

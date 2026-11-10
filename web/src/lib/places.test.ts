@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { norm, parseRef, refOf, search, type SearchIndex, type SearchUnit } from './places';
+import { norm, parseRef, refOf, search, searchUnit, type SearchIndex, type SearchUnit } from './places';
+import { shortName } from './data';
 
 // a small hand-made index in the shape of web/search.json: [id, level, name, canton, alternative names]
 const ROWS: [string, string, string, string | null, string[]][] = [
@@ -7,7 +8,14 @@ const ROWS: [string, string, string, string | null, string[]][] = [
   ['261', 'gemeinde', 'Zürich', 'ZH', ['Zurich', 'Zurigo']],
   ['3203', 'gemeinde', 'St. Gallen', 'SG', ['Saint-Gall', 'San Gallo']],
   ['3787', 'gemeinde', 'Sankt Moritz', 'GR', []],
-  ['371', 'gemeinde', 'Biel/Bienne', 'BE', ['Biel', 'Bienne']],
+  ['371', 'gemeinde', 'Biel/Bienne', 'BE', ['Bienne', 'Bienna']],
+  ['2764', 'gemeinde', 'Biel-Benken', 'BL', []],
+  ['6748', 'gemeinde', 'Les Genevez (JU)', 'JU', ['Les Genevez']],
+  ['112', 'bezirk', 'Bezirk Zürich', 'ZH', []],
+  ['2400', 'bezirk', 'Canton de Neuchâtel', 'NE', ['Cant. de Neuchâtel']],
+  ['BE', 'kanton', 'Bern / Berne', null, ['Berne']],
+  ['351', 'gemeinde', 'Bern', 'BE', ['Berne']],
+  ['6458', 'gemeinde', 'Neuchâtel', 'NE', ['Neuenburg']],
   ['2196', 'gemeinde', 'Fribourg', 'FR', ['Freiburg']],
   ['242', 'gemeinde', 'Köniz', 'BE', []],
   ['GE', 'kanton', 'Genève', null, ['Genf']],
@@ -15,9 +23,7 @@ const ROWS: [string, string, string, string | null, string[]][] = [
 ];
 
 function index(): SearchIndex {
-  const units: SearchUnit[] = ROWS.map(([id, level, name, kanton, alts]) => ({
-    ref: refOf(level, id), id, level, name, kanton, alts, keys: [norm(name), ...alts.map(norm)],
-  }));
+  const units: SearchUnit[] = ROWS.map(([id, level, name, kanton, alts]) => searchUnit(id, level, name, kanton, alts));
   return {
     units,
     byRef: new Map(units.map((u) => [u.ref, u])),
@@ -90,6 +96,34 @@ describe('search', () => {
   it('uses population to rank equal matches', () => {
     const pop = new Map([['3203', 1], ['3787', 5]]);
     expect(search(ix, 'st', 5, pop)[0].ref).toBe('3787');
+  });
+});
+
+describe('search ranking (U14) and short names (U15)', () => {
+  const ix = index();
+  const refs = (q: string) => search(ix, q).map((h) => h.ref);
+  it('exact names come before prefix matches', () => {
+    expect(refs('Geneve')[0]).toBe('6621');
+    expect(refs('Geneve').indexOf('6748')).toBeGreaterThan(refs('Geneve').indexOf('kanton:GE'));
+    expect(refs('Biel')[0]).toBe('371');
+    expect(refs('Biel').indexOf('2764')).toBeGreaterThan(0);
+    expect(refs('Bern').slice(0, 2)).toEqual(['351', 'kanton:BE']);
+  });
+  it('districts are found and shown without the administrative prefix', () => {
+    const hit = search(ix, 'Zurich').find((h) => h.ref === 'bezirk:112');
+    expect(hit?.name).toBe('Zürich');
+    expect(search(ix, 'Neuchatel').find((h) => h.ref === 'bezirk:2400')?.name).toBe('Neuchâtel');
+  });
+  it('strips the prefix of district names only', () => {
+    expect(shortName('bezirk', 'Bezirk Zürich')).toBe('Zürich');
+    expect(shortName('bezirk', 'Wahlkreis Luzern-Stadt')).toBe('Luzern-Stadt');
+    expect(shortName('bezirk', 'District de la Broye')).toBe('Broye');
+    expect(shortName('bezirk', "District de l'Ouest lausannois")).toBe('Ouest lausannois');
+    expect(shortName('bezirk', 'Distretto di Lugano')).toBe('Lugano');
+    expect(shortName('bezirk', 'Arrondissement administratif Jura bernois')).toBe('Jura bernois');
+    expect(shortName('bezirk', 'Verwaltungskreis Biel/Bienne')).toBe('Biel/Bienne');
+    expect(shortName('bezirk', 'Kanton Uri')).toBe('Uri');
+    expect(shortName('gemeinde', 'Region Test')).toBe('Region Test');
   });
 });
 

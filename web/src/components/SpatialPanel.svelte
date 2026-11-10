@@ -128,13 +128,13 @@
   .intro { margin-top: 8px; }
   .moran { margin-top: 8px; border-left: 3px solid var(--ink); padding-left: 8px; }
   .mh { display: flex; align-items: center; gap: 2px; }
-  .mt { font-weight: 700; font-size: 0.8rem; }
-  .big { margin: 2px 0 0; font-weight: 600; font-size: 0.86rem; }
-  .plain { margin: 6px 0 0; font-size: 0.8rem; line-height: 1.4; }
+  .mt { font-weight: 700; font-size: var(--fs-small); }
+  .big { margin: 2px 0 0; font-weight: 600; font-size: var(--fs-small); }
+  .plain { margin: 6px 0 0; font-size: var(--fs-small); line-height: 1.4; }
   .modes { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .modes .seg button { padding: 3px 8px; font-size: 0.76rem; }
-  .fdr { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: 0.78rem; cursor: pointer; }
+  .modes .seg button { padding: 3px 8px; font-size: var(--fs-meta); }
+  .fdr { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: var(--fs-meta); cursor: pointer; }
   .fdr input { margin: 2px 0 0; accent-color: var(--ink); }
-  .warn { color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; }
+  .warn { color: var(--text); border-left: 3px solid var(--ink); padding-left: 6px; }
   .b2 { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 </style>

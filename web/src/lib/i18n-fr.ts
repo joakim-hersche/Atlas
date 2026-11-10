@@ -106,8 +106,8 @@ export const FR: Dict = {
   'pt.nearestHub': 'Pôle le plus proche',
   'pt.nearestSet': "Pôles retenus : les gares principales des villes-centres des 15 agglomérations d'au moins 100 000 habitants (voir Définition).",
   'pt.door': 'Porte à porte',
-  'pt.reached': `{n} communes à moins de {t}${n}min ({what})${n}; les autres en couleurs atténuées.`,
-  'pt.reachedF': `{n} communes à moins de {t}${n}min ({what}, parmi les communes filtrées)${n}; les autres en couleurs atténuées.`,
+  'pt.reached': `{n} communes à moins de {t}${n}min ({what})${n}; les autres en plus clair.`,
+  'pt.reachedF': `{n} communes à moins de {t}${n}min ({what}, parmi les communes filtrées)${n}; les autres en plus clair.`,
   // header and navigation
   'nav.map': 'Carte',
   'nav.compare': 'Comparer des indicateurs',
@@ -143,8 +143,8 @@ export const FR: Dict = {
   'card.profile': 'Profil',
   'mv.none': 'Aucun',
   'card.amongData': 'parmi les {units} avec données',
-  'card.oneHighest': '1 = le plus élevé',
-  'card.oneLowest': '1 = le plus bas',
+  'card.oneHighest': 'le plus élevé en premier',
+  'card.oneLowest': 'le plus bas en premier',
   'card.fromHub': '{mode} depuis {hub}',
   'card.toHub': '{mode} vers {hub}',
   'card.rank': 'Rang {r} sur {n}',
@@ -229,7 +229,7 @@ export const FR: Dict = {
   'lg.median': 'médiane',
   'lg.national': 'national',
   'lg.noData': 'pas de données',
-  'lg.s.continuous': 'Cont.',
+  'lg.s.continuous': 'Continu',
   'lg.s.equal': 'Égaux',
   'lg.s.quantile': 'Quantiles',
   'lg.source': 'Source',
@@ -264,8 +264,8 @@ export const FR: Dict = {
   'mv.reachErr': `Les données d’accessibilité n’ont pas pu être chargées${n}: {e}`,
   'mv.reachHeld': `Les temps par commune sont retenus dans cette version${n}; seul le réseau est dessiné.`,
   'mv.reachLevel': `Les temps de parcours sont par commune${n}: le réseau est dessiné, les unités ne sont pas mises en évidence à ce niveau.`,
-  'mv.reached': `{n} communes à moins de {t}${n}min${n}; les autres en couleurs atténuées.`,
-  'mv.reachedF': `{n} communes à moins de {t}${n}min (parmi les communes filtrées)${n}; les autres en couleurs atténuées.`,
+  'mv.reached': `{n} communes à moins de {t}${n}min${n}; les autres en plus clair.`,
+  'mv.reachedF': `{n} communes à moins de {t}${n}min (parmi les communes filtrées)${n}; les autres en plus clair.`,
   'mv.ringHint': 'Anneaux sur la carte en aplats. « Symboles » dessine des cercles pleins dans la couleur de l’aplat.',
   'mv.selected': '{one} sélectionnée',
   'mv.shade': 'Couleur selon',
@@ -404,7 +404,7 @@ export const FR: Dict = {
   'p.partOf': 'Fait partie de',
   'p.otherNames': 'Autres noms',
   'p.metrics': 'Tous les indicateurs',
-  'p.rankNote': `Rang 1 = valeur la plus élevée (la plus basse lorsque moins est mieux). Les valeurs égales partagent le meilleur rang et sont marquées «${n}ex aequo${n}». La marque rouge indique le percentile parmi toutes les {units} avec données${n}; une bande claire couvre un groupe d’ex aequo.`,
+  'p.rankNote': `Rang 1 = valeur la plus élevée (la plus basse lorsque moins est mieux). Les valeurs égales partagent le meilleur rang et sont marquées «${n}ex aequo${n}». La marque noire indique le percentile parmi toutes les {units} avec données${n}; une bande claire couvre un groupe d’ex aequo.`,
   'p.showAll': 'Les {n} indicateurs',
   'p.loadingTheme': 'Chargement…',
   'p.rankCH': 'Rang {r} sur {n}',
@@ -729,3 +729,6 @@ Object.assign(FR, SPATIAL_FR);
 // year comparisons, reliability notes, small multiples and the reference layer (map and legend)
 import { FR_MAPX } from './i18n-mapx-fr';
 Object.assign(FR, FR_MAPX);
+// usability and design review fixes (ux.*, sp2.*): defined with their English and German strings
+import { FR_UX } from './i18n-ux';
+Object.assign(FR, FR_UX);

@@ -181,10 +181,14 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       const pos: number[] = [];
       for (let c = 0; c < nCls; c++) (upperOf(c) <= c0 && lowerOf(c) < c0 ? neg : pos).push(c);
       classColours = new Array(nCls);
-      const grade = (k: number, len: number) => (len === 1 ? 2 : 1 + Math.round((k * 2) / (len - 1)));
+      // D3: one distinct colour per class. Each arm is interpolated from its pale end (next to the centre) to its
+      // dark end, in as many steps as it has classes (a 3-step arm used to repeat colours with 4 or more classes).
+      const negArm = [div[2], div[1], div[0]];
+      const posArm = [div[4], div[5], div[6]];
+      const step = (k: number, len: number) => (len === 1 ? 0.5 : k / (len - 1));
       // neg is ascending (most negative first): the class next to 0 is the last one
-      neg.forEach((c, j) => (classColours[c] = div[3 - grade(neg.length - 1 - j, neg.length)]));
-      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === c0 && upperOf(c) === c0 ? div[3] : div[3 + grade(j, pos.length)]));
+      neg.forEach((c, j) => (classColours[c] = interpolate(negArm, step(neg.length - 1 - j, neg.length))));
+      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === c0 && upperOf(c) === c0 ? div[3] : interpolate(posArm, step(j, pos.length))));
     }
     colourOf = (x) => classColours[classIndex(x, breaks)];
   }
@@ -414,10 +418,27 @@ export function voteTitle(p: string): string | null {
 /** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14' (no internal vote number in the UI);
  *  `withTitle` appends the vote's title where there is room for it (exports). */
 export function fmtPeriod(p: string, withTitle = false): string {
-  const [a, b] = p.split('#');
+  const [a0, b] = p.split('#');
+  const a = fmtDate(a0);
   if (!b) return a;
   const title = withTitle ? voteTitle(p) : null;
   return title ? `${a} · ${title}` : a;
+}
+
+// U8: dates as "27 Sep 2026" / "27. Sept. 2026" / "27 sept. 2026", never raw ISO
+const MONTHS: Record<string, string[]> = {
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  de: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'],
+  fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+};
+/** An ISO date (YYYY-MM-DD) in the UI language; anything else is returned unchanged. */
+export function fmtDate(iso: string, lang: string = app.lang): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  const mon = (MONTHS[lang] ?? MONTHS.en)[Number(m[2]) - 1];
+  if (!mon) return iso;
+  const d = Number(m[3]);
+  return lang === 'de' ? `${d}. ${mon} ${m[1]}` : `${d} ${mon} ${m[1]}`;
 }
 
 export function fmtR(r: number): string {

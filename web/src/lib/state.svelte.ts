@@ -28,6 +28,7 @@ export class AppState {
   lang = $state<Lang>('en');
   only = $state(false);
   ptm = $state<'st' | 'dd'>('st');
+  ronly = $state(false);
   vote = $state<string | null>(null);
   vdiff = $state(false);
   /** D37: single-seat cantons included in classes, ranks and statistics (off by default) */
@@ -51,6 +52,8 @@ export class AppState {
   /** level the user picked although the shaded metric does not exist there: asked before swapping */
   levelAsk = $state<{ level: string; metric: string; fallback: string | null } | null>(null);
   levelNote = $state<{ text: string; level: string; metric: string; prev: { level: string; metric: string; metricB: string | null; size: string | null } } | null>(null);
+  /** U4: one-line banner after a link asked for something the app cannot show (not in the hash) */
+  notice = $state<string | null>(null);
   /** counts state loads from the URL (initial and every hashchange), so the shell can check the new state */
   loads = $state(0);
   /** fit the map to the selected unit once when the map view opens (set by 'show on map') */
@@ -83,6 +86,7 @@ export class AppState {
     this.lang = v.lang;
     this.only = v.only;
     this.ptm = v.ptm;
+    this.ronly = v.ronly;
     this.vote = v.vote;
     this.vdiff = v.vdiff;
     this.maj = v.maj;
@@ -107,7 +111,7 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, maj: this.maj, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params }, spatial: this.spatial, fdr: this.fdr, embed: this.embed,
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, ronly: this.ronly, vote: this.vote, vdiff: this.vdiff, maj: this.maj, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params }, spatial: this.spatial, fdr: this.fdr, embed: this.embed,
       cmpFrom: this.cmpFrom, cmpMode: this.cmpMode, fixed: this.fixed, multi: this.multi ? this.multi.slice() : null, labels: this.labels,
     };
   }
@@ -127,20 +131,34 @@ export class AppState {
 
 export const app = new AppState(readHash());
 
+/** U2: the next hash write only tidies the current history entry (a link was opened, Back / Forward loaded a
+ *  state, or the app replaced state it could not use): it must not add a step to the history. */
+let tidy = true;
+export function replaceNext(): void {
+  tidy = true;
+}
+
 /** Write the state to the hash (debounced, not while the reach animation runs) and follow
  *  hash changes made by links. Call from a component's $effect; returns the cleanup. */
 export function syncHash(): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  tidy = true;
   const stopEffect = $effect.root(() => {
     $effect(() => {
       const s = app.snapshot();
       if (!s.embed) storeLang(s.lang);
       if (app.playing) return;
       clearTimeout(timer);
-      timer = setTimeout(() => writeHash(s), 150);
+      timer = setTimeout(() => {
+        writeHash(s, tidy);
+        tidy = false;
+      }, 150);
     });
   });
-  const onHash = () => app.load(parseHash(location.hash));
+  const onHash = () => {
+    tidy = true;
+    app.load(parseHash(location.hash));
+  };
   window.addEventListener('hashchange', onHash);
   return () => {
     clearTimeout(timer);

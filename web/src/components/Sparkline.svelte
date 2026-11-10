@@ -80,7 +80,7 @@
 
 <style>
   .spark { display: inline-flex; flex-direction: column; vertical-align: middle; height: auto !important; }
-  .rng { font-size: 9px; line-height: 1.1; color: var(--faint); white-space: nowrap; }
+  .rng { font-size: var(--fs-cap); line-height: 1.1; color: var(--faint); white-space: nowrap; }
   .zero { stroke: var(--border); stroke-width: 1; }
   svg { display: block; overflow: visible; }
   path { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }

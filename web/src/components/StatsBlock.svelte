@@ -49,7 +49,8 @@
         <tr><th>{t('st.n')}</th><td class="num">{fmtNumber(s.length, 0)} <span class="muted">{t('st.of', { n: fmtNumber(nIn, 0) })}</span></td></tr>
         <tr><th>{t('st.mean')} <span class="muted">({t('st.unweighted')})</span></th><td class="num">{f(mean(s))}</td></tr>
         <tr><th>{t('st.median')}<Term k="median" /></th><td class="num">{f(quantile(s, 0.5))}</td></tr>
-        <tr><th>P10 / P90<Term k="p10_p90" /></th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
+        <tr><th title={t('ux.p10T')}>{t('ux.p10Plain', { units: unitWord })}<Term k="p10_p90" /></th><td class="num">{f(quantile(s, 0.1))}</td></tr>
+        <tr><th title={t('ux.p90T')}>{t('ux.p90Plain', { units: unitWord })}</th><td class="num">{f(quantile(s, 0.9))}</td></tr>
         <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') || !cantons[ext.lo] || cantons[ext.lo] === names[ext.lo] ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
         <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') || !cantons[ext.hi] || cantons[ext.hi] === names[ext.hi] ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
         <tr><th>{t('st.ch')}{#if mask}<span class="who">{t('st.chAll')}</span>{/if}</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
@@ -71,7 +72,7 @@
           <tbody>
             <tr><th>{t('st.value')}</th><td class="num strong">{f(v[sel]!)}</td></tr>
             <tr><th>{t('st.rank')}</th><td class="num">{fmtNumber(rank.rank, 0)} <span class="muted">{t('st.of', { n: fmtNumber(rank.n, 0) })}{tiedText(rank, true)}, {meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')}</span></td></tr>
-            <tr><th>{t('st.pct')}<Term k="percentile" /></th><td class="num">P{fmtNumber(Math.round(rank.pct), 0)}</td></tr>
+            <tr><th>{t('st.pct')}<Term k="percentile" /></th><td class="num" title="P{fmtNumber(Math.round(rank.pct), 0)}">{t('ux.pctPlain', { p: fmtNumber(Math.round(rank.pct), 0), units: unitWord })}</td></tr>
           </tbody>
         </table>
         <div class="pbar" aria-hidden="true">{#if rank.tied > 0}<i style="left:{rank.pctLo}%; width:{rank.pctHi - rank.pctLo}%"></i>{/if}<span style="left:{rank.pct}%"></span></div>
@@ -83,21 +84,21 @@
 </div>
 
 <style>
-  .stats { font-size: 0.82rem; }
-  .unit { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .stats { font-size: var(--fs-small); }
+  .unit { font-size: var(--fs-meta); color: var(--muted); margin-top: 2px; }
   table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 8px 4px 0; vertical-align: top; white-space: nowrap; }
-  td { text-align: right; padding: 4px 0; }
+  th { text-align: left; font-weight: 400; color: var(--text-2); padding: var(--sp-1) var(--sp-2) var(--sp-1) 0; vertical-align: top; }
+  td { text-align: right; padding: var(--sp-1) 0; white-space: nowrap; }
   tr + tr { border-top: 1px solid var(--border); }
-  .who { display: block; font-family: var(--font-sans); font-size: 0.72rem; color: var(--faint); }
+  .who { display: block; font-family: var(--font-sans); font-size: var(--fs-meta); color: var(--faint); }
   .muted { color: var(--muted); }
-  .strong { font-weight: 700; font-size: 1rem; }
+  .strong { font-weight: 700; font-size: var(--fs-body); }
   .foot { margin: 6px 0 0; }
-  .filt { margin: 4px 0 0; font-size: 0.78rem; border-left: 3px solid var(--ink); padding-left: 6px; }
+  .filt { margin: 4px 0 0; font-size: var(--fs-meta); border-left: 3px solid var(--ink); padding-left: 6px; }
   .selblock { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
-  .sname { margin: 3px 0 0; font-size: 0.95rem; }
+  .sname { margin: 3px 0 0; font-size: var(--fs-body); }
   .pbar { position: relative; height: 6px; margin: 8px 0 2px; background: var(--border); }
-  .pbar i { position: absolute; top: 0; height: 6px; background: var(--accent-soft); border: 1px solid var(--accent); border-width: 0 1px; }
-  .pbar span { position: absolute; top: -3px; width: 3px; height: 12px; background: var(--accent); transform: translateX(-1px); }
+  .pbar i { position: absolute; top: 0; height: 6px; background: var(--surface-2); border: 1px solid var(--ink); border-width: 0 1px; }
+  .pbar span { position: absolute; top: -3px; width: 3px; height: 12px; background: var(--ink); transform: translateX(-1.5px); }
   .foot a { color: inherit; }
 </style>

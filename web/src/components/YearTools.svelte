@@ -53,21 +53,22 @@
     </div>
     <p class="foot">{problem ?? t('yc.note', { from: from ?? '', to })}{#if !problem && mode === 'pct'}{' '}{t('yc.notePct')}{/if}</p>
   {/if}
-  <label class="fx" class:off={changing} title={t('yc.fixedT')}>
+  <label class="fx" class:off={changing} title={changing ? t('ux.fixedOffWhy') : t('yc.fixedT')}>
     <input type="checkbox" checked={fixed && !changing} disabled={changing} onchange={(e) => onfixed(e.currentTarget.checked)} />
     <span>{t('yc.fixed')}</span>
   </label>
+  {#if changing}<p class="foot">{t('ux.fixedOffWhy')}</p>{/if}
 </div>
 
 <style>
   .yt { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
   .line { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 8px; }
-  .seg button { padding: 3px 9px; font-size: 0.76rem; }
-  .multi { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: var(--text); }
+  .seg button { padding: 3px 9px; font-size: var(--fs-meta); }
+  .multi { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; color: var(--text); }
   .multi:hover { background: var(--panel-2); }
   .since { display: flex; align-items: center; gap: 6px; }
-  select { border: 1px solid var(--ink); background: var(--panel); padding: 2px 4px; font-size: 0.8rem; border-radius: 0; }
-  .fx { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; cursor: pointer; }
+  select { border: 1px solid var(--ink); background: var(--panel); padding: 2px 4px; font-size: var(--fs-small); border-radius: 0; }
+  .fx { display: flex; align-items: center; gap: 6px; font-size: var(--fs-meta); cursor: pointer; }
   .fx input { accent-color: var(--ink); margin: 0; width: 15px; height: 15px; }
   .fx.off { opacity: 0.5; cursor: default; }
   p.foot { margin: 0; }

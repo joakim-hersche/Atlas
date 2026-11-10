@@ -37,7 +37,10 @@
 {#if g}
   <span class="term" bind:this={root}>
     <button type="button" class="i" aria-expanded={open} aria-controls={id} aria-label="{t('gl.more')}: {g.term}"
-      onclick={(e) => { e.stopPropagation(); place(); openId = open ? null : id; }}>i</button>
+      onclick={(e) => { e.stopPropagation(); place(); openId = open ? null : id; }}>
+      <!-- D8: one info icon, outlined, 14 px -->
+      <svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="6.4" fill="none" stroke="currentColor" stroke-width="1.1" /><rect x="6.35" y="6" width="1.3" height="4.6" fill="currentColor" /><rect x="6.35" y="3.4" width="1.3" height="1.4" fill="currentColor" /></svg>
+    </button>
     {#if open}
       <span class="pop" id={id} role="note" style="top:{pos.top}px; left:{pos.left}px"><strong>{g.term}</strong> {g.text}</span>
     {/if}
@@ -45,15 +48,21 @@
 {/if}
 
 <style>
-  .term { position: relative; display: inline-block; vertical-align: baseline; margin-left: 3px; font-family: var(--font-sans); }
+  .term { position: relative; display: inline-block; vertical-align: baseline; margin-left: var(--sp-1); font-family: var(--font-sans); }
   .i {
-    width: 14px; height: 14px; padding: 0; border: 1px solid var(--ink); border-radius: 50%; background: var(--panel); color: var(--text);
-    font: italic 700 9px/12px Georgia, 'Times New Roman', serif; cursor: pointer; text-align: center; vertical-align: 1px;
+    display: inline-grid; place-items: center; width: 14px; height: 14px; padding: 0; border: 0; background: none; color: var(--text);
+    cursor: pointer; vertical-align: -2px; border-radius: 50%;
   }
-  .i[aria-expanded='true'] { background: var(--ink); color: var(--ink-text); }
+  .i svg { display: block; }
+  /* touch screens: a 40 x 40 target around the 14 px icon, without moving the text around it */
+  @media (pointer: coarse), (max-width: 899px) {
+    .i { width: 40px; height: 40px; margin: -13px -13px -13px -13px; }
+  }
+  .i[aria-expanded='true'] svg circle { fill: var(--ink); }
+  .i[aria-expanded='true'] svg rect { fill: var(--ink-text); }
   .pop {
     position: fixed; z-index: 90; width: min(280px, calc(100vw - 16px)); background: var(--panel); color: var(--text);
-    border: 1px solid var(--ink); border-top: 3px solid var(--ink); padding: 7px 9px; font-size: 0.78rem; font-weight: 400; line-height: 1.4;
+    border: 1px solid var(--ink); border-top: 3px solid var(--ink); padding: var(--sp-2) var(--sp-3); font-size: var(--fs-small); font-weight: 400; line-height: var(--lh-small);
     text-transform: none; letter-spacing: 0; white-space: normal; text-align: left; font-style: normal;
   }
   .pop strong { display: block; margin-bottom: 2px; }

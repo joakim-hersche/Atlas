@@ -8,6 +8,8 @@
   import MapView from './views/MapView.svelte';
   import SourcesView from './views/SourcesView.svelte';
   import Search from './components/Search.svelte';
+  import ShareButton from './components/ShareButton.svelte';
+  import Locator from './components/Locator.svelte';
   import { initRadioGroups } from './lib/a11y';
   import { fmtNumber } from './lib/classify';
   import { ColumnStore } from './lib/columns.svelte';
@@ -19,6 +21,7 @@
   import { sanitizeState } from './lib/sanitize';
   import { viewUrl } from './lib/embed';
   import './lib/i18n-spatial';
+  import './lib/i18n-ux';
 
   // pages other than the map load on first use (code splitting: the first load carries the map only)
   let compareP: Promise<typeof import('./views/CompareView.svelte')> | undefined;
@@ -46,7 +49,10 @@
   const t0 = performance.now();
 
   // unknown level in a link: fall back to municipalities
-  if (!LEVELS.some((l) => l.id === app.level && l.geometry)) app.level = 'gemeinde';
+  if (!LEVELS.some((l) => l.id === app.level && l.geometry)) {
+    app.notice = t('ux.badLevel', { id: app.level });
+    app.level = 'gemeinde';
+  }
 
   onMount(() => {
     const mq = window.matchMedia(DESKTOP);
@@ -116,8 +122,8 @@
   const unitsText = $derived(
     ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelWord(ld.level)}` : gemCount !== null ? `${fmtNumber(gemCount, 0)} ${levelWord('gemeinde')}` : '',
   );
-  // an older-boundaries map (vintage) is the map page on another municipality state
-  const current = $derived(route === 'profile' ? null : route === 'vintage' ? 'map' : route);
+  // a profile belongs to the place pages (Compare places); an older-boundaries map is the map page
+  const current = $derived(route === 'profile' ? 'places' : route === 'vintage' ? 'map' : route);
   /** first render time, for the performance check (window.__firstRender) */
   function rendered() {
     (window as unknown as { __firstRender: number }).__firstRender ??= performance.now() - t0;
@@ -152,8 +158,10 @@
           {/each}
         </nav>
         <a class="plain" href={navHref('sources')} aria-current={current === 'sources' ? 'page' : undefined}>{t('nav.sources')}</a>
+        <ShareButton />
         {@render langSwitch()}
       {:else}
+        <ShareButton variant="icon" />
         <div class="menu" bind:this={menuEl}>
           <button type="button" class="menubtn" aria-haspopup="true" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
             <span>{current ? navLabel(current) : t('nav.menu')}</span>
@@ -171,6 +179,15 @@
       {/if}
     </div>
   </header>
+  {/if}
+
+  {#if app.notice && !app.embed}
+    <div class="notice" role="status">
+      <span>{app.notice}</span>
+      <button type="button" aria-label={t('common.dismiss')} onclick={() => (app.notice = null)}>
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" /></svg>
+      </button>
+    </div>
   {/if}
 
   {#if base && cols}
@@ -198,7 +215,12 @@
   {/if}
 
   {#if (!base || (isMap && !ld)) && !loadError}
-    <div class="status" role="status">{isMap ? t('status.loadingMap') : t('status.loading')}</div>
+    <!-- U17: Switzerland's outline (the canton file comes first) and a progress line while the map data loads -->
+    <div class="loading" role="status">
+      {#if base && isMap}<div class="lshape"><Locator kanton={base.kanton} lakes={base.lakes} shapes={[]} label={t('ux.loadingData')} /></div>{/if}
+      <p>{isMap ? (base ? t('ux.loadingData') : t('status.loadingMap')) : t('status.loading')}</p>
+      <span class="bar" aria-hidden="true"><i></i></span>
+    </div>
   {/if}
   {#if loadError || cols?.error}
     <div class="status err" role="alert">{t('status.error', { e: loadError ?? cols?.error ?? '' })}</div>
@@ -214,54 +236,70 @@
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; border: 0; background: none; padding: 0; cursor: pointer; text-align: left; color: var(--text); text-decoration: none; }
   .skip {
-    position: absolute; left: 8px; top: -60px; z-index: 100; background: var(--ink); color: var(--ink-text); padding: 8px 12px; font-weight: 600;
+    position: absolute; left: 8px; top: -60px; z-index: 100; background: var(--ink); color: var(--ink-text); padding: 0 12px; min-height: 40px; display: flex; align-items: center; font-weight: 600;
     text-decoration: none;
   }
   .skip:focus { top: 8px; }
-  .brand strong { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.08em; }
+  .brand strong { font-weight: 700; font-size: var(--fs-lead); letter-spacing: 0.08em; }
   .mark { width: 18px; height: 18px; background: var(--accent); flex: none; position: relative; }
   .mark::before, .mark::after { content: ''; position: absolute; background: #fff; }
   .mark::before { left: 7.5px; top: 3.5px; width: 3px; height: 11px; }
   .mark::after { left: 3.5px; top: 7.5px; width: 11px; height: 3px; }
-  .sub { color: var(--muted); font-size: 0.8rem; padding-left: 12px; border-left: 1px solid var(--rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { color: var(--muted); font-size: var(--fs-small); padding-left: 12px; border-left: 1px solid var(--rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .right { display: flex; align-items: center; gap: 10px; flex: none; }
   .modes a { padding: 5px 12px; }
   .plain {
-    border: 1px solid transparent; background: none; padding: 5px 8px; cursor: pointer; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid transparent; background: none; padding: 5px 8px; cursor: pointer; font-size: var(--fs-small); font-weight: 500;
     text-decoration: underline; text-underline-offset: 3px; color: var(--text);
   }
   .plain[aria-current='page'] { background: var(--ink); color: var(--ink-text); text-decoration: none; }
   .menu { position: relative; }
-  .lang button { padding: 5px 8px; font-size: 0.76rem; }
+  .lang button { padding: 5px 8px; font-size: var(--fs-meta); }
   .dlang { padding: 8px 14px 6px; border-top: 1px solid var(--border); margin-top: 3px; }
-  .drop .dlang .lang button { display: inline-block; width: auto; padding: 6px 14px; font-size: 0.85rem; }
+  .drop .dlang .lang button { display: inline-block; width: auto; padding: 6px 14px; font-size: var(--fs-small); }
   .drop .dlang .lang button[aria-checked='true'] { background: var(--ink); color: var(--ink-text); }
   .menubtn {
     display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--ink); background: var(--panel);
-    font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    font-size: var(--fs-small); font-weight: 600; cursor: pointer; white-space: nowrap;
   }
   .drop {
     position: absolute; right: 0; top: calc(100% + 3px); min-width: 200px; background: var(--panel); border: 1px solid var(--ink);
     border-top: 3px solid var(--ink); padding: 3px 0; z-index: 70;
   }
-  .drop > a { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: none; font-size: 0.92rem; cursor: pointer; color: var(--text); text-decoration: none; }
+  .drop > a { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: none; font-size: var(--fs-body); cursor: pointer; color: var(--text); text-decoration: none; }
   .drop > a[aria-current='page'] { font-weight: 700; box-shadow: inset 3px 0 0 var(--ink); }
   .status {
     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); color: var(--muted);
     padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); z-index: 40; max-width: 90vw;
   }
   .status.err { color: var(--text); }
+  .loading {
+    position: absolute; inset: 52px 0 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-3);
+    background: var(--bg); pointer-events: none; padding: var(--sp-4);
+  }
+  .loading p { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text-2); }
+  .lshape { width: min(520px, 86vw); opacity: 0.55; }
+  .bar { position: relative; display: block; width: 160px; height: 2px; background: var(--border); overflow: hidden; }
+  .bar i { position: absolute; top: 0; bottom: 0; width: 40%; background: var(--ink); animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { left: -40%; } to { left: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .bar i { animation: none; left: 0; width: 100%; } }
+  .notice {
+    flex: none; display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--gutter);
+    border-bottom: var(--rule-edge); background: var(--surface-2); font-size: var(--fs-small); line-height: var(--lh-small); position: relative; z-index: 45;
+  }
+  .notice span { flex: 1; min-width: 0; }
+  .notice button { flex: none; width: var(--ctl-h); height: var(--ctl-h); display: grid; place-items: center; border: 0; background: none; cursor: pointer; color: var(--text); }
   .embed-open {
     position: absolute; right: 8px; bottom: 8px; z-index: 60; background: var(--panel); color: var(--text); border: 1px solid var(--ink);
-    padding: 5px 10px; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+    padding: 5px 10px; font-size: var(--fs-meta); font-weight: 700; text-decoration: none;
   }
 
   @media (max-width: 1279px) {
     .sub { display: none; }
   }
   @media (max-width: 899px) {
-    .top { height: 44px; border-bottom-width: 2px; gap: 8px; }
-    .brand strong { font-size: 1.02rem; }
+    .top { height: 44px;  gap: 8px; }
+    .brand strong { font-size: var(--fs-body); }
     .mark { width: 16px; height: 16px; }
     .mark::before { left: 6.5px; top: 3px; height: 10px; }
     .mark::after { left: 3px; top: 6.5px; width: 10px; }

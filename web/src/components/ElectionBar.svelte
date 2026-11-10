@@ -101,22 +101,22 @@
 
 <style>
   .el { margin: 6px 0 12px; }
-  h3 { margin: 0 0 6px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  h3 { margin: 0 0 6px; font-size: var(--fs-small); text-transform: uppercase; letter-spacing: 0.05em; }
   .stack { display: flex; height: 14px; border: 1px solid var(--ink); margin-bottom: 6px; }
   .stack span { display: block; height: 100%; border-right: 1px solid var(--panel); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th { font-weight: 600; font-size: 0.7rem; color: var(--muted); text-align: left; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); }
+  th { font-weight: 600; font-size: var(--fs-cap); color: var(--muted); text-align: left; }
   td { padding: 2px 0; border-bottom: 1px solid var(--border); }
   .p { white-space: nowrap; padding-right: 6px; }
   .p i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: 0; border: 1px solid var(--rule); }
   .n { text-align: right; width: 3.4em; padding-left: 4px; }
   .bar { position: relative; width: 45%; padding: 0 6px; }
-  .b { display: block; height: 8px; background: var(--ink); }
+  .b { display: block; height: 8px; background: var(--text-3); }
   .tk { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; }
-  .tk.kt { background: var(--accent); }
-  .tk.ch { background: var(--faint); }
+  .tk.kt { background: var(--ink); box-shadow: 0 0 0 1px var(--panel); }
+  .tk.ch { background: var(--ink); width: 1px; margin-left: -0.5px; top: -1px; bottom: -1px; }
   .tot td { font-weight: 700; border-bottom: 0; }
   .muted { color: var(--muted); }
-  .note { margin: 4px 0 0; font-size: 0.72rem; color: var(--muted); }
-  .note.maj { color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; }
+  .note { margin: 4px 0 0; font-size: var(--fs-meta); color: var(--muted); }
+  .note.maj { color: var(--text); border-left: 3px solid var(--ink); padding-left: 6px; }
 </style>

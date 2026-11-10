@@ -119,11 +119,10 @@
   function outside(e: PointerEvent) {
     if ((open || expanded) && !root.contains(e.target as Node)) close();
   }
-  const subOf = (h: SearchHit) => {
+  /** U14: the type as a legible chip, the canton next to it */
+  const typeOf = (h: SearchHit) => {
     const lv = levelName(h.level, false);
-    const parts = [lv.charAt(0).toUpperCase() + lv.slice(1)];
-    if (h.kanton && h.level !== 'kanton') parts.push(h.kanton);
-    return parts.join(' · ');
+    return lv.charAt(0).toUpperCase() + lv.slice(1);
   };
   const showField = $derived(variant === 'inline' || !collapsed || expanded);
 </script>
@@ -167,7 +166,8 @@
                 {#if h.plz && h.plz.locality !== h.name}<span class="via">{h.plz.locality}</span>{/if}
               </span>
               <span class="hs">
-                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: h.plz.share < 0.05 ? '< 0.1' : fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{' · '}{/if}{subOf(h)}
+                <span class="chip">{typeOf(h)}</span>{#if h.kanton && h.level !== 'kanton'}<span class="kt">{h.kanton}</span>{/if}
+                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: h.plz.share < 0.05 ? '< 0.1' : fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{/if}
               </span>
             </button>
           {/each}
@@ -183,7 +183,7 @@
   .mag { position: absolute; left: 8px; color: var(--text); pointer-events: none; }
   input {
     width: 100%; min-width: 0; padding: 6px 8px 6px 29px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel);
-    font-size: 0.85rem; -webkit-appearance: none; appearance: none;
+    font-size: var(--fs-small); -webkit-appearance: none; appearance: none;
   }
   input::-webkit-search-cancel-button { display: none; }
   .header { width: 280px; }
@@ -192,7 +192,7 @@
     width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--ink); background: var(--panel); cursor: pointer;
     color: var(--text); padding: 0;
   }
-  .x { flex: none; border: 0; background: none; width: 40px; height: 36px; font-size: 1.4rem; cursor: pointer; color: var(--text); }
+  .x { flex: none; border: 0; background: none; width: 40px; height: 36px; font-size: var(--fs-stat); cursor: pointer; color: var(--text); }
   .pop {
     position: absolute; z-index: 60; top: calc(100% + 3px); left: 0; right: 0; min-width: 320px; max-height: min(420px, 70vh); overflow-y: auto;
     background: var(--panel); border: 1px solid var(--ink); border-top: 3px solid var(--ink); overscroll-behavior: contain;
@@ -205,21 +205,23 @@
   .hit.active { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--ink); }
   .hn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
   .hn strong { font-weight: 700; }
-  .code { font-weight: 700; background: var(--ink); color: var(--ink-text); padding: 0 4px; font-size: 0.78rem; }
-  .via { color: var(--muted); font-size: 0.78rem; }
-  .hs { color: var(--muted); font-size: 0.74rem; }
-  .msg { margin: 0; padding: 10px; color: var(--muted); font-size: 0.82rem; }
+  .code { font-weight: 700; background: var(--ink); color: var(--ink-text); padding: 0 4px; font-size: var(--fs-meta); }
+  .via { color: var(--muted); font-size: var(--fs-meta); }
+  .hs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); color: var(--text-2); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+  .chip { border: 1px solid var(--ink); padding: 0 var(--sp-1); color: var(--text); font-weight: 600; }
+  .kt { font-weight: 600; color: var(--text); }
+  .msg { margin: 0; padding: 10px; color: var(--muted); font-size: var(--fs-small); }
 
   /* phone header: icon, then a full-width field over the header */
   .phone { width: auto; position: static; }
   .phone.expanded .field {
-    position: absolute; z-index: 61; inset: 0; background: var(--panel); padding: 0 4px 0 12px; border-bottom: 2px solid var(--rule);
+    position: absolute; z-index: 61; inset: 0; background: var(--panel); padding: 0 4px 0 12px; border-bottom: 1px solid var(--rule);
   }
   .phone.expanded .mag { left: 20px; }
-  .phone input { font-size: 16px; padding: 7px 8px 7px 30px; }
+  .phone input { font-size: var(--fs-input); padding: 7px 8px 7px 30px; }
   .phone .pop { position: absolute; top: 100%; left: 0; right: 0; width: auto; min-width: 0; max-height: 72vh; border-left: 0; border-right: 0; }
   @media (max-width: 899px) {
-    .search:not(.header) input { font-size: 16px; }
+    .search:not(.header) input { font-size: var(--fs-input); }
     .pop { min-width: 0; }
   }
 </style>

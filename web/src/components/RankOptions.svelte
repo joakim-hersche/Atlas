@@ -61,13 +61,13 @@
 <style>
   .ropt { margin: 0 0 10px; }
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; }
-  .chip { padding: 2px 7px; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; font-size: 0.74rem; font-weight: 500; }
+  .chip { padding: 2px 7px; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; font-size: var(--fs-meta); font-weight: 500; }
   .min { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
-  .lab { font-size: 0.76rem; font-weight: 600; }
-  input { width: 6.5em; padding: 4px 6px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); font-size: 16px; text-align: right; color: var(--text); }
+  .lab { font-size: var(--fs-meta); font-weight: 600; }
+  input { width: 6.5em; padding: 4px 6px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); font-size: var(--fs-input); text-align: right; color: var(--text); }
   input:disabled { opacity: 0.5; }
-  .seg button { padding: 2px 8px; font-size: 0.76rem; }
-  .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.76rem; color: var(--text); }
-  .note { margin: 4px 0 0; font-size: 0.74rem; color: var(--muted); }
-  @media (min-width: 900px) { input { font-size: 0.82rem; } }
+  .seg button { padding: 2px 8px; font-size: var(--fs-meta); }
+  .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: var(--fs-meta); color: var(--text); }
+  .note { margin: 4px 0 0; font-size: var(--fs-meta); color: var(--muted); }
+  @media (min-width: 900px) { input { font-size: var(--fs-small); } }
 </style>

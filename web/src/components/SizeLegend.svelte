@@ -62,7 +62,7 @@
 </div>
 
 <style>
-  .size { font-size: 0.8rem; }
+  .size { font-size: var(--fs-small); }
   .head { margin-bottom: 4px; }
   .unit { font-weight: 600; }
   .per { color: var(--muted); }
@@ -70,6 +70,6 @@
   .c { fill: none; stroke: var(--ink); stroke-width: 1; }
   .c.filled { fill: var(--panel-2); stroke: var(--ink); }
   .ld { fill: none; stroke: var(--ink); stroke-width: 0.6; stroke-dasharray: 2 2; }
-  .tl { font: 10px var(--font-mono); fill: var(--text); }
-  .meta { margin: 4px 0 0; color: var(--muted); font-size: 0.74rem; }
+  .tl { font: var(--fs-cap) var(--font-mono); fill: var(--text); }
+  .meta { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-meta); }
 </style>

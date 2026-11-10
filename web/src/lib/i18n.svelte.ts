@@ -109,8 +109,8 @@ const EN: Dict = {
   "pt.nearestHub": "Nearest hub",
   "pt.nearestSet": "Hubs counted: the main stations of the core cities of the 15 agglomerations with at least 100,000 residents (see Definition).",
   "pt.door": "Door to door",
-  "pt.reached": "{n} municipalities within {t} min ({what}); others shown desaturated.",
-  "pt.reachedF": "{n} municipalities within {t} min ({what}, among the filtered); others shown desaturated.",
+  "pt.reached": "{n} municipalities within {t} min ({what}); the others are drawn paler.",
+  "pt.reachedF": "{n} municipalities within {t} min ({what}, among the filtered); the others are drawn paler.",
   // header and navigation
   'nav.map': 'Map',
   'nav.compare': 'Compare metrics',
@@ -148,10 +148,10 @@ const EN: Dict = {
   'mv.none': 'None',
   // map views and shared components
   "card.amongData": "among {units} with data",
-  "card.oneHighest": "1 = highest",
+  "card.oneHighest": "highest first",
   "card.fromHub": "{mode} from {hub}",
   "card.toHub": "{mode} to {hub}",
-  "card.oneLowest": "1 = lowest",
+  "card.oneLowest": "lowest first",
   "card.rank": "Rank {r} of {n}",
   "card.expand": "Show details",
   "card.collapse": "Fewer details",
@@ -233,7 +233,7 @@ const EN: Dict = {
   "lg.median": "median",
   "lg.national": "national",
   "lg.noData": "no data",
-  "lg.s.continuous": "Cont.",
+  "lg.s.continuous": "Continuous",
   "lg.s.equal": "Equal",
   "lg.s.quantile": "Quantile",
   "lg.source": "Source",
@@ -573,8 +573,8 @@ const DE: Dict = {
   "pt.nearestHub": "Nächstes Zentrum",
   "pt.nearestSet": "Gezählte Zentren: die Hauptbahnhöfe der Kernstädte der 15 Agglomerationen mit mindestens 100 000 Einwohnerinnen und Einwohnern (siehe Definition).",
   "pt.door": "Tür zu Tür",
-  "pt.reached": "{n} Gemeinden innert {t} Min. ({what}); übrige entsättigt.",
-  "pt.reachedF": "{n} Gemeinden innert {t} Min. ({what}, unter den gefilterten); übrige entsättigt.",
+  "pt.reached": "{n} Gemeinden innert {t} Min. ({what}); die übrigen heller.",
+  "pt.reachedF": "{n} Gemeinden innert {t} Min. ({what}, unter den gefilterten); die übrigen heller.",
   'nav.map': 'Karte',
   'nav.compare': 'Kennzahlen vergleichen',
   'nav.places': 'Orte vergleichen',
@@ -609,10 +609,10 @@ const DE: Dict = {
   'card.profile': 'Profil',
   'mv.none': 'Keine',
   "card.amongData": "unter {units} mit Daten",
-  "card.oneHighest": "1 = höchster",
+  "card.oneHighest": "höchster zuerst",
   "card.fromHub": "{mode} ab {hub}",
   "card.toHub": "{mode} nach {hub}",
-  "card.oneLowest": "1 = tiefster",
+  "card.oneLowest": "tiefster zuerst",
   "card.rank": "Rang {r} von {n}",
   "card.expand": "Details zeigen",
   "card.collapse": "Weniger Details",
@@ -1030,8 +1030,11 @@ export function levelName(id: string, plural = true): string {
 /** Name of a unit in the UI language: typology units carry the official BFS names per language
  *  (units.json `names`); places keep their official form. */
 export function unitName(r: { name: string; names?: Record<string, string> }): string {
-  return r.names?.[app.lang] ?? r.name;
+  return fixLabel(r.names?.[app.lang] ?? r.name);
 }
+/** U15: a typo in the source's English label of a municipality type (BFS levels file: "agglomertation"),
+ *  corrected for display until the pipeline fixes it. */
+export const fixLabel = (s: string): string => s.replace(/agglomertation/g, 'agglomeration');
 
 /** Event type of the boundary history in French ('' when French is not loaded or unknown). */
 export const historyFr = (k: string): string | undefined => fr?.HISTORY_FR[k];

@@ -140,6 +140,31 @@ describe('diverging scales', () => {
     expect(s.colourOf(-10)).toBe(DIV[0]);
     expect(s.colourOf(10)).toBe(DIV[6]);
   });
+  it('D3: every diverging class gets its own colour (quantile and equal interval)', () => {
+    // a change map like population 2010->2025: few losses, many gains (1 class below 0, 5 above)
+    const gains = [-676, -20, -3, ...ramp(400).map((x) => x * 3), ...ramp(400).map((x) => x * 40)];
+    const datasets = [
+      gains,
+      ramp(200).map((x) => x - 20),
+      ramp(200).map((x) => x - 180),
+      [-10, -5, -1, 0, 1, 5, 10, 20],
+      ramp(1000).map((x) => (x % 7) - 3 + x / 100),
+    ];
+    for (const v of datasets)
+      for (const m of ['quantile', 'equal'] as const) {
+        const s = buildScale(v, m, true, SEQ, DIV, 0);
+        expect(new Set(s.classColours).size).toBe(s.classColours.length);
+      }
+    // the vote yes share (quantile around 50 %) too
+    const yes = buildScale(ramp(100).map((x) => 20 + x * 0.3), 'quantile', true, SEQ, DIV, 50);
+    expect(new Set(yes.classColours).size).toBe(yes.classColours.length);
+  });
+  it('D3: the arms run from pale next to the centre to dark at the ends', () => {
+    const s = buildScale(ramp(300).map((x) => x - 30), 'quantile', true, SEQ, DIV, 0);
+    const last = s.classColours.length - 1;
+    expect(s.classColours[last]).toBe(DIV[6]);
+    expect(s.classColours[0]).not.toBe(DIV[6]);
+  });
   it('continuous diverging maps the centre to the neutral grey', () => {
     const s = buildScale([-10, -5, 0, 5, 10], 'continuous', true, SEQ, DIV, 0);
     expect(s.colourOf(0)).toBe(DIV[3]);

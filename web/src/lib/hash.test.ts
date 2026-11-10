@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, parseHash, serializeHash, T_MAX, type ViewState } from './hash';
+import { DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, emptyFilter, historyKey, parseHash, serializeHash, T_MAX, type ViewState } from './hash';
 
 type Shared = Omit<ViewState, 'preset'>;
 const withoutPreset = (s: ViewState): Shared => {
@@ -51,6 +51,8 @@ describe('hash round trip', () => {
     reach: 'pt',
     t: 45,
     ptm: 'dd',
+    ronly: true,
+    maj: true,
     sel: '261',
     tab: 'rank',
     lang: 'de',
@@ -65,7 +67,9 @@ describe('hash round trip', () => {
     const h = serializeHash(full);
     for (const part of ['v=compare', 'l=bezirk', 'm=geo_pop_density', 'b=share_foreign', 's=pop_total', 'd=sym', 'cls=e',
       'y=2015', 'f=n:pop_total:1000:50000', 'f=n:vac_rate::1.5', 'f=c:kanton:ZH,BE', 'f=r:bern:pt:30', 'hub=basel',
-      'reach=pt', 't=45', 'ptm=dd', 'sel=261', 'tab=rank', 'lang=de', 'only=1']) expect(h).toContain(part);
+      'reach=pt', 't=45', 'ptm=dd', 'ro=1', 'mj=1', 'sel=261', 'tab=rank', 'lang=de', 'only=1']) expect(h).toContain(part);
+    // each key once (mj used to be written twice: as a known key and again from params)
+    expect(h.match(/mj=1/g)?.length).toBe(1);
     expect(h.startsWith('#')).toBe(true);
   });
   it('serialising twice gives the same hash (stable, shareable)', () => {
@@ -125,5 +129,44 @@ describe('hash parsing', () => {
   it('encodes values with special characters and reads them back', () => {
     const s: Shared = { ...withoutPreset(parseHash('')), params: { q: 'Zürich & Bern' } };
     expect(roundTrip(s).params.q).toBe('Zürich & Bern');
+  });
+});
+
+describe('review fixes (U1-U4)', () => {
+  const d = withoutPreset(parseHash(''));
+  it('reach as a filter (ro=1) round-trips and is written only while reach is on', () => {
+    const s: Shared = { ...d, reach: 'pt', hub: 'lausanne', t: 30, ronly: true };
+    expect(serializeHash(s)).toContain('ro=1');
+    expect(roundTrip(s).ronly).toBe(true);
+    expect(serializeHash({ ...s, reach: 'off' })).not.toContain('ro=');
+  });
+  it('old links without ro keep reach as a display only', () => {
+    expect(parseHash('#hub=lausanne&reach=pt&t=30').ronly).toBe(false);
+  });
+  it('drops empty conditions from the link (U3)', () => {
+    const s: Shared = { ...d, filters: [
+      { kind: 'num', metric: 'vac_rate', lo: null, hi: null },
+      { kind: 'cat', field: 'kanton', values: [] },
+      { kind: 'num', metric: 'pop_total', lo: 1000, hi: null },
+    ] };
+    const h = serializeHash(s);
+    expect(h).toBe('#f=n:pop_total:1000:');
+    expect(emptyFilter(s.filters[0])).toBe(true);
+    expect(emptyFilter(s.filters[2])).toBe(false);
+  });
+  it('a step for Back: page, level, metric and selection; not sliders (U2)', () => {
+    const k = historyKey(d);
+    expect(historyKey({ ...d, sel: '261' })).not.toBe(k);
+    expect(historyKey({ ...d, level: 'kanton' })).not.toBe(k);
+    expect(historyKey({ ...d, metric: 'vac_rate' })).not.toBe(k);
+    expect(historyKey({ ...d, route: 'profile', params: { id: '261' } })).not.toBe(k);
+    // the default metric written or not is the same step
+    expect(historyKey({ ...d, metric: DEFAULT_METRIC })).toBe(k);
+    expect(historyKey({ ...(d as Shared), t: 90, year: '2015' } as Shared)).toBe(k);
+  });
+  it('keeps old keys readable', () => {
+    const s = parseHash('#m=vac_rate&f=c:kanton:VD&hub=lausanne&reach=pt&t=30&tab=rank&mj=1&vd=1');
+    expect(s).toMatchObject({ metric: 'vac_rate', hub: 'lausanne', reach: 'pt', t: 30, tab: 'rank', maj: true, vdiff: true });
+    expect(s.params).toEqual({});
   });
 });

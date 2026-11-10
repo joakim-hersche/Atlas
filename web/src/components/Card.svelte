@@ -24,6 +24,14 @@
     method?: string;
     /** before the D31 data: public transport measured from the hub outwards */
     outward?: boolean;
+    /** C1: the morning spread, formatted ("36 min (35–41)"), towards and from the hub; the ranges incl. waiting */
+    spread?: { st: SpreadLine | null; dd: SpreadLine | null; title: string } | null;
+  }
+  interface SpreadLine {
+    to: string | null;
+    from: string | null;
+    waitTo: string | null;
+    waitFrom: string | null;
   }
   interface Extra {
     label: string;
@@ -77,7 +85,7 @@
   const value = $derived(col.v[index]);
   /** D37: a single-seat canton's value, kept apart from classes and ranks (shown here, labelled) */
   const majVal = $derived(value === null ? majorityValue(col, index) : null);
-  // a regional value (e.g. a district rate on the municipality map) is not ranked among municipalities
+  // U6: a regional value attached to municipalities (canton rent) has no municipal rank or percentile
   const rank = $derived(regional ? null : rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
@@ -97,6 +105,10 @@
   });
 </script>
 
+{#snippet spreadLines(s: SpreadLine, hub: string, title: string)}
+  <p class="pm sp" title={title}>{#if s.from}{t('sp2.fromHub', { hub })}: <span class="num">{s.from}</span>{/if}{#if s.waitTo || s.waitFrom}{s.from ? ' · ' : ''}{t('sp2.wait')}: <span class="num">{s.waitTo ? `→ ${s.waitTo}` : ''}{s.waitTo && s.waitFrom ? ', ' : ''}{s.waitFrom ? `← ${s.waitFrom}` : ''} min</span>{/if}</p>
+{/snippet}
+
 {#if compact && !expanded}
   <div class="card strip" role="dialog" aria-label={name}>
     <button type="button" class="sbtn" aria-expanded="false" title={t('card.expand')} onclick={() => (expanded = true)}>
@@ -106,7 +118,8 @@
           <span class="sval">{fmtValue(value, meta)}</span>
           <span class="yr">{fmtPeriod(col.period)}</span>
           {#if ci}<span class="sci">± {fmtSig(ci.half, 2)}</span>{/if}
-          {#if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
+          {#if regional}<span class="srank">· {t('ux.regionValue', { level: levelName(regional, false) })}</span>
+          {:else if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
           {#if flags.length}<span class="smark">{flags.map((f) => f.split(' ')[0]).join('')}</span>{/if}
         {:else if majVal !== null}
           <span class="sval">{fmtValue(majVal, meta)}</span>
@@ -142,10 +155,13 @@
       <span class="val">{fmtValue(value, meta)}</span>
       {#if ci}<span class="hw num" title={t('rl.cardCi', { lo: fmtValue(ci.lo, meta), hi: fmtValue(ci.hi, meta) })}>± {fmtSig(ci.half, 2)}</span>{/if}
       <span class="yr">{fmtPeriod(col.period)}</span>
-      {#if rank}
+      {#if regional}
+        <span class="rank">{t('ux.regionValue', { level: levelName(regional, false).replace(/^./, (c) => c.toUpperCase()) })}<span class="muted">{" · "}{t("ux.regionNoRank", { level: levelName(regional, false) })}</span></span>
+      {:else if rank}
         <span class="rank">
-          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)} · P{Math.round(rank.pct)}<Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
-          <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span></span>
+          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)}
+          <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span>
+          · <span title={t('ux.pctT', { p: Math.round(rank.pct), units: unitWord })}>{t('ux.pctPlain', { p: Math.round(rank.pct), units: unitWord })}</span><Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}</span>
         </span>
       {/if}
     </div>
@@ -189,23 +205,25 @@
         <div class="ptl">
           <span class="rl">{st.name} → {reach.hub}</span>
           {#if st.minutes !== null}
-            <span class="rv" class:within={reach.within && reach.active === 'ptst'}>{fmtNumber(st.minutes, 0)} min</span>
+            <span class="rv" class:within={reach.within && reach.active === 'ptst'}>{reach.spread?.st?.to ?? `${fmtNumber(st.minutes, 0)} min`}</span>
             <span class="rl">{t('pt.byPt')}{st.from ? `, ${t(st.from.outside ? 'pt.fromOut' : 'pt.from', { st: st.from.name })}` : ''}</span>
           {:else}
             <span class="rv muted">{st.reason ?? t('lg.noData')}</span>
           {/if}
         </div>
         {#if st.note}<p class="pm nt">{st.note}</p>{/if}
+        {#if reach.spread?.st}{@render spreadLines(reach.spread.st, reach.hub, reach.spread.title)}{/if}
         {#if reach.door}
           <div class="ptl sub2">
             <span class="rl">{t('pt.door')}</span>
             {#if reach.door.minutes !== null}
-              <span class="rv" class:within={reach.within && reach.active === 'pt'}>{fmtNumber(reach.door.minutes, 0)} min</span>
+              <span class="rv" class:within={reach.within && reach.active === 'pt'}>{reach.spread?.dd?.to ?? `${fmtNumber(reach.door.minutes, 0)} min`}</span>
             {:else}
               <span class="rv muted">{reach.door.reason ?? t('lg.noData')}</span>
             {/if}
           </div>
         {/if}
+        {#if reach.spread?.dd}{@render spreadLines(reach.spread.dd, reach.hub, reach.spread.title)}{/if}
         {#if reach.method}<p class="pm">{reach.method}</p>{/if}
       </div>
     {:else if reach}
@@ -229,51 +247,51 @@
   }
   .card.docked { box-shadow: none; border: 0; padding: 0; background: none; }
   .top { display: flex; align-items: baseline; gap: 8px; }
-  h2 { margin: 0; font-size: 1.1rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { margin: 0; font-size: var(--fs-lead); line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
   .ttl { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
   h2 { display: inline; }
-  .sub { color: var(--muted); font-size: 0.78rem; font-family: var(--font-mono); white-space: nowrap; }
+  .sub { color: var(--muted); font-size: var(--fs-meta); font-family: var(--font-mono); white-space: nowrap; }
   .prof {
-    flex: none; align-self: start; font-size: 0.78rem; font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
+    flex: none; align-self: start; font-size: var(--fs-meta); font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
     text-decoration: none; white-space: nowrap;
   }
   a.tag { color: var(--faint); }
   .close {
-    border: 1px solid var(--ink); background: none; width: 26px; height: 26px; font-size: 1.05rem; line-height: 1;
+    border: 1px solid var(--ink); background: none; width: 26px; height: 26px; font-size: var(--fs-lead); line-height: 1;
     cursor: pointer; flex: none; align-self: start; color: var(--text);
   }
-  .mlabel { margin: 8px 0 0; color: var(--text); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mlabel { margin: 8px 0 0; color: var(--text); font-weight: 700; font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: 0.06em; }
   .valrow { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; margin-top: 1px; }
-  .val { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .yr { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
-  .rank { flex-basis: 100%; font-size: 0.8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .val { font-size: var(--fs-stat); font-weight: 700; letter-spacing: -0.02em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .yr { font-size: var(--fs-meta); color: var(--muted); font-family: var(--font-mono); }
+  .rank { flex-basis: 100%; font-size: var(--fs-small); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .reason { color: var(--text); }
-  .hw { font-size: 0.9rem; font-weight: 600; color: var(--muted); }
+  .hw { font-size: var(--fs-body); font-weight: 600; color: var(--muted); }
   .sci { color: var(--muted); }
-  .ci { margin: 3px 0 0; font-size: 0.76rem; line-height: 1.35; }
+  .ci { margin: 3px 0 0; font-size: var(--fs-meta); line-height: 1.35; }
   .cr { display: block; color: var(--muted); }
-  .rb { display: inline-block; padding: 0 5px; background: var(--ink); color: var(--ink-text); font-size: 0.68rem; font-weight: 600; white-space: nowrap; vertical-align: 1px; }
+  .rb { display: inline-block; padding: 0 5px; background: var(--ink); color: var(--ink-text); font-size: var(--fs-cap); font-weight: 600; white-space: nowrap; vertical-align: 1px; }
   .rbw { background: none; color: var(--text); border: 1px solid var(--ink); }
-  .flag { margin: 3px 0 0; font-size: 0.76rem; color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; line-height: 1.3; }
+  .flag { margin: 3px 0 0; font-size: var(--fs-meta); color: var(--text); border-left: 3px solid var(--ink); padding-left: 6px; line-height: 1.3; }
   .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
-  .extra { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8rem; margin-top: 4px; }
+  .extra { display: flex; justify-content: space-between; gap: 10px; font-size: var(--fs-small); margin-top: 4px; }
   .xl { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .xv { font-weight: 600; flex: none; }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
-  .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: 0.72rem; color: var(--faint); }
+  .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: var(--fs-meta); color: var(--faint); }
   .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); display: inline-block; }
   .tag.warn { color: var(--text); }
-  .reach { display: flex; gap: 8px; align-items: baseline; font-size: 0.82rem; }
+  .reach { display: flex; gap: 8px; align-items: baseline; font-size: var(--fs-small); }
   .rl { color: var(--muted); }
   .rv { font-weight: 700; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .rv.within { color: var(--accent); }
+  .rv.within { color: var(--text); font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
   .short { display: none; }
-  .pt { flex-basis: 100%; font-size: 0.82rem; }
+  .pt { flex-basis: 100%; font-size: var(--fs-small); }
   .ptl { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
-  .ptl .rv { font-size: 1rem; }
-  .sub2 .rv { font-size: 0.86rem; }
-  .pm { margin: 2px 0 0; font-size: 0.7rem; color: var(--faint); line-height: 1.3; }
+  .ptl .rv { font-size: var(--fs-body); }
+  .sub2 .rv { font-size: var(--fs-small); }
+  .pm { margin: 2px 0 0; font-size: var(--fs-cap); color: var(--faint); line-height: 1.3; }
   .pm.nt { color: var(--text); }
   @media (min-width: 900px) {
     .reach { flex-basis: 100%; justify-content: space-between; }
@@ -286,37 +304,37 @@
   }
   .sbtn > span { grid-column: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sbtn .chev { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
-  .l1 strong { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
-  .sbtn > .l2 { font-size: 0.8rem; margin-top: 1px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
-  .sval { font-weight: 700; font-size: 0.95rem; }
+  .l1 strong { font-size: var(--fs-body); font-weight: 700; letter-spacing: -0.01em; }
+  .sbtn > .l2 { font-size: var(--fs-small); margin-top: 1px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+  .sval { font-weight: 700; font-size: var(--fs-body); }
   .srank { color: var(--text); }
-  .smark { margin-left: 4px; color: var(--accent); font-weight: 700; }
-  .l3 { font-size: 0.78rem; margin-top: 1px; }
-  .l3 .rv { font-size: 0.8rem; }
+  .smark { margin-left: var(--sp-1); color: var(--text); font-weight: 700; }
+  .l3 { font-size: var(--fs-meta); margin-top: 1px; }
+  .l3 .rv { font-size: var(--fs-small); }
   .sside { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 4px; }
   .chev { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: square; }
   .close .chev { display: block; margin: auto; }
   .compact { max-height: 100%; min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; }
   @media (max-width: 899px) {
     .card { padding: 7px 10px 8px; }
-    h2 { font-size: 0.98rem; }
+    h2 { font-size: var(--fs-body); }
     .prof {
-    flex: none; align-self: start; font-size: 0.78rem; font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
+    flex: none; align-self: start; font-size: var(--fs-meta); font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
     text-decoration: none; white-space: nowrap;
   }
   a.tag { color: var(--faint); }
   .close { width: 24px; height: 24px; }
     .mlabel { display: none; }
-    .val { font-size: 1.15rem; }
-    .rank { flex-basis: auto; font-size: 0.78rem; margin: 0; }
+    .val { font-size: var(--fs-lead); }
+    .rank { flex-basis: auto; font-size: var(--fs-meta); margin: 0; }
     .rank::before { content: '· '; color: var(--muted); }
     .long { display: none; }
     .short { display: inline; }
     .foot { margin-top: 5px; flex-wrap: nowrap; }
     .foot:has(.pt) { flex-wrap: wrap; }
     .tags { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
-    .reach { flex: none; font-size: 0.8rem; }
-    .pt { font-size: 0.78rem; }
+    .reach { flex: none; font-size: var(--fs-small); }
+    .pt { font-size: var(--fs-meta); }
     .pm:not(.nt) { display: none; }
   }
 </style>

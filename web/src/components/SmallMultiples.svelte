@@ -9,7 +9,7 @@
   import { ml, t } from '../lib/i18n.svelte';
   import '../lib/i18n-mapx';
   import { CH_BOUNDS } from '../lib/mapview';
-  import { divRamp, mute, seqRamp, token } from '../lib/theme';
+  import { divRamp, seqRamp, token } from '../lib/theme';
   import { defaultPeriods, pooledSpan } from '../lib/yearcmp.svelte';
   import { unitOf } from '../lib/classify';
 
@@ -131,14 +131,14 @@
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, cw, ch);
     const P = build(cw, ch);
-    const surface = token('--map-bg') || '#fff';
+    const surface = token('--muted-fill') || '#ececec';
     const nodata = hatchPattern(g);
     for (const [i, path] of P.units) {
       const x = v ? v[i] : null;
       let col: string | CanvasPattern = nodata;
       if (x !== null && scale) {
         col = scale.colourOf(x);
-        if (mask && !mask[i]) col = mute(col, surface, 0.88);
+        if (mask && !mask[i]) col = surface;
       } else if (!v) col = token('--nodata-fill') || '#f0f0f0';
       g.fillStyle = col;
       g.fill(path, 'evenodd');
@@ -180,9 +180,10 @@
     onpick(periods.filter((q) => cur.includes(q)));
   }
 
-  let closeBtn: HTMLButtonElement;
+  // D16: focus goes to the dialog title (read first by screen readers), not to the close button
+  let titleEl: HTMLHeadingElement;
   onMount(() => {
-    tick().then(() => closeBtn?.focus());
+    tick().then(() => titleEl?.focus());
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onclose();
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
@@ -193,10 +194,10 @@
 <div class="sm" role="dialog" aria-label={t('sm.title')}>
   <header>
     <div class="hd">
-      <h2>{t('sm.title')}</h2>
+      <h2 tabindex="-1" bind:this={titleEl}>{t('sm.title')}</h2>
       <p class="mt">{ml(meta)} <span class="un">· {unitOf(meta)}</span></p>
     </div>
-    <button type="button" class="x" bind:this={closeBtn} aria-label={t('sm.close')} title={t('sm.close')} onclick={onclose}>×</button>
+    <button type="button" class="x" aria-label={t('sm.close')} title={t('sm.close')} onclick={onclose}>×</button>
   </header>
 
   {#if !periods.length}
@@ -247,19 +248,23 @@
     display: flex; flex-direction: column; gap: 10px; overscroll-behavior: contain;
   }
   @media (max-width: 899px) { .sm { position: fixed; z-index: 60; padding-bottom: calc(16px + env(safe-area-inset-bottom)); } }
-  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
-  h2 { margin: 0; font-size: 1.05rem; }
-  .mt { margin: 2px 0 0; font-size: 0.82rem; font-weight: 600; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+  h2 { margin: 0; font-size: var(--fs-lead); }
+  .mt { margin: 2px 0 0; font-size: var(--fs-small); font-weight: 600; }
   .un { font-weight: 400; color: var(--muted); }
-  .x { flex: none; width: 30px; height: 30px; border: 1px solid var(--ink); background: var(--panel); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+  h2:focus { outline: none; }
+  .x { flex: none; width: var(--ctl-h); height: var(--ctl-h); border: 1px solid var(--ink); background: var(--panel); font-size: var(--fs-stat); line-height: 1; cursor: pointer; }
   .x:hover { background: var(--panel-2); }
-  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
-  .chip { padding: 2px 8px; border: 1px solid var(--ink); background: var(--panel); font-size: 0.76rem; cursor: pointer; }
+  /* D16: the years as one joined segment row that scrolls sideways */
+  .chips { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; border: 1px solid var(--ink); align-self: flex-start; max-width: 100%; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); border: 0; background: var(--panel); font-size: var(--fs-small); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .chip + .chip { border-left: 1px solid var(--ink); }
   .chip[aria-pressed='true'] { background: var(--ink); color: var(--ink-text); }
   .chip:disabled { opacity: 0.4; cursor: not-allowed; }
   .grid { display: grid; gap: 12px 10px; }
   figure { margin: 0; min-width: 0; }
-  figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 2px; font-size: 0.86rem; }
+  figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 2px; font-size: var(--fs-small); }
   .cv { position: relative; background: var(--map-bg); border: 1px solid var(--border); }
   canvas { display: block; }
   .nov { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--panel) 70%, transparent); }
@@ -267,9 +272,9 @@
   .cls { display: grid; gap: 3px; }
   .c { display: flex; flex-direction: column; min-width: 0; }
   .sw { height: 6px; margin-bottom: 2px; }
-  .rng { font-size: 0.7rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rng { font-size: var(--fs-cap); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .grad { height: 8px; }
-  .ends { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); }
+  .ends { display: flex; justify-content: space-between; font-size: var(--fs-cap); color: var(--muted); }
   .key p { margin: 5px 0 0; }
   .pad { padding: 8px 0; }
   .pad0 { margin: -4px 0 0; }

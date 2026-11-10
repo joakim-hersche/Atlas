@@ -68,6 +68,7 @@
           title={na(l.id) && naTitle ? naTitle(l.id) : undefined} onclick={() => pick(l.id)}>{levelName(l.id)}</button>
       {/each}
       <button type="button" role="menuitemradio" aria-checked="false" disabled>{t('level.types')}</button>
+      {#if avail && [...MAIN, ...more.map((l) => l.id)].some(na)}<p class="nanote">{t('ux.struck')}</p>{/if}
     </div>
   {/if}
 </div>
@@ -78,7 +79,7 @@
   .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
   .seg::-webkit-scrollbar { display: none; }
   .seg button { flex: none; }
-  .seg button { padding: 5px 10px; font-size: 0.8rem; font-weight: 600; }
+  .seg button { padding: 5px 10px; font-size: var(--fs-small); font-weight: 600; }
   .more { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
   .ml { max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; }
   .more svg { flex: none; }
@@ -87,15 +88,16 @@
     border: 1px solid var(--ink); border-top: 3px solid var(--ink); padding: 3px 0;
   }
   .menu button {
-    display: block; width: 100%; text-align: left; padding: 7px 12px; border: 0; background: none; cursor: pointer; font-size: 0.84rem;
+    display: block; width: 100%; text-align: left; padding: 7px 12px; border: 0; background: none; cursor: pointer; font-size: var(--fs-small);
   }
   .menu button:hover:not(:disabled), .menu button:focus-visible { background: var(--panel-2); }
   .menu button[aria-checked='true'] { font-weight: 700; box-shadow: inset 3px 0 0 var(--ink); }
   /* the shaded metric does not exist at this level */
   .seg button.na[aria-checked='false'], .menu button.na { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 1px; }
   .menu button:disabled { color: var(--faint); cursor: default; font-style: italic; }
+  .nanote { margin: 0; padding: var(--sp-2) var(--sp-3); border-top: var(--rule-row); font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-3); max-width: 260px; }
   @media (max-width: 899px) {
-    .seg button { padding: 6px 8px; font-size: 0.76rem; }
+    .seg button { padding: 6px 8px; font-size: var(--fs-meta); }
     .ml { max-width: 6.5em; }
   }
 </style>

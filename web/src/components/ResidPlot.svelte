@@ -100,7 +100,7 @@
     g.fillText(`${xTitle} →`, w - M.r, h - 2, w - M.l);
 
     screen = new Float32Array(idx.length * 2);
-    const r = w < 500 ? 2.2 : 2.6;
+    const r = 3; // D15
     const muted = token('--muted');
     for (let k = 0; k < idx.length; k++) {
       const X = sx(fitted[k]);
@@ -108,7 +108,7 @@
       screen[2 * k] = X;
       screen[2 * k + 1] = Y;
       const reg = region ? region[idx[k]] : -1;
-      g.globalAlpha = 0.75;
+      g.globalAlpha = 0.7;
       g.fillStyle = reg >= 0 ? cols[reg] : muted;
       g.beginPath();
       g.arc(X, Y, r, 0, Math.PI * 2);
@@ -186,10 +186,10 @@
   canvas { position: absolute; inset: 0; touch-action: pan-y; cursor: crosshair; }
   .tip {
     position: absolute; transform: translate(12px, -50%); pointer-events: none; background: var(--panel); border: 1px solid var(--ink);
-    padding: 6px 9px; font-size: 0.8rem; white-space: nowrap; z-index: 2;
+    padding: 6px 9px; font-size: var(--fs-small); white-space: nowrap; z-index: 2;
   }
   .tip.flip { transform: translate(calc(-100% - 12px), -50%); }
-  .regions { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.76rem; margin-top: 4px; }
+  .regions { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-meta); margin-top: 4px; }
   .regions i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
   .muted { color: var(--muted); }
 </style>

@@ -21,7 +21,7 @@
 <style>
   .pb { position: relative; display: inline-block; width: 100%; min-width: 48px; height: 12px; vertical-align: middle; }
   .track { position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--border); }
-  .band { position: absolute; top: 4px; height: 4px; background: var(--accent-soft); border: 1px solid var(--accent); border-width: 0 1px; opacity: 0.9; }
+  .band { position: absolute; top: 4px; height: 4px; background: var(--surface-2); border: 1px solid var(--ink); border-width: 0 1px; }
   .mid { position: absolute; left: 50%; top: 2px; width: 1px; height: 8px; background: var(--faint); }
-  .mark { position: absolute; top: 0; width: 3px; height: 12px; margin-left: -1.5px; background: var(--accent); }
+  .mark { position: absolute; top: 0; width: 3px; height: 12px; margin-left: -1.5px; background: var(--ink); }
 </style>

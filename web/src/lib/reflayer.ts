@@ -116,14 +116,22 @@ interface Placed {
   kind: 'city' | 'lake';
   size: number;
   align: 'left' | 'right' | 'center';
+  /** gap between the point and the text (px) */
+  gap: number;
+  /** draw the city's own dot (not where the reach hub dot sits) */
+  dot: boolean;
 }
 
 /** Smallest city shown at a zoom level (the placement then thins the rest out by collisions). */
 function minPop(z: number): number {
-  return z < 7 ? 70000 : z < 8 ? 28000 : z < 8.8 ? 13000 : z < 9.6 ? 6500 : z < 10.5 ? 3500 : 2000;
+  // D7: only places of 50,000+ at the initial (national) zoom
+  return z < 7 ? 50000 : z < 8 ? 28000 : z < 8.8 ? 13000 : z < 9.6 ? 6500 : z < 10.5 ? 3500 : 2000;
 }
-const citySize = (pop: number) => (pop >= 100000 ? 13 : pop >= 30000 ? 12 : pop >= 10000 ? 11 : 10);
-const cityWeight = (size: number) => (size >= 12 ? 650 : 500);
+// D7 / D1: city labels 11 px / 600 at least (13 and 12 px for the largest cities when there is room)
+const citySize = (pop: number, narrow: boolean) => (narrow ? 11 : pop >= 100000 ? 13 : pop >= 30000 ? 12 : 11);
+const cityWeight = (size: number) => (size >= 12 ? 650 : 600);
+/** D16: label halo 2.5 px (the stroke straddles the glyph outline, so twice that) */
+const HALO = 5;
 
 export class RefLayer {
   private canvas: HTMLCanvasElement;
@@ -132,6 +140,7 @@ export class RefLayer {
   private visible = true;
   private placed: Placed[] = [];
   private widths = new Map<string, number>();
+  private avoid: [number, number] | null = null;
 
   constructor(private map: maplibregl.Map, parent: HTMLElement) {
     this.canvas = document.createElement('canvas');
@@ -145,6 +154,11 @@ export class RefLayer {
 
   setData(d: RefData | null) {
     this.data = d;
+    this.draw();
+  }
+  /** D16: a point whose own marker is drawn elsewhere (the reach hub): a city label there moves clear of it */
+  setAvoid(p: [number, number] | null) {
+    this.avoid = p;
     this.draw();
   }
   setVisible(v: boolean) {
@@ -183,6 +197,9 @@ export class RefLayer {
     };
     // lakes first when large enough for their name, then cities by population, then the other lakes
     const floor = minPop(z);
+    const av = this.avoid ? m.project(this.avoid) : null;
+    // the hub dot (radius 5.5) is an obstacle for every other label
+    if (av) boxes.push([av.x - 6, av.y - 6, av.x + 6, av.y + 6]);
     type Cand = { kind: 'city'; c: City } | { kind: 'lake'; l: Lake };
     const cands: Cand[] = [];
     for (const c of d.cities) {
@@ -197,28 +214,35 @@ export class RefLayer {
         const c = cd.c;
         const p = m.project([c.lng, c.lat]);
         if (p.x < -20 || p.y < -20 || p.x > W + 20 || p.y > H + 20) continue;
-        const size = citySize(c.pop);
+        const size = citySize(c.pop, W < 600);
         const w = this.width(g, c.name, this.font('city', size));
+        // next to the reach hub dot (radius 5.5): no own dot, the text set further out
+        const onHub = !!av && Math.hypot(av.x - p.x, av.y - p.y) < 24;
+        const gap = onHub ? 13 : 5;
+        const cx = onHub ? av!.x : p.x;
+        const cy = onHub ? av!.y : p.y;
         let align: Placed['align'] = 'left';
-        let box: [number, number, number, number] = [p.x - 3.5, p.y - size / 2 - 1, p.x + 5 + w, p.y + size / 2 + 1];
+        // the box covers the city's own dot, but not the hub dot (an obstacle of its own)
+        const dot = onHub ? -gap + 2 : 3.5;
+        let box: [number, number, number, number] = [cx - dot, cy - size / 2 - 1, cx + gap + w, cy + size / 2 + 1];
         if (!free(box)) {
           align = 'right';
-          box = [p.x - 5 - w, p.y - size / 2 - 1, p.x + 3.5, p.y + size / 2 + 1];
+          box = [cx - gap - w, cy - size / 2 - 1, cx + dot, cy + size / 2 + 1];
           if (!free(box)) continue;
         }
         boxes.push(box);
-        this.placed.push({ text: c.name, x: p.x, y: p.y, kind: 'city', size, align });
+        this.placed.push({ text: c.name, x: cx, y: cy, kind: 'city', size, align, gap, dot: !onHub });
       } else {
         const l = cd.l;
         // a lake is named once it is long enough on screen to carry a name
         if (l.span * ppd < 46) continue;
         const p = m.project([l.lng, l.lat]);
-        const size = l.span * ppd > 130 ? 12 : 10.5;
+        const size = l.span * ppd > 130 ? 12 : 11;
         const w = this.width(g, l.name, this.font('lake', size));
         const box: [number, number, number, number] = [p.x - w / 2, p.y - size / 2 - 1, p.x + w / 2, p.y + size / 2 + 1];
         if (!free(box)) continue;
         boxes.push(box);
-        this.placed.push({ text: l.name, x: p.x, y: p.y, kind: 'lake', size, align: 'center' });
+        this.placed.push({ text: l.name, x: p.x, y: p.y, kind: 'lake', size, align: 'center', gap: 0, dot: false });
       }
     }
   }
@@ -234,15 +258,13 @@ export class RefLayer {
       const font = this.font(p.kind, p.size);
       g.font = font;
       g.textAlign = p.align === 'center' ? 'center' : p.align === 'left' ? 'left' : 'right';
-      const tx = p.align === 'left' ? p.x + 5 : p.align === 'right' ? p.x - 5 : p.x;
-      g.lineWidth = 3.4;
+      const tx = p.align === 'left' ? p.x + p.gap : p.align === 'right' ? p.x - p.gap : p.x;
+      g.lineWidth = HALO;
       g.strokeStyle = halo;
-      g.globalAlpha = 0.9;
       g.strokeText(p.text, tx, p.y);
-      g.globalAlpha = 1;
       g.fillStyle = p.kind === 'lake' ? lake : ink;
       g.fillText(p.text, tx, p.y);
-      if (p.kind === 'city') {
+      if (p.kind === 'city' && p.dot) {
         g.beginPath();
         g.arc(p.x, p.y, 2.3, 0, Math.PI * 2);
         g.fillStyle = halo;
