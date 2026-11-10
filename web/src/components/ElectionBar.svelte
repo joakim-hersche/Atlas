@@ -84,8 +84,8 @@
             <td class="p"><i style="background:{r.other ? 'var(--nodata-fill)' : colour(k)}"></i>{short(ml(r.m))}</td>
             <td class="n num">{fmtNumber(r.v, 1)}</td>
             <td class="bar"><span class="b" style="width:{(100 * r.v) / max}%"></span>
-              {#if r.kv !== null && canton && level !== 'kanton'}<span class="tk kt" style="left:{(100 * r.kv) / max}%" title="{canton} {fmtNumber(r.kv, 1)} %"></span>{/if}
-              {#if r.cv !== null}<span class="tk ch" style="left:{(100 * r.cv) / max}%" title="CH {fmtNumber(r.cv, 1)} %"></span>{/if}</td>
+              {#if r.kv !== null && canton && level !== 'kanton'}<span class="tk kt" style="left:calc(6px + (100% - 12px) * {r.kv / max})" title="{canton} {fmtNumber(r.kv, 1)} %"></span>{/if}
+              {#if r.cv !== null}<span class="tk ch" style="left:calc(6px + (100% - 12px) * {r.cv / max})" title="CH {fmtNumber(r.cv, 1)} %"></span>{/if}</td>
             {#if canton && level !== 'kanton'}<td class="n num muted">{r.kv !== null ? fmtNumber(r.kv, 1) : '–'}</td>{/if}
             <td class="n num muted">{r.cv !== null ? fmtNumber(r.cv, 1) : '–'}</td>
           </tr>
@@ -112,7 +112,7 @@
   .n { text-align: right; width: 3.4em; padding-left: 4px; }
   .bar { position: relative; width: 45%; padding: 0 6px; }
   .b { display: block; height: 8px; background: var(--ink); }
-  .tk { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: 4px; }
+  .tk { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; }
   .tk.kt { background: var(--accent); }
   .tk.ch { background: var(--faint); }
   .tot td { font-weight: 700; border-bottom: 0; }
