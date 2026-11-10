@@ -1,5 +1,5 @@
 source_id: reach_metrics
-title: Travel times by public transport and car from the 20 reach hubs to every municipality
+title: Travel times by public transport and car between every municipality and the 21 reach hubs (towards the hub)
 publisher: "Computed by ATLAS (pipeline/reach) from opentransportdata.swiss GTFS (public transport) and ARE NPVM 2023 (car)"
 url: https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020
 url_car: https://doi.org/10.5281/zenodo.23009199

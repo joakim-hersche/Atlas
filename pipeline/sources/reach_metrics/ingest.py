@@ -17,7 +17,7 @@ reference state (populated hectares placed in reference-state polygons), so rows
 Gaps: 'no arrival at the hub by 10:30' becomes not_applicable (the hub is not reachable on a morning
 trip; it is not missing data, so it does not make the coverage partial; expert audit SHOULD 9); other
 statuses (no stop within walking distance, ...) become no_data. The reason is the note. A station time
-measured from a stop without rail (bus, boat, ...) says so in the note ("from <stop> (bus)").
+measured from a stop without rail (bus, boat, ...) says so in the note ("from <stop> (bus), not a rail station").
 Values are minutes, period '2026' (timetable 2026 / reference state 2026; the car model year 2023 is
 stated in the note).
 """
@@ -60,7 +60,7 @@ def _from_note(row) -> str | None:
     m = row.get("main_mode")
     if not isinstance(m, str) or m in ("rail", "none"):
         return None
-    return f"from {row.get('main_station')} ({m}), no rail station in the municipality"
+    return f"from {row.get('main_station')} ({m}), not a rail station"
 
 
 def _rows(d: pd.DataFrame, metric: str, mode: str) -> pd.DataFrame:
@@ -78,12 +78,10 @@ def _rows(d: pd.DataFrame, metric: str, mode: str) -> pd.DataFrame:
     })
     sp = d["bfs_nr"].astype(int).map(SPECIAL)
     o.loc[~ok.values & sp.notna().values, "note"] = sp[~ok.values & sp.notna().values].values
-    extra = pd.Series([None] * len(d), dtype=object)
-    for f in ((_late_note,) if "window_start_min" in d else ()) + ((_from_note,) if "main_mode" in d else ()):
-        x = d.apply(f, axis=1)
-        extra = extra.combine(x, lambda a, b: b if a is None else (a if b is None else f"{a}; {b}"))
-    m = ok.values & extra.notna().values
-    o.loc[m, "note"] = (o.loc[m, "note"] + "; " + extra[m]).values
+    fs = ((_late_note,) if "window_start_min" in d else ()) + ((_from_note,) if "main_mode" in d else ())
+    extra = ["; ".join(x for x in (f(r) for f in fs) if x) or None for r in d.to_dict("records")]
+    m = ok.values & np.array([e is not None for e in extra], bool)
+    o.loc[m, "note"] = (o.loc[m, "note"] + "; " + pd.Series(extra, dtype=object)[m]).values
     return o
 
 

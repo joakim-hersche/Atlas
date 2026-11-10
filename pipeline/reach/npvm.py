@@ -8,6 +8,11 @@ rows whose origin is a hub zone are kept:
 
 Hub zone = NPVM zone polygon containing the hub's main station (GTFS parent-station coordinates).
 
+Direction: the app uses the matrix column (every zone -> hub zone, `to_hub=True`) for car and PT,
+the same direction as the GTFS times towards the hub (D31; expert audit SHOULD 8, since 2026-11-11).
+The car times (TTC) are loaded-network times of the average-weekday assignment ("average weekday
+model incl. congestion").
+
 Municipality value (car, decision D11): population-weighted mean over the zones of the municipality,
 with weights from STATPOP 2025 hectares (the NPVM record ships no zone population; its structural
 data are on SWISSUbase behind registration). Each populated hectare centre is placed in its NPVM

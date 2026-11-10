@@ -117,7 +117,10 @@ def main_station_report(net: Network, ptres: pd.DataFrame, gem_ids, n_other: int
     pop.index = pop.index.astype(int)
     idx_of = dict(zip(net.stations.didok.astype(str), net.stations.idx))
     changed = [b for b in first.index if b in old.index and idx_of.get(str(first.loc[b, "main_didok"])) != old.loc[b, "idx"]]
-    nearest, _ = nearest_hubs()
+    try:
+        nearest, _ = nearest_hubs()
+    except FileNotFoundError:
+        nearest = [h[0] for h in HUBS]
     cases = list(MAIN_REPORT) + [(b, None) for b in sorted(changed, key=lambda b: -pop.get(b, 0))
                                  if b not in {c[0] for c in MAIN_REPORT}][:n_other]
     cache = {}
@@ -235,7 +238,10 @@ def main(slugs: list[str] | None = None):
     if slugs and idx_path.exists():
         old_files = [f for f in json.loads(idx_path.read_text())["files"] if f["hub"] not in [h[0] for h in hubs]]
     allf = sorted(old_files + files, key=lambda f: (f["hub"], f["mode"]))
-    nearest, _ = nearest_hubs()
+    try:   # needs the STATPOP observations (harmonize); the reach_metrics ingest checks the set again
+        nearest, _ = nearest_hubs()
+    except FileNotFoundError:
+        nearest = []
     idx_path.write_text(json.dumps({"service_date": SERVICE_DATE.isoformat(), "feed": FEED,
                                     "reverse_days": [d.isoformat() for d in REVERSE_DAYS],
                                     "hubs": [{"slug": h[0], "name": h[1], "didok": h[2], "nearest_set": h[0] in nearest}

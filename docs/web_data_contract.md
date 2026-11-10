@@ -134,8 +134,8 @@ row of those canton-years.
   `funicular`); `main_station_fields` = `["name","didok","inside_municipality","mode"]`. NEW `mode_text`
   `{mode: {en,de,fr}}`. When `mode` is not `rail`, show the station time as "from <stop> (bus/boat …)", not
   as a train time.
-- NEW `notes[mode][hub][unit idx]`: per-unit additions to the method (late window; "from <stop> (bus), no
-  rail station in the municipality"). The frontend's `reachNote()` already reads this shape.
+- NEW `notes[mode][hub][unit idx]`: per-unit additions to the method (late window; "from <stop> (bus), not a
+  rail station"). The frontend's `reachNote()` already reads this shape.
 - `reverse_days`: the three weekdays whose median day gives the station and door-to-door times.
 - Pairs with no arrival at the hub by 10:30 are `not_applicable` (not `no_data`) in the metrics, so they do not
   make the coverage "partial"; the reason stays in `reasons` and in the column note.

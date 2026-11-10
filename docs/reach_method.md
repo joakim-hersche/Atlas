@@ -1,21 +1,27 @@
 # Reach (travel time) data: method and results
 
-Build everything with one command: `uv run python -m pipeline.reach.run`. A single hub can be rebuilt with `... run zuerich`. The full run takes about 3 minutes once the inputs are cached; the one-off GTFS preparation adds about 1 minute.
+Build everything with one command: `uv run python -m pipeline.reach.run`. A single hub can be rebuilt with `... run zuerich`. The full run (21 hubs) takes about 7½ minutes once the inputs are cached (per hub: reverse scans on three days 11 s, forward scans 6 s, drawing the rest); the one-off GTFS preparation adds about 70 s per service day (three days).
 
 ## Outputs
-- `data/interim/reach/travel_times.parquet` has 211,000 rows: 20 hubs × 2,110 municipalities × 5 methods.
+- `data/interim/reach/travel_times.parquet` has 221,550 rows: 21 hubs × 2,110 municipalities × 5 methods.
   - Methods: `gtfs_rcsa_mainstation` and `gtfs_rcsa_popweighted` (towards the hub, D31, shown in the app), `gtfs_csa_station` and `gtfs_csa_popweighted` (hub-outward, kept for the drawing and comparison), `npvm2023_ttc_popweighted` (car).
-  - Columns: `hub`, `mode`, `bfs_nr`, `minutes`, `status`, `method`, plus `minutes_incl_wait`, `pop_share_with_stop`, `pop_share_no_car_access`, and for the main-station rows `main_station`, `main_didok`, `main_inside`, `minutes_p10`, `minutes_p90`, `window_start_min`.
+  - Columns: `hub`, `mode`, `bfs_nr`, `minutes`, `status`, `method`, plus `minutes_incl_wait`, `pop_share_with_stop`, `pop_share_no_car_access`, and for the main-station rows `main_station`, `main_didok`, `main_inside`, `main_mode` (rail, bus, boat, tram, metro, cableway, funicular), `main_pop_share` (share of residents within 1.5 km of it), `minutes_p10`, `minutes_p90`, `window_start_min`, `minutes_by_day` (the station time on each of the three days).
   - `minutes` is filled only when `status == ok`; otherwise it is NaN and the status gives the reason (D21).
-- `data/out/reach/<hub>_<mode>.json` holds the growing-network lines, 40 files in total. `data/out/reach/index.json` lists the files and their sizes.
+- `data/out/reach/<hub>_<mode>.json` holds the growing-network lines, 42 files in total. `data/out/reach/index.json` lists the files and their sizes, the hubs (with `nearest_set`) and the reverse-scan days.
 - `data/interim/reach/validation.json` holds the spot checks and the GTFS-vs-NPVM agreement.
 - Intermediates:
-  - `gtfs_20261117/` contains stations, connections, footpaths and trips.
-  - `pt_station_times/<hub>.parquet`
+  - `gtfs_20261117/` contains stations, connections, footpaths and trips (also `gtfs_20261125/`, `gtfs_20261203/` for the reverse scans).
+  - `pt_station_times/<hub>.parquet` (hub-outward), `pt_station_times_to_hub/<hub>.parquet` (towards the hub, median day plus each day's median)
   - NPVM hub rows
   - hectare links
 - Code is in `pipeline/reach/`: `gtfs_prep`, `csa`, `pt`, `npvm`, `draw`, `hubs`, `run`.
 - Connectors with `fetch.py` and `meta.yaml`: `pipeline/sources/otd_gtfs`, `are_npvm` and `bav_rail`. The swissTLMRegio download is in `pipeline/reach/fetch.py` (source id `swisstopo_tlmregio`).
+
+## Hubs (D9, D39)
+- **Picker: 21 hubs** = the 20 approved stations (D9) plus **Baden** (Baden SBB, didok 8503504, checked in the GTFS stops: parent station `Parentch:1:sloid:3504`, 205 rail departures 06:30–18:00), `pipeline/reach/hubs.py` `HUBS`.
+- **Nearest-hub set (D39): 15 hubs**, derived at build time by `hubs.nearest_hubs()`: the core city's main station of every BFS agglomeration (Agglomerationen 2020, backbone column `AGGL2020`) with at least 100,000 residents in the latest STATPOP year (pop_total 2025 summed over the reference-state membership). Each qualifying agglomeration is mapped to its station explicitly (`AGGL_HUB`: Zürich → Zürich HB, Genève (CH) → Genève, Basel (CH) → Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano (CH) → Lugano, Winterthur, Zug, Baden – Brugg → Baden, Aarau, Neuchâtel, Biel/Bienne, Olten – Zofingen → Olten). The build fails if the derived set differs from the 15 approved by the owner, or if an agglomeration ≥ 100,000 has no station.
+- STATPOP 2025: Zürich 1,499,457 … Baden – Brugg 117,931, Aarau 117,602, Neuchâtel 114,425, Biel/Bienne 112,538, Olten – Zofingen 109,572; the next ones, Sion (99,805) and Fribourg (95,296), stay below 100,000.
+- `reach_*_nearest_hub` = minimum over these 15 only (Bellinzona, Chur, Fribourg, Sion, Schaffhausen, Thun are starting points in the picker but not "hubs" for this metric); the note names the hub, `reach_times.json` carries `nearest_hubs`, `nearest_rule` (EN/DE/FR) and `nearest[mode]` (hub name per unit).
 
 ## Public transport towards the hub (D31) — the figures shown in the app
 Reviewers compared the hub-outward times with the SBB app and did not trust them (review round 1). Since
@@ -36,19 +42,75 @@ footpaths relaxed once). It runs for every deadline minute 06:00–10:30 (271 ru
 The journey for deadline T actually arrives at the earliest deadline T_a ≤ T with LD(T_a) = LD(T);
 **journey time = T_a − LD(T)**, as a journey planner shows it (no initial wait, no wait at the hub).
 The value is the **median over the 61 deadlines 07:30–08:30**; deadlines before the earliest possible
-arrival have no journey and are left out. Where the hub cannot be reached by 08:30 at all (far hubs:
+arrival have no journey and are left out. This is done on **three weekdays** (see "Service days") and
+each station takes the summary of its **median day** (median of the three daily medians; P10, P90 and
+the late window come from that same day). Where the hub cannot be reached by 08:30 at all (far hubs:
 the first trains of the day arrive later), the hour from the earliest possible arrival is used if
 that is by 10:30, and the note says so ("no arrival by 08:30: median over the hour from 08:55");
 otherwise the pair has no value ("no arrival at the hub by 10:30"). P10 and P90 over the same
 deadlines are stored (`minutes_p10`, `minutes_p90`). Connections are kept from 04:30 for this
 (`gtfs_prep.EARLIEST_DEP`); a stop counts as served with a departure or arrival 06:30–18:00 as before.
 
-**Main station.** Among the served stations inside the municipality (reference polygon), the one with
-the most rail departures 06:30–18:00 on the service day; a municipality without a rail station takes
-the stop with the most departures of any mode. A municipality with no served stop inside takes the
-station chosen the same way within 2 km of its population-weighted centre (`main_inside = false`, 37
-municipalities); 7 have none (status `no stop within 2 km`: Häutligen, Oberthal, Oberhünigen,
-Schelten, Seehof, Ochlenberg BE and Blatten VS). Their door-to-door value exists except for Schelten,
+**Main station (since 2026-11-11: by the population it serves; expert audit MUST 2).** The old rule
+(most departures) picked intermediate halts and, without rail, boat or rack-railway halts: Engelberg →
+Grafenort, Arosa → St. Peter-Molinis, Poschiavo → Alp Grüm, Locarno → Riazzino, Weggis → Romiti
+Felsentor (Rigi railway). New rule (`pt.main_stations()`):
+1. Candidates: the stops served 06:30–18:00 inside the municipality (reference polygon).
+2. Coverage of a candidate: residents (STATPOP 2025) of the municipality's inhabited hectares within
+   1.5 km straight line (the door-to-door access radius).
+3. Rail first: if the best-covering rail station covers at least **a third** of what the best stop of
+   any mode covers, only rail stations compete; otherwise all modes.
+4. Of the competing stops, those covering at least **half** of the best coverage remain, and the one
+   with the most departures 06:30–18:00 (rail departures for rail) wins. This keeps the town station
+   where it serves the town (Rapperswil SG rather than Jona, Wetzikon ZH rather than Kempten, Solothurn
+   rather than Solothurn West, Schwyz station rather than the bus stop "Schwyz, Zentrum") and drops
+   outlying halts.
+5. A hub municipality takes its hub station (time 0).
+6. No served stop inside: the same choice among the stops within 2 km of the population-weighted
+   centre (`main_inside = false`, 37 municipalities); 7 have none (status `no stop within 2 km`:
+   Häutligen, Oberthal, Oberhünigen, Schelten, Seehof, Ochlenberg BE and Blatten VS).
+
+Thresholds were chosen by inspection: with "≥ 90 % of the best coverage" Wetzikon took Kempten and
+Montreux took Belmont-sur-Montreux; with "rail if ≥ half" Kriens and Schwyz took bus stops although
+their S-Bahn stations cover a third of the residents. The main station changed for 439 of 2,103
+municipalities. Its mode (`main_mode`): rail 860, bus 1,209, tram 20, cableway 10, funicular 3,
+metro 1. **A station time from a stop without rail is labelled** in the metric note and in
+`reach_times.json` (`main_station[i][3]`, `notes`): "from Weggis, Dorfplatz (bus), not a rail station".
+
+Before → after (station time towards the named hub; both from the same per-station medians; door to door after the slash):
+
+| Municipality → hub | Before (most departures) | After (population served) |
+|---|---|---|
+| Engelberg → Luzern | Grafenort 32 | Engelberg 47 / 56 |
+| Arosa → Chur | St. Peter-Molinis 50 | Arosa 58 / 67 |
+| Poschiavo → Chur | Alp Grüm 174 | Poschiavo 177 / 184 |
+| Locarno → Bellinzona | Riazzino 16 | Locarno S. Antonio 41 / 42 |
+| Weggis → Luzern | Romiti Felsentor 84 | Weggis, Dorfplatz (bus) 45 / 51 |
+| Weggis → Bern | Romiti Felsentor 179 | Weggis, Dorfplatz (bus) 112 / 117 |
+| Köniz → Bern | Niederwangen 11 | Wabern bei Bern 12 / 21 |
+| Meyrin → Genève | Zimeysa 10 | Meyrin 8 / 27 |
+| Kloten → Zürich HB | Zürich Flughafen 10 | Kloten 15 / 26 |
+| Adliswil → Zürich HB | Sood-Oberleimbach 27 | Adliswil 28 / 33 |
+| Arbon → St. Gallen | Arbon Seemoosriet 34 | Arbon 30 / 36 |
+| Ebikon → Luzern | Buchrain 14 | Ebikon 11 / 21 |
+| Richterswil → Zürich HB | Samstagern 36 | Richterswil 30 / 40 |
+| Ecublens VD → Lausanne | Campus des médias 24 | UNIL-Sorge (metro) 17 / 18 |
+| Glarus → Zürich HB | Netstal 60 | Glarus 63 / 73 |
+| Blonay – Saint-Légier → Lausanne | Hauteville 26 | St-Légier-Gare 28 / 39 |
+| Veyrier → Genève | Pont de Sierne 27 | Sierne (bus) 28 / 36 |
+| Ittigen → Bern | Worblaufen 5 | Papiermühle 8 / 15 |
+| Val de Bagnes → Lausanne | Etiez 84 | Le Châble VS 89 / 113 |
+| Val-de-Travers → Neuchâtel | Travers 27 | Fleurier 41 / 46 |
+| Münchenbuchsee → Bern | Zollikofen 9 | Münchenbuchsee 12 / 20 |
+| Eschenbach SG → Zürich HB | Neuhaus SG, Ochsen 53 | Eschenbach SG, Twirren (bus) 52 / 56 |
+| Steinhausen → Zug | Steinhausen Rigiblick 5 | Steinhausen 6 / 18 |
+| Widnau → St. Gallen | Rhydorf 35 | Gemeindehaus (bus) 45 / 47 |
+| Aadorf → Winterthur | Guntershausen 21 | Aadorf 18 / 29 |
+| Fully → Lausanne | Branson, Pont du Rhône 76 | Fully, poste (bus) 81 / 86 |
+
+(The first six are the audit's cases; the others are the 20 most populous municipalities whose main
+station changed. `validation.json` → `main_station_before_after`.) Locarno's FFS station lies in
+Muralto, so Locarno's own main station is the FART stop S. Antonio in the centre. Their door-to-door value exists except for Schelten,
 Seehof and Blatten, which have no served stop within 1.5 km of any inhabited hectare. Examples: Zürich → Zürich HB (1,007 rail departures), Oberweningen → the bus stop
 "Oberweningen, Im Hüebli" (the S-Bahn station Schöfflisdorf-Oberweningen lies in Schöfflisdorf).
 For a hub's own municipality the station time is 0.
@@ -58,15 +120,21 @@ stop in the municipality, while STATPOP 2025 still lists 302 residents on 28 hec
 figures are missing with the reason "village destroyed by the landslide of May 2025; no public
 transport service in the 2026 timetable".
 
-**Spot checks (station time, median; P10–P90 in brackets; door to door after the slash):**
+**Spot checks (station time, median day; P10–P90 in brackets; door to door after the slash; also in
+`pipeline/tests/test_reach.py`):**
 
 | From → hub | Station time | Door to door | Expected |
 |---|---|---|---|
-| Winterthur → Zürich HB | 20 (19–28) | 37 | 20–25 |
-| Basel SBB → Zürich HB | 53 (53–69) | 74 | ~55 |
-| Liestal → Basel SBB | 11 (10–16) | 25 | 10–15 |
+| Winterthur → Zürich HB | 20 (19–28) | 37 | ~20 |
+| Basel SBB → Zürich HB | 53 (53–69) | 74 | ~53 |
+| Liestal → Basel SBB | 11 (10–16) | 25 | ~11 |
 | Zug → Zürich HB | 26 (24–35) | 41 | ~25 |
 | Bern → Zürich HB | 57 (56–60) | 76 | 56–60 |
+| Baden → Zürich HB | 16 (16–28) | 32 | ~15 |
+| Lugano → Zürich HB | 115 (115–143) | 140 | ~110 (feed: 113–117 min trains all day) |
+| Genève → Zürich HB | 190 (190–190) | 197 | ~160 (see "Service days") |
+| Engelberg → Luzern | 47 (47–54) | 56 | ~43 (feed: every Engelberg–Luzern train 47 min) |
+| Arosa → Chur | 58 (58–58) | 67 | ~60 |
 | Oberweningen → Zürich HB | 36 (36–36) | 39 | sensible (was 419 min before the best-stop fix) |
 
 **Long trips checked against the feed (2026-11-10).** The median is taken over arrival *minutes*, so
@@ -81,17 +149,38 @@ journey, 04:32 → 07:58, arrives by 08:30). The main station of Genève is Corn
 footpath or change-time rule adds time on these trips: the values are the feed's own journeys.
 
 **Agreement with the NPVM PT matrix** (column = zone → hub zone, population-weighted like the car
-values; 20 hubs, 40,473 pairs with a value in both, hub zones excluded):
+values; 21 hubs, 42,570 pairs with a value in both, hub zones excluded; before the main-station and
+multi-day change: 20 hubs, r 0.985 and 0.980):
 
 | GTFS variant (towards hub) | r | median GTFS/NPVM | median diff | within ±15 % | within ±25 % |
 |---|---|---|---|---|---|
-| door to door | 0.985 | 0.95 | −6.5 min | 88 % | 98 % |
-| station time | 0.980 | 0.91 | −12.9 min | 72 % | 91 % |
+| door to door | 0.985 | 0.95 | −6.4 min | 88 % | 98 % |
+| station time | 0.981 | 0.91 | −12.6 min | 73 % | 91 % |
 
-Per hub, r is 0.96–0.99 for door to door. The station time is shorter than NPVM by construction
-(NPVM includes access and egress). Coverage: 40,491 of 42,200 pairs have a station time; 11,110 of
-them use the late window (mostly far hubs such as Genève from eastern Switzerland); 1,569 pairs have
-no arrival by 10:30.
+Per hub, r is 0.976–0.989 for door to door and 0.971–0.986 for the station time. The station time is
+shorter than NPVM by construction (NPVM includes access and egress). Coverage: 42,586 of 44,310 pairs
+have a station time (11,577 of them use the late window); 1,577 pairs have no arrival by 10:30 and 147
+no stop within 2 km.
+
+**No arrival by 10:30 is not missing data** (expert audit SHOULD 9). These pairs (mostly Lugano,
+Bellinzona, Genève and Sion from the far side of the country) get status `not_applicable` in the
+metrics, with the reason "no arrival at the hub by 10:30 on a weekday morning (first connections arrive
+later)", so the web build counts them as covered and the coverage label stays "national" instead of
+"partial:<cantons>".
+
+**Service days (robustness, 2026-11-11).** The station and door-to-door times are the median day of
+**Tue 17 Nov, Wed 25 Nov and Thu 3 Dec 2026** (`gtfs_prep.REVERSE_DAYS`; each day is prepared like
+the service day). Before choosing them, ten weekdays (12, 17, 18, 19, 24, 25, 26 Nov, 1, 2, 3 Dec)
+were compared: trips per day 190.6k–193.4k (11 Nov 186.6k and 8 Dec 180.9k, a holiday, left out);
+no trips of route type 714 (rail replacement bus) on any of them; the 420 hub-to-hub station times
+(21 × 20) are identical on all ten days except one pair on 12 Nov (+4 min). Across the three chosen
+days only 0.4 % of municipality–hub pairs differ at all (max 21 min, local works), and in 0.15 % the
+median day differs from 17 Nov. **Genève → Zürich 190 min is therefore not a works artefact of
+17 Nov:** every weekday in Nov–Dec 2026 has the same trains. The direct Genève–Zürich trains take
+173 min all day in this feed (2026 timetable; Lausanne–Bern 69–72 min), and an arrival at Zürich
+07:30–08:30 needs one of the first trains of the day (05:33 → 08:28 direct, 175 min; or 04:46 with a
+change, 190 min, which serves most arrival minutes). Runtime: about 11 s of reverse scans per hub for
+the three days (4 s per day), about 4 minutes for all 21 hubs.
 
 ## Public transport, hub-outward (D10) — growing lines and comparison
 **Feed and day.**
@@ -117,7 +206,7 @@ no arrival by 10:30.
   - A station with no neighbour within 400 m is linked to its nearest station within 1 km (11,780 links). Without this, some cableway valley stations would be cut off; Illgau is one.
   - Footpaths are relaxed once (not transitively closed). pickup_type and drop_off_type = 1 are respected.
 - **Algorithm.** The Connection Scan Algorithm (earliest arrival) is implemented in numba (`csa.py`). It takes about 20 ms per run.
-- **Hubs** are their main rail station, given as didok number and GTFS station id `Parentch:1:sloid:<n>`:
+- **Hubs** are their main rail station, given as didok number and GTFS station id `Parentch:1:sloid:<n>` (plus Baden 8503504, D39):
 
 | Hub | didok | Hub | didok |
 |---|---|---|---|
@@ -147,10 +236,12 @@ Two methods are stored:
 
 ## Car (D11)
 - The source is the ARE NPVM 2023 matrix `4_TTC_PW_NPVM_2023` ("Reisezeit PW (TTC)"), Zenodo doi:10.5281/zenodo.23009199, CC-BY-4.0.
+- **Direction (since 2026-11-11, expert audit SHOULD 8): towards the hub**, the matrix column (every zone → hub zone), the same direction as public transport. The matrix has full columns; row and column agree closely (44,310 pairs: r 0.999, median column − row −0.2 min, 5–95 % range −3.5 to +3.1 min; Zürich → Bern 106.8 vs 107.7, Genève → Zürich 212.5 vs 213.9).
+- Labelled **"average weekday model incl. congestion"** (TTC = travel time in the loaded network of the average-weekday assignment). The values are well above free flow (Zürich HB ↔ Bern about 107 min, Olten 68), which is what the audit expected from a loaded network.
 - The data sheet says all matrices are for the **average weekday (DWV)**.
-- It does **not** say whether the times are congested. TTC is the skim of the DWV (whole-day) assignment, so it most likely reflects day-average loaded-network times, not the peak hour. This is my inference and is unverified. Peak-hour (MSP) states exist only as VISUM files.
+- The data sheet does not state the congestion level explicitly. TTC is the skim of the DWV (whole-day) assignment, i.e. day-average loaded-network times, not the peak hour. Peak-hour (MSP) states exist only as VISUM files.
 - **Hub zone** = the NPVM zone polygon that contains the hub's station. For example, Zürich HB is in zone 26101201.
-- **Municipality value** = the population-weighted mean of the zone times.
+- **Municipality value** = the population-weighted mean of the zone → hub-zone times.
   - NPVM ships no zone population; its structural data are on SWISSUbase behind registration. Weights are therefore **STATPOP 2025 hectares**.
   - Each hectare centre is placed by point-in-polygon both in its NPVM zone and in its **2026 reference municipality**. Boundary changes from the 2023 zone state are handled spatially, without the 2023 ids. This is equivalent to `to_vintage` with `weighted_mean:population`, but exact where a zone is split by a merger.
   - The intrazonal time is not in the matrix and is set to 0 for the hub zone.
@@ -179,12 +270,12 @@ Two methods are stored:
     - Fahrsträsschen 20
   - The tree is pruned to the paths to each municipality's centroid node (2,088 anchors).
   - Edge times are then **rescaled to the NPVM car times** by iterative proportional fitting. Each edge gets a multiplier equal to the mean target/current ratio of the anchors downstream of it (6 passes). Times stay monotone along every path.
-  - Residual at the anchors: mean absolute error 2.7–3.8 min, 90th percentile 6–8 min.
+  - Residual at the anchors: mean absolute error 2.7–3.7 min, 90th percentile 6–8 min.
   - Chains with the same speed are merged into polylines and simplified to 40 m.
 - **Sizes.**
-  - PT files: 612–641 KB raw, **169–179 KB gzipped**.
-  - Car files: 584–612 KB raw, **200–208 KB gzipped**.
-  - All 40 files are under the 300 KB gzip target, 7.5 MB gzipped in total.
+  - PT files: **169–179 KB gzipped**.
+  - Car files: **200–208 KB gzipped**.
+  - All 42 files are under the 300 KB gzip target, 7.9 MB gzipped in total.
 
 ## Validation (hub-outward)
 **Spot checks** (median journey time, with the fastest in brackets):
@@ -212,7 +303,7 @@ Two methods are stored:
 - **Transfer rules.** Trip-specific transfer rules are not used. The minimum change time is per station, not per platform pair. Footpaths are straight-line × 1.3 and are not transitively closed.
 - **Station method.** It uses the earliest station anywhere in the municipality. For large municipalities this can be a small outlying stop; the population-weighted method is the better "typical resident" figure.
 - **Access to stops.** Walking access uses the best served stop within 1.5 km (straight line × 1.3); real walking paths and slopes are not modelled.
-- **Feed date.** The single date and feed version (2026-11-07) contain whatever construction works were planned for that day (Genève–Lausanne is slower than usual). ToU 5.2: state the feed version in the app.
+- **Feed date.** The towards-hub figures use the median day of three weekdays; the hub-outward figures and the drawing use 17 Nov 2026 only. Long-running works that last the whole period (e.g. the slower Lausanne–Bern running times in the 2026 timetable) are in every day and cannot be removed this way. ToU 5.2: state the feed version in the app.
 - **Car times.** NPVM car times are average-weekday model times, and congestion handling is unconfirmed (see above). The hectare weights are 2025 population, while the zones are from 2023.
 - **Car drawing.** The car drawing is illustrative.
   - swissTLMRegio includes foreign main roads, so some trees route through France or Italy; for example, Genève → Valais runs along the south shore of Lake Geneva.
