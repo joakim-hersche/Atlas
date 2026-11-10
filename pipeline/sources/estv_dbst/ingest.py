@@ -14,6 +14,9 @@ Net and taxable income are complete (incl. taxpayers without tax) only from 2008
 taxpayer counts and federal tax yield. 2001-2002 are left out: several cantons were still on
 two-year assessment (taxpayer total 3.5 M vs 4.3 M in 2003); 1999/2000 and earlier likewise (PDF
 before 1999).
+Normal cases alone (with and without federal tax: taxpayers, net and taxable income, tax yield) exist only
+in the 2020+ files (the older workbooks split normal cases for taxpayers with federal tax only); they are
+the population of the income classes and of the median (estv_median_income).
 Income classes (10 classes of taxable income, incl. CHF 100,001+) exist only in the 2020+ files;
 they are taken from the normal cases (file 500) with their own denominator
 (tax_np_taxpayers_normal), so the share above CHF 100k is a share of normal-case taxpayers.
@@ -165,6 +168,12 @@ def _new_year(year: int) -> tuple[pd.DataFrame, dict]:
     put("taxable", [("all_normal", "taxable"), ("all_special", "taxable")])
     put("tax", [("all_normal", "tax"), ("all_special", "tax")])
     put("taxpayers_normal", [("all_normal", "n")])
+    # normal cases only (file 500 sheets 521-524, file 300 sheet 321): the population of the income classes
+    # and of the median (review round 3, D2/X2/X3: special cases pull the all-cases mean down in resorts)
+    put("no_tax_normal", [("none_normal", "n")])
+    put("net_normal", [("all_normal", "net")])
+    put("taxable_normal", [("all_normal", "taxable")])
+    put("tax_normal", [("all_normal", "tax")])
     for cid in CLASS_IDS:
         put(f"cls_{cid}", [("all_normal", "n")], cls=cid)
     # taxable income > CHF 100,000 (normal cases): sum of the four upper classes, or total minus
@@ -188,6 +197,8 @@ def _new_year(year: int) -> tuple[pd.DataFrame, dict]:
          "taxable": nat[("all_normal", "taxable")] + nat[("all_special", "taxable")],
          "tax": nat[("all_normal", "tax")] + nat[("all_special", "tax")],
          "taxpayers_normal": nat[("all_normal", "n")],
+         "no_tax_normal": nat[("none_normal", "n")], "net_normal": nat[("all_normal", "net")],
+         "taxable_normal": nat[("all_normal", "taxable")], "tax_normal": nat[("all_normal", "tax")],
          "tp_100k": float(src[2].reindex(up).sum()),
          **{f"cls_{c}": float(tabs[("all_normal", "n")][2].get(c, np.nan)) for c in CLASS_IDS}}
     # published canton totals (audit round 2, M1: income classes are suppressed in small municipalities)
@@ -199,6 +210,8 @@ def _new_year(year: int) -> tuple[pd.DataFrame, dict]:
         "taxable": kt[("all_normal", "taxable")]["total"] + kt[("all_special", "taxable")]["total"],
         "tax": kt[("all_normal", "tax")]["total"] + kt[("all_special", "tax")]["total"],
         "taxpayers_normal": kt[("all_normal", "n")]["total"],
+        "no_tax_normal": kt[("none_normal", "n")]["total"], "net_normal": kt[("all_normal", "net")]["total"],
+        "taxable_normal": kt[("all_normal", "taxable")]["total"], "tax_normal": kt[("all_normal", "tax")]["total"],
         "tp_100k": src[3].reindex(columns=up).sum(axis=1, min_count=len(up)).fillna(
             src[3]["total"] - src[3].reindex(columns=low).sum(axis=1, min_count=len(low))),
         **{f"cls_{c}": kt[("all_normal", "n")].get(c) for c in CLASS_IDS}})
@@ -282,6 +295,8 @@ def _old_year(year: int) -> tuple[pd.DataFrame, dict]:
 METRICS = {"taxpayers": "tax_np_taxpayers", "no_tax": "tax_np_taxpayers_no_federal_tax",
            "net": "tax_np_net_income_chf", "taxable": "tax_np_taxable_income_chf",
            "tax": "tax_np_federal_tax_chf", "taxpayers_normal": "tax_np_taxpayers_normal",
+           "no_tax_normal": "tax_np_taxpayers_no_federal_tax_normal", "net_normal": "tax_np_net_income_normal_chf",
+           "taxable_normal": "tax_np_taxable_income_normal_chf", "tax_normal": "tax_np_federal_tax_normal_chf",
            "tp_100k": "tax_np_normal_taxable_100k_plus",
            **{f"cls_{c}": f"tax_np_normal_taxable_class_{c}" for c in CLASS_IDS}}
 

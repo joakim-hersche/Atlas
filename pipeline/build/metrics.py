@@ -76,6 +76,7 @@ LEVEL_WORD = {"bezirk": "district", "kanton": "canton", "schweiz": "national", "
 UNIT_WORD = {"gemeinde": "municipalities"}
 SUPPRESSED_MAX = 0.01        # M1: suppressed municipalities may hold at most 1 % of a unit's residents
 POP_METRIC = "pop_total"     # reference population for the tolerance (STATPOP, 31 Dec)
+PUB_DERIVED = "computed from the published totals of the source"
 EST_DERIVED = ("estimate: computed from sums that leave out a few municipalities suppressed for small numbers "
                "(at most 1 % of residents)")
 
@@ -169,9 +170,151 @@ def _missing_note(prefix: str = "") -> str:
             f"|| ' municipalities without a value: ' || concat_ws(', ', {items})")
 
 
+PUBLISHED_TOTAL = "published total of the source; it can differ slightly from the sum of the municipalities"
+# prefer_native notes must start with 'published total' (base_terms flag pub, web.py flags)
+
+
+def internal_splits(mem: pd.DataFrame) -> pd.DataFrame:
+    """(level, unit_id = BFS number): municipalities whose every population-weighted reprojection (split or
+    partial transfer in the crosswalk to the reference state) stays inside their own unit of that level, so
+    the unit's sum is exact although the municipal values are boundary estimates (review round 3, D9)."""
+    from pipeline.common import REFERENCE_DATE
+    p = interim_path("backbone", f"crosswalk_{REFERENCE_DATE.isoformat()}.parquet")
+    if not p.exists():
+        return pd.DataFrame(columns=["level", "unit_id"])
+    cw = pd.read_parquet(p, columns=["from_hist_id", "to_bfs_nr", "weight"])
+    part = cw[cw["weight"] < 1 - 1e-9]
+    groups = part.groupby("from_hist_id")["to_bfs_nr"].apply(lambda s: sorted({int(x) for x in s})).tolist()
+    # connected components of municipalities linked by a shared predecessor
+    parent: dict[int, int] = {}
+
+    def find(a):
+        while parent.setdefault(a, a) != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+    for g in groups:
+        for b in g[1:]:
+            parent[find(b)] = find(g[0])
+    comp: dict[int, set] = {}
+    for a in list(parent):
+        comp.setdefault(find(a), set()).add(a)
+    m = mem.assign(bfs=mem["unit_id"].astype(int)).set_index("bfs")
+    rows = []
+    for members in comp.values():
+        ms = [x for x in members if x in m.index]
+        for lvl in AGG_LEVELS:
+            if lvl not in m.columns:
+                continue
+            if len({str(m.loc[x, lvl]) for x in ms}) == 1 and len(ms) == len(members):
+                rows += [(lvl, str(x)) for x in ms]
+    return pd.DataFrame(rows or [("", "")], columns=["level", "unit_id"])
+
+
+def internal_rank(alias: str, lvl: str) -> str:
+    """Precision rank of a municipal row for a sum at level lvl: a boundary estimate inside the unit is exact (D9)."""
+    return (f"CASE WHEN {alias}.precision = 'boundary_estimate' AND bi.unit_id IS NOT NULL THEN 0 "
+            f"ELSE {PREC_RANK.replace('precision', alias + '.precision')} END")
+
+
+def territory_rows(con, tw: dict) -> pd.DataFrame:
+    """D3: for not-aggregatable metrics with `territory_weight: <metric>[:lag]`, canton rows whose published value
+    is on other boundaries (nat_bad) are recomputed on today's boundaries: the mean of the municipal values
+    weighted by <metric> of the period `lag` years earlier (social assistance: residents of the previous year,
+    the BFS denominator), only where every municipality of the canton has a value."""
+    cols = ["unit_id", "level", "metric_id", "period", "value", "status", "precision", "provenance", "n_units",
+            "n_missing", "note"]
+    out = []
+    for mid, spec in tw.items():
+        w, _, lag = spec.partition(":")
+        lag = int(lag or 0)
+        r = con.execute(f"""
+            SELECT m.kanton AS unit_id, 'kanton' AS level, v.metric_id, v.period,
+                   SUM(v.value * wt.value) / SUM(wt.value) AS value, 'ok' AS status,
+                   {PREC_NAME.format(r=PREC_RANK.replace('precision', 'v.precision'))} AS precision,
+                   'aggregated' AS provenance, COUNT(*) AS n_units, 0 AS n_missing,
+                   ANY_VALUE(b.why) AS why, ANY_VALUE(p.value) AS published
+            FROM gem v JOIN mem m USING (unit_id)
+            JOIN gem wt ON wt.unit_id = v.unit_id AND wt.metric_id = '{w}' AND wt.status = 'ok'
+                       AND regexp_full_match(v.period, '\\d{{4}}') AND wt.period = CAST(CAST(v.period AS INTEGER) - {lag} AS VARCHAR)
+            JOIN nat_bad b ON b.level = 'kanton' AND b.unit_id = m.kanton AND b.metric_id = v.metric_id AND b.period = v.period
+            LEFT JOIN nat_all p ON p.level = 'kanton' AND p.unit_id = m.kanton AND p.metric_id = v.metric_id AND p.period = v.period
+            JOIN n_kanton n ON n.u = m.kanton
+            WHERE v.metric_id = '{mid}' AND v.status = 'ok'
+            GROUP BY m.kanton, v.metric_id, v.period, n.n HAVING COUNT(*) = n.n""").df()
+        if r.empty:
+            continue
+        r["note"] = [f"computed on today's boundaries: mean of the municipal values weighted by residents "
+                     f"{'of the previous year ' if lag == 1 else ''}(the value the source published for the canton, "
+                     f"{pub:g}, is on its former boundaries)" if pub == pub and pub is not None else
+                     "computed on today's boundaries: mean of the municipal values weighted by residents"
+                     for pub in r["published"]]
+        out.append(r[cols])
+    return pd.concat(out, ignore_index=True) if out else pd.DataFrame(columns=cols).astype({"value": float})
+
+
+def territory_notes(con) -> pd.DataFrame:
+    """(level, unit_id, period, note) for cantons and districts whose territory at the end of the period's year
+    differs from the reference state (D16), naming the municipalities that moved."""
+    import datetime as _dt
+    from pipeline.backbone.crosswalk import load_backbone, versions_at
+    from pipeline.common import REFERENCE_DATE
+    periods = [r[0] for r in con.execute("SELECT DISTINCT period FROM base_all WHERE level IN ('kanton', 'bezirk')").fetchall()]
+    by_date: dict = {}
+    for p_ in periods:
+        y = period_year(p_)
+        if y is None:
+            continue
+        d = min(REFERENCE_DATE, _dt.date(y, 12, 31))
+        if d < REFERENCE_DATE:
+            by_date.setdefault(d, []).append(p_)
+    if not by_date:
+        return pd.DataFrame(columns=["level", "unit_id", "period", "note"])
+    mv, _ = load_backbone()
+    cw = pd.read_parquet(interim_path("backbone", f"crosswalk_{REFERENCE_DATE.isoformat()}.parquet"))
+    ref = membership().set_index("bfs_nr")[["kanton", "bezirk"]]
+    cache: dict = {}
+    rows = []
+    for d, ps in by_date.items():
+        v = versions_at(mv, d)[["hist_id", "canton", "district_nr", "name"]]
+        x = v.merge(cw[["from_hist_id", "to_bfs_nr"]], left_on="hist_id", right_on="from_hist_id").join(ref, on="to_bfs_nr")
+        key = []
+        for lvl, then_col, now_col in (("kanton", "canton", "kanton"), ("bezirk", "district_nr", "bezirk")):
+            ch = x[x[then_col].astype(str) != x[now_col].astype(str)]
+            for u in set(ch[then_col].astype(str)) | set(ch[now_col].astype(str)):
+                inc = ch[ch[now_col].astype(str) == u]
+                exc = ch[ch[then_col].astype(str) == u]
+                key.append((lvl, u, _moved_text(lvl, inc, exc)))
+        k = tuple(sorted(key))
+        if k not in cache:
+            cache[k] = key
+        for lvl, u, txt in cache[k]:
+            for p_ in ps:
+                rows.append((lvl, u, p_, txt))
+    return pd.DataFrame(rows, columns=["level", "unit_id", "period", "note"]).drop_duplicates(["level", "unit_id", "period"])
+
+
+def _moved_text(lvl: str, inc: pd.DataFrame, exc: pd.DataFrame) -> str:
+    """'on today's boundaries: includes Moutier (then canton BE); without Clavaleyres (now canton FR), so ...' (D16).
+    Municipalities by their name at the time; one part per municipality (more than three: a count)."""
+    word = {"kanton": "canton", "bezirk": "district"}[lvl]
+    parts = []
+    for df, verb in ((inc, "includes"), (exc, "without")):
+        if not len(df):
+            continue
+        pairs = sorted({(str(n), str(k)) for n, k in zip(df["name"], df["canton" if verb == "includes" else "kanton"])})
+        if len(pairs) > 3:
+            parts.append(f"{verb} {len(pairs)} municipalities {'then' if verb == 'includes' else 'now'} in another {word}")
+        elif lvl == "kanton":
+            parts += [f"{verb} {n} ({'then' if verb == 'includes' else 'now'} canton {k})" for n, k in pairs]
+        else:
+            parts += [f"{verb} {n} ({'then' if verb == 'includes' else 'now'} in another district)" for n, _ in pairs]
+    return f"on today's boundaries: {'; '.join(parts)}, so it differs from the figure published for the {word} at the time"
+
+
 def run() -> str:
     meta = load_metrics().drop_duplicates("id")
-    for c in ("include_pseudo", "zero_when", "majority_election"):
+    for c in ("include_pseudo", "zero_when", "majority_election", "native_note", "prefer_native", "territory_weight"):
         if c not in meta:
             meta[c] = None
     tmp = interim_path("duckdb_tmp", "x").parent
@@ -185,6 +328,10 @@ def run() -> str:
     mem["unit_id"] = mem["bfs_nr"].astype(str)
     con.register("mem_df", mem[["unit_id", *AGG_LEVELS]].astype(str))
     con.execute("CREATE TABLE mem AS SELECT * FROM mem_df")
+    # review round 3, D9: a split or territory exchange wholly inside a unit (Kloten <-> Nuerensdorf 2024, both
+    # in district Buelach, canton ZH) cannot change that unit's sum, so it is no boundary estimate there
+    con.register("bint_df", internal_splits(mem))
+    con.execute("CREATE TABLE bint AS SELECT * FROM bint_df")
     con.register("meta_df", meta[["id", "kind", "aggregation", "native_level"]].astype(str))
     con.execute("CREATE TABLE meta AS SELECT * FROM meta_df")
     obs = interim_path("observation.parquet")
@@ -319,6 +466,12 @@ def run() -> str:
     parts = ["""SELECT unit_id, 'gemeinde' AS level, metric_id, period, value, status, precision, provenance,
                        1 AS n_units, CASE WHEN status = 'ok' THEN 0 ELSE 1 END AS n_missing, note FROM gem"""]
     sums = meta.loc[(meta["kind"] == "base") & (meta["aggregation"] == "sum"), "id"].tolist()
+    pref_rows = [(r["id"], r["prefer_native"] if isinstance(r["prefer_native"], str) else PUBLISHED_TOTAL)
+                 for r in meta.to_dict("records") if r["id"] in sums and r.get("prefer_native") not in (None, False)
+                 and r.get("prefer_native") == r.get("prefer_native")]
+    prefer = [m_ for m_, _ in pref_rows]
+    con.register("pref_note_df", pd.DataFrame(pref_rows or [("", "")], columns=["metric_id", "note"]))
+    con.execute("CREATE TABLE pref_note AS SELECT * FROM pref_note_df")
     wmeans = {r["id"]: r["aggregation"].split(":", 1)[1] for r in meta.to_dict("records")
               if r["kind"] == "base" and str(r["aggregation"]).startswith("weighted_mean:")}
     notagg = meta.loc[(meta["kind"] == "base") & (meta["aggregation"] == "not_aggregatable")
@@ -335,7 +488,9 @@ def run() -> str:
         con.execute(f"""CREATE TABLE n_{lvl} AS SELECT {lvl} AS u, COUNT(*) AS n FROM mem
                         WHERE {lvl} IS NOT NULL AND {lvl} NOT IN ('nan', '<NA>', 'None') GROUP BY 1""")
         word = LEVEL_WORD.get(lvl, lvl)
-        use_nat = "x.complete = 0 AND nt.value IS NOT NULL"
+        # D7: metrics with prefer_native use the source's published total even when the sum is complete
+        pref = "x.metric_id IN (" + _q(prefer) + ")"
+        use_nat = f"(x.complete = 0 OR {pref}) AND nt.value IS NOT NULL"
         sub_note = ("'excludes amounts not allocatable to a municipality (in canton and Swiss totals only)'"
                     if lvl not in PSEUDO_LEVELS else "NULL")
         parts.append(f"""
@@ -345,7 +500,8 @@ def run() -> str:
                    CASE WHEN {use_nat} THEN nt.precision ELSE x.precision END AS precision,
                    CASE WHEN {use_nat} THEN 'native' ELSE 'aggregated' END AS provenance,
                    x.n_units, x.n_missing,
-                   CASE WHEN {use_nat} THEN 'published {word} value; municipal values incomplete (' || x.mnote || ')'
+                   CASE WHEN {use_nat} AND x.complete = 1 THEN pn.note
+                        WHEN {use_nat} THEN 'published {word} value; municipal values incomplete (' || x.mnote || ')'
                         WHEN x.status <> 'ok' AND nb.why IS NOT NULL THEN x.note || '; ' || nb.why || ', so it is not used'
                         ELSE x.note END AS note
             FROM (SELECT g.u AS unit_id, g.metric_id, g.period,
@@ -363,8 +519,9 @@ def run() -> str:
                   FROM (SELECT m.{lvl} AS u, gem.metric_id, gem.period, SUM(gem.value) AS s, {counts('gem')},
                                mode(gem.status) FILTER (WHERE gem.zw) AS zw_status,
                                ANY_VALUE(gem.note) FILTER (WHERE gem.zw) AS zw_note,
-                               {PREC_NAME.format(r=PREC_RANK)} AS precision
+                               {PREC_NAME.format(r=internal_rank('gem', lvl))} AS precision
                         FROM gem_sum gem JOIN mem m USING (unit_id)
+                        LEFT JOIN bint bi ON bi.level = '{lvl}' AND bi.unit_id = gem.unit_id
                         WHERE gem.metric_id IN ({_q(sums)}) AND m.{lvl} NOT IN ('nan', '<NA>', 'None')
                         GROUP BY 1, 2, 3) g
                   JOIN n_{lvl} n ON g.u = n.u
@@ -373,7 +530,8 @@ def run() -> str:
             LEFT JOIN nat nt ON nt.level = '{lvl}' AND nt.unit_id = x.unit_id AND nt.metric_id = x.metric_id
                             AND nt.period = x.period
             LEFT JOIN nat_bad nb ON nb.level = '{lvl}' AND nb.unit_id = x.unit_id AND nb.metric_id = x.metric_id
-                            AND nb.period = x.period""")
+                            AND nb.period = x.period
+            LEFT JOIN pref_note pn ON pn.metric_id = x.metric_id""")
         for mid, w in wmeans.items():
             full = "(g.n_with = n.n AND g.w > 0)"
             est = f"({estimate()} AND g.w > 0)"
@@ -393,8 +551,9 @@ def run() -> str:
                              SUM(CASE WHEN v.value IS NOT NULL THEN w.value END) AS w,
                              {counts('v')},
                              NULL AS zw_status, NULL AS zw_note,
-                             {PREC_NAME.format(r='CASE v.precision WHEN \'exact\' THEN 0 WHEN \'survey\' THEN 1 WHEN \'modelled\' THEN 2 ELSE 3 END')} AS precision
+                             {PREC_NAME.format(r=internal_rank('v', lvl))} AS precision
                       FROM gem_sum v JOIN wmap wm ON wm.metric_id = v.metric_id AND wm.period = v.period
+                      LEFT JOIN bint bi ON bi.level = '{lvl}' AND bi.unit_id = v.unit_id
                       JOIN gem w ON v.unit_id = w.unit_id AND w.period = wm.w_period AND w.metric_id = '{w}'
                       JOIN mem m ON v.unit_id = m.unit_id
                       WHERE v.metric_id = '{mid}' AND m.{lvl} NOT IN ('nan', '<NA>', 'None')
@@ -405,12 +564,27 @@ def run() -> str:
                                 AND nb.period = g.period""")
     # not aggregatable (medians, published rates): the source's own higher-level values; a value on other
     # boundaries is kept (it is the only one) with a note naming the boundary state (M2)
+    # native_note (metrics.yaml): what the higher-level value is when it is not the publisher's own figure
+    # (review round 3, D10: the canton / Swiss median income is an ATLAS estimate from published classes)
+    nn = [(r["id"], r["native_note"]) for r in meta.to_dict("records") if isinstance(r.get("native_note"), str)]
+    con.register("nnote_df", pd.DataFrame(nn or [("", "")], columns=["metric_id", "note"]))
+    # D3: a not-aggregatable canton value published on other boundaries, with territory_weight, is recomputed on
+    # today's boundaries as the weighted mean of its municipal values where these are complete (rows tw below)
+    tw = {r["id"]: r["territory_weight"] for r in meta.to_dict("records") if isinstance(r.get("territory_weight"), str)}
+    tw_rows = territory_rows(con, tw)
+    con.register("tw_df", tw_rows)
     parts.append(f"""SELECT n.unit_id, n.level, n.metric_id, n.period, n.value, 'ok' AS status, n.precision,
                             'native' AS provenance, 1 AS n_units, 0 AS n_missing,
-                            CASE WHEN b.why IS NOT NULL THEN 'published value; ' || b.why ELSE 'published value' END AS note
+                            concat_ws('; ', COALESCE(nn.note, 'published value'),
+                                      CASE WHEN nn.note IS NOT NULL THEN replace(b.why, 'published canton value', 'the canton data')
+                                           ELSE b.why END) AS note
                      FROM nat_all n LEFT JOIN nat_bad b ON b.level = n.level AND b.unit_id = n.unit_id
                           AND b.metric_id = n.metric_id AND b.period = n.period
+                     LEFT JOIN nnote_df nn ON nn.metric_id = n.metric_id
+                     ANTI JOIN tw_df t ON t.unit_id = n.unit_id AND t.level = n.level AND t.metric_id = n.metric_id
+                          AND t.period = n.period
                      WHERE n.metric_id IN ({_q(notagg)})""")
+    parts.append("SELECT unit_id, level, metric_id, period, value, status, precision, provenance, n_units, n_missing, note FROM tw_df")
     parts.append("SELECT * FROM native_only")
     # survey counts published only by district (Structural Survey languages): canton = sum of its districts,
     # where every district has a value on the current boundaries and the source has no canton value
@@ -443,14 +617,16 @@ def run() -> str:
         CREATE TABLE base_terms AS
         SELECT b.unit_id, b.level, b.metric_id, b.period, COALESCE(b.value, 0) AS value, b.precision, b.n_units,
                CASE WHEN b.status = 'ok' THEN 1 ELSE 0 END AS real,
-               CASE WHEN b.provenance = 'native' AND b.level <> 'gemeinde' THEN 1 ELSE 0 END AS nat,
-               CASE WHEN b.note LIKE 'estimate:%' THEN 1 ELSE 0 END AS est
+               CASE WHEN b.provenance = 'native' AND b.level <> 'gemeinde'
+                         AND (b.note IS NULL OR b.note NOT LIKE 'published total%') THEN 1 ELSE 0 END AS nat,
+               CASE WHEN b.note LIKE 'estimate:%' THEN 1 ELSE 0 END AS est,
+               CASE WHEN b.note LIKE 'published total%' THEN 1 ELSE 0 END AS pub
         FROM base_all b LEFT JOIN zw z ON b.metric_id = z.metric_id AND b.status = z.status
         WHERE b.status = 'ok' OR z.metric_id IS NOT NULL""")
 
     def side(ids: list[str]) -> str:
         return f"""SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units,
-                          SUM(real) AS n_real, MAX(nat) AS nat, MAX(est) AS est
+                          SUM(real) AS n_real, MAX(nat) AS nat, MAX(est) AS est, MAX(pub) AS pub
                    FROM base_terms WHERE metric_id IN ({_q(ids)})
                    GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(ids))}"""
 
@@ -478,7 +654,8 @@ def run() -> str:
                        {PREC_OF.format(x='GREATEST(a.p, b.p)')} AS precision,
                        'derived' AS provenance, a.n_units, 0 AS n_missing,
                        CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)'
-                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}' END AS note
+                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}'
+                            WHEN GREATEST(a.pub, b.pub) = 1 THEN '{PUB_DERIVED}' END AS note
                 FROM ({side(num)}) a JOIN ({side(den)}) b USING (unit_id, level, period)
                 WHERE b.s IS NOT NULL AND b.s <> 0 AND a.n_real > 0 AND b.n_real > 0"""
             derived.append(ok_sql)
@@ -490,7 +667,8 @@ def run() -> str:
 
             def win(ids):
                 return f"""SELECT unit_id, level, y, SUM(s) OVER w AS s, MAX(p) OVER w AS p, SUM(n_real) OVER w AS n_real,
-                                  MAX(nat) OVER w AS nat, MAX(est) OVER w AS est, COUNT(*) OVER w AS n, MIN(y) OVER w AS y0, n_units
+                                  MAX(nat) OVER w AS nat, MAX(est) OVER w AS est, MAX(pub) OVER w AS pub,
+                                  COUNT(*) OVER w AS n, MIN(y) OVER w AS y0, n_units
                            FROM (SELECT *, CAST(period AS INTEGER) AS y FROM ({side(ids)})
                                  WHERE regexp_full_match(period, '\\d{{4}}'))
                            WINDOW w AS (PARTITION BY unit_id, level ORDER BY y ROWS BETWEEN {k - 1} PRECEDING AND CURRENT ROW)"""
@@ -501,7 +679,8 @@ def run() -> str:
                        {PREC_OF.format(x='GREATEST(a.p, b.p)')} AS precision, 'derived' AS provenance,
                        a.n_units, 0 AS n_missing,
                        CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)'
-                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}' END AS note
+                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}'
+                            WHEN GREATEST(a.pub, b.pub) = 1 THEN '{PUB_DERIVED}' END AS note
                 FROM ({win(num)}) a JOIN ({win(den)}) b
                   ON a.unit_id = b.unit_id AND a.level = b.level AND b.y = a.y - {lag}
                 WHERE a.n = {k} AND b.n = {k} AND a.y - a.y0 = {k - 1} AND b.y - b.y0 = {k - 1}
@@ -528,6 +707,18 @@ def run() -> str:
     if has_nrw:  # D37: single-seat cantons (majority election) in party shares, blocs and leaning
         print("D37 majority election:", elections.apply_majority(
             con, meta, [l for l in AGG_LEVELS if l not in ("bezirk", "kanton", "schweiz")], elections.majority_cantons()))
+    # D16: canton / district values on today's boundaries for a period when the unit's territory was different
+    # (Moutier BE -> JU 2026): say so, as the figure published at the time differs. Votes and elections have
+    # their own note in the app.
+    tn = territory_notes(con)
+    con.register("tnote_df", tn)
+    for t_ in ("base_all", "der"):
+        con.execute(f"""UPDATE {t_} SET note = concat_ws('; ', {t_}.note, t.note) FROM tnote_df t
+                        WHERE {t_}.level = t.level AND {t_}.unit_id = t.unit_id AND {t_}.period = t.period
+                          AND {t_}.status = 'ok' AND {t_}.provenance IN ('aggregated', 'derived')
+                          AND ({t_}.note IS NULL OR {t_}.note NOT LIKE '%today''s boundaries%')
+                          AND NOT starts_with({t_}.metric_id, 'vote_') AND NOT starts_with({t_}.metric_id, 'nrw_')""")
+    print("D16 rows on today's boundaries for a changed unit, noted:", len(tn), "unit-periods")
     con.execute(f"COPY (SELECT {cols} FROM base_all UNION ALL SELECT {cols} FROM der) "
                 f"TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)")
     con.close()

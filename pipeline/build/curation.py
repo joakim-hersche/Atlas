@@ -13,7 +13,7 @@ denominators, confidence intervals), single metric × level cells, and whole lev
 Enforcement in metrics.json (pipeline.build.web), using the mechanisms the frontend already reads:
   hidden: true                 metric never offered (picker, profiles, sources list); levels kept
   levels                       a hidden level is removed, so the picker, level switch and tables skip it
-  unavailable_levels[level]    the reason, shown where the level is not offered
+  unavailable_levels[level]    the reason (one clause, no closing full stop), shown where the level is not offered
   profile_levels               all levels with values (profiles keep hidden-from-map values, labelled)
   curation {level: {v, why}}   the verdict per level ('show' | 'note' | 'hide') and its reason
 featured.json lists the featured story maps; each must be shown or noted at its level.
@@ -87,6 +87,11 @@ def decide(mid: str, level: str, n: int, n_units: int, pop_share: float, cfg: di
     return v, why, "rule"
 
 
+def clean_reason(why: str) -> str:
+    """A curation reason as one clause: whitespace collapsed (YAML folding) and no closing full stop."""
+    return re.sub(r"\s+", " ", str(why)).strip().rstrip(".").strip()
+
+
 def apply(entry: dict, verdicts: dict, levels_with_values: list[str]) -> dict:
     """Enforce one metric's verdicts {level: (verdict, reason, basis)} on its metrics.json entry."""
     entry["profile_levels"] = list(levels_with_values)
@@ -101,11 +106,13 @@ def apply(entry: dict, verdicts: dict, levels_with_values: list[str]) -> dict:
             keep.append(lvl)
             continue
         verdict, why, _ = v
-        cur[lvl] = {"v": "hide" if verdict == "hidden" else verdict, "why": why}
+        cur[lvl] = {"v": "hide" if verdict == "hidden" else verdict, "why": clean_reason(why)}
         # a hidden metric keeps its levels: the app never offers it, but companions (e.g. the
         # confidence interval `<id>_ci` of a survey share) are looked up through them
         if verdict == "hide":
-            unav[lvl] = f"not offered as a map: {why}"
+            # the app shows "Not available here: <reason>." (review round 3, C5: no repeated phrase and no
+            # double full stop), so the reason is the plain why without its own closing full stop
+            unav[lvl] = clean_reason(why)
         else:
             keep.append(lvl)
     entry["levels"] = keep

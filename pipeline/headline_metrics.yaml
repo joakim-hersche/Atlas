@@ -11,7 +11,7 @@ headline:
   Language & religion: [vz_lang_de_share, vz_lang_fr_share, vz_lang_it_share, vz_rel_catholic_share]
   Households & family: [hh_avg_size, hh_share_1p, share_married]
   Economy & jobs: [ent_jobs_per_1000, ent_jobs_change_10y, ent_share_jobs_s3, xb_per_100_jobs]
-  Income & tax: [tax_np_mean_taxable_income, tax_np_share_taxable_100k_plus, tax_np_federal_tax_per_capita, taxb_city_married2c_100k, taxb_city_single_80k, taxb_amr_married2c2i_125k, taxb_amr_single_80k, tax_burden_single_80k, tax_burden_married2c_100k]
+  Income & tax: [tax_np_mean_taxable_income_normal, tax_np_median_taxable_income, tax_np_share_taxable_100k_plus, tax_np_federal_tax_per_capita, taxb_city_married2c_100k, taxb_city_single_80k, taxb_amr_married2c2i_125k, taxb_amr_single_80k, tax_burden_single_80k, tax_burden_married2c_100k]
   Public finances: [fin_net_debt_per_capita, fin_self_financing_ratio]
   Housing & buildings: [vac_rate, zw_second_home_share, gws_share_sfh, gws_share_bld_2001plus, gws_share_heatpump, con_new_dwellings_per_1000]
   Real estate prices: [land_price_m2]

@@ -49,7 +49,7 @@ METRIC_KEYS = {"id", "theme", "label_en", "label_de", "unit", "decimals", "direc
 OPTIONAL_METRIC_KEYS = {"description", "source_note", "volatile", "zero_when", "plausibility_note",
                         "additivity_note", "additivity_rounding", "additivity_tolerance", "bounded_0_100",
                         "allow_negative", "source_id", "include_pseudo", "credit_source", "unavailable_note",
-                        "keywords", "majority_election", "until"}
+                        "keywords", "majority_election", "until", "native_note", "prefer_native"}
 
 SOURCES_DIR = Path(__file__).resolve().parents[1] / "sources"
 

@@ -1,0 +1,209 @@
+# German and French for the texts the pipeline writes into the app's data: value notes, gap reasons, curation
+# reasons, reach footnotes (review round 3, A4). Read by pipeline/build/texts.py, shipped as data/out/web/texts.json.
+#
+# exact:    whole texts (or "; "-separated parts of a text) translated as they are
+# patterns: an English regular expression matching a whole text or part; templates insert its groups:
+#           {1} as is, {1|n} number in the language's format (1,234.5 -> 1'234.5 / 1 234,5),
+#           {1|t} translated again (a nested text), {1|l} a ", " list translated item by item.
+# Regexes use numbered groups only (the frontend runs them in JavaScript too). Place, station and hub names,
+# canton codes, party abbreviations, dates and times stay as they are. Swiss German: "ss", never "ß".
+
+exact:
+  # ---- statuses and generic reasons --------------------------------------------------------------------
+  - {en: "cannot be aggregated", de: "nicht aggregierbar", fr: "non agrégeable"}
+  - {en: "no published value at this level", de: "kein veröffentlichter Wert auf dieser Ebene", fr: "aucune valeur publiée à ce niveau"}
+  - {en: "no data at this level", de: "keine Daten auf dieser Ebene", fr: "pas de données à ce niveau"}
+  - {en: "no values at this level", de: "keine Werte auf dieser Ebene", fr: "pas de valeurs à ce niveau"}
+  - {en: "values suppressed (small numbers)", de: "Werte unterdrückt (kleine Zahlen)", fr: "valeurs masquées (petits nombres)"}
+  - {en: "not covered", de: "nicht erfasst", fr: "non couvert"}
+  - {en: "no data", de: "keine Daten", fr: "pas de données"}
+  - {en: "not published at this level", de: "auf dieser Ebene nicht veröffentlicht", fr: "non publié à ce niveau"}
+  - {en: "not applicable", de: "nicht zutreffend", fr: "sans objet"}
+  - {en: "published value", de: "veröffentlichter Wert", fr: "valeur publiée"}
+  - {en: "published canton value", de: "veröffentlichter Wert des Kantons", fr: "valeur publiée du canton"}
+  - {en: "published district value", de: "veröffentlichter Wert des Bezirks", fr: "valeur publiée du district"}
+  - {en: "published national value", de: "veröffentlichter Wert der Schweiz", fr: "valeur publiée pour la Suisse"}
+  - {en: "published major-region value", de: "veröffentlichter Wert der Grossregion", fr: "valeur publiée de la grande région"}
+  - {en: "the territory has changed since", de: "das Gebiet hat sich seither verändert", fr: "le territoire a changé depuis"}
+  - {en: "the territory has changed since, so it is not used", de: "das Gebiet hat sich seither verändert, deshalb wird er nicht verwendet", fr: "le territoire a changé depuis, elle n'est donc pas utilisée"}
+  - {en: "computed from published values (municipal values incomplete)", de: "aus veröffentlichten Werten berechnet (Gemeindewerte unvollständig)", fr: "calculé à partir de valeurs publiées (valeurs communales incomplètes)"}
+  - {en: "computed from the published totals of the source", de: "aus den veröffentlichten Totalen der Quelle berechnet", fr: "calculé à partir des totaux publiés par la source"}
+  - {en: "published total of the source; it can differ slightly from the sum of the municipalities", de: "veröffentlichtes Total der Quelle; es kann leicht von der Summe der Gemeinden abweichen", fr: "total publié par la source ; il peut différer légèrement de la somme des communes"}
+  - {en: "published total (ESTV); ESTV notes that the sum of the municipalities can differ from it because cells are hidden for tax secrecy", de: "veröffentlichtes Total (ESTV); laut ESTV kann die Summe der Gemeinden davon abweichen, weil Zellen wegen des Steuergeheimnisses verborgen sind", fr: "total publié (AFC) ; selon l'AFC, la somme des communes peut en différer, car des cellules sont masquées en raison du secret fiscal"}
+  - {en: "ATLAS estimate from the income classes ESTV publishes for this unit (not an ESTV figure)", de: "Schätzung von ATLAS aus den Einkommensklassen, welche die ESTV für diese Einheit veröffentlicht (keine Zahl der ESTV)", fr: "estimation d'ATLAS à partir des classes de revenu que l'AFC publie pour cette unité (pas un chiffre de l'AFC)"}
+  - {en: "excludes amounts not allocatable to a municipality (in canton and Swiss totals only)", de: "ohne Beträge, die keiner Gemeinde zugeordnet werden können (nur in den Totalen der Kantone und der Schweiz enthalten)", fr: "sans les montants non attribuables à une commune (compris seulement dans les totaux des cantons et de la Suisse)"}
+  - {en: "includes units outside municipalities (pseudo-units)", de: "einschliesslich Einheiten ausserhalb der Gemeinden (Pseudo-Einheiten)", fr: "y compris des unités hors communes (pseudo-unités)"}
+  - {en: "sum of the published district values", de: "Summe der veröffentlichten Bezirkswerte", fr: "somme des valeurs publiées des districts"}
+  - {en: "suppressed by the source (small numbers)", de: "von der Quelle unterdrückt (kleine Zahlen)", fr: "masqué par la source (petits nombres)"}
+  - {en: "suppressed in source (small numbers)", de: "in der Quelle unterdrückt (kleine Zahlen)", fr: "masqué dans la source (petits nombres)"}
+  - {en: "suppressed by BFS (confidentiality)", de: "vom BFS unterdrückt (Vertraulichkeit)", fr: "masqué par l'OFS (confidentialité)"}
+  - {en: "not published (small cohort)", de: "nicht veröffentlicht (kleine Kohorte)", fr: "non publié (petite cohorte)"}
+  - {en: "not 1:1 with the reference state (merger/split)", de: "nicht 1:1 mit dem Referenzstand (Fusion/Aufteilung)", fr: "pas 1:1 avec l'état de référence (fusion/scission)"}
+  - {en: "not re-aggregatable", de: "nicht neu aggregierbar", fr: "non réagrégeable"}
+  - {en: "mapped to the reference state (mergers only)", de: "auf den Referenzstand übertragen (nur Fusionen)", fr: "rapporté à l'état de référence (fusions seulement)"}
+  - {en: "not available in source (-9999: small numbers or data not delivered)", de: "in der Quelle nicht verfügbar (-9999: kleine Zahlen oder Daten nicht geliefert)", fr: "non disponible dans la source (-9999 : petits nombres ou données non livrées)"}
+  - {en: "median class not determinable: small cells suppressed by tax secrecy", de: "Medianklasse nicht bestimmbar: kleine Zellen wegen des Steuergeheimnisses unterdrückt", fr: "classe médiane indéterminable : petites cellules masquées en raison du secret fiscal"}
+  - {en: "includes quarters flagged provisional by BFS", de: "enthält vom BFS als provisorisch bezeichnete Quartale", fr: "comprend des trimestres signalés comme provisoires par l'OFS"}
+  - {en: "BEVNAT suppresses 1 to 3 births", de: "BEVNAT unterdrückt 1 bis 3 Geburten", fr: "BEVNAT masque 1 à 3 naissances"}
+  - {en: "computed from the commuter matrix flows: employed residents working in another canton", de: "aus den Strömen der Pendlermatrix berechnet: Erwerbstätige, die in einem anderen Kanton arbeiten", fr: "calculé à partir des flux de la matrice des pendulaires : actifs occupés travaillant dans un autre canton"}
+  - {en: "no Energiestadt label", de: "kein Label Energiestadt", fr: "pas de label Cité de l'énergie"}
+  - {en: "self-financing ratio not computable (net investments ≤ 0 or negative self-financing; source shows no value)", de: "Selbstfinanzierungsgrad nicht berechenbar (Nettoinvestitionen ≤ 0 oder negative Selbstfinanzierung; die Quelle zeigt keinen Wert)", fr: "degré d'autofinancement non calculable (investissements nets ≤ 0 ou autofinancement négatif ; la source n'indique pas de valeur)"}
+  - {en: "no sale of unbuilt land reported by ZH this year", de: "ZH meldet für dieses Jahr keinen Verkauf von unbebautem Land", fr: "ZH ne signale aucune vente de terrain non bâti cette année"}
+  - {en: "no transaction of residential building land this year (BL)", de: "keine Handänderung von Wohnbauland in diesem Jahr (BL)", fr: "aucune transaction de terrain à bâtir résidentiel cette année (BL)"}
+  - {en: "FR delivers neither the survey perimeter nor 'not endangered' areas: assessed perimeter unknown", de: "FR liefert weder den Untersuchungsperimeter noch die Flächen «nicht gefährdet»: beurteilter Perimeter unbekannt", fr: "FR ne livre ni le périmètre d'étude ni les surfaces « non menacées » : périmètre évalué inconnu"}
+  - {en: "the PxWeb cube does not include this vote yet", de: "der PxWeb-Würfel enthält diese Abstimmung noch nicht", fr: "le cube PxWeb ne contient pas encore cette votation"}
+  - {en: "provisional result (BFS DAM / voteinfo, 'provisorisch')", de: "provisorisches Ergebnis (BFS DAM / voteinfo, «provisorisch»)", fr: "résultat provisoire (OFS DAM / voteinfo, « provisorisch »)"}
+  # ---- elections and votes -----------------------------------------------------------------------------
+  - {en: "party did not stand", de: "Partei trat nicht an", fr: "le parti ne s'est pas présenté"}
+  - {en: "party did not stand (no list in this canton)", de: "Partei trat nicht an (keine Liste in diesem Kanton)", fr: "le parti ne s'est pas présenté (pas de liste dans ce canton)"}
+  - {en: "counted with another municipality in the BFS results (its votes are included there)", de: "in den BFS-Ergebnissen mit einer anderen Gemeinde gezählt (ihre Stimmen sind dort enthalten)", fr: "comptée avec une autre commune dans les résultats de l'OFS (ses voix y sont incluses)"}
+  - {en: "no separate result", de: "kein eigenes Ergebnis", fr: "pas de résultat séparé"}
+  - {en: "majority election (single-seat canton): votes for candidates, not party lists", de: "Majorzwahl (Kanton mit einem Sitz): Stimmen für Kandidierende, nicht für Parteilisten", fr: "élection majoritaire (canton à siège unique) : voix pour des candidats, pas pour des listes de partis"}
+  - {en: "only single-seat cantons (majority election): votes for candidates, not party lists", de: "nur Kantone mit einem Sitz (Majorzwahl): Stimmen für Kandidierende, nicht für Parteilisten", fr: "seulement des cantons à siège unique (élection majoritaire) : voix pour des candidats, pas pour des listes de partis"}
+  - {en: "not comparable with proportional cantons", de: "nicht vergleichbar mit Proporzkantonen", fr: "non comparable avec les cantons à la proportionnelle"}
+  - {en: "includes the single-seat (majority-election) cantons, as BFS's national party strength", de: "einschliesslich der Kantone mit einem Sitz (Majorzwahl), wie die nationale Parteistärke des BFS", fr: "y compris les cantons à siège unique (élection majoritaire), comme la force des partis nationale de l'OFS"}
+  - {en: "tacit election (stille Wahl): no vote was held in this canton", de: "stille Wahl: in diesem Kanton fand keine Wahl statt", fr: "élection tacite : aucun scrutin n'a eu lieu dans ce canton"}
+  - {en: "no result published for this municipality and election (counted with another municipality, tacit election, or canton did not exist)", de: "für diese Gemeinde und Wahl kein Ergebnis veröffentlicht (mit einer anderen Gemeinde gezählt, stille Wahl oder Kanton bestand noch nicht)", fr: "aucun résultat publié pour cette commune et cette élection (comptée avec une autre commune, élection tacite ou canton inexistant)"}
+  # ---- licence gate --------------------------------------------------------------------------------------
+  - {en: "not shipped: licence of this canton's publisher not cleared", de: "nicht veröffentlicht: Lizenz des kantonalen Herausgebers noch nicht geklärt", fr: "non diffusé : licence de l'éditeur cantonal pas encore clarifiée"}
+  - {en: "held back until their licence is confirmed", de: "zurückbehalten, bis ihre Lizenz bestätigt ist", fr: "retenues jusqu'à la confirmation de leur licence"}
+  - {en: "licence to verify", de: "Lizenz zu prüfen", fr: "licence à vérifier"}
+  - {en: "licence not stated", de: "Lizenz nicht angegeben", fr: "licence non indiquée"}
+  - {en: "blocked by review", de: "durch Prüfung gesperrt", fr: "bloqué après examen"}
+  - {en: "shipped", de: "veröffentlicht", fr: "diffusé"}
+  - {en: "held back: licence not yet confirmed", de: "zurückbehalten: Lizenz noch nicht bestätigt", fr: "retenu : licence pas encore confirmée"}
+  - {en: "held back: licence review", de: "zurückbehalten: Lizenzprüfung", fr: "retenu : examen de la licence"}
+  # ---- reach (travel times) ------------------------------------------------------------------------------
+  - {en: "bus", de: "Bus", fr: "bus"}
+  - {en: "boat", de: "Schiff", fr: "bateau"}
+  - {en: "tram", de: "Tram", fr: "tram"}
+  - {en: "metro", de: "Metro", fr: "métro"}
+  - {en: "cableway", de: "Seilbahn", fr: "téléphérique"}
+  - {en: "funicular", de: "Standseilbahn", fr: "funiculaire"}
+  - {en: "no stop in or near the municipality", de: "keine Haltestelle in oder nahe der Gemeinde", fr: "aucun arrêt dans la commune ou à proximité"}
+  - {en: "no PT within walking distance", de: "kein ÖV in Gehdistanz", fr: "pas de TP à distance de marche"}
+  - {en: "P10/P90 undefined: for part of the departures from the hub there is no connection within two hours", de: "P10/P90 nicht definiert: für einen Teil der Abfahrten im Zentrum gibt es innerhalb von zwei Stunden keine Verbindung", fr: "P10/P90 non définis : pour une partie des départs du pôle, il n'y a pas de correspondance dans les deux heures"}
+  - {en: "rail service point(s) in the municipality but no station in the ridership file for this year (operator not covered)", de: "Bahnhaltestelle(n) in der Gemeinde, aber kein Bahnhof in der Frequenzdatei dieses Jahres (Bahnunternehmen nicht erfasst)", fr: "point(s) d'arrêt ferroviaire(s) dans la commune, mais aucune gare dans le fichier de fréquentation de cette année (entreprise non couverte)"}
+  # ---- curation reasons (pipeline/curation.yaml; shown as "Not available here: <reason>") ----------------
+  - {en: "a yes/no label: a list, not a map", de: "ein Ja/Nein-Label: eine Liste, keine Karte", fr: "un label oui/non : une liste, pas une carte"}
+  - {en: "almost every municipality has none", de: "fast keine Gemeinde hat welche", fr: "presque aucune commune n'en a"}
+  - {en: "at municipality level identical to 'Out-commuter share' (com_out_share)", de: "auf Gemeindeebene identisch mit «Wegpendleranteil» (com_out_share)", fr: "au niveau communal identique à « Part des pendulaires sortants » (com_out_share)"}
+  - {en: "at municipality level identical to 'Out-commuters' (com_out_commuters)", de: "auf Gemeindeebene identisch mit «Wegpendler» (com_out_commuters)", fr: "au niveau communal identique à « Pendulaires sortants » (com_out_commuters)"}
+  - {en: "cantonal hazard maps cover 19 of 26 cantons (missing GR, SG, VD, UR, NW, OW, BS) and are drawn differently per canton: municipality map only, ranked among covered municipalities", de: "die kantonalen Gefahrenkarten decken 19 von 26 Kantonen ab (es fehlen GR, SG, VD, UR, NW, OW, BS) und sind je Kanton anders erstellt: nur Gemeindekarte, Rang unter den erfassten Gemeinden", fr: "les cartes cantonales des dangers couvrent 19 cantons sur 26 (manquent GR, SG, VD, UR, NW, OW, BS) et sont établies différemment selon le canton : carte communale seulement, rang parmi les communes couvertes"}
+  - {en: "confidence interval of a survey estimate: the app shows it next to the value (reliability notes), never as a map of its own", de: "Vertrauensintervall einer Stichprobenschätzung: die App zeigt es neben dem Wert (Hinweise zur Zuverlässigkeit), nie als eigene Karte", fr: "intervalle de confiance d'une estimation par sondage : l'application l'affiche à côté de la valeur (notes de fiabilité), jamais comme carte"}
+  - {en: "duplicate of 'Battery-electric share of cars' (BFS vehicle register, mfz_bev_share), which is the one on maps; Energie Reporter's modelled monthly share (5.5 % vs BFS 5.16 %) stays on profiles", de: "Duplikat von «Anteil Elektroautos» (Fahrzeugregister des BFS, mfz_bev_share), das auf den Karten steht; der modellierte Monatsanteil des Energie Reporters (5.5 % gegenüber BFS 5.16 %) bleibt in den Profilen", fr: "doublon de « Part des voitures électriques » (registre des véhicules de l'OFS, mfz_bev_share), qui figure sur les cartes ; la part mensuelle modélisée de l'Energie Reporter (5,5 % contre 5,16 % selon l'OFS) reste dans les profils"}
+  - {en: "duplicate of 'Vacancy rate' (vac_rate, recomputed from counts at every level); BFS's published rate (rounded, municipalities only) stays on profiles", de: "Duplikat von «Leerwohnungsziffer» (vac_rate, auf jeder Ebene aus den Zählungen neu berechnet); die vom BFS veröffentlichte Ziffer (gerundet, nur Gemeinden) bleibt in den Profilen", fr: "doublon de « Taux de logements vacants » (vac_rate, recalculé à partir des comptages à chaque niveau) ; le taux publié par l'OFS (arrondi, communes seulement) reste dans les profils"}
+  - {en: "duplicate of the BFS count of battery-electric cars (mfz_cars_bev)", de: "Duplikat der BFS-Zahl der Elektroautos (mfz_cars_bev)", fr: "doublon du nombre de voitures électriques de l'OFS (mfz_cars_bev)"}
+  - {en: "identical to 'Naturalisations per 100 foreign residents' (nat_rate, 1 January denominator)", de: "identisch mit «Einbürgerungen pro 100 ausländische Einwohner» (nat_rate, Bezugsgrösse am 1. Januar)", fr: "identique à « Naturalisations pour 100 résidents étrangers » (nat_rate, dénominateur au 1er janvier)"}
+  - {en: "identical to 'Naturalisations' (nat_total)", de: "identisch mit «Einbürgerungen» (nat_total)", fr: "identique à « Naturalisations » (nat_total)"}
+  - {en: "identical to 'Population' (pop_total, 31 December)", de: "identisch mit «Bevölkerung» (pop_total, 31. Dezember)", fr: "identique à « Population » (pop_total, 31 décembre)"}
+  - {en: "non-response count of the Structural Survey: a quality field", de: "Zahl der Antwortausfälle der Strukturerhebung: ein Qualitätsfeld", fr: "nombre de non-réponses du relevé structurel : un champ de qualité"}
+  - {en: "only the few tram and metro cities have any", de: "nur die wenigen Städte mit Tram oder Metro haben welche", fr: "seules les quelques villes avec tram ou métro en ont"}
+  - {en: "station counts (SBB, boardings and alightings) are not complete above the municipality", de: "die Bahnhofzählungen (SBB, Ein- und Aussteigende) sind oberhalb der Gemeinde nicht vollständig", fr: "les comptages des gares (CFF, montées et descentes) ne sont pas complets au-dessus de la commune"}
+  - {en: "technical denominator", de: "technische Bezugsgrösse", fr: "dénominateur technique"}
+  - {en: "technical denominator (census 2000 households)", de: "technische Bezugsgrösse (Haushalte der Volkszählung 2000)", fr: "dénominateur technique (ménages du recensement 2000)"}
+  - {en: "technical denominator (census 2000 languages)", de: "technische Bezugsgrösse (Sprachen der Volkszählung 2000)", fr: "dénominateur technique (langues du recensement 2000)"}
+  - {en: "technical denominator (census 2000 religions)", de: "technische Bezugsgrösse (Religionen der Volkszählung 2000)", fr: "dénominateur technique (religions du recensement 2000)"}
+  - {en: "technical denominator (mean population of the demographic rates)", de: "technische Bezugsgrösse (mittlere Bevölkerung der demografischen Raten)", fr: "dénominateur technique (population moyenne des taux démographiques)"}
+  - {en: "technical denominator (persons in private households)", de: "technische Bezugsgrösse (Personen in Privathaushalten)", fr: "dénominateur technique (personnes dans des ménages privés)"}
+  - {en: "technical denominator of the Structural Survey language shares", de: "technische Bezugsgrösse der Sprachanteile der Strukturerhebung", fr: "dénominateur technique des parts linguistiques du relevé structurel"}
+  - {en: "technical denominator of the Structural Survey language shares of the statistical cities", de: "technische Bezugsgrösse der Sprachanteile der Strukturerhebung für die statistischen Städte", fr: "dénominateur technique des parts linguistiques du relevé structurel pour les villes statistiques"}
+  - {en: "technical denominator of the commuting shares", de: "technische Bezugsgrösse der Pendleranteile", fr: "dénominateur technique des parts de pendulaires"}
+  - {en: "technical denominator of the education shares", de: "technische Bezugsgrösse der Bildungsanteile", fr: "dénominateur technique des parts de formation"}
+  - {en: "technical denominator of the naturalisation rate", de: "technische Bezugsgrösse der Einbürgerungsrate", fr: "dénominateur technique du taux de naturalisation"}
+  - {en: "technical denominator of the noise exposure shares", de: "technische Bezugsgrösse der Anteile Lärmbelastung", fr: "dénominateur technique des parts d'exposition au bruit"}
+  - {en: "technical denominator of the protected-area shares", de: "technische Bezugsgrösse der Anteile Schutzgebiete", fr: "dénominateur technique des parts d'aires protégées"}
+  - {en: "technical denominator of the school buildings per 1,000 residents", de: "technische Bezugsgrösse der Schulgebäude pro 1'000 Einwohner", fr: "dénominateur technique des bâtiments scolaires pour 1000 habitants"}
+  - {en: "technical denominator of the second-home share", de: "technische Bezugsgrösse des Zweitwohnungsanteils", fr: "dénominateur technique de la part de résidences secondaires"}
+  - {en: "technical denominator of the vacancy rate", de: "technische Bezugsgrösse der Leerwohnungsziffer", fr: "dénominateur technique du taux de logements vacants"}
+  - {en: "technical: share of residents inside an assessed perimeter (close to 100 % wherever covered)", de: "technisch: Anteil der Einwohner innerhalb eines beurteilten Perimeters (nahe 100 %, wo erfasst)", fr: "technique : part des habitants à l'intérieur d'un périmètre évalué (proche de 100 % partout où il est couvert)"}
+  - {en: "three units only (urban, intermediate, rural): the map repeats the typology instead of showing the metric; the three values are compared in the profiles. Kept for votes and elections, where the urban–rural split is the story", de: "nur drei Einheiten (städtisch, intermediär, ländlich): die Karte wiederholt die Typologie, statt die Kennzahl zu zeigen; die drei Werte werden in den Profilen verglichen. Für Abstimmungen und Wahlen beibehalten, wo der Stadt-Land-Gegensatz die Geschichte ist", fr: "trois unités seulement (urbain, intermédiaire, rural) : la carte répète la typologie au lieu de montrer l'indicateur ; les trois valeurs sont comparées dans les profils. Conservé pour les votations et les élections, où le clivage ville-campagne est le sujet"}
+
+patterns:
+  # ---- counts of missing municipalities (pipeline/build/metrics.py) --------------------------------------
+  - {en: '([\d,]+) of ([\d,]+) municipalities without a value: (.+)', de: '{1|n} von {2|n} Gemeinden ohne Wert: {3|l}', fr: '{1|n} communes sur {2|n} sans valeur : {3|l}'}
+  - {en: '([\d,]+) suppressed \(small numbers\)', de: '{1|n} unterdrückt (kleine Zahlen)', fr: '{1|n} masquées (petits nombres)'}
+  - {en: '([\d,]+) not published', de: '{1|n} nicht veröffentlicht', fr: '{1|n} non publiées'}
+  - {en: '([\d,]+) not covered', de: '{1|n} nicht erfasst', fr: '{1|n} non couvertes'}
+  - {en: '([\d,]+) not applicable', de: '{1|n} nicht zutreffend', fr: '{1|n} sans objet'}
+  - {en: '([\d,]+) no data', de: '{1|n} ohne Daten', fr: '{1|n} sans données'}
+  - {en: '([\d,]+) no row in the source', de: '{1|n} ohne Zeile in der Quelle', fr: '{1|n} absentes de la source'}
+  - {en: 'municipal values incomplete \((.+)\)', de: 'Gemeindewerte unvollständig ({1|t})', fr: 'valeurs communales incomplètes ({1|t})'}
+  - {en: 'published (canton|district|national|major-region) value; municipal values incomplete', de: '{1|t}', fr: '{1|t}'}
+  - {en: 'estimate: ([\d,]+) of ([\d,]+) municipalities suppressed for small numbers \(([\d.]+) % of residents\) are not included', de: 'Schätzung: {1|n} von {2|n} Gemeinden, wegen kleiner Zahlen unterdrückt ({3|n} % der Einwohner), sind nicht enthalten', fr: 'estimation : {1|n} communes sur {2|n}, masquées pour petits nombres ({3|n} % des habitants), ne sont pas comprises'}
+  - {en: 'estimate: computed from sums that leave out a few municipalities suppressed for small numbers \(at most ([\d.]+) % of residents\)', de: 'Schätzung: aus Summen berechnet, in denen einige wegen kleiner Zahlen unterdrückte Gemeinden fehlen (höchstens {1|n} % der Einwohner)', fr: 'estimation : calculée à partir de sommes sans quelques communes masquées pour petits nombres (au plus {1|n} % des habitants)'}
+  - {en: 'incomplete at this level: (.+) for some municipalities', de: 'auf dieser Ebene unvollständig: bei einigen Gemeinden {1|t}', fr: 'incomplet à ce niveau : {1|t} pour certaines communes'}
+  - {en: 'published canton value is on the boundaries of (\d{4}-\d\d-\d\d)', de: 'der veröffentlichte Wert des Kantons bezieht sich auf den Gebietsstand vom {1}', fr: 'la valeur publiée du canton se rapporte à l''état territorial du {1}'}
+  - {en: 'published district value is on the boundaries of (\d{4}-\d\d-\d\d)', de: 'der veröffentlichte Wert des Bezirks bezieht sich auf den Gebietsstand vom {1}', fr: 'la valeur publiée du district se rapporte à l''état territorial du {1}'}
+  - {en: 'the canton data is on the boundaries of (\d{4}-\d\d-\d\d)', de: 'die Daten des Kantons beziehen sich auf den Gebietsstand vom {1}', fr: 'les données du canton se rapportent à l''état territorial du {1}'}
+  - {en: 'published only at district level( \(survey\))?', de: 'nur auf Bezirksebene veröffentlicht{1|t}', fr: 'publié seulement au niveau des districts{1|t}'}
+  - {en: 'published only at canton level( \(survey\))?', de: 'nur auf Kantonsebene veröffentlicht{1|t}', fr: 'publié seulement au niveau des cantons{1|t}'}
+  - {en: 'published only at labour-market area level( \(survey\))?', de: 'nur auf Ebene der Arbeitsmarktregionen veröffentlicht{1|t}', fr: 'publié seulement au niveau des bassins d''emploi{1|t}'}
+  - {en: 'published only at (?:arbeitsmarktgebiet) level( \(survey\))?', de: 'nur auf Ebene der Arbeitsmarktregionen veröffentlicht{1|t}', fr: 'publié seulement au niveau des bassins d''emploi{1|t}'}
+  - {en: 'published only at national level( \(survey\))?', de: 'nur für die Schweiz veröffentlicht{1|t}', fr: 'publié seulement pour la Suisse{1|t}'}
+  - {en: ' \(survey\)', de: ' (Stichprobe)', fr: ' (enquête par sondage)'}
+  - {en: 'no value for (.+) at this level \(newest here: (.+)\)', de: 'kein Wert für {1} auf dieser Ebene (neuester hier: {2})', fr: 'pas de valeur pour {1} à ce niveau (la plus récente ici : {2})'}
+  - {en: 'sum of the ([\d,]+) published canton values', de: 'Summe der {1|n} veröffentlichten Kantonswerte', fr: 'somme des {1|n} valeurs cantonales publiées'}
+  - {en: 'sum of the ([\d,]+) published canton values \(offences not assigned to a canton are not included\)', de: 'Summe der {1|n} veröffentlichten Kantonswerte (ohne Straftaten, die keinem Kanton zugeordnet sind)', fr: 'somme des {1|n} valeurs cantonales publiées (sans les infractions non attribuées à un canton)'}
+  - {en: 'published national total \(STAT-TAB (px-x-\d+_\d+)\), incl. offences not assigned to a canton', de: 'veröffentlichtes Total der Schweiz (STAT-TAB {1}), einschliesslich der keinem Kanton zugeordneten Straftaten', fr: 'total suisse publié (STAT-TAB {1}), y compris les infractions non attribuées à un canton'}
+  - {en: 'from the BFS demographic balance \((px-x-\d+_\d+)\)', de: 'aus der demografischen Bilanz des BFS ({1})', fr: 'tiré du bilan démographique de l''OFS ({1})'}
+  - {en: 'BFS publishes all years on the latest municipality state \((\d{4}-\d\d-\d\d)\)', de: 'das BFS veröffentlicht alle Jahre auf dem neuesten Gemeindestand ({1})', fr: 'l''OFS publie toutes les années sur l''état communal le plus récent ({1})'}
+  - {en: 'snapshot (\d{4}-\d\d)', de: 'Stand {1}', fr: 'état {1}'}
+  - {en: '(\d{4})–(\d{4})', de: '{1}–{2}', fr: '{1}–{2}'}
+  # ---- territory (D3, D16) --------------------------------------------------------------------------------
+  - {en: 'computed on today''s boundaries: mean of the municipal values weighted by residents of the previous year \(the value the source published for the canton, ([\d.]+), is on its former boundaries\)', de: 'auf dem heutigen Gebietsstand berechnet: Mittel der Gemeindewerte, gewichtet mit den Einwohnern des Vorjahres (der von der Quelle für den Kanton veröffentlichte Wert, {1|n}, bezieht sich auf das frühere Gebiet)', fr: 'calculé sur le territoire actuel : moyenne des valeurs communales pondérée par les habitants de l''année précédente (la valeur publiée par la source pour le canton, {1|n}, se rapporte à son ancien territoire)'}
+  - {en: 'computed on today''s boundaries: mean of the municipal values weighted by residents', de: 'auf dem heutigen Gebietsstand berechnet: Mittel der Gemeindewerte, gewichtet mit den Einwohnern', fr: 'calculé sur le territoire actuel : moyenne des valeurs communales pondérée par les habitants'}
+  - {en: 'on today''s boundaries: (.+), so it differs from the figure published for the canton at the time', de: 'auf dem heutigen Gebietsstand: {1|t}; deshalb weicht der Wert von der damals für den Kanton veröffentlichten Zahl ab', fr: 'sur le territoire actuel : {1|t} ; la valeur diffère donc du chiffre publié à l''époque pour le canton'}
+  - {en: 'on today''s boundaries: (.+), so it differs from the figure published for the district at the time', de: 'auf dem heutigen Gebietsstand: {1|t}; deshalb weicht der Wert von der damals für den Bezirk veröffentlichten Zahl ab', fr: 'sur le territoire actuel : {1|t} ; la valeur diffère donc du chiffre publié à l''époque pour le district'}
+  - {en: 'includes (.+) \(then canton ([A-Z]{2})\)', de: 'mit {1} (damals Kanton {2})', fr: 'avec {1} (alors canton {2})'}
+  - {en: 'without (.+) \(now canton ([A-Z]{2})\)', de: 'ohne {1} (heute Kanton {2})', fr: 'sans {1} (aujourd''hui canton {2})'}
+  - {en: 'includes (.+) \(then in another district\)', de: 'mit {1} (damals in einem anderen Bezirk)', fr: 'avec {1} (alors dans un autre district)'}
+  - {en: 'without (.+) \(now in another district\)', de: 'ohne {1} (heute in einem anderen Bezirk)', fr: 'sans {1} (aujourd''hui dans un autre district)'}
+  - {en: 'includes ([\d,]+) municipalities then in another district', de: 'mit {1|n} Gemeinden, die damals in einem anderen Bezirk lagen', fr: 'avec {1|n} communes alors situées dans un autre district'}
+  - {en: 'without ([\d,]+) municipalities now in another district', de: 'ohne {1|n} Gemeinden, die heute in einem anderen Bezirk liegen', fr: 'sans {1|n} communes aujourd''hui situées dans un autre district'}
+  - {en: 'includes ([\d,]+) municipalities then in another canton', de: 'mit {1|n} Gemeinden, die damals in einem anderen Kanton lagen', fr: 'avec {1|n} communes alors situées dans un autre canton'}
+  - {en: 'without ([\d,]+) municipalities now in another canton', de: 'ohne {1|n} Gemeinden, die heute in einem anderen Kanton liegen', fr: 'sans {1|n} communes aujourd''hui situées dans un autre canton'}
+  - {en: 'district created on 1 Jan (\d{4})', de: 'Bezirk geschaffen am 1. Januar {1}', fr: 'district créé le 1er janvier {1}'}
+  - {en: 'district created on (\d+) Jan (\d{4})', de: 'Bezirk geschaffen am {1}. Januar {2}', fr: 'district créé le {1} janvier {2}'}
+  - {en: 'the PKS districts are on the state of 1 Jan (\d{4}) \(Moutier is counted in Jura bernois\)', de: 'die Bezirke der PKS beziehen sich auf den Stand vom 1. Januar {1} (Moutier wird zum Berner Jura gezählt)', fr: 'les districts de la SPC se rapportent à l''état du 1er janvier {1} (Moutier est compté dans le Jura bernois)'}
+  - {en: 'district on the state of 1 Jan (\d{4}) \(PKS geography\): includes Moutier, which moved to the canton of Jura on 1 Jan (\d{4})', de: 'Bezirk auf dem Stand vom 1. Januar {1} (Geografie der PKS): mit Moutier, das am 1. Januar {2} zum Kanton Jura wechselte', fr: 'district à l''état du 1er janvier {1} (géographie de la SPC) : avec Moutier, passé au canton du Jura le 1er janvier {2}'}
+  # ---- elections -------------------------------------------------------------------------------------------
+  - {en: 'proportional-representation cantons only: excludes ([\d,]+) of ([\d,]+) municipalities in single-seat cantons \(([A-Z, ]+); ([\d.]+) % of fictitious voters\)', de: 'nur Proporzkantone: ohne {1|n} von {2|n} Gemeinden in Kantonen mit einem Sitz ({3}; {4|n} % der fiktiven Wählenden)', fr: 'cantons à la proportionnelle seulement : sans {1|n} communes sur {2|n} situées dans des cantons à siège unique ({3} ; {4|n} % des électeurs fictifs)'}
+  - {en: 'proportional-representation cantons only: excludes ([\d,]+) of ([\d,]+) municipalities in single-seat cantons \(([A-Z, ]+)\)', de: 'nur Proporzkantone: ohne {1|n} von {2|n} Gemeinden in Kantonen mit einem Sitz ({3})', fr: 'cantons à la proportionnelle seulement : sans {1|n} communes sur {2|n} situées dans des cantons à siège unique ({3})'}
+  - {en: 'from (\d{4}) counted under FDP above canton level, as in BFS''s national party strength', de: 'ab {1} oberhalb der Kantonsebene zur FDP gezählt, wie in der nationalen Parteistärke des BFS', fr: 'dès {1} compté avec le PLR au-dessus du niveau cantonal, comme dans la force des partis nationale de l''OFS'}
+  # ---- suppression and reliability of the sources ---------------------------------------------------------
+  - {en: 'suppressed: (\d+) or fewer observations \(BFS ''X''\)', de: 'unterdrückt: {1} oder weniger Beobachtungen (BFS «X»)', fr: 'masqué : {1} observations ou moins (OFS « X »)'}
+  - {en: 'low reliability: extrapolation from (\d+) or fewer observations \(BFS ''\( \)''\)', de: 'geringe Zuverlässigkeit: Hochrechnung aus {1} oder weniger Beobachtungen (BFS «( )»)', fr: 'fiabilité faible : extrapolation à partir de {1} observations ou moins (OFS « ( ) »)'}
+  - {en: 'low reliability: extrapolation from fewer than (\d+) observations \(BFS ''\( \)''\)', de: 'geringe Zuverlässigkeit: Hochrechnung aus weniger als {1} Beobachtungen (BFS «( )»)', fr: 'fiabilité faible : extrapolation à partir de moins de {1} observations (OFS « ( ) »)'}
+  - {en: 'suppressed by BFS \((\d+) to (\d+) events\)', de: 'vom BFS unterdrückt ({1} bis {2} Ereignisse)', fr: 'masqué par l''OFS ({1} à {2} événements)'}
+  - {en: 'withheld by BFS for data protection: (\d+) to (\d+) offences \(''x''\)', de: 'vom BFS aus Datenschutzgründen zurückbehalten: {1} bis {2} Straftaten («x»)', fr: 'retenu par l''OFS pour la protection des données : {1} à {2} infractions (« x »)'}
+  - {en: 'not computed below the canton: relations of fewer than (\d+) persons are grouped by canton only in the source \(code (\d+)\)', de: 'unterhalb des Kantons nicht berechnet: Beziehungen mit weniger als {1} Personen sind in der Quelle nur nach Kanton zusammengefasst (Code {2})', fr: 'non calculé au-dessous du canton : les relations de moins de {1} personnes ne sont regroupées que par canton dans la source (code {2})'}
+  - {en: 'own-municipality flow below (\d+) persons \(grouped into code (\d+) in the source\)', de: 'Strom innerhalb der Gemeinde unter {1} Personen (in der Quelle unter Code {2} zusammengefasst)', fr: 'flux interne à la commune inférieur à {1} personnes (regroupé sous le code {2} dans la source)'}
+  - {en: 'ZH publishes offences only for municipalities with more than ([\d,]+) inhabitants', de: 'ZH veröffentlicht Straftaten nur für Gemeinden mit mehr als {1|n} Einwohnern', fr: 'ZH ne publie les infractions que pour les communes de plus de {1|n} habitants'}
+  - {en: 'not covered: the ([A-Z]{2}) source does not publish this indicator', de: 'nicht erfasst: die Quelle aus {1} veröffentlicht diese Kennzahl nicht', fr: 'non couvert : la source de {1} ne publie pas cet indicateur'}
+  - {en: 'not published by ([A-Z]{2}) \(small numbers\)', de: 'von {1} nicht veröffentlicht (kleine Zahlen)', fr: 'non publié par {1} (petits nombres)'}
+  - {en: 'not published by ([A-Z]{2}) \(data protection: fewer than (\d+) transactions\)', de: 'von {1} nicht veröffentlicht (Datenschutz: weniger als {2} Handänderungen)', fr: 'non publié par {1} (protection des données : moins de {2} transactions)'}
+  - {en: 'not published by ([A-Z]{2}) \(fewer than (\d+) relevant transactions\)', de: 'von {1} nicht veröffentlicht (weniger als {2} massgebende Handänderungen)', fr: 'non publié par {1} (moins de {2} transactions déterminantes)'}
+  # ---- reach (pipeline/reach, pipeline/build/profile.py) ---------------------------------------------------
+  - {en: 'from (.+) \((bus|boat|tram|metro|cableway|funicular)\), not a rail station', de: 'ab {1} ({2|t}), kein Bahnhof', fr: 'depuis {1} ({2|t}), pas une gare ferroviaire'}
+  - {en: 'nearest hub: (.+)', de: 'nächstes Zentrum: {1}', fr: 'pôle le plus proche : {1}'}
+  - {en: 'no arrival by (\d\d:\d\d): median over the hour from the earliest possible arrival \((\d\d:\d\d)\)', de: 'keine Ankunft bis {1}: Median über die Stunde ab der frühestmöglichen Ankunft ({2})', fr: 'pas d''arrivée avant {1} : médiane sur l''heure qui suit la première arrivée possible ({2})'}
+  - {en: 'GTFS timetable (\d{4}), from the main station, arrivals at the hub (\d\d:\d\d)–(\d\d:\d\d) \(median journey time, median of three weekdays\)', de: 'GTFS-Fahrplan {1}, ab dem Hauptbahnhof der Gemeinde, Ankunft im Zentrum {2}–{3} (Median der Reisezeit, Median von drei Werktagen)', fr: 'horaire GTFS {1}, depuis la gare principale, arrivées au pôle de {2} à {3} (temps de trajet médian, médiane de trois jours ouvrables)'}
+  - {en: 'GTFS timetable (\d{4}), door to door, arrivals at the hub (\d\d:\d\d)–(\d\d:\d\d) \(population-weighted median, median of three weekdays\)', de: 'GTFS-Fahrplan {1}, Tür zu Tür, Ankunft im Zentrum {2}–{3} (bevölkerungsgewichteter Median, Median von drei Werktagen)', fr: 'horaire GTFS {1}, porte-à-porte, arrivées au pôle de {2} à {3} (médiane pondérée par la population, médiane de trois jours ouvrables)'}
+  - {en: 'no arrival at the hub by (\d\d:\d\d) on a weekday morning \(first connections arrive later\)', de: 'keine Ankunft im Zentrum bis {1} an einem Werktagmorgen (die ersten Verbindungen kommen später an)', fr: 'pas d''arrivée au pôle avant {1} un matin de semaine (les premières correspondances arrivent plus tard)'}
+  - {en: 'no arrival at the hub by (\d\d:\d\d)', de: 'keine Ankunft im Zentrum bis {1}', fr: 'pas d''arrivée au pôle avant {1}'}
+  - {en: 'no arrival at the hub by (\d\d:\d\d) on the service day', de: 'keine Ankunft im Zentrum bis {1} am Stichtag', fr: 'pas d''arrivée au pôle avant {1} le jour de référence'}
+  - {en: 'no departure from the hub (\d\d:\d\d)-(\d\d:\d\d) reaches it by (\d\d:\d\d)', de: 'keine Abfahrt im Zentrum zwischen {1} und {2} erreicht die Gemeinde bis {3}', fr: 'aucun départ du pôle entre {1} et {2} n''y arrive avant {3}'}
+  - {en: 'no departure from the hub between (\d\d:\d\d) and (\d\d:\d\d) reaches it by (\d\d:\d\d) \(rare service\)', de: 'keine Abfahrt im Zentrum zwischen {1} und {2} erreicht die Gemeinde bis {3} (seltenes Angebot)', fr: 'aucun départ du pôle entre {1} et {2} n''y arrive avant {3} (desserte rare)'}
+  - {en: 'no stop within ([\d.]+) km', de: 'keine Haltestelle im Umkreis von {1|n} km', fr: 'aucun arrêt à moins de {1|n} km'}
+  - {en: 'no stop within walking distance \(([\d.]+) km\) of where people live', de: 'keine Haltestelle in Gehdistanz ({1|n} km) zu den Wohnorten', fr: 'aucun arrêt à distance de marche ({1|n} km) des lieux d''habitation'}
+  - {en: 'village destroyed by the landslide of May (\d{4})', de: 'Dorf durch den Bergsturz vom Mai {1} zerstört', fr: 'village détruit par l''éboulement de mai {1}'}
+  - {en: 'no public transport service in the (\d{4}) timetable', de: 'kein ÖV-Angebot im Fahrplan {1}', fr: 'aucune desserte de transports publics dans l''horaire {1}'}
+  # ---- curation rule (pipeline/build/curation.py) ---------------------------------------------------------
+  - {en: 'not offered as a map: (.+)', de: 'keine Karte: {1|t}', fr: 'pas de carte : {1|t}'}
+  - {en: 'too little coverage for a map: ([\d,]+) of ([\d,]+) units, ([\d.]+) % of residents', de: 'zu wenig Abdeckung für eine Karte: {1|n} von {2|n} Einheiten, {3|n} % der Einwohner', fr: 'couverture insuffisante pour une carte : {1|n} unités sur {2|n}, {3|n} % des habitants'}
+  - {en: 'fewer than (\d+) units: shown only when every unit has a value \(([\d,]+) of ([\d,]+) units, ([\d.]+) % of residents\)', de: 'weniger als {1} Einheiten: nur gezeigt, wenn jede Einheit einen Wert hat ({2|n} von {3|n} Einheiten, {4|n} % der Einwohner)', fr: 'moins de {1} unités : affiché seulement si chaque unité a une valeur ({2|n} unités sur {3|n}, {4|n} % des habitants)'}
+  - {en: 'partial coverage: ([\d,]+) of ([\d,]+) units, ([\d.]+) % of residents', de: 'teilweise Abdeckung: {1|n} von {2|n} Einheiten, {3|n} % der Einwohner', fr: 'couverture partielle : {1|n} unités sur {2|n}, {3|n} % des habitants'}
+  - {en: 'complete \(([\d,]+) of ([\d,]+) units, ([\d.]+) % of residents\)', de: 'vollständig ({1|n} von {2|n} Einheiten, {3|n} % der Einwohner)', fr: 'complet ({1|n} unités sur {2|n}, {3|n} % des habitants)'}
+  - {en: 'almost every municipality has none \(([\d,]+) of ([\d,]+) have any\)', de: 'fast keine Gemeinde hat welche ({1|n} von {2|n} haben welche)', fr: 'presque aucune commune n''en a ({1|n} sur {2|n} en ont)'}
+  - {en: 'offered only at: (.+)', de: 'nur angeboten für: {1}', fr: 'proposé seulement pour : {1}'}

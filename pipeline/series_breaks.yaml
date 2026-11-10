@@ -94,9 +94,9 @@ breaks:
   - id: vehicles_2022_register
     period: "2022"
     metrics: [mfz_cars, mfz_cars_private, mfz_cars_bev, mfz_cars_phev, mfz_cars_hev, mfz_cars_petrol, mfz_cars_diesel]
-    note_en: "2022: about 34,000 vehicles with export plates that were no longer in Switzerland were removed from the stock (register clean-up)."
-    note_de: "2022: rund 34'000 nicht mehr in der Schweiz befindliche Fahrzeuge mit Export-Kontrollschild wurden aus dem Bestand entfernt (Registerbereinigung)."
-    note_fr: "2022 : environ 34 000 véhicules munis d’une plaque d’exportation et ne se trouvant plus en Suisse ont été retirés du parc (rectification du registre)."
+    note_en: "About 34,000 vehicles with export plates that were no longer in Switzerland were removed from the stock in 2022 (register clean-up)."
+    note_de: "Rund 34'000 nicht mehr in der Schweiz befindliche Fahrzeuge mit Export-Kontrollschild wurden 2022 aus dem Bestand entfernt (Registerbereinigung)."
+    note_fr: "Environ 34 000 véhicules munis d’une plaque d’exportation et ne se trouvant plus en Suisse ont été retirés du parc en 2022 (rectification du registre)."
     evidence:
       - url: https://www.bfs.admin.ch/asset/en/DF_MFZ_0_COMMUNE
         file: data/raw/bfs_sdmx/*/DF_MFZ_0_COMMUNE_1.0.0.structure.xml
