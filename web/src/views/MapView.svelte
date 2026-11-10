@@ -1308,6 +1308,7 @@
           <p class="foot yr">{t(li.series ? 'mv.yearNoSeries' : 'mv.yearNoSeriesLevel', { y: app.year })}
             <button type="button" class="link" onclick={() => (app.year = null)}>{t('mv.backLatest')}</button></p>
         {/if}
+        <VintageSwitch {base} />
       </section>
 
       <section class="spsec">
@@ -1405,7 +1406,6 @@
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
-        <VintageSwitch {base} />
       </div>
       {/if}
       {#if (!desktop || app.embed) && card && refA && colA}

@@ -29,26 +29,26 @@
 </script>
 
 {#if ix && ix.vintages.length}
-  <div class="vin" role="radiogroup" aria-label={tv('vin.label')} aria-busy={busy}>
-    <span class="caps lab" aria-hidden="true">{tv('vin.label')}</span>
-    <div class="seg">
-      <button type="button" role="radio" aria-checked={cur === null} title={tv('vin.refT', { date: fmtDate(ix.reference) })}
-        onclick={() => pick(null)}>{tv('vin.ref', { y: refYear })}</button>
-      {#each ix.vintages as v}
-        <button type="button" role="radio" aria-checked={cur === v.id} title={tv('vin.oldT', { date: fmtDate(v.date) })}
-          onclick={() => pick(v.id)}>{v.id}</button>
-      {/each}
-    </div>
+  <!-- a quiet line in the panel (owner: the boundaries choice must not sit front and centre on the map) -->
+  <div class="vin foot" role="radiogroup" aria-label={tv('vin.label')} aria-busy={busy}>
+    <span class="lab">{tv('vin.label')}:</span>
+    <button type="button" class="opt" role="radio" aria-checked={cur === null} title={tv('vin.refT', { date: fmtDate(ix.reference) })}
+      onclick={() => pick(null)}>{tv('vin.ref', { y: refYear })}</button>
+    {#each ix.vintages as v}
+      <span class="sep" aria-hidden="true">·</span>
+      <button type="button" class="opt" role="radio" aria-checked={cur === v.id} title={tv('vin.oldT', { date: fmtDate(v.date) })}
+        onclick={() => pick(v.id)}>{v.id}</button>
+    {/each}
   </div>
 {/if}
 
 <style>
-  .vin { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--ink); padding: 0 0 0 6px; max-width: 100%; }
+  .vin { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 8px 0 0; }
   .vin[aria-busy='true'] { cursor: progress; }
-  .lab { font-size: 0.66rem; }
-  .seg { border: 0; border-left: 1px solid var(--ink); }
-  .seg button { padding: 3px 8px; font-size: 0.74rem; font-weight: 600; }
-  @media (max-width: 899px) {
-    .seg button { padding: 4px 7px; font-size: 0.72rem; }
-  }
+  .lab { color: var(--muted); }
+  .sep { color: var(--muted); }
+  .opt { border: 0; background: none; padding: 0; min-height: 0; font: inherit; color: var(--text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .opt[aria-checked='true'] { text-decoration: none; font-weight: 600; color: var(--ink); cursor: default; }
+  /* touch: a 40 px target around the short text, without changing the line's look */
+  @media (pointer: coarse) { .opt { min-height: 40px; min-width: 40px; margin: -12px 0; } }
 </style>

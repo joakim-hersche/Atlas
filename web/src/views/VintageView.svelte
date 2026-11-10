@@ -248,6 +248,7 @@
         {:else if yearMissing && col}
           <p class="foot yr">{tv('vin.noYear', { y: app.year ?? '' })} · {fmtPeriod(col.period)}</p>
         {/if}
+        <VintageSwitch {base} />
         {#if vm}
           <p class="prov">{provText}{#if vm.provenance === 'forward' && vm.n_estimate}{' '}{tv('vin.nEst', { n: fmtNumber(vm.n_estimate, 0) })}{/if}
             {#if source}<a href={srcLink}>{source.publisher.split(' (')[0]}</a>{/if}</p>
@@ -262,7 +263,6 @@
   <section class="pane">
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
-      <div class="lvlbar"><VintageSwitch {base} /></div>
       {#if !desktop && card && ref && meta}
         <div class="card-wrap">
           <Card name={card.u.name} canton={card.u.kanton} sub={card.sub} {meta} file={ref.file} col={ref.col} index={card.i}
@@ -334,8 +334,6 @@
     position: absolute; z-index: 5; pointer-events: none; transform: translate(14px, 14px); background: var(--panel);
     border: 1px solid var(--ink); padding: 6px 9px; font-size: 0.8rem; white-space: nowrap;
   }
-  .lvlbar { position: absolute; z-index: 3; top: 10px; left: 10px; right: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
-  .lvlbar > :global(*) { pointer-events: auto; }
   .card-wrap { position: absolute; z-index: 6; left: 8px; right: 34px; bottom: 8px; max-width: 440px; margin: 0 auto; max-height: calc(100% - 52px); display: flex; flex-direction: column; justify-content: flex-end; }
   .status {
     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); color: var(--muted);
@@ -351,6 +349,5 @@
     .pane { order: 0; flex: 1 1 auto; min-height: 50%; }
     .controls { order: 1; flex: none; border-top: 2px solid var(--rule); max-height: 44%; padding-bottom: env(safe-area-inset-bottom); }
     .body section { padding: 9px 0; }
-    .lvlbar { top: 8px; left: 8px; }
   }
 </style>
