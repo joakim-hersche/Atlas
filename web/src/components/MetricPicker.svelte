@@ -1,15 +1,26 @@
 <script lang="ts">
-  // Metric picker: headline metrics grouped by theme; typing searches every metric available
-  // at municipality level (accent- and case-insensitive, German labels and ids too).
-  import type { MetricMeta } from '../lib/data';
+  // Metric picker: headline metrics grouped by theme; typing searches every metric (accent- and
+  // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
+  // (not aggregatable, or not published there) are listed but disabled, with the reason.
+  import { levelInfo, type MetricMeta } from '../lib/data';
 
   interface Props {
     metrics: MetricMeta[];
     value: string;
+    level?: string;
     tag?: string;
+    /** label of the empty choice (e.g. 'None' for size); omitted = no empty choice */
+    none?: string;
     onpick: (id: string) => void;
   }
-  let { metrics, value, tag, onpick }: Props = $props();
+  let { metrics, value, level = 'gemeinde', tag, none, onpick }: Props = $props();
+  const MAP_LEVELS = ['gemeinde', 'bezirk', 'kanton', 'grossregion', 'sprachgebiet', 'agglomeration', 'arbeitsmarktgebiet', 'stadt_land'];
+  const ok = (m: MetricMeta) => m.levels.includes(level);
+  function why(m: MetricMeta) {
+    if (m.aggregation === 'not_aggregatable') return 'not aggregatable';
+    const at = m.levels.filter((l) => MAP_LEVELS.includes(l));
+    return at.length === 1 ? `${levelInfo(at[0]).label.toLowerCase()} only` : `not for ${levelInfo(level).label.toLowerCase()}`;
+  }
 
   let open = $state(false);
   let q = $state('');
@@ -18,7 +29,8 @@
   let input = $state<HTMLInputElement>();
 
   const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const usable = $derived(metrics.filter((m) => !m.hidden && m.levels.includes('gemeinde')));
+  const usable = $derived(metrics.filter((m) => !m.hidden && m.levels.some((l) => MAP_LEVELS.includes(l))));
+  const nAvail = $derived(usable.filter(ok).length);
   const current = $derived(metrics.find((m) => m.id === value));
   const keyed = $derived(usable.map((m) => ({ m, key: norm(`${m.label_en} ${m.label_de} ${m.id} ${m.theme}`) })));
 
@@ -26,19 +38,19 @@
     const words = norm(q).split(/\s+/).filter(Boolean);
     let items: MetricMeta[];
     if (!words.length) {
-      items = usable.filter((m) => m.headline !== null).sort((a, b) => a.headline! - b.headline!);
+      items = usable.filter((m) => m.headline !== null && (ok(m) || m.levels.includes('gemeinde'))).sort((a, b) => a.headline! - b.headline!);
     } else {
       items = keyed
         .filter((k) => words.every((w) => k.key.includes(w)))
         .map((k) => k.m)
-        .sort((a, b) => (a.headline ?? 1e9) - (b.headline ?? 1e9) || a.label_en.localeCompare(b.label_en))
+        .sort((a, b) => Number(ok(b)) - Number(ok(a)) || (a.headline ?? 1e9) - (b.headline ?? 1e9) || a.label_en.localeCompare(b.label_en))
         .slice(0, 120);
     }
     const groups = new Map<string, MetricMeta[]>();
     for (const m of items) groups.set(m.theme, [...(groups.get(m.theme) ?? []), m]);
     return [...groups.entries()];
   });
-  const flat = $derived(list.flatMap(([, ms]) => ms));
+  const flat = $derived(list.flatMap(([, ms]) => ms).filter(ok));
 
   function toggle() {
     open = !open;
@@ -57,6 +69,7 @@
     else if (e.key === 'ArrowDown') { active = Math.min(flat.length - 1, active + 1); e.preventDefault(); scrollActive(); }
     else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); e.preventDefault(); scrollActive(); }
     else if (e.key === 'Enter' && flat[active]) pick(flat[active].id);
+    else if (e.key === 'Enter' && none && !flat.length) pick('');
   }
   function scrollActive() {
     queueMicrotask(() => root.querySelector('.opt.active')?.scrollIntoView({ block: 'nearest' }));
@@ -72,34 +85,49 @@
   <button type="button" class="btn" aria-haspopup="listbox" aria-expanded={open} onclick={toggle}>
     {#if tag}<span class="tag">{tag}</span>{/if}
     <span class="lbl">
-      <span class="theme caps">{current?.theme ?? ''}</span>
-      <span class="name">{current?.label_en ?? value}</span>
+      <span class="theme caps">{current?.theme ?? (none ? 'Off' : '')}</span>
+      <span class="name">{current?.label_en ?? (value || none || '')}</span>
     </span>
     <svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" /></svg>
   </button>
   {#if open}
     <div class="pop" role="dialog" aria-label="Choose a metric">
       <div class="search">
-        <input bind:this={input} bind:value={q} type="search" placeholder="Search {usable.length} metrics" aria-label="Search metrics"
+        <input bind:this={input} bind:value={q} type="search" placeholder="Search {nAvail} metrics" aria-label="Search metrics"
           oninput={() => (active = 0)} onkeydown={key} />
         <button type="button" class="x" aria-label="Close" onclick={() => (open = false)}>×</button>
       </div>
       <div class="list" role="listbox" aria-label="Metrics">
-        {#if !flat.length}
+        {#if none && !q}
+          <button type="button" role="option" class="opt" aria-selected={!value} onclick={() => pick('')}>
+            <span class="ol">{none}</span><span class="om">–</span>
+          </button>
+        {/if}
+        {#if !list.length}
           <p class="empty">No metric matches “{q}”.</p>
         {/if}
         {#each list as [theme, ms]}
           <div class="grp caps">{theme}</div>
           {#each ms as m}
             {@const k = flat.indexOf(m)}
-            <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
-              onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
-              <span class="ol">{m.label_en}</span>
-              <span class="om">{m.unit || '–'} · {m.latest}{m.coverage.startsWith('partial:') ? ' · partial' : ''}</span>
-            </button>
+            {#if ok(m)}
+              <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
+                onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
+                <span class="ol">{m.label_en}</span>
+                <span class="om">{m.unit || '–'} · {m.latest}{m.coverage.startsWith('partial:') ? ' · partial' : ''}</span>
+              </button>
+            {:else}
+              <div role="option" class="opt off" aria-disabled="true" aria-selected="false" title="Not available for {levelInfo(level).label.toLowerCase()}">
+                <span class="ol">{m.label_en}</span>
+                <span class="om">{why(m)}</span>
+              </div>
+            {/if}
           {/each}
         {/each}
-        {#if !q}<p class="hint foot">Headline metrics shown. Type to search all {usable.length}.</p>{/if}
+        {#if !q}<p class="hint foot">Headline metrics shown. Type to search all {nAvail}.</p>{/if}
+        {#if nAvail < usable.length}
+          <p class="hint foot">{usable.length - nAvail} metrics are not available for {levelInfo(level).label.toLowerCase()}: medians, indices and travel times cannot be aggregated, and some sources publish one level only.</p>
+        {/if}
       </div>
     </div>
   {/if}
@@ -138,6 +166,8 @@
     text-align: left; cursor: pointer; align-items: baseline;
   }
   .opt.active { background: var(--panel-2); }
+  .opt.off { cursor: default; color: var(--faint); }
+  .opt.off .om { font-style: italic; }
   .opt[aria-selected='true'] .ol { color: var(--accent); font-weight: 600; }
   .opt[aria-selected='true'] { box-shadow: inset 2px 0 0 var(--accent); }
   .ol { min-width: 0; }

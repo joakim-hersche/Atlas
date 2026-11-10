@@ -10,20 +10,29 @@
     reason: string | null;
     within: boolean;
   }
+  interface Extra {
+    label: string;
+    value: string;
+  }
   interface Props {
     name: string;
+    /** canton code, used for the coverage gap reason */
     canton: string;
-    bfs: string;
+    /** line next to the name, e.g. 'ZH · BFS 261' */
+    sub: string;
     meta: MetricMeta;
-    file: ColumnFile;
+    file: ColumnFile | null;
     col: Column;
     index: number;
     source: Source | undefined;
     reach: Reach | null;
     docked?: boolean;
+    unitWord?: string;
+    /** further rows, e.g. the size metric */
+    extra?: Extra[];
     onclose: () => void;
   }
-  let { name, canton, bfs, meta, file, col, index, source, reach, docked = false, onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], onclose }: Props = $props();
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
@@ -35,7 +44,7 @@
 <div class="card" class:docked role="dialog" aria-label="{name} quick card">
   <div class="top">
     <h2>{name}</h2>
-    <span class="sub">{canton} · BFS {bfs}</span>
+    <span class="sub">{sub}</span>
     <button type="button" class="close" aria-label="Close" onclick={onclose}>×</button>
   </div>
   <p class="mlabel">{meta.label_en}</p>
@@ -45,7 +54,7 @@
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
-          Rank {fmtNumber(rank.rank, 0)} of {fmtNumber(rank.n, 0)} · P{Math.round(rank.pct)}<span class="long">{cov ? ' · among municipalities with data' : ''}
+          Rank {fmtNumber(rank.rank, 0)} of {fmtNumber(rank.n, 0)} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · among ${unitWord} with data` : ''}
           <span class="muted">({meta.direction === 'lower_better' ? '1 = lowest' : '1 = highest'})</span></span>
         </span>
       {/if}
@@ -57,6 +66,9 @@
       <span class="rank reason">{gapReason(file, col, index, meta, canton)}</span>
     </div>
   {/if}
+  {#each extra as x}
+    <div class="extra"><span class="xl">{x.label}</span><span class="xv num">{x.value}</span></div>
+  {/each}
   <div class="foot">
     <span class="tags">
       <span class="tag">{precision}</span>
@@ -97,6 +109,9 @@
   .reason { color: var(--text); }
   .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
+  .extra { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8rem; margin-top: 4px; }
+  .xl { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xv { font-weight: 600; flex: none; }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
   .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: 0.72rem; color: var(--faint); }
   .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); }

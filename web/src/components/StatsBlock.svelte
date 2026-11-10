@@ -12,8 +12,9 @@
     ch: { value: number; period: string } | null;
     sel: number | null;
     source: Source | undefined;
+    unitWord?: string;
   }
-  let { meta, v, period, names, cantons, ch, sel, source }: Props = $props();
+  let { meta, v, period, names, cantons, ch, sel, source, unitWord = 'municipalities' }: Props = $props();
 
   const s = $derived(sortedValues(v));
   const ext = $derived.by(() => {
@@ -33,7 +34,7 @@
 </script>
 
 <div class="stats">
-  <div class="caps">Distribution across municipalities</div>
+  <div class="caps">Distribution across {unitWord}</div>
   <div class="unit">{meta.unit || 'value'} · {fmtPeriod(period)}</div>
   {#if s.length}
     <table>
@@ -42,8 +43,8 @@
         <tr><th>Mean <span class="muted">(unweighted)</span></th><td class="num">{f(mean(s))}</td></tr>
         <tr><th>Median</th><td class="num">{f(quantile(s, 0.5))}</td></tr>
         <tr><th>P10 / P90</th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
-        <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
-        <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
+        <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') || !cantons[ext.lo] || cantons[ext.lo] === names[ext.lo] ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
+        <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') || !cantons[ext.hi] || cantons[ext.hi] === names[ext.hi] ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
         <tr><th>Switzerland</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
       </tbody>
     </table>
@@ -66,7 +67,7 @@
         </table>
         <div class="pbar" aria-hidden="true"><span style="left:{rank.pct}%"></span></div>
       {:else}
-        <p class="muted">No value for this municipality.</p>
+        <p class="muted">No value for this unit.</p>
       {/if}
     </div>
   {/if}

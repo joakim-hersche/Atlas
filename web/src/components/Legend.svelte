@@ -17,8 +17,9 @@
     method: Method;
     onmethod: (m: Method) => void;
     compact?: boolean;
+    unitWord?: string;
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities' }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
@@ -91,7 +92,7 @@
   </div>
 
   <div class="plot" bind:clientWidth={w}>
-    <svg width={w} height={H + 22} role="img" aria-label="Distribution of {meta.label_en} across {fmtNumber(scale.n, 0)} municipalities">
+    <svg width={w} height={H + 22} role="img" aria-label="Distribution of {meta.label_en} across {fmtNumber(scale.n, 0)} {unitWord}">
       {#each bins as b}
         {#if b.h}<rect x={b.x} y={H - b.h} width={b.w} height={b.h} fill={b.fill} />{/if}
       {/each}

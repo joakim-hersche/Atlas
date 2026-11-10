@@ -24,6 +24,9 @@
   --sel-casing: #ffffff;
   --nodata-fill: #f0f0f0;
   --nodata-line: #9a9a9a;
+  --sym-ground: #eeeeee;  /* polygons under proportional symbols */
+  --sym-line: #ffffff;
+  --sym-stroke: #ffffff;
   --reach-line: #000000;
   --reach-casing: #ffffff;
   --plot-grid: #e6e6e6;
