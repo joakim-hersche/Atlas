@@ -1,0 +1,11 @@
+source_id: bfs_gwr
+title: School and university buildings per municipality (GWR, public extract)
+publisher: BFS (Federal Statistical Office), Federal Register of Buildings and Dwellings (GWR)
+url: https://public.madd.bfs.admin.ch/ch.zip
+license: "Freie Nutzung. Quellenangabe ist Pflicht (license.txt of the GWR publication https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/license.txt; also in the extract as license.pdf): commercial and non-commercial use allowed, source (author, title, link) required"
+attribution: "Source: BFS – Eidgenössisches Gebäude- und Wohnungsregister (GWR), public data"
+vintage: "register snapshot 2026-11-10 (EXPDAT); municipality numbers of the extract mapped to the reference state; resident base STATPOP 31 Dec 2025"
+years: "2026 (snapshot)"
+precision: exact
+notes: "Level-A data only. Buildings, not schools: class 1263 holds school buildings, universities and research institutes; kindergartens and daycare centres are mostly in other classes. The same extract supplies building coordinates to bafu_noise (pipeline/sources/bfs_gwr/buildings.py)."
+catalog_ids: [bfs_gwr_schools]

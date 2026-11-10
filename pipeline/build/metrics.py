@@ -412,7 +412,10 @@ def run() -> str:
                           AND b.metric_id = n.metric_id AND b.period = n.period
                      WHERE n.metric_id IN ({_q(notagg)})""")
     parts.append("SELECT * FROM native_only")
-    con.execute("CREATE TABLE base_all AS " + " UNION ALL ".join(parts))
+    # one part at a time (a single UNION of all parts exceeds the memory cap)
+    con.execute("CREATE TABLE base_all AS " + parts[0])
+    for part in parts[1:]:
+        con.execute("INSERT INTO base_all " + part)
     # National Council (D37): LPS under FDP above canton level from 2011 (pipeline/build/elections.py)
     from pipeline.build import elections
     has_nrw = "nrw_fw_fdp" in set(meta["id"])

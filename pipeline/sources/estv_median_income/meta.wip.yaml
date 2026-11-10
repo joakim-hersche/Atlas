@@ -1,0 +1,12 @@
+source_id: estv_median_income
+title: Median taxable income per taxpayer, estimated from the ESTV income classes (direct federal tax, normal cases)
+publisher: ESTV/AFC (Federal Tax Administration); estimate by ATLAS
+url: https://www.estv.admin.ch/de/statistiken-natuerliche-personen-gemeinden-1983-bis-heute
+license: "Wiedergabe unter Angabe der Quelle für Nutzung gestattet (colophon of the ESTV workbooks, © ESTV, same files as estv_dbst)"
+attribution: "Source: ESTV – Statistik der direkten Bundessteuer, natürliche Personen (income classes); median estimated by ATLAS"
+vintage: municipality state of each tax year (inferred from the BFS numbers, as in estv_dbst), class counts summed to the reference state, then the median estimated; cantons and Switzerland from the published class totals
+years: "2020–2023 (income classes exist only from 2020)"
+method: "pipeline/sources/estv_median_income/estimate.py: log-linear interpolation of the cumulative class counts inside the median class; suppressed cells (< 4 taxpayers) filled from the remainder to the total"
+precision: modelled
+caveats: "Normal cases only (special cases are excluded because their classes are not comparable); taxable income of the direct federal tax, per tax unit (a married couple counts once). 2020: the all-normal-cases workbook is wrong (publisher error), so the classes are the sum of the with-tax (sheet 121) and without-tax (sheet 321) workbooks. 2021 and 2022: about 8 % of the municipalities have no estimate because a larger cell was hidden as well."
+catalog_ids: [estv_dbst_np_gemeinde]

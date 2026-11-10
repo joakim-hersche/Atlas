@@ -1,0 +1,13 @@
+source_id: bfs_se_language_cities
+title: Structural Survey – main languages by statistical city, 5-year pooled, with confidence intervals
+publisher: BFS (Federal Statistical Office) – Strukturerhebung (SE)
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets/36491975/master
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse, as for the other SE tables)"
+attribution: "Source: BFS – Strukturerhebung (SE), kumuliert"
+vintage: "cities keyed by name, matched to the municipality register at the end of the pooling period; a city whose territory changed since (merger, split or transfer before the reference state) is skipped for that edition"
+years: "pooled 2010-2014 … 2020-2024 (11 rolling editions; period = 'YYYY-YYYY')"
+precision: survey (95 % CI per count; share CI approximated)
+notes: "Partial coverage: 146 to 170 statistical cities (about half of the population); BFS publishes no SE language table for other municipalities or for MS regions (checked: DAM search 'Hauptsprachen' 2026-11-10, tables su-d-40.02.01.08.01-.31, SSV, CITYSTAT). Up to three main languages per person, so shares add to more than 100 %. Not comparable with the census 2000 single answer (bfs_census_1970_2000)."
+table: su-d-40.02.01.08.31-<year>
+dam_ids: {2010-2014: 255438, 2011-2015: 2262978, 2012-2016: 4842078, 2013-2017: 7726964, 2014-2018: 12228944, 2015-2019: 16404814, 2016-2020: 21765642, 2017-2021: 24311541, 2018-2022: 31068962, 2019-2023: 34727032, 2020-2024: 36491975}
+catalog_ids: [bfs_se_language_cities]

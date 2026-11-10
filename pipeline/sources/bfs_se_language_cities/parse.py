@@ -86,8 +86,9 @@ def parse_edition(path, period: str) -> pd.DataFrame:
             cols[LANG[key]] = j
     end = pd.Timestamp(f"{period[-4:]}-12-31")
     look, touched = _lookup(end)
-    first = next(r for r in vals[hdr_row + 2:] if isinstance(r[c0], (int, float)))
-    ci_factor = 100.0 if first[c0 + 1] < 0.05 else 1.0  # first editions give the CI as a fraction
+    # the first editions give the CI as a fraction, later ones in percent: decide on the largest population CI
+    pop_ci = [r[c0 + 1] for r in vals[hdr_row + 2:] if isinstance(r[c0 + 1], (int, float))]
+    ci_factor = 100.0 if pop_ci and max(pop_ci) < 0.5 else 1.0
     rows = []
     for i, r in enumerate(vals[hdr_row + 2:], start=hdr_row + 2):
         name = r[c0 - 1]
@@ -123,11 +124,23 @@ def parse_edition(path, period: str) -> pd.DataFrame:
     return df
 
 
+SHARE_LANGS = ["de", "fr", "it", "rm", "en", "other"]
+
+
 def to_obs(df: pd.DataFrame) -> pd.DataFrame:
-    base = df.assign(metric_id="lang_sec_" + df["lang"])
-    ci = df.assign(metric_id="lang_sec_" + df["lang"] + "_ci", value=df["ci"])
+    """Population count, language shares (% of the city's residents) and approximate CI half-widths (pp)."""
+    key = ["level", "unit_id", "period"]
+    pop = df[df["lang"] == "pop"].set_index(key)["value"]
+    sh = df[df["lang"].isin(SHARE_LANGS)].copy()
+    popv = pop.reindex(pd.MultiIndex.from_frame(sh[key])).to_numpy()
+    sh["share"] = sh["value"] / popv * 100
+    base = sh.assign(metric_id="lang_sec_" + sh["lang"] + "_share", value=sh["share"])
+    base["status"] = np.where(base["value"].notna(), "ok", base["status"].where(base["status"] != "ok", "no_data"))
+    ci = sh.assign(metric_id="lang_sec_" + sh["lang"] + "_share_ci", value=sh["share"] * sh["ci"] / 100)
     ci["status"] = np.where(ci["value"].notna(), "ok", ci["status"].where(ci["status"] != "ok", "no_data"))
-    out = pd.concat([base, ci], ignore_index=True)
+    ci["note"] = np.where(ci["value"].isna(), ci["note"], None)
+    pop_rows = df[df["lang"] == "pop"].assign(metric_id="lang_sec_pop")
+    out = pd.concat([pop_rows, base, ci], ignore_index=True)
     out["precision"], out["provenance"], out["source_id"] = "survey", "native", SOURCE
     out["vintage"] = REFERENCE_DATE.isoformat()
     return out[OBS_COLUMNS]

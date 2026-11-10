@@ -1,0 +1,13 @@
+source_id: bafu_noise
+title: Road and rail traffic noise exposure of residents per municipality (BAFU sonBASE 2021)
+publisher: "BAFU / FOEN (Federal Office for the Environment) via data.geo.admin.ch; buildings from BFS GWR, residents from BFS STATPOP"
+url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bafu.laerm-strassenlaerm_tag
+url_other: "ch.bafu.laerm-strassenlaerm_nacht, ch.bafu.laerm-bahnlaerm_tag, ch.bafu.laerm-bahnlaerm_nacht (same STAC pattern)"
+license: "Open use, source must be provided: the STAC collections link https://opendata.swiss/en/terms-of-use/#terms_by (terms_by); BAFU disclaimer in the download: 'sonBASE geodata may only be reproduced if the corresponding source is indicated'"
+attribution: "FOEN 2025, sonBASE - Noise Database of Switzerland 2021 (BAFU); buildings: BFS GWR; residents: BFS STATPOP; exposure computed by ATLAS"
+vintage: "sonBASE state 2021 (traffic data 2021, calculation 2023, published 2025/2026); residents STATPOP 2021 hectares; buildings of the GWR extract of 2026-11-10 built up to 2021; municipalities of the reference state"
+years: "2021"
+method: "pipeline/sources/bafu_noise/parse.py: 10 m noise grid sampled at the GWR residential buildings (maximum within 10 m), residents of each STATPOP hectare distributed over its buildings by dwellings"
+precision: modelled
+notes: "BAFU: sonBASE is for statistical information at national and regional level; not suitable for the local level; not legally binding. Aircraft noise (BAZL) is not included. Road limit values (Anhang 3 LSV, SR 814.41): IGW 60/50 dB(A) day/night for sensitivity level II, 65/55 for level III (confirmed 2026-11-10 in a WEKA table citing Anhang 3 LSV; fedlex.admin.ch and bafu.admin.ch were not reachable from the build environment). The rail limits (Anhang 4 LSV) are assumed to be the same numbers and were not independently confirmed."
+catalog_ids: [bafu_noise_sonbase]
