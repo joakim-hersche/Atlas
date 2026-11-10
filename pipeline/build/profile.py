@@ -138,7 +138,14 @@ def build_search(units, identity, cantons, plz) -> dict:
         else:
             alts = _alts(name, level_alts.get(lvl, {}).get(uid, []))
         rows.append([uid, lvl, name, kt, alts])
+    former_fields, former = former_names(units)
     out = {"fields": ["id", "level", "display_name", "kanton", "alt_names"], "units": rows,
+           # review round 3 (A6, R1): names of municipalities that existed on or after 1960 and no longer carry
+           # that name today (merged, renamed, split), each resolving to today's municipality
+           "former_fields": former_fields, "former": former,
+           "former_note": ("former municipality names since 1960 (BFS historized register): 'to' = today's municipalities "
+                           "holding its territory, largest share first; 'vintages' = its unit id on the older boundary "
+                           "states where that municipality existed on that date"),
            "plz_fields": ["gemeinde_id", "locality", "address_share_pct"],
            "plz_note": "one row per locality (PLZ + Zusatzziffer) and municipality, largest share first; "
                        "address_share_pct = share (%) of that locality's addresses lying in the "
@@ -161,6 +168,41 @@ def build_search(units, identity, cantons, plz) -> dict:
                                 for b, loc, s in zip(g["bfs_nr"], g["locality"], g["address_share"])]
         out["sources"].append("swisstopo_plz")
     return out
+
+
+def former_names(units) -> tuple[list[str], list]:
+    """Former municipality names (A6): every municipality version valid on or after 1960 whose name is not the
+    name of a current municipality it maps to. Rows: [name, hist_id, canton then, valid_from, valid_to,
+    to [[bfs_nr, weight], ...] largest first, vintages {vintage id: unit id} where it existed on that date]."""
+    from pipeline.backbone.crosswalk import versions_at
+    from pipeline.build.vintages import VINTAGES
+    mv = pd.read_parquet(interim_path("backbone", "municipality_version.parquet"))
+    mv = mv[mv["entry_mode"].astype(str) == "11"]
+    mv = mv[mv["valid_to"].isna() | (mv["valid_to"] >= SINCE)]
+    cw = pd.read_parquet(interim_path("backbone", f"crosswalk_{REFERENCE_DATE.isoformat()}.parquet"),
+                         columns=["from_hist_id", "to_bfs_nr", "weight"])
+    cur = {u["id"]: u["name"] for u in units if u["level"] == "gemeinde"}
+    to = defaultdict(list)
+    for h, b, w in zip(cw["from_hist_id"], cw["to_bfs_nr"], cw["weight"]):
+        if str(int(b)) in cur:
+            to[int(h)].append([str(int(b)), round(float(w), 3)])
+    at = {v.id: set(versions_at(mv, v.date)["hist_id"].astype(int)) for v in VINTAGES}
+    rows: dict = {}
+    for r in mv.sort_values(["name", "valid_from"]).itertuples():
+        h = int(r.hist_id)
+        tgt = sorted(to.get(h, []), key=lambda x: -x[1])
+        if not tgt or any(cur.get(b) == r.name for b, _ in tgt):
+            continue                         # unmapped, or the name is still a current municipality's name
+        vint = {vid: str(int(r.bfs_nr)) for vid, hs in at.items() if h in hs}
+        vt = r.valid_to.date().isoformat() if pd.notna(r.valid_to) else None
+        key = (r.name, tuple(b for b, _ in tgt))
+        if key in rows:                      # the same name for the same place in several register versions
+            row = rows[key]
+            row[4] = vt
+            row[6] = {**(row[6] or {}), **vint} or None
+            continue
+        rows[key] = [r.name, h, r.canton, r.valid_from.date().isoformat(), vt, tgt, vint or None]
+    return ["name", "hist_id", "kanton", "valid_from", "valid_to", "to", "vintages"], list(rows.values())
 
 
 # ---------------------------------------------------------------- identity.json
@@ -406,12 +448,15 @@ REACH_METHODS = {
                  "innerhalb 1,5 km, dann die Fahrplan-Reisezeit (bevölkerungsgewichteter Median).",
            "fr": "Porte à porte vers le pôle, arrivée 07:30–08:30 : marche du domicile au meilleur arrêt à moins "
                  "de 1,5 km, puis le trajet selon l'horaire (médiane pondérée par la population)."},
-    "car": {"en": "Car travel time towards the hub, average weekday model incl. congestion (national passenger "
-                  "transport model ARE NPVM 2023).",
-            "de": "Autofahrzeit Richtung Zentrum, Modell für den durchschnittlichen Werktag inkl. Stau (Nationales "
-                  "Personenverkehrsmodell ARE NPVM 2023).",
-            "fr": "Temps de trajet en voiture vers le pôle, modèle du jour ouvrable moyen, congestion comprise "
-                  "(modèle national du trafic voyageurs ARE MNTP 2023)."},
+    # review round 3 (F7, data spot check): the NPVM car times are loaded-network times of the whole-day
+    # assignment, typically about 25–35 % above the free-flow times of a route planner (Zürich–Bern 108 min)
+    "car": {"en": "Car travel time towards the hub: whole-day average weekday model incl. congestion (national passenger "
+                  "transport model ARE NPVM 2023); typically about 25–35 % above free-flow route-planner times.",
+            "de": "Autofahrzeit Richtung Zentrum: Modell für den ganzen durchschnittlichen Werktag inkl. Stau (Nationales "
+                  "Personenverkehrsmodell ARE NPVM 2023); meist etwa 25–35 % über den Zeiten eines Routenplaners ohne Verkehr.",
+            "fr": "Temps de trajet en voiture vers le pôle : modèle de toute la journée d'un jour ouvrable moyen, congestion "
+                  "comprise (modèle national du trafic voyageurs ARE MNTP 2023) ; en général environ 25–35 % au-dessus des "
+                  "temps d'un calculateur d'itinéraire sans trafic."},
 }
 # generic per-metric notes of pipeline/sources/reach_metrics (the per-unit additions follow after "; ")
 _REACH_GENERIC = ("GTFS timetable 2026", "ARE NPVM 2023")

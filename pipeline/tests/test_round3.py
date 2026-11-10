@@ -128,3 +128,59 @@ def test_canton_median_note_is_not_published_value():
             assert any(n.startswith("ATLAS estimate") for n in c.get("notes") or [])
             return
     pytest.skip("median not shipped at canton level")
+
+
+# ---- A4: translated pipeline texts -----------------------------------------------------------------------
+def test_translate_notes_de_fr():
+    from pipeline.build.texts import load, translate
+    tx = load()
+    s = ("published canton value; municipal values incomplete (3 of 352 municipalities without a value: "
+         "3 suppressed (small numbers), 1 no data)")
+    assert translate(s, "de", tx) == ("veröffentlichter Wert des Kantons; Gemeindewerte unvollständig (3 von 352 Gemeinden "
+                                      "ohne Wert: 3 unterdrückt (kleine Zahlen), 1 ohne Daten)")
+    assert translate(s, "fr", tx).startswith("valeur publiée du canton ; valeurs communales incomplètes (3 communes sur 352")
+    # a note joined with '; ' inside one entry (fictitious voters) and number formats
+    s = ("proportional-representation cantons only: excludes 65 of 1,374 municipalities in single-seat cantons "
+         "(AI, AR; 3.0 % of fictitious voters)")
+    assert "1'374" in translate(s, "de", tx) and "3,0 %" in translate(s, "fr", tx)
+    # names are kept; one part per moved municipality
+    s = ("on today's boundaries: without Clavaleyres (now canton FR); without Moutier (now canton JU), so it differs "
+         "from the figure published for the canton at the time")
+    assert translate(s, "de", tx, strict=True) == ("auf dem heutigen Gebietsstand: ohne Clavaleyres (heute Kanton FR); ohne "
+                                                    "Moutier (heute Kanton JU); deshalb weicht der Wert von der damals für "
+                                                    "den Kanton veröffentlichten Zahl ab")
+    assert translate("an unknown note", "de", tx, strict=True) is None
+    assert translate("an unknown note", "de", tx) == "an unknown note"
+
+
+def test_texts_have_no_eszett_and_compile():
+    import re
+    import yaml
+    from pipeline.build.texts import I18N
+    for name in ("texts.yaml", "texts_sources.yaml"):
+        y = yaml.safe_load((I18N / name).read_text(encoding="utf-8"))
+        for e in (y.get("exact") or []) + (y.get("patterns") or []):
+            assert "ß" not in e.get("de", ""), e["en"]
+            assert e.get("de") and e.get("fr"), e["en"]
+        for e in y.get("patterns") or []:
+            re.compile(e["en"])
+            assert "(?P<" not in e["en"] and "(?<" not in e["en"].replace("(?<!", "")   # JS-compatible groups
+
+
+# ---- A6: former municipality names in the search index ---------------------------------------------------
+def test_former_names_resolve_to_current_and_vintage():
+    from pipeline.common import interim_path
+    if not interim_path("backbone", "municipality_version.parquet").exists() or not out_path("web", "units.json").exists():
+        pytest.skip("backbone / units not built")
+    from pipeline.build.profile import former_names, load_units
+    fields, rows = former_names(load_units())
+    assert fields == ["name", "hist_id", "kanton", "valid_from", "valid_to", "to", "vintages"]
+    by = {r[0]: r for r in rows}
+    # Obstalden GL merged into Glarus Nord (1630) in 2011; on the 2000 and 2010 boundaries it was unit 1624
+    o = by["Obstalden"]
+    assert o[5][0][0] == "1630" and o[6] == {"2010": "1624", "2000": "1624"}
+    # Clavaleyres BE merged into Murten FR in 2022: one row for all its register versions
+    assert [r[0] for r in rows].count("Clavaleyres") == 1 and by["Clavaleyres"][5][0][0] == "2275"
+    # current names are not listed as former names
+    cur = {u["name"] for u in load_units() if u["level"] == "gemeinde"}
+    assert "Glarus Nord" not in by and not any(r[0] in cur and r[5][0][0] for r in rows if r[0] == "Zürich")
