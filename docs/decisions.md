@@ -125,7 +125,7 @@ Owner: "No emails. Go with your recommendation." Options from `checkpoint3.md`:
 
 **Checkpoint 3 closed: 2026-11-10.** Phase 4 (web app) starts with the Checkpoint 4 skeleton.
 
-## Phase 4 — Checkpoint 4 (2026-11-10, awaiting owner review, round 3)
+## Phase 4 — Checkpoint 4 (2026-11-10, closed)
 
 Skeleton built in `web/` (TypeScript, Vite, Svelte, MapLibre GL, D27) and published as a private preview: https://claude.ai/artifact/QWE95eJd2pbcCzUieHosCY
 - Map of all 2,110 municipalities shaded by any of the headline metrics (quantiles, colour-vision-safe scale, gaps hatched with their reason per D21).
@@ -139,3 +139,6 @@ Owner feedback round 1 (2026-11-10): "cleaner, more professional, as statisticia
 
 ### D29. White Swiss style, light only (owner, 2026-11-10)
 Owner: "Contrast is still an issue. I want a white background Swiss style website." The app drops dark mode (overrides the brief's "light and dark mode" in 6.1): white ground, black type in Inter (a Helvetica stand-in on Google Fonts), black hairline and heavy rules, square corners, no shadows. Selected controls are black with white text. Swiss red (#d52b1e) is the single accent, for the brand mark, the A/B tags, the map selection and the percentile marker. Secondary text is #3d3d3d (11:1 on white) and footnotes #595959 (7:1); nothing in the UI falls below WCAG AA. The data colour scales stay as validated (blue sequential, orange–blue diverging), so red keeps no data meaning.
+
+### D30. Checkpoint 4 closed: design approved (owner, 2026-11-10)
+Owner: "I am happy with the design so far." The skeleton's look (D29), the Compare mode and the phone bottom sheet (chevron handle) are the base for the full UI (brief 6.1). Build order: map features first (all hubs, size by, stacked filters, reach filter, levels, year slider, ranking table), then pages (profile, compare places, search with postal codes, sources page, German UI). The preview stays a private artifact until the owner decides on public hosting.
