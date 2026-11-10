@@ -1,0 +1,35 @@
+source_id: kt_hazards
+title: Residents in natural-hazard zones (cantonal hazard maps via geodienste.ch, *)
+publisher: Cantons via geodienste.ch (Konferenz der kantonalen Geoinformations- und Katasterstellen KGK); population BFS STATPOP
+url: https://geodienste.ch/services/gefahrenkarten
+license: "Per canton as listed by geodienste.ch (publishers): mostly 'Freie Nutzung. Quellenangabe ist Pflicht.'"
+attribution: "Compiled by Gemeindebank from: geodienste.ch – Gefahrenkarten (MGDM 166.1 v1.3) of the cantons AG, AI, AR, BE, BL, FR, GE, GL, GR, JU, LU, NE, SG, SH, SO, SZ, TG, TI, VS, ZG, ZH; BFS – STATPOP 2025 (hectare grid)"
+vintage: "Hazard polygons overlaid with STATPOP 2025 hectare points assigned to reference-state municipalities (zonal statistics)"
+years: "map state November 2026 (period 2026), population 2025"
+catalog_ids: [cantonal_gefahrenkarten, kt_geodienste_hazard, kt_geodienste_hazard_restricted]
+publishers:
+  AG: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", terms_url: "https://www.ag.ch/geoportal/geodatenshop/Nutzungsbedingungen.aspx?Typ=NutzungsbedingungenAGIS1", updated: "2026-03-30"}
+  AI: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", terms_url: "https://geodienste.ch/pdfs/AI/gefahrenkarten/data/Nutzungsbedingungen_AI_annex-123-2.pdf", updated: "2022-08-04"}
+  AR: {terms: "Freie Nutzung", terms_url: "https://ar.ch/fileadmin/user_upload/Departement_Bau_Volkswirtschaft/Amt_fuer_Raum_Wald/Geoinformation_und_Vermessung/AR_Nutzungsbedingungen_Geodaten.pdf", updated: "2026-07-17"}
+  BE: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", terms_url: "https://geofiles.be.ch/internet/geo/geodaten/agi-dv-nutzungsbedingungen-de.pdf", updated: "2026-09-03"}
+  BL: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2022-09-16"}
+  FR: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-11-07"}
+  GE: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", terms_url: "https://sitg.ge.ch/ressources/conditions-utilisation-donnees", updated: "2026-11-01"}
+  GL: {terms: "Freie Nutzung", updated: "2026-04-22"}
+  GR: {terms: "UNVERIFIED: geodienste lists 'keine Angabe'; own terms at https://geo.gr.ch/geodaten/nutzungsbedingungen; data published as 'Frei erhältlich'", updated: "2026-10-06"}
+  JU: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-11-07"}
+  LU: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-10-26"}
+  NE: {terms: "Freie Nutzung. Quellenangabe ist Pflicht. Kommerzielle Nutzung nur mit Bewilligung des Datenlieferanten zulässig.", updated: "2024-09-30", note: "non-commercial personal project: allowed; commercial reuse would need SITN permission"}
+  SG: {terms: "UNVERIFIED: geodienste lists 'keine Angabe'; own terms at https://www.sg.ch/bauen/geoinformation/datenbezug/agb.html; data published as 'Frei erhältlich'", updated: "2026-09-03"}
+  SH: {terms: "Freie Nutzung", updated: "2026-06-01"}
+  SO: {terms: "Freie Nutzung", updated: "2026-09-22"}
+  SZ: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2025-12-04"}
+  TG: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2024-04-30"}
+  TI: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-01-14"}
+  VS: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-10-19"}
+  ZG: {terms: "Freie Nutzung. Quellenangabe ist Pflicht.", updated: "2026-10-30"}
+  ZH: {terms: "Freie Nutzung", terms_url: "https://geo.zh.ch/terms-of-use", updated: "2026-10-29"}
+  population: {publisher: "BFS – STATPOP 2025 hectare grid", license: "OPEN-BY (BFS terms of use)"}
+excluded:
+  NW, OW, UR, VD: "download requires approval ('Freigabe erforderlich', HTTP 401); not requested"
+  BS: "not published yet ('Im Aufbau')"
