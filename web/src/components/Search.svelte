@@ -187,6 +187,7 @@
   }
   input::-webkit-search-cancel-button { display: none; }
   .header { width: 280px; }
+  @media (max-width: 1199px) { .header { width: 190px; } }
   .icon {
     width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--ink); background: var(--panel); cursor: pointer;
     color: var(--text); padding: 0;
