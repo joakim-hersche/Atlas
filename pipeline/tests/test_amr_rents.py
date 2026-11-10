@@ -40,7 +40,7 @@ def test_real_data():
     # same figures as the Statatlas map of the same indicator (Zürich area 12033: 23.8 in 2024, 20.0 in 2012)
     assert v.loc["12033", "2024"] == 23.8 and v.loc["12033", "2012"] == 20.0
     assert v["2024"].between(8, 30).all()
-    # Zürich and Genève areas are dearer than the Swiss median area; Scuol (mountain) is cheaper
-    assert v.loc["12033", "2024"] > v["2024"].median() and v.loc["16110", "2024"] < v["2024"].median()
+    # Zürich and Genève areas are dearer than the Swiss median area; the Leventina area (13010, Ticino valley) is cheaper
+    assert v.loc["12033", "2024"] > v["2024"].median() and v.loc["13010", "2024"] < v["2024"].median()
     ci = o[o.metric_id == "rent_amr_chf_m2_ci"].pivot_table(index="unit_id", columns="period", values="value")
     assert (ci.fillna(0) >= 0).all().all() and ci["2024"].median() < 2
