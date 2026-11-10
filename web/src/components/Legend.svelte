@@ -4,7 +4,7 @@
   import { ml, t as tr } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
-  import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import {
     axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
     type Method, type Scale,
@@ -147,7 +147,7 @@
   </p>
   <p class="foot">
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
-    {#if cov}<span class="partial"> · {tr('p.partial', { n: cov.length })}</span>{/if}
+    {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
   </p>
 </div>
 

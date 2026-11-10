@@ -3,7 +3,7 @@
   import { t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
-  import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues, unitOf } from '../lib/classify';
 
   interface Props {
@@ -56,7 +56,7 @@
       </tbody>
     </table>
     <p class="foot">
-      <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? ` · ${t('p.partial', { n: cov.length })}` : ''}{ch ? '' : ` · ${t('st.noCH')}`}
+      <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? ` · ${coverageLabel(meta)}` : ''}{ch ? '' : ` · ${t('st.noCH')}`}
     </p>
   {:else if mask}
     <p class="muted">{t('st.noMatch')}</p>

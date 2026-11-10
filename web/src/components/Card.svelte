@@ -2,7 +2,7 @@
   import { levelName, ml, t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
-  import { flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
   interface Reach {
@@ -98,7 +98,7 @@
   <div class="foot">
     <span class="tags">
       <span class="tag">{precision}</span>
-      {#if cov}<span class="tag warn">{t('p.partial', { n: cov.length })}</span>{/if}
+      {#if cov}<span class="tag warn">{coverageLabel(meta)}</span>{/if}
       {#if regional}<span class="tag warn">{t('rg.tag', { level: levelName(regional, false) })}</span>{/if}
       {#if sourceLink}<a class="tag src" href={sourceLink} title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</a>
       {:else}<span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>{/if}

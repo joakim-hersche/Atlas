@@ -175,7 +175,7 @@
   import PctBar from '../components/PctBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
+  import { coverageLabel, loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
   import { historyFr, isDe, levelName, ml, t, themeName, tiedText, unitName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
   import {
@@ -407,7 +407,7 @@
       <span class="lbl">{ml(m)}<Term k={glossKeyOf(m)} /></span>
       <span class="tags">
         {#if e}<span class="tag">{precisionLabel(e.precision)}</span><span class="sep">·</span>{/if}
-        {#if e?.partial}<span class="tag warn">{t('p.partial', { n: e.partial.length })}</span><span class="sep">·</span>{/if}
+        {#if e?.partial}<span class="tag warn">{coverageLabel(m)}</span><span class="sep">·</span>{/if}
         {#if e?.regional}<span class="tag warn">{t('rg.tag', { level: levelName(e.regional, false) })}</span><span class="sep">·</span>{/if}
         <a class="tag src" href={sourceHref(m.source)} title={base.sources.get(m.source)?.title ?? ''}>{publisher(m)}</a>
       </span>

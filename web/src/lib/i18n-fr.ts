@@ -245,6 +245,7 @@ export const FR: Dict = {
   'p.showLess': 'Indicateurs principaux seulement',
   'p.notPublished': 'non publié à ce niveau',
   'p.partial': `partiel${n}: {n} cantons sur 26`,
+  'cov.units': `partiel${n}: {n} {units} sur {of}`,
   'pl.try': 'Exemples',
   'prec.boundary_estimate': 'estimation par limites',
   'prec.exact': 'exact',

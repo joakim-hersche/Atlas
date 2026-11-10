@@ -2,7 +2,7 @@
 import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
 import { t, levelWord } from './i18n.svelte';
-import { periodTitles } from './classify';
+import { fmtNumber, periodTitles } from './classify';
 import { app } from './state.svelte';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
@@ -349,6 +349,17 @@ const statusText = (k: string) => t(`gap.${k}`);
 const PRECISIONS = ['exact', 'survey', 'modelled', 'boundary_estimate'];
 /** Precision tag in the UI language (exact / survey / modelled / boundary estimate). */
 export const precisionText = (p: string): string => (PRECISIONS.includes(p) ? t(`prec.${p}`) : p);
+
+/** "partial: …" label of a metric with partial coverage: the number of units with data at its lowest
+ *  level when the build says so (coverage_detail; e.g. 180 of 2,110 municipalities for city rents),
+ *  else the number of cantons covered. null = national coverage. */
+export function coverageLabel(meta: MetricMeta): string | null {
+  const cov = partialCantons(meta);
+  if (!cov) return null;
+  const d = meta.coverage_detail;
+  if (d && d.n && d.of) return t('cov.units', { n: fmtNumber(d.n, 0), of: fmtNumber(d.of, 0), units: levelWord(d.level) });
+  return t('p.partial', { n: cov.length });
+}
 
 export function partialCantons(meta: MetricMeta): string[] | null {
   return meta.coverage.startsWith('partial:') ? meta.coverage.slice(8).split(',') : null;
