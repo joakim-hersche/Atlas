@@ -6,8 +6,20 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const OUT = resolve(here, '../../data/out');
+const FULL = resolve(here, '../../data/out');
+const SAMPLE = resolve(here, '../sample-data');
 const DEST = resolve(here, '../public/data');
+// Without a pipeline build (a fresh clone), fall back to the small committed sample (web/sample-data,
+// made by scripts/make_sample_data.py): a few metrics, all units, the same layout as data/out.
+const USE_SAMPLE = process.env.ATLAS_SAMPLE === '1' || !existsSync(join(FULL, 'web/metrics.json'));
+const OUT = USE_SAMPLE ? SAMPLE : FULL;
+if (USE_SAMPLE) {
+  if (!existsSync(join(SAMPLE, 'web/metrics.json'))) {
+    console.error('Neither data/out/web (run the pipeline: make data) nor web/sample-data exists.');
+    process.exit(1);
+  }
+  console.warn('Using the sample data in web/sample-data (a few metrics only; no data/out/web build, or ATLAS_SAMPLE=1).');
+}
 
 // every *.json file in a directory under data/out (optional entries; missing directory -> none)
 const dirFiles = (dir) =>
@@ -65,7 +77,10 @@ rmSync(DEST, { recursive: true, force: true });
 let missing = 0;
 let copied = 0;
 let bytes = 0;
-for (const [rel, required] of FILES) {
+// the sample has no reach, no other themes and fewer levels; those files are optional there
+const SAMPLE_OPTIONAL = new Set(['reach/zuerich_pt.json', 'web/latest/gemeinde/mobility_accessibility.json']);
+for (const [rel, req] of FILES) {
+  const required = req && !(USE_SAMPLE && SAMPLE_OPTIONAL.has(rel));
   const src = join(OUT, rel);
   if (!existsSync(src)) {
     const msg = `${required ? 'missing' : 'skipped (optional)'}: data/out/${rel}`;
@@ -82,4 +97,4 @@ if (missing) {
   console.error(`${missing} required file(s) missing; run the pipeline first (make web profile reach geometry).`);
   process.exit(1);
 }
-console.log(`copied ${copied} data files (${(bytes / 1048576).toFixed(1)} MB) to web/public/data/`);
+console.log(`copied ${copied} ${USE_SAMPLE ? 'SAMPLE ' : ''}data files (${(bytes / 1048576).toFixed(1)} MB) to web/public/data/`);
