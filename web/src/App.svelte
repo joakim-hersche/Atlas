@@ -15,6 +15,8 @@
   import { hrefFor } from './lib/nav';
   import { app, syncHash } from './lib/state.svelte';
   import { sanitizeState } from './lib/sanitize';
+  import { viewUrl } from './lib/embed';
+  import './lib/i18n-spatial';
 
   // pages other than the map load on first use (code splitting: the first load carries the map only)
   let compareP: Promise<typeof import('./views/CompareView.svelte')> | undefined;
@@ -127,7 +129,8 @@
 
 <svelte:window onpointerdown={outsideMenu} onkeydown={(e) => e.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map'} class:page={!isMap}>
+<div class="app" class:embed={app.embed} class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map'} class:page={!isMap}>
+  {#if !app.embed}
   <a class="skip" href="#main" onclick={skipToMain}>{t('nav.skip')}</a>
   <header class="top">
     <a class="brand" href={hrefFor('map')} title="ATLAS — {t('nav.map')}">
@@ -163,6 +166,7 @@
       {/if}
     </div>
   </header>
+  {/if}
 
   {#if base && cols}
     {#if route === 'profile'}
@@ -180,6 +184,10 @@
         <MapView {base} {ld} {cols} {desktop} onrendered={rendered} />
       {/if}
     {/if}
+  {/if}
+
+  {#if app.embed && !isMap}
+    <a class="embed-open" href={viewUrl(false)} target="_blank" rel="noopener">{t('em.open')} ↗</a>
   {/if}
 
   {#if (!base || (isMap && !ld)) && !loadError}
@@ -236,6 +244,10 @@
     padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); z-index: 40; max-width: 90vw;
   }
   .status.err { color: var(--text); }
+  .embed-open {
+    position: absolute; right: 8px; bottom: 8px; z-index: 60; background: var(--panel); color: var(--text); border: 1px solid var(--ink);
+    padding: 5px 10px; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+  }
 
   @media (max-width: 1279px) {
     .sub { display: none; }

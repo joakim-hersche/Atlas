@@ -18,10 +18,10 @@ Feature requests from persona review round 1 (`docs/review_round1.md`) that are 
   - Noise exposure, childcare places, school locations (family).
   - Recent language data: pooled Structural Survey, municipal or MS region (journalist, geographer).
 - [ ] **Map:** reference layer with lake and city labels, more detailed boundaries on zoom, symbols by default for count metrics (geographer).
-- [ ] **Spatial statistics:** Moran's I, LISA cluster map, bivariate choropleth (geographer).
+- [x] **Spatial statistics:** Moran's I, LISA cluster map, bivariate choropleth (geographer). Done: panel "Spatial patterns" on the map (`#sp=lisa`, `#sp=bi&b=<metric>`, `fdr=1`).
 - [ ] **Older boundaries:** view data on older boundaries (e.g. 2000) as well as harmonised (geographer).
 - [x] **Filtered aggregate** (done: `ag=`, web/src/lib/aggregate.ts): weighted result for the filtered set, e.g. "French-speaking CH: X % yes" (journalist).
-- [ ] **Embedding:** embeddable view (iframe) of any saved URL state (journalist).
+- [x] **Embedding:** embeddable view (iframe) of any saved URL state (journalist). Done: `#…&embed=1` and the Embed button.
 - [x] **Casual users:** plain-language "In short" summary per place; "places like X near Y" (casual user).
 - [x] **Ranking table** (done: `xc=`, `rmin=`, `rmf=`): add any metric as a column; minimum-size filter or flag for small municipalities (analyst, economist).
 - [ ] **Open data and repo**

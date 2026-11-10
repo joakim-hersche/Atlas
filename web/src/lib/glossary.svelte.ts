@@ -2,6 +2,7 @@
 // jargon (quantile, P10/P90, z-score, labour market area ...) behind an ⓘ next to the word. Loaded on
 // first use; a build without the file shows no ⓘ.
 import { getOptionalJSON, type MetricMeta } from './data';
+import { SPATIAL_GLOSS } from './spatial-gloss';
 import { app } from './state.svelte';
 
 export interface GlossEntry {
@@ -70,7 +71,7 @@ const LOCAL: Record<string, GlossEntry> = {
 
 /** Term and explanation in the UI language, or null (unknown key, or no glossary in this build). */
 export function gloss(key: string): { term: string; text: string } | null {
-  const e = entries?.[key] ?? LOCAL[key];
+  const e = entries?.[key] ?? LOCAL[key] ?? SPATIAL_GLOSS[key];
   if (!e) return null;
   const l = app.lang;
   return {

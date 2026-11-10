@@ -4,7 +4,7 @@
 // from app.params, or navigate with app.go('profile', { id: '261' }).
 import type { Method } from './classify';
 import {
-  DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, parseHash, readHash, storeLang, writeHash, type Display, type Filter, type Lang, type ReachMode, type ViewState,
+  DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, parseHash, readHash, storeLang, writeHash, type Display, type Filter, type Lang, type ReachMode, type SpatialMode, type ViewState,
 } from './hash';
 
 export class AppState {
@@ -37,6 +37,10 @@ export class AppState {
   xcols = $state<string[]>([]);
   rmin = $state<number | null>(null);
   rflag = $state(false);
+  /** spatial statistics map mode, false discovery rate for it, and the compact embed mode (all in the hash) */
+  spatial = $state<SpatialMode>('off');
+  fdr = $state(false);
+  embed = $state(false);
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
   /** level the user picked although the shaded metric does not exist there: asked before swapping */
@@ -82,6 +86,9 @@ export class AppState {
     this.xcols = v.xcols;
     this.rmin = v.rmin;
     this.rflag = v.rflag;
+    this.spatial = v.spatial;
+    this.fdr = v.fdr;
+    this.embed = v.embed;
     this.preset = v.preset;
     this.loads++;
   }
@@ -90,7 +97,7 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, maj: this.maj, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, maj: this.maj, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params }, spatial: this.spatial, fdr: this.fdr, embed: this.embed,
     };
   }
 
@@ -116,7 +123,7 @@ export function syncHash(): () => void {
   const stopEffect = $effect.root(() => {
     $effect(() => {
       const s = app.snapshot();
-      storeLang(s.lang);
+      if (!s.embed) storeLang(s.lang);
       if (app.playing) return;
       clearTimeout(timer);
       timer = setTimeout(() => writeHash(s), 150);

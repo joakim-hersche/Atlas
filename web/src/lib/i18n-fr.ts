@@ -721,3 +721,6 @@ export const HISTORY_FR: Record<string, string> = {
 
 // commute filters, filtered aggregate and ranking-table options (strings live in i18n-filters-strings.ts)
 Object.assign(FR, FR_FILTERS);
+// spatial statistics and embed mode (sp.*, em.*): defined with their English and German strings
+import { SPATIAL_FR } from './i18n-spatial';
+Object.assign(FR, SPATIAL_FR);
