@@ -8,9 +8,11 @@
     periods: string[];
     value: string | null;
     onchange: (year: string | null) => void;
+    /** boundary note after the range (default: harmonised to the reference state) */
+    harm?: string;
     children?: Snippet;
   }
-  let { periods, value, onchange, children }: Props = $props();
+  let { periods, value, onchange, harm, children }: Props = $props();
 
   const latest = $derived(periods[periods.length - 1]);
   const idx = $derived(value && periods.includes(value) ? periods.indexOf(value) : periods.length - 1);
@@ -27,7 +29,7 @@
   <output class="num yv">{periods[idx]}</output>
   <button type="button" class="latest" disabled={value === null} onclick={() => onchange(null)}>{t('yr.latest')}</button>
 </div>
-<p class="range foot"><span class="num">{periods[0]}–{latest}</span> · {t('yr.harm')}{#if children}{@render children()}{/if}</p>
+<p class="range foot"><span class="num">{periods[0]}–{latest}</span> · {harm ?? t('yr.harm')}{#if children}{@render children()}{/if}</p>
 
 <style>
   .year { display: flex; align-items: center; gap: 8px; }

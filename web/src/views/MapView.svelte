@@ -8,6 +8,7 @@
   import FilterPanel from '../components/FilterPanel.svelte';
   import LevelSwitch from '../components/LevelSwitch.svelte';
   import LevelNote from '../components/LevelNote.svelte';
+  import VintageSwitch from '../components/VintageSwitch.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
@@ -845,6 +846,7 @@
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
+        <VintageSwitch {base} />
       </div>
       {#if !desktop && card && refA && colA}
         <div class="card-wrap">

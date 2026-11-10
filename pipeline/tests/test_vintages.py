@@ -99,7 +99,8 @@ def test_units_geometry_and_values_align(index):
         # successors on the reference state: shares of the old unit's residents add up to 1
         for u in units:
             assert u["to"], f"{v['id']} {u['id']} has no successor"
-            assert sum(w for *_, w in u["to"]) == pytest.approx(1, abs=0.002)
+            assert sum(t[2] for t in u["to"]) == pytest.approx(1, abs=0.002)
+            assert all(t[3] >= 1 for t in u["to"])
 
 
 @built

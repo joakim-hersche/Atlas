@@ -288,12 +288,16 @@ def cleared(source_id: str) -> bool:
 
 
 def successors(units: gpd.GeoDataFrame) -> dict[int, list]:
-    """hist_id -> [[current bfs_nr, current name, weight], ...] on the reference state."""
+    """hist_id -> [[current bfs_nr, current name, weight, n_parts], ...] on the reference state.
+    weight: share of the old unit's residents in that current municipality; n_parts: number of
+    municipalities of the old state that contribute to it (1 = same territory, apart from splits)."""
     cw = crosswalk(REFERENCE_DATE)
     cw = cw[cw["from_hist_id"].isin(set(units["hist_id"])) & (cw["weight"] > 0)]
+    parts = cw.groupby("to_hist_id")["from_hist_id"].nunique()
     out: dict[int, list] = {}
     for r in cw.sort_values(["from_hist_id", "weight"], ascending=[True, False]).itertuples():
-        out.setdefault(int(r.from_hist_id), []).append([str(int(r.to_bfs_nr)), r.to_name, round(float(r.weight), 3)])
+        out.setdefault(int(r.from_hist_id), []).append(
+            [str(int(r.to_bfs_nr)), r.to_name, round(float(r.weight), 3), int(parts[r.to_hist_id])])
     return out
 
 

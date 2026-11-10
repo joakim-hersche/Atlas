@@ -73,19 +73,28 @@ needed they can be split per period later.
 
 ## 4. UI
 
-- A **Boundaries** switch (2026 harmonised · 2010 · 2000) on the map, next to the level switch.
-  It is view state like everything else: `#v=vintage&vin=2000&m=vz_lang_fr_share&y=1970&sel=6621`.
+- A **Boundaries** switch (2026 harmonised · 2010 · 2000) on the map, under the level switch
+  (`components/VintageSwitch.svelte`). It is view state like everything else; an older state is its
+  own map route: `#v=vintage&vin=2000&m=vz_lang_fr_share&y=1970&sel=6621`
+  (`views/VintageView.svelte`, loaded on first use).
 - Choosing an older vintage opens the municipality map of that state. The shade metric is kept when
-  it exists there; otherwise the map says so in one line (“not available on the 2000 boundaries:
-  published on a later municipality state only”), offers the harmonised map, and the picker lists
-  only the metrics that exist on that state, with their periods (year slider over the census years).
-- Every value carries its provenance: “BFS, 2000 boundaries” or “carried forward to the 2010
-  boundaries by ATLAS (boundary estimate where municipalities were split)”.
-- The card of an old municipality names the municipality or municipalities it is part of today
-  (with the weight where it was split) and links to their profiles. Going back to 2026 keeps the
-  metric and selects the main successor.
-- Districts and cantons of the older state, filters, reach and ranking stay on the harmonised map in
-  this version.
+  it exists there. Otherwise the map stays hatched (no data, D21) and says why in one line (“… has
+  no values on the 2000 boundaries. An older state shows only data published on that state (or an
+  older one); ATLAS does not split merged municipalities back into their former parts.”), with two
+  buttons: show it on the harmonised map, or a metric of the same theme that exists there. The
+  picker lists only the metrics of that state; the year slider runs over their periods (census
+  1970–2000) and says “on the boundaries of 31 Dec 2000”.
+- Provenance under the legend: “Published by the source on this municipality state” (native) or
+  “Published on an older state and carried forward to these boundaries by ATLAS …”, with the number
+  of municipalities that carry a boundary estimate; the card shows the precision tag per value.
+- The card of an old municipality says where it is today: “Today: X (BFS)”, or “Today part of X”
+  plus “Formed from n municipalities of 2000”, or one line per current municipality with the share
+  of residents where it was split; “Profile today” opens the current municipality's profile.
+- The selection follows the switch: an old municipality → the current one with most of its
+  residents; a current one → its predecessor (same BFS number, else one fully inside it). Going back
+  to 2026 keeps the metric.
+- Districts and cantons of the older state, filters, reach, size symbols and ranking stay on the
+  harmonised map in this version. Canton borders of the old state are drawn.
 
 ## 5. Not in this version (possible next steps)
 
