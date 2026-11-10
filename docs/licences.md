@@ -90,14 +90,14 @@ Four reviewers asked for the tax burden and multipliers; one quoted the ESTV col
 - These carry no reuse statement: https://www.estv.admin.ch/de/steuerbelastung-in-den-gemeinden, https://www.estv.admin.ch/de/steuerfuesse-abzuege-und-tarife-der-schweiz, https://www.estv.admin.ch/de/impressum-estv, the Steckbrief "Steuerbelastung in der Schweiz" (12.06.2025), the exported xlsx files, the 2018 Steuerbelastung xlsx and the Steuerfüsse 1995–2026 xlsx.
 - The only colophon in the series is in the 2012 PDF (© BFS 2013): "Abdruck – ausser für kommerzielle Nutzung – unter Angabe der Quelle gestattet". It covers that publication only.
 - **admin.ch legal notice, read 2026-11-10** (https://www.admin.ch/gov/de/start/rechtliches.html, now allowed). It is restrictive: "Durch das Herunterladen oder Kopieren von Inhalten, Bildern, Fotos oder anderen Dateien werden keinerlei Rechte bezüglich der Inhalte übertragen. [...] Für die Reproduktion jeglicher Elemente ist die schriftliche Zustimmung der Urheberrechtsträger im Voraus einzuholen." The page links no open-data terms.
-- **Missing:** written consent from ESTV. The calculator exports stay blocked. The BFS OPEN-BY republications below replace them (connectors `bfs_ssv_tax_burden`, `bfs_atlas_tax_burden`).
+- **Missing:** written consent from ESTV. The calculator exports stay blocked. The BFS OPEN-BY republications below replace them (connector `bfs_tax_burden`).
 - **Metric caveats once cleared:** keep `precision: modelled`. Values are for one standard case, reformed church member and no wealth. Multipliers are comparable within a canton only (already in the connector). The export rounds tax amounts to whole CHF, so the federal/cantonal/municipal/church split carries up to ±0.001 percentage points of rounding.
 
 **Cleared alternative (BFS OPEN-BY, ESTV as source).** BFS republishes ESTV tax burden figures under its own OPEN-BY terms:
 - *Statistik der Schweizer Städte 2026*, dataflows `DF_SSV_TAX_BRDN_*` on disseminate.stats.swiss: 180 cities, tax year 2024, five household types. https://statistik.admin.ch/de/asset/36503269 reads "Nutzungsbedingungen OPEN-BY Freie Nutzung – Quellenangabe ist Pflicht" and "Quelle(n): Eidgenössische Steuerverwaltung".
 - BFS Statatlas, estimated average tax burden by labour market region, 2010–2025: https://statistik.admin.ch/de/asset/36679820 is OPEN-BY.
 
-Both are partial (cities or regions only); they are recorded in the catalog as `bfs_ssv_tax_burden` and `bfs_atlas_tax_burden_amr`.
+Both are partial (cities or regions only); catalog rows `bfs_ssv_tax_burden` and `bfs_atlas_tax_burden_amr`, built as connector `bfs_tax_burden` (cleared; labour market areas via SDMX DF_RDISP_2, asset 36681060, OPEN-BY).
 
 **BAG premiums (`bag_premiums`): still held back.** priminfo says "Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar" and links https://opendata.swiss/de/dataset/health-insurance-premiums (403). priminfo has no imprint or terms page (404), and the BAG pages link "Rechtliches" to admin.ch (403). **Missing:** the opendata.swiss licence of that dataset (one read of opendata.swiss would settle it). The generic admin.ch notice in the BAG footer requires prior written consent, so it does not clear the premiums; only a dataset-specific open licence would.
 
@@ -140,6 +140,7 @@ Both are partial (cities or regions only); they are recorded in the catalog as `
 | `bfs_statent_geodata` | OPEN-BY – open use, the source must be provided (BFS termsOfUse; confirm per asset) |
 | `bfs_statpop` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_statpop_geodata` | OPEN-BY – open use, the source must be provided (BFS termsOfUse; confirm per asset) |
+| `bfs_tax_burden` | OPEN-BY – open use, the source must be provided (statistik.admin.ch assets 36503269, 36681060; data ESTV; checked 2026-11-10) |
 | `bfs_udemo` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_vacancy` | OPEN-BY – open use, the source must be provided (BFS termsOfUse, asset https://www.bfs.admin.ch/asset/en/DF_LWZ_1) |
 | `bfs_vehicles` | OPEN-BY – open use, the source must be provided (BFS termsOfUse, assets https://www.bfs.admin.ch/asset/en/DF_MFZ_0_COMMUNE, .../DF_IVS_0_COMMUNE) |

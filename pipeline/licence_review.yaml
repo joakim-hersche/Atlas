@@ -110,3 +110,7 @@ bag_premiums:
 bfs_rents:
   status: cleared
   evidence: "BFS asset pages https://statistik.admin.ch/de/asset/36398431 (rent by canton), /36398447 (rent per m2 by canton) and /36503090 (SSV cities, 2026 edition): 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Files carry '© BFS 2026' and 'Quellen: BFS – SE, GWS'. Checked 2026-11-10."
+
+bfs_tax_burden:
+  status: cleared
+  evidence: "BFS republication of ESTV tax burden. https://statistik.admin.ch/de/asset/36503269 (Statistik der Schweizer Städte 2026, Steuerbelastung): 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht', 'Quelle(n) Eidgenössische Steuerverwaltung'. https://statistik.admin.ch/de/asset/36681060 (DF_RDISP_2, Regionale Disparitäten nach Arbeitsmarktregionen 2018): 'OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Checked 2026-11-10. Attribution must name BFS/SSV and ESTV as data source."

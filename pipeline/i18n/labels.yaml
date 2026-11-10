@@ -627,6 +627,40 @@ pop_change_1y: {label_fr: "Évolution de la population (1 an)", unit_en: "%", un
 pop_change_5y: {label_fr: "Évolution de la population (5 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 pop_change_10y: {label_fr: "Évolution de la population (10 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 
+# --- bfs_tax_burden ---
+taxb_city_single_50k: {label_fr: "Charge fiscale : célibataire, sans enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_80k: {label_fr: "Charge fiscale : célibataire, sans enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_100k: {label_fr: "Charge fiscale : célibataire, sans enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_150k: {label_fr: "Charge fiscale : célibataire, sans enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_200k: {label_fr: "Charge fiscale : célibataire, sans enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_500k: {label_fr: "Charge fiscale : célibataire, sans enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_50k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_80k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_100k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_150k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_200k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_500k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_50k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_80k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_100k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_150k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_200k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_500k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_50k: {label_fr: "Charge fiscale : couple de retraités, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_80k: {label_fr: "Charge fiscale : couple de retraités, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_100k: {label_fr: "Charge fiscale : couple de retraités, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_150k: {label_fr: "Charge fiscale : couple de retraités, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_200k: {label_fr: "Charge fiscale : couple de retraités, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_500k: {label_fr: "Charge fiscale : couple de retraités, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_wealth_married_500k: {label_fr: "Charge de l'impôt sur la fortune : marié, sans enfants, fortune nette de 500 000 CHF (villes)", unit_en: "% of net wealth", unit_de: "% des Reinvermögens", unit_fr: "% de la fortune nette"}
+taxb_city_wealth_married_1000k: {label_fr: "Charge de l'impôt sur la fortune : marié, sans enfants, fortune nette de 1 000 000 CHF (villes)", unit_en: "% of net wealth", unit_de: "% des Reinvermögens", unit_fr: "% de la fortune nette"}
+taxb_amr_single_40k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 40 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_single_80k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 80 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_single_150k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 150 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_60k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 60 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_125k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 125 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_250k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 250 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+
 # --- bfs_udemo ---
 udemo_active: {label_fr: "Entreprises actives", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
 udemo_births: {label_fr: "Créations d'entreprises", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
