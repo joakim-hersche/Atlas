@@ -115,8 +115,16 @@ def observations() -> pd.DataFrame:
         k.columns = ["kt", "period", "v"]
         k["unit_id"] = k["kt"].map(id2ab)
         k["period"] = k["period"].astype(str)
+        # canton totals refer to the canton territory of the year (JU without Moutier until 2025):
+        # vintage = the state of the municipal layer (2025-04-06) so that the plausibility sweep
+        # counts the Moutier BE→JU transfer as a canton transfer
         o = emit(k, {"v": metric}, "period", SOURCE, level="kanton", unit_col="unit_id",
-                 vintage=REFERENCE_DATE, precision="exact", provenance="native")
+                 vintage=dt.date(2025, 4, 6), precision="exact", provenance="native")
         o.loc[o["period"].isin(["2024", "2025"]), "precision"] = "modelled"
+        # non-integer canton recipients (e.g. GL 2007, AR 2014/2015, most cantons 2024–2025) are
+        # BFS estimates (weighting for missing deliveries), not counts
+        est = (metric == "sh_recipients") & o["value"].notna() & (o["value"] != o["value"].round())
+        o.loc[est, "precision"] = "modelled"
+        o.loc[est, "note"] = "BFS estimate (weighted for municipalities/units not delivered): not a count"
         native.append(o)
     return pd.concat([obs, *native], ignore_index=True)[OBS_COLUMNS]

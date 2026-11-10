@@ -1,0 +1,11 @@
+source_id: bfs_commuting
+title: Employed persons by municipality of residence and municipality of work (commuter matrix), 2014, 2018, 2020
+publisher: BFS (Federal Statistical Office), register linkage AHV, STATPOP and STATENT
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets/27885394/master
+url_xlsx: https://dam-api.bfs.admin.ch/hub/api/dam/assets/27885387/master
+license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
+attribution: "Source: BFS – Registerverknüpfung aus AHV, STATPOP und STATENT (Erwerbstätige nach Wohn- und Arbeitsgemeinde)"
+vintage: "all years on the municipality state of 18.10.2020 (XLSX header; infer_vintage per year: 2020 state, jaccard 1.0); reprojected to the reference state at flow level"
+years: "2014, 2018, 2020"
+code_7777: "«Andere Gemeinden»: all relations with fewer than 5 employed persons, grouped per residence (R) or work (W) municipality; canton 77 = «andere Kantone». Counted in the totals, never as own municipality."
+catalog_ids: [bfs_pendler_gemeinde_matrix]

@@ -1,0 +1,15 @@
+source_id: bfs_accessibility
+title: Accessibility of services for the population (road distance from each inhabited hectare to the nearest service), 2011, 2015, 2018, 2021
+publisher: BFS (Federal Statistical Office), GEOSTAT, via data.geo.admin.ch
+url: https://data.geo.admin.ch/api/stac/v0.9/collections/ch.bfs.erreichbarkeit
+url_data: https://data.geo.admin.ch/ch.bfs.erreichbarkeit/erreichbarkeit/erreichbarkeit_2056.csv
+url_about: https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/dienstleistungen-bevoelkerung-erreichbarkeit.assetdetail.32029919.html
+license_status: UNVERIFIED
+license: "UNVERIFIED – conflicting statements: BFS DAM asset says OPEN-BY (open use, source must be provided); the STAC collection's licence link is opendata.swiss terms_by_ask (commercial use requires permission); the data description PDF (be-d-00.03-spop-dat-v02, 2024) says 'Wiedergabe unter Angabe der Quelle für nichtkommerzielle Nutzung gestattet'. Non-commercial personal use with attribution is covered by all three; confirm with geostat@bfs.admin.ch before any commercial use."
+license_dam: "OPEN-BY"
+license_stac: "https://opendata.swiss/en/terms-of-use#terms_by_ask (STAC license field 'proprietary')"
+license_pdf: "reproduction with source for non-commercial use"
+attribution: "Source: BFS – Erreichbarkeit von Dienstleistungen (GEOSTAT); aggregated to municipalities by Gemeindebank"
+vintage: "hectare grid; assigned to the reference-state polygons (G1) on the 100 m lattice of pipeline/sources/meteoswiss_climate/zonal.py"
+years: "2011, 2015, 2018, 2021 (doctors/GP: 2018, 2021)"
+catalog_ids: [bfs_erreichbarkeit_dienstleistungen]

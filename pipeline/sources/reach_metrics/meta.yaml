@@ -1,0 +1,11 @@
+source_id: reach_metrics
+title: Travel times by public transport and car from the 20 reach hubs to every municipality
+publisher: "Computed by Gemeindebank (pipeline/reach) from opentransportdata.swiss GTFS (public transport) and ARE NPVM 2023 (car)"
+url: https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020
+url_car: https://doi.org/10.5281/zenodo.23009199
+license: "GTFS: opentransportdata.swiss terms of use (cite opentransportdata.swiss); NPVM 2023: CC-BY 4.0 (ARE)"
+attribution: "Travel times computed by Gemeindebank from the Swiss GTFS timetable (opentransportdata.swiss) and the ARE national passenger transport model NPVM 2023; population STATPOP 2025 (BFS)"
+vintage: "reference state (populated hectares placed in reference-state polygons by pipeline/reach)"
+years: "2026 (timetable 2026; car model year 2023)"
+input: data/interim/reach/travel_times.parquet (methods gtfs_csa_popweighted, npvm2023_ttc_popweighted; gtfs_csa_station is not exported as a metric)
+catalog_ids: [otd_gtfs_timetable_2026, are_npvm_matrices_zenodo]
