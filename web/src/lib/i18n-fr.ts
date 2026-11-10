@@ -112,6 +112,7 @@ export const FR: Dict = {
   'nav.map': 'Carte',
   'nav.compare': 'Comparer des indicateurs',
   'nav.places': 'Comparer des lieux',
+  'nav.profile': 'Profil',
   'nav.sources': 'Sources',
   'nav.menu': 'Menu',
   'nav.view': 'Vue',
