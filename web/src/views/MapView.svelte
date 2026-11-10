@@ -6,6 +6,7 @@
   import Legend from '../components/Legend.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import FilterPanel from '../components/FilterPanel.svelte';
+  import LevelSelect from '../components/LevelSelect.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
@@ -429,7 +430,10 @@
     <div class="body">
       {#if desktop || phoneTab === 'map'}
       <section>
-        <div class="caps lab">Shade by</div>
+        <div class="row2 lab">
+          <span class="caps">Shade by</span>
+          <LevelSelect value={ld.level} onchange={(l) => { stop(); app.setLevel(l); }} />
+        </div>
         <MetricPicker metrics={base.metrics} level={ld.level} value={metaA.id} onpick={(id) => (app.metric = id)} />
         <div class="legend-wrap">
           {#if whyA}
@@ -526,7 +530,7 @@
         <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)} />
       {:else}
-        <p class="foot hint">Tap or click a {li.one} for its value, rank and percentile.</p>
+        <p class="foot hint">Tap or click {/^[aeiou]/.test(li.one) ? 'an' : 'a'} {li.one} for its value, rank and percentile.</p>
       {/if}
       <div class="tabs side-tabs" role="tablist" aria-label="Side panel">
         <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>Ranking</button>
@@ -563,6 +567,7 @@
   .lab { margin-bottom: 6px; }
   .why { margin: 0; font-size: 0.8rem; }
   .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .row2 > .caps { flex: none; white-space: nowrap; }
   .row2 .seg button { padding: 3px 8px; font-size: 0.76rem; }
   .sp { margin-top: 8px; }
   p.sp { margin-bottom: 0; }
