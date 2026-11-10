@@ -5,7 +5,7 @@ url: https://data.geo.admin.ch/api/stac/v0.9/collections/ch.bafu.bundesinventare
 url_other: "ch.bafu.schutzgebiete-paerke_nationaler_bedeutung; ch.bafu.bundesinventare-hochmoore, -flachmoore, -auen, -amphibien, -trockenwiesen_trockenweiden (same STAC API)"
 license: "BLN, amphibians: opendata.swiss terms_by (open use, cite the source); parks, moors, floodplains, dry grasslands: STAC license 'proprietary' without a licence link (UNVERIFIED, geo.admin.ch free use with source assumed)"
 license_status: PARTLY_UNVERIFIED
-attribution: "Source: BAFU – Bundesinventare (BLN, Hoch- und Flachmoore, Auen, Amphibienlaichgebiete, Trockenwiesen und -weiden) and Pärke von nationaler Bedeutung; boundaries swissBOUNDARIES3D (swisstopo); overlay by Gemeindebank"
+attribution: "Source: BAFU – Bundesinventare (BLN, Hoch- und Flachmoore, Auen, Amphibienlaichgebiete, Trockenwiesen und -weiden) and Pärke von nationaler Bedeutung; boundaries swissBOUNDARIES3D (swisstopo); overlay by ATLAS"
 vintage: "polygons, overlaid with swissBOUNDARIES3D 2026-01 (reference state)"
 years: "current inventory states (2022-11 to 2026-05), period 2026"
 catalog_ids: [bafu_protected_areas]

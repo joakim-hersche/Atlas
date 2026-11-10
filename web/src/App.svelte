@@ -130,9 +130,9 @@
 <div class="app" class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map'} class:page={!isMap}>
   <a class="skip" href="#main" onclick={skipToMain}>{t('nav.skip')}</a>
   <header class="top">
-    <a class="brand" href={hrefFor('map')} title="Gemeindebank — {t('nav.map')}">
+    <a class="brand" href={hrefFor('map')} title="ATLAS — {t('nav.map')}">
       <span class="mark" aria-hidden="true"></span>
-      <strong>Gemeindebank</strong>
+      <strong>ATLAS</strong>
       <span class="sub">{unitsText ? t('brand.sub', { units: unitsText }) : t('brand.subNo')}</span>
     </a>
     <div class="right">
@@ -203,7 +203,7 @@
     text-decoration: none;
   }
   .skip:focus { top: 8px; }
-  .brand strong { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
+  .brand strong { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.08em; }
   .mark { width: 18px; height: 18px; background: var(--accent); flex: none; position: relative; }
   .mark::before, .mark::after { content: ''; position: absolute; background: #fff; }
   .mark::before { left: 7.5px; top: 3.5px; width: 3px; height: 11px; }

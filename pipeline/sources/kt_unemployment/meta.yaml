@@ -3,7 +3,7 @@ title: Registered unemployed per municipality (compiled from cantonal sources, *
 publisher: Statistisches Amt ZH; OCSTAT Genève; Statistique Vaud; Fachstelle für Statistik St.Gallen (data SECO)
 url: https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_107.csv
 license: "Per publisher (see publishers)"
-attribution: "Compiled by Gemeindebank from: SECO via Statistisches Amt Kanton Zürich; OCSTAT / Office cantonal de l'emploi Genève; Statistique Vaud / SECO / Service de l'emploi VD; SECO via Fachstelle für Statistik Kanton St.Gallen (STADA2)"
+attribution: "Compiled by ATLAS from: SECO via Statistisches Amt Kanton Zürich; OCSTAT / Office cantonal de l'emploi Genève; Statistique Vaud / SECO / Service de l'emploi VD; SECO via Fachstelle für Statistik Kanton St.Gallen (STADA2)"
 vintage: "ZH per year: merged municipalities take ZH's back-cast value where published, otherwise their predecessors valid on 31 Dec of the year (summed for counts, ratios only if 1:1); GE 45 communes (stable); VD current communes (matched by name); SG current municipalities (STADA2 back-casts)"
 years: "ZH 1991–2024, GE 1990–2025, SG 2009–2025, VD 2025-10, 2026-09, 2026-10"
 catalog_ids: [kt_unemployment_gemeinde_compiled, kt_zh_unemployment, kt_ge_unemployment, kt_vd_unemployment, kt_sg_unemployment]

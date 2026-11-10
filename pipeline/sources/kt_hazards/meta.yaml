@@ -3,7 +3,7 @@ title: Residents in natural-hazard zones (cantonal hazard maps via geodienste.ch
 publisher: Cantons via geodienste.ch (Konferenz der kantonalen Geoinformations- und Katasterstellen KGK); population BFS STATPOP
 url: https://geodienste.ch/services/gefahrenkarten
 license: "Per canton as listed by geodienste.ch (publishers): mostly 'Freie Nutzung. Quellenangabe ist Pflicht.'"
-attribution: "Compiled by Gemeindebank from: geodienste.ch – Gefahrenkarten (MGDM 166.1 v1.3) of the cantons AG, AI, AR, BE, BL, FR, GE, GL, GR, JU, LU, NE, SG, SH, SO, SZ, TG, TI, VS, ZG, ZH; BFS – STATPOP 2025 (hectare grid)"
+attribution: "Compiled by ATLAS from: geodienste.ch – Gefahrenkarten (MGDM 166.1 v1.3) of the cantons AG, AI, AR, BE, BL, FR, GE, GL, GR, JU, LU, NE, SG, SH, SO, SZ, TG, TI, VS, ZG, ZH; BFS – STATPOP 2025 (hectare grid)"
 vintage: "Hazard polygons overlaid with STATPOP 2025 hectare points assigned to reference-state municipalities (zonal statistics)"
 years: "map state November 2026 (period 2026), population 2025"
 catalog_ids: [cantonal_gefahrenkarten, kt_geodienste_hazard, kt_geodienste_hazard_restricted]

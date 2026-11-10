@@ -97,12 +97,14 @@
       <div class="search">
         <input bind:this={input} bind:value={q} type="search" placeholder={t('mp.search', { n: nAvail })} aria-label={t('mp.searchL')}
           oninput={() => (active = 0)} onkeydown={key} />
-        <button type="button" class="x" aria-label={t('common.close')} onclick={() => (open = false)}>×</button>
+        <button type="button" class="x" aria-label={t('common.close')} onclick={() => (open = false)}>
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" /></svg>
+        </button>
       </div>
       <div class="list" role="listbox" aria-label={t('mp.choose')}>
         {#if none && !q}
           <button type="button" role="option" class="opt" aria-selected={!value} onclick={() => pick('')}>
-            <span class="ol">{none}</span><span class="om">–</span>
+            <span class="ol">{none}</span>
           </button>
         {/if}
         {#if !list.length}
@@ -138,46 +140,57 @@
 <style>
   .picker { position: relative; min-width: 0; }
   .btn {
-    display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 12px; text-align: left; cursor: pointer;
     background: var(--panel); border: 1px solid var(--ink);
   }
-  .btn:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+  .btn:hover, .btn[aria-expanded='true'] { box-shadow: inset 0 0 0 1px var(--ink); }
   .tag {
-    flex: none; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; width: 18px; height: 18px; display: grid;
-    place-items: center; background: var(--accent); color: var(--accent-text); font-family: var(--font-sans); font-weight: 700;
+    flex: none; width: 20px; height: 20px; display: grid; place-items: center; font-size: 0.72rem; font-weight: 700;
+    background: var(--accent); color: var(--accent-text);
   }
-  .lbl { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.2; }
+  .lbl { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; flex: 1; line-height: 1.2; }
   .theme { font-size: 0.62rem; }
   .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chev { flex: none; color: var(--text); }
+
+  /* popover: exactly as wide as the trigger, so it never spills out of (or is clipped by) the panel */
   .pop {
-    position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: max(100%, 360px); max-width: calc(100vw - 16px);
+    position: absolute; z-index: 30; top: calc(100% - 1px); left: 0; right: 0;
     background: var(--panel); border: 1px solid var(--ink); border-top: 3px solid var(--ink);
-    display: flex; flex-direction: column; max-height: min(460px, 70vh);
+    display: flex; flex-direction: column; max-height: min(480px, 70vh);
   }
-  .search { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--border); }
+  .search { display: flex; align-items: center; gap: 4px; padding: 8px; border-bottom: 1px solid var(--rule); }
   .search input {
-    flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink);
-    background: var(--panel); font-size: 16px;
+    flex: 1; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--ink); background: var(--panel);
+    font-size: 16px; line-height: 36px; outline: none;
   }
-  .x { border: 0; background: none; width: 32px; font-size: 1.2rem; cursor: pointer; color: var(--text); }
-  .list { overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
-  .grp { padding: 12px 10px 4px; font-size: 0.66rem; position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--rule); }
+  .search input:focus-visible { box-shadow: inset 0 0 0 1px var(--ink); outline: none; }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .x { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; background: none; cursor: pointer; color: var(--text); }
+  .list { overflow-y: auto; overflow-x: hidden; padding: 0 0 8px; overscroll-behavior: contain; }
+  .grp {
+    position: sticky; top: 0; z-index: 1; display: flex; align-items: center; min-height: 32px; padding: 10px 12px 4px;
+    font-size: 0.66rem; background: var(--panel); border-bottom: 1px solid var(--rule);
+  }
+  /* each row: name, then unit · period on a second line; vertically centred */
   .opt {
-    display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 5px 10px; border: 0; background: none;
-    text-align: left; cursor: pointer; align-items: baseline;
+    display: flex; flex-direction: column; justify-content: center; gap: 2px; width: 100%; min-height: 44px; padding: 6px 12px;
+    border: 0; border-bottom: 1px solid var(--border); background: none; text-align: left; cursor: pointer; color: var(--text);
   }
   .opt.active { background: var(--panel-2); }
   .opt.off { cursor: default; color: var(--faint); }
   .opt.off .om { font-style: italic; }
+  .opt[aria-selected='true'] { box-shadow: inset 3px 0 0 var(--accent); }
   .opt[aria-selected='true'] .ol { color: var(--accent); font-weight: 600; }
-  .opt[aria-selected='true'] { box-shadow: inset 2px 0 0 var(--accent); }
-  .ol { min-width: 0; }
-  /* unit · period · coverage: wraps instead of being clipped */
-  .om { flex: 0 1 auto; color: var(--muted); font-size: 0.72rem; font-family: var(--font-mono); max-width: 48%; text-align: right; overflow-wrap: break-word; }
-  .empty { padding: 10px; color: var(--muted); margin: 0; }
-  .hint { padding: 8px 10px 0; margin: 0; }
+  .ol { min-width: 0; line-height: 1.25; overflow-wrap: anywhere; }
+  .om { min-width: 0; color: var(--muted); font-size: 0.72rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { padding: 12px; color: var(--muted); margin: 0; }
+  .hint { padding: 8px 12px 0; margin: 0; }
+  @media (min-width: 900px) {
+    .search input { font-size: 0.875rem; height: 32px; line-height: 32px; }
+    .x { width: 32px; height: 32px; }
+  }
   @media (max-width: 899px) {
-    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 72vh; }
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; max-height: 72vh; }
   }
 </style>

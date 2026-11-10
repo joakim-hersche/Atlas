@@ -3,7 +3,7 @@ title: Criminal Code offences per municipality (compiled from cantonal police st
 publisher: Kantonspolizei Zürich; Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt; Kantonspolizeien Appenzell Ausserrhoden, Appenzell Innerrhoden, Basel-Landschaft (BFS PKS)
 url: https://daten.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00003600.csv
 license: "Per publisher (see publishers)"
-attribution: "Compiled by Gemeindebank from: Kantonspolizei Zürich – Polizeiliche Kriminalstatistik; Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt; BFS – Polizeiliche Kriminalstatistik via Kantonspolizei AR, AI, BL"
+attribution: "Compiled by ATLAS from: Kantonspolizei Zürich – Polizeiliche Kriminalstatistik; Statistisches Amt Basel-Stadt / Kantonspolizei Basel-Stadt; BFS – Polizeiliche Kriminalstatistik via Kantonspolizei AR, AI, BL"
 vintage: "ZH and BS BFS numbers of the current state (ZH municipalities > 10,000 inhabitants); ZH burglaries per year, state inferred from ZH's BFS numbers; AR, AI, BL PKS 2025 tables on the 2025 state (names matched)"
 years: "2009–2025"
 catalog_ids: [kt_crime_gemeinde_compiled, kt_zh_crime, kt_bs_crime, kt_other_crime_leads]

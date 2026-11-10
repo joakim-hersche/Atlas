@@ -3,7 +3,7 @@ title: Compulsory-school pupils by municipality of residence (compiled from cant
 publisher: Statistisches Amt / Bildungsstatistik ZH; Amt für Daten und Statistik BL; Service de la statistique FR; Kanton Zug (data BFS SDL)
 url: https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_149.csv
 license: "Per publisher (see publishers)"
-attribution: "Compiled by Gemeindebank from: Bildungsstatistik Kanton Zürich; BFS – Statistik der Lernenden via Amt für Daten und Statistik Basel-Landschaft and SStat Fribourg; BFS – Statistik der Lernenden via Kanton Zug (data.zg.ch)"
+attribution: "Compiled by ATLAS from: Bildungsstatistik Kanton Zürich; BFS – Statistik der Lernenden via Amt für Daten und Statistik Basel-Landschaft and SStat Fribourg; BFS – Statistik der Lernenden via Kanton Zug (data.zg.ch)"
 vintage: "ZH per year: merged municipalities take ZH's back-cast value where published, otherwise their predecessors valid on 31 Dec of the year (summed for counts, ratios only if 1:1); FR back-cast on the current state; BL per year (state inferred from BL's BFS numbers); ZG 11 municipalities (stable)"
 years: "ZH 2001–2023, BL 2014–2024, FR 2010–2024, ZG 1997–2024 (school years, first year)"
 catalog_ids: [kt_pupils_schools_compiled, kt_zh_pupils, kt_bl_pupils, kt_fr_pupils, kt_zg_pupils]

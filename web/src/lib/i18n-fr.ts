@@ -58,7 +58,7 @@ export const FR: Dict = {
   'ex.pngMap': 'Carte en PNG',
   'ex.pngWait': 'Préparation…',
   'ex.boundaries': `Limites${n}: OFS, limites généralisées 2026`,
-  'ex.made': 'Gemeindebank',
+  'ex.made': 'ATLAS',
   'ex.view': `Vue${n}: {url}`,
   'ex.notMatching': 'ne correspond pas aux filtres',
   // public transport (D31)

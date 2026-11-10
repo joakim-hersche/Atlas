@@ -172,3 +172,6 @@ Spatial diagnostics (Moran's I, LISA, spatial lag) stay on the backlog (option C
 Replaces the separate-repository plan in D33. Owner: "Do it on the current github." The built site goes to the `gh-pages` branch of Atlas: only the built site, a single commit replaced on each deploy (`make deploy`, scripts/deploy_pages.sh). Pages has to be enabled by the owner (Settings → Pages → branch gh-pages, folder /). A private repository needs a paid GitHub plan for Pages; on a free plan the repository has to be public. Before making it public: the closed PR #1 still references the old initial commit with the owner's personal email (GitHub keeps PR refs); GitHub Support can purge it.
 
 Live 2026-11-10: https://joakim-hersche.github.io/Atlas/ (GitHub Pages from `gh-pages`; first deploy took about 3½ minutes). Repository made public by the owner; `main` history rewritten so only no-reply addresses appear (merge commits of PR #2/#3).
+
+### D36. Renamed to ATLAS; work goes straight to main (owner, 2026-11-10)
+The site is called **ATLAS** (header, page title, export credit lines, "computed by" notes in the data). The repository is already `atlas`; internal docs keep the history under the working name Gemeindebank. Owner: "can you make the changes on main?" Changes are now pushed directly to `main` (fast-forward), without pull requests; `make deploy` republishes the site.

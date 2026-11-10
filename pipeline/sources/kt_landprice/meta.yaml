@@ -3,7 +3,7 @@ title: Building land prices per municipality (compiled from cantonal statistics,
 publisher: Statistisches Amt Kanton Zürich; Amt für Daten und Statistik Basel-Landschaft
 url: https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_199.csv
 license: "Per publisher (see publishers)"
-attribution: "Compiled by Gemeindebank from: Statistisches Amt Kanton Zürich (Gemeindeporträt); Amt für Daten und Statistik Basel-Landschaft (Bodenpreisstatistik)"
+attribution: "Compiled by ATLAS from: Statistisches Amt Kanton Zürich (Gemeindeporträt); Amt für Daten und Statistik Basel-Landschaft (Bodenpreisstatistik)"
 vintage: "ZH per year: merged municipalities take ZH's back-cast value where published, otherwise their predecessors valid on 31 Dec of the year (summed for counts, ratios only if 1:1); BL per year, state inferred from BL's BFS numbers; prices kept only where the mapping to the reference state is 1:1"
 years: "ZH 1974–2024 (sales 2007–2024); BL 1979–2025"
 catalog_ids: [kt_zh_landprice, kt_bl_landprice, kt_zh_bodenpreise_gemeinde, kt_other_transaction_prices]

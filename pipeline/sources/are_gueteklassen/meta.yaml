@@ -3,7 +3,7 @@ title: Public transport quality classes (ÖV-Güteklassen A–D), residents per 
 publisher: ARE (Federal Office for Spatial Development) via data.geo.admin.ch; residents STATPOP (BFS)
 url: https://data.geo.admin.ch/api/stac/v0.9/collections/ch.are.gueteklassen_oev
 license: "Open use, the source must be provided (STAC licence link opendata.swiss terms_by; STAC license field 'proprietary')"
-attribution: "Source: ARE – ÖV-Güteklassen (Datengrundlage opentransportdata.swiss); population STATPOP (BFS); residents per class computed by Gemeindebank"
+attribution: "Source: ARE – ÖV-Güteklassen (Datengrundlage opentransportdata.swiss); population STATPOP (BFS); residents per class computed by ATLAS"
 vintage: "polygons; residents per class on the reference-state geometry (G1), STATPOP hectares of the same year (2026: 2025)"
 years: "2012–2026 (annual ARE releases, spring timetable state)"
 method: "class polygons rasterized on the 100 m STATPOP lattice (pipeline/sources/meteoswiss_climate/zonal.py), best class wins on overlap (none observed)"

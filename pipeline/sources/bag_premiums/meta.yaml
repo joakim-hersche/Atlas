@@ -6,7 +6,7 @@ url_overview: https://www.priminfo.admin.ch/downloads/gesamtbericht_ch-2027.pdf 
 url_regions: https://www.priminfo.admin.ch/downloads/praemienregionen-2027.xlsx ; https://www.bag.admin.ch/de/krankenversicherung-praemienregionen (annex state 1.1.2026)
 license_status: UNVERIFIED
 license: "UNVERIFIED – priminfo/BAG publications without an explicit licence on the download page; the same premium data is published on opendata.swiss (dataset health-insurance-premiums, not reachable from here, 403). Federal publications, free use with source assumed; confirm on opendata.swiss."
-attribution: "Source: BAG – Prämienübersicht 2026/2027 and Prämienregionen (priminfo.admin.ch); mean/median per region computed by Gemeindebank"
+attribution: "Source: BAG – Prämienübersicht 2026/2027 and Prämienregionen (priminfo.admin.ch); mean/median per region computed by ATLAS"
 vintage: "2026: region annex on the state of 1.1.2026 (= reference); 2027: D_PRIM on the state of 1.1.2027, 2027 mergers (VD) mapped back to their reference predecessors"
 years: "2026, 2027 (premium years); BAG mean premium 2027 only"
 choice: "Standard model, adults (26+), franchise CHF 300, accident cover INCLUDED (BAG reference premium); unweighted over insurers. The without-accident premium is parsed but not delivered."

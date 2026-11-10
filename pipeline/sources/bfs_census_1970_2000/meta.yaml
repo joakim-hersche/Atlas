@@ -4,7 +4,7 @@ publisher: BFS (Federal Statistical Office) – Eidgenössische Volkszählungen
 url: https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-4001000000_123/px-x-4001000000_123.px
 license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse; catalog marks licence UNVERIFIED for these cubes)"
 attribution: "Source: BFS – Eidgenössische Volkszählungen"
-vintage: all census years published on the 2000 municipality state (2896 Gemeinden); reprojected to the reference state by Gemeindebank (mergers exact; splits population-weighted -> boundary_estimate)
+vintage: all census years published on the 2000 municipality state (2896 Gemeinden); reprojected to the reference state by ATLAS (mergers exact; splits population-weighted -> boundary_estimate)
 years: 1970, 1980, 1990, 2000
 notes: "Decisions D3/D15. Population at the economic place of residence (census definition, differs from STATPOP). Main language was a single answer in the census (the Structural Survey since 2010 allows several) – not directly comparable with bfs_se_language_bezirk. Canton/national rows kept as published (historical canton territory)."
 cubes: [px-x-4001000000_123, px-x-4001000000_122, px-x-4001000000_102, px-x-4001000000_101]

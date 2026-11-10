@@ -361,7 +361,7 @@ def observations() -> pd.DataFrame:
                                                      "not comparable with later years")
         if kt in ("LU", "BL"):
             calc = o["metric_id"].isin([NET, SFG]) & o["status"].eq("ok")
-            o.loc[calc, "note"] = "computed by Gemeindebank from the cantonal HRM2 accounts"
+            o.loc[calc, "note"] = "computed by ATLAS from the cantonal HRM2 accounts"
         parts.append(o)
         for c in cols:
             covered_periods[(MAP[c], kt)] = set(w.loc[w[c].notna() | w.get(f"{c}__na", False), "period"])

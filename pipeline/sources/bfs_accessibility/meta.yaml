@@ -9,7 +9,7 @@ license: "UNVERIFIED – conflicting statements: BFS DAM asset says OPEN-BY (ope
 license_dam: "OPEN-BY"
 license_stac: "https://opendata.swiss/en/terms-of-use#terms_by_ask (STAC license field 'proprietary')"
 license_pdf: "reproduction with source for non-commercial use"
-attribution: "Source: BFS – Erreichbarkeit von Dienstleistungen (GEOSTAT); aggregated to municipalities by Gemeindebank"
+attribution: "Source: BFS – Erreichbarkeit von Dienstleistungen (GEOSTAT); aggregated to municipalities by ATLAS"
 vintage: "hectare grid; assigned to the reference-state polygons (G1) on the 100 m lattice of pipeline/sources/meteoswiss_climate/zonal.py"
 years: "2011, 2015, 2018, 2021 (doctors/GP: 2018, 2021)"
 catalog_ids: [bfs_erreichbarkeit_dienstleistungen]
