@@ -72,7 +72,8 @@
     content: ''; position: absolute; left: 3px; top: 1px; border: 4px solid transparent; border-bottom: 7px solid var(--faint); border-top: 0;
   }
   .mk.brk::before { border-bottom-color: var(--ink); }
-  .mkn { margin: 2px 0 0; display: flex; align-items: center; gap: 5px; }
+  .mkn { margin: 2px 0 0; display: flex; align-items: flex-start; gap: 5px; }
+  .mkn .mi { margin-top: 0.35em; }
   .mi { flex: none; width: 0; height: 0; border: 4px solid transparent; border-bottom: 7px solid var(--faint); border-top: 0; }
   .mi.brk { border-bottom-color: var(--ink); }
 </style>
