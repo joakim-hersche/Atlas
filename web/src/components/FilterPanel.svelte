@@ -1,11 +1,12 @@
 <script lang="ts">
   // Stacked filters: numeric ranges on any metric, categorical conditions and travel time to a hub,
   // combined with AND. Each condition shows how many units pass it and how many have no value.
+  import { ml, t } from '../lib/i18n.svelte';
   import MetricPicker from './MetricPicker.svelte';
   import RangeFilter from './RangeFilter.svelte';
   import { fmtNumber, fmtPeriod } from '../lib/classify';
   import type { Hub, MetricMeta } from '../lib/data';
-  import { CAT_LABEL, type CatOption, type FilterEval, type MatchResult } from '../lib/filters';
+  import { catLabel, type CatOption, type FilterEval, type MatchResult } from '../lib/filters';
   import { CAT_FIELDS, T_MAX, type CatField, type Filter } from '../lib/hash';
 
   interface Props {
@@ -53,13 +54,13 @@
 <div class="filters">
   <div class="summary" aria-live="polite">
     {#if match.active}
-      <strong class="num">{fmtNumber(match.n, 0)}</strong> of <span class="num">{fmtNumber(total, 0)}</span> {unitWord} match
-      {#if match.active > 1}all {match.active} conditions{/if}
-      {#if match.nMissingOnly}<span class="miss">· <span class="hatch"></span> <span class="num">{fmtNumber(match.nMissingOnly, 0)}</span> excluded for missing data</span>{/if}
+      <span class="num">{t('fp.match', { n: fmtNumber(match.n, 0), total: fmtNumber(total, 0), units: unitWord })}</span>
+      {#if match.active > 1}{t('fp.all', { n: match.active })}{/if}
+      {#if match.nMissingOnly}<span class="miss">· <span class="hatch"></span> <span class="num">{fmtNumber(match.nMissingOnly, 0)}</span> {t('fp.excluded')}</span>{/if}
     {:else}
-      No conditions: all <span class="num">{fmtNumber(total, 0)}</span> {unitWord} shown.
+      {t('fp.none', { n: fmtNumber(total, 0), units: unitWord })}
     {/if}
-    {#if filters.length}<button type="button" class="link" onclick={() => onset([])}>Clear all</button>{/if}
+    {#if filters.length}<button type="button" class="link" onclick={() => onset([])}>{t('fp.clear')}</button>{/if}
   </div>
 
   {#each evals as e, k (k)}
@@ -68,23 +69,23 @@
       {#if f.kind === 'num'}
         <div class="ch">
           <div class="grow"><MetricPicker {metrics} {level} value={f.metric} onpick={(id) => update(k, { kind: 'num', metric: id, lo: null, hi: null })} /></div>
-          <button type="button" class="x" aria-label="Remove condition" onclick={() => remove(k)}>×</button>
+          <button type="button" class="x" aria-label={t('fp.remove')} onclick={() => remove(k)}>×</button>
         </div>
         {#if e.status === 'active' && e.domain && e.col}
-          <RangeFilter label={e.col.meta.label_en} hideLabel min={e.domain.min} max={e.domain.max} lo={f.lo} hi={f.hi}
+          <RangeFilter label={ml(e.col.meta)} hideLabel min={e.domain.min} max={e.domain.max} lo={f.lo} hi={f.hi}
             log={e.domain.log} decimals={e.col.meta.decimals} onchange={(lo, hi) => update(k, { ...f, lo, hi })} />
           <p class="cf num">
-            {e.col.meta.unit || 'value'} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} pass{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} no data, excluded{/if}
+            {e.col.meta.unit || t('fp.value')} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noDataEx')}{/if}
           </p>
         {/if}
       {:else if f.kind === 'cat'}
         {@const opts = options(f.field)}
         <div class="ch">
-          <span class="caps grow">{CAT_LABEL[f.field]}</span>
-          <button type="button" class="x" aria-label="Remove condition" onclick={() => remove(k)}>×</button>
+          <span class="caps grow">{catLabel(f.field)}</span>
+          <button type="button" class="x" aria-label={t('fp.remove')} onclick={() => remove(k)}>×</button>
         </div>
         {#if short(opts)}
-          <div class="chips" role="group" aria-label={CAT_LABEL[f.field]}>
+          <div class="chips" role="group" aria-label={catLabel(f.field)}>
             {#each opts as o}
               <button type="button" class="chip" aria-pressed={f.values.includes(o.id)} onclick={() => toggle(k, o.id)}>{o.name}</button>
             {/each}
@@ -96,10 +97,10 @@
             </div>
           {/if}
           {#if opts.length > 12}
-            <input type="search" class="find" placeholder="Search {opts.length}" aria-label="Search {CAT_LABEL[f.field]}"
+            <input type="search" class="find" placeholder={t('fp.search', { n: opts.length })} aria-label={t('fp.search', { n: catLabel(f.field) })}
               value={search[k] ?? ''} oninput={(ev) => (search = { ...search, [k]: ev.currentTarget.value })} />
           {/if}
-          <div class="list" role="group" aria-label={CAT_LABEL[f.field]}>
+          <div class="list" role="group" aria-label={catLabel(f.field)}>
             {#each opts.filter((o) => !search[k] || norm(o.name).includes(norm(search[k]))) as o}
               <label class="opt"><input type="checkbox" checked={f.values.includes(o.id)} onchange={() => toggle(k, o.id)} /> <span>{o.name}</span></label>
             {/each}
@@ -108,26 +109,26 @@
         {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} pass</p>{/if}
       {:else}
         <div class="ch">
-          <span class="caps grow">Travel time</span>
-          <button type="button" class="x" aria-label="Remove condition" onclick={() => remove(k)}>×</button>
+          <span class="caps grow">{t('fp.travel')}</span>
+          <button type="button" class="x" aria-label={t('fp.remove')} onclick={() => remove(k)}>×</button>
         </div>
         <div class="rr">
-          <span>Within</span>
+          <span>{t('fp.within')}</span>
           <output class="num strong">{f.max} min</output>
-          <span>of</span>
-          <select class="sel" value={f.hub} aria-label="Hub" onchange={(ev) => update(k, { ...f, hub: ev.currentTarget.value })}>
+          <span>{t('fp.of')}</span>
+          <select class="sel" value={f.hub} aria-label={t('common.hub')} onchange={(ev) => update(k, { ...f, hub: ev.currentTarget.value })}>
             {#each hubs as h}<option value={h.slug}>{h.name}</option>{/each}
           </select>
-          <div class="seg" role="radiogroup" aria-label="Mode">
-            <button type="button" role="radio" aria-checked={f.mode === 'pt'} onclick={() => update(k, { ...f, mode: 'pt' })}>PT</button>
-            <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>Car</button>
+          <div class="seg" role="radiogroup" aria-label={t('common.mode')}>
+            <button type="button" role="radio" aria-checked={f.mode === 'pt'} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('common.pt')}</button>
+            <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
-        <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} aria-label="Maximum travel time in minutes"
+        <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} aria-label={t('fp.maxTime')}
           oninput={(ev) => update(k, { ...f, max: +ev.currentTarget.value })} />
         {#if e.status === 'active'}
           <p class="cf num">
-            {fmtNumber(e.nPass, 0)} pass{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} no time, excluded{/if}
+            {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noTimeEx')}{/if}
           </p>
         {/if}
       {/if}
@@ -136,21 +137,20 @@
   {/each}
 
   <label class="add">
-    <span class="caps">Add a condition</span>
+    <span class="caps">{t('fp.add')}</span>
     <select class="sel" value="" onchange={(ev) => { const v = ev.currentTarget.value; ev.currentTarget.value = ''; if (v) add(v); }}>
-      <option value="">Choose…</option>
-      <option value="num">Range of any metric</option>
-      {#each CAT_FIELDS as fld}<option value={fld}>{CAT_LABEL[fld]}</option>{/each}
-      <option value="reach">Travel time to a hub</option>
+      <option value="">{t('fp.choose')}</option>
+      <option value="num">{t('fp.range')}</option>
+      {#each CAT_FIELDS as fld}<option value={fld}>{catLabel(fld)}</option>{/each}
+      <option value="reach">{t('fp.reach')}</option>
     </select>
   </label>
-  <p class="foot">Conditions combine with AND. Non-matching {unitWord} are muted on the map, not hidden. A {unitWord === 'municipalities' ? 'municipality' : 'unit'} without a value for a filtered metric does not match.</p>
+  <p class="foot">{t('fp.foot', { units: unitWord })}</p>
 </div>
 
 <style>
   .filters { font-size: 0.82rem; }
   .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; }
-  .summary strong { font-size: 1rem; }
   .miss { color: var(--text); }
   .link { margin-left: auto; border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.78rem; }
   .cond { border-top: 1px solid var(--ink); padding: 8px 0 10px; }

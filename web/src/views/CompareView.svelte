@@ -10,7 +10,7 @@
   import { levelInfo, loadUnits, unavailableReason, type Base, type LevelData, type MetricMeta } from '../lib/data';
   import { CH_BOUNDS, UnitMap, syncCameras } from '../lib/mapview';
   import { app } from '../lib/state.svelte';
-  import { t } from '../lib/i18n.svelte';
+  import { levelName, t, levelWord } from '../lib/i18n.svelte';
   import { currentLevelNote, switchLevel } from '../lib/levels';
   import { divRamp, seqRamp } from '../lib/theme';
 
@@ -23,7 +23,7 @@
   }
   let { base, ld, cols, desktop, onrendered }: Props = $props();
 
-  const REGION_NAMES: Record<string, string> = { '1': 'German', '2': 'French', '3': 'Italian', '4': 'Romansh' };
+  const REGION_NAMES = (): Record<string, string> => ({ '1': t('cv.r1'), '2': t('cv.r2'), '3': t('cv.r3'), '4': t('cv.r4') });
 
   interface Preset {
     slug: string;
@@ -33,11 +33,11 @@
     fallback?: { b: string; label: string };
   }
   const PRESETS: Preset[] = [
-    { slug: 'left-income', label: 'Left bloc vs income', a: 'nrw_share_left_bloc', b: 'tax_np_mean_taxable_income',
-      fallback: { b: 'nrw_share_sp', label: 'SP share vs income' } },
-    { slug: 'density-foreigners', label: 'Density vs foreigners', a: 'geo_pop_density', b: 'share_foreign' },
-    { slug: 'age-svp', label: 'Age vs SVP', a: 'share_age_65plus', b: 'nrw_share_svp' },
-    { slug: 'heatpumps-income', label: 'Heat pumps vs income', a: 'gws_share_heatpump', b: 'tax_np_mean_taxable_income' },
+    { slug: 'left-income', label: 'cv.p.left', a: 'nrw_share_left_bloc', b: 'tax_np_mean_taxable_income',
+      fallback: { b: 'nrw_share_sp', label: 'cv.p.sp' } },
+    { slug: 'density-foreigners', label: 'cv.p.density', a: 'geo_pop_density', b: 'share_foreign' },
+    { slug: 'age-svp', label: 'cv.p.age', a: 'share_age_65plus', b: 'nrw_share_svp' },
+    { slug: 'heatpumps-income', label: 'cv.p.heat', a: 'gws_share_heatpump', b: 'tax_np_mean_taxable_income' },
   ];
   const metas = $derived(base.metas);
   const presetsOf = (m: Map<string, MetricMeta>) =>
@@ -96,7 +96,7 @@
   const scaleA = $derived(scaleOf(colA?.v, metaA, app.cls));
   const scaleB = $derived(scaleOf(colB?.v, metaB, app.cls));
   const nUnits = $derived(ld.units.length);
-  const word = $derived(levelInfo(ld.level).label.toLowerCase());
+  const word = $derived(levelWord(ld.level));
   const pop = $derived(ld.core.metrics['pop_total']?.v ?? ld.units.map(() => null));
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
   const blank = $derived(ld.units.map(() => null));
@@ -177,7 +177,7 @@
         const i = d.index.get(r.id);
         if (i !== undefined) idx[i] = Number(r.sprachgebiet) - 1;
       }
-      regions = { idx, names: ['1', '2', '3', '4'].map((k) => REGION_NAMES[k]) };
+      regions = { idx, names: ['1', '2', '3', '4'].map((k) => REGION_NAMES()[k]) };
     });
     return () => (live = false);
   });
@@ -214,11 +214,11 @@
   });
 </script>
 
-<nav class="presets" aria-label="Example comparisons">
+<nav class="presets" aria-label={t('cv.examplesL')}>
   <LevelSwitch value={ld.level} onchange={(l) => switchLevel(base, l)} />
-  <span class="caps">Examples</span>
+  <span class="caps">{t('pl.try')}</span>
   {#each presets as p}
-    <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{p.label}</button>
+    <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{t(p.label)}</button>
   {/each}
 </nav>
 
@@ -251,9 +251,9 @@
           {:else if P.meta && P.scale && P.col}
             <Legend meta={P.meta} v={P.col.v} period={P.col.period} scale={P.scale} {nUnits} unitWord={word}
               source={base.sources.get(P.meta.source)} method={app.cls} onmethod={(m) => (app.cls = m)} />
-            {#if P.ref?.yearMissing}<p class="foot">No value for {P.ref.yearMissing}; latest shown.</p>{/if}
+            {#if P.ref?.yearMissing}<p class="foot">{t('cv.noYear', { y: P.ref.yearMissing })}</p>{/if}
           {:else if P.ref === undefined}
-            <p class="muted">Loading…</p>
+            <p class="muted">{t('status.loading')}</p>
           {/if}
         </div>
       </div>
@@ -264,11 +264,11 @@
     {#if metaB && colA && colB && regions && !whyA && !whyB}
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
         region={regions.idx} regionNames={regions.names} {pop} names={ld.name} cantons={ld.canton}
-        hover={hover} sel={selIdx} isDark={false} unitWord={word} unitOne={levelInfo(ld.level).one} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
+        hover={hover} sel={selIdx} isDark={false} unitWord={word} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
-      <p class="muted loading">The scatter plot needs both metrics at this level.</p>
+      <p class="muted loading">{t('cv.needBoth')}</p>
     {:else}
-      <p class="muted loading">Loading…</p>
+      <p class="muted loading">{t('status.loading')}</p>
     {/if}
   </section>
 </main>

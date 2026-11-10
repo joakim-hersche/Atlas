@@ -1,6 +1,7 @@
 <script lang="ts">
   // Legend for proportional symbols: three nested reference circles (area proportional to the value)
   // at the current zoom, plus counts of units without a circle.
+  import { t } from '../lib/i18n.svelte';
   import type { MetricMeta } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtTick } from '../lib/classify';
 
@@ -44,7 +45,7 @@
 </script>
 
 <div class="size">
-  <div class="head"><span class="unit">{meta.unit || 'value'}</span><span class="per">&nbsp;· {fmtPeriod(period)} · area ∝ value</span></div>
+  <div class="head"><span class="unit">{meta.unit || t('fp.value')}</span><span class="per">&nbsp;· {fmtPeriod(period)} · {t('sz.area')}</span></div>
   <svg width={W} height={H} role="img" aria-label="Circle sizes: {refs.map((r) => fmtTick(r.v, meta)).join(', ')} {meta.unit}">
     {#each refs as c, k}
       {@const cy = H - 2 - c.r}

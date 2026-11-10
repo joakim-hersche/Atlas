@@ -1,5 +1,6 @@
 // Data loading and the column format written by pipeline/build/web.py.
 import { feature } from 'topojson-client';
+import { levelName, t, levelWord } from './i18n.svelte';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
 
@@ -283,20 +284,12 @@ export function loadReach(hub: string, mode: 'pt' | 'car'): Promise<ReachFile | 
 }
 
 // ---------------------------------------------------------------- gap reasons (D21)
-const STATUS_TEXT: Record<string, string> = {
-  no_data: 'no data for this year',
-  suppressed: 'suppressed (small numbers)',
-  not_published: 'not published at this level',
-  not_covered: 'not covered by this canton',
-  not_applicable: 'not applicable',
-};
+const STATUS = ['no_data', 'suppressed', 'not_published', 'not_covered', 'not_applicable'];
+const statusText = (k: string) => t(`gap.${k}`);
 
-export const PRECISION_TEXT: Record<string, string> = {
-  exact: 'exact',
-  survey: 'survey',
-  modelled: 'modelled',
-  boundary_estimate: 'boundary estimate',
-};
+const PRECISIONS = ['exact', 'survey', 'modelled', 'boundary_estimate'];
+/** Precision tag in the UI language (exact / survey / modelled / boundary estimate). */
+export const precisionText = (p: string): string => (PRECISIONS.includes(p) ? t(`prec.${p}`) : p);
 
 export function partialCantons(meta: MetricMeta): string[] | null {
   return meta.coverage.startsWith('partial:') ? meta.coverage.slice(8).split(',') : null;
@@ -305,15 +298,15 @@ export function partialCantons(meta: MetricMeta): string[] | null {
 /** Reason a value is missing, from the status code, falling back to the coverage list.
  *  `file` is null for a column built from a series file (no status codes there). */
 export function gapReason(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta, canton: string): string {
-  if (!file) return STATUS_TEXT.no_data;
+  if (!file) return statusText('no_data');
   const code = col.s?.[String(i)];
   if (code !== undefined) {
     const name = Object.keys(file.status_codes).find((k) => file.status_codes[k] === code);
-    if (name && STATUS_TEXT[name]) return STATUS_TEXT[name];
+    if (name && STATUS.includes(name)) return statusText(name);
   }
   const cov = partialCantons(meta);
-  if (cov && !cov.includes(canton)) return STATUS_TEXT.not_covered;
-  return STATUS_TEXT.no_data;
+  if (cov && !cov.includes(canton)) return statusText('not_covered');
+  return statusText('no_data');
 }
 
 export function precisionOf(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta): string {
@@ -334,16 +327,16 @@ export interface ColRef {
   file: ColumnFile | null;
 }
 
-const lvlLabel = (id: string) => LEVELS.find((l) => l.id === id)?.label.toLowerCase() ?? (id === 'schweiz' ? 'Switzerland' : id);
+const lvlLabel = (id: string) => levelWord(id);
 
 /** Why a metric cannot be shown at a level (one line), or null when it can. */
 export function unavailableReason(meta: MetricMeta, level: string): string | null {
   if (meta.levels.includes(level)) return null;
   const where = meta.levels.filter((l) => l !== 'schweiz' && l !== 'gemeindetyp').map(lvlLabel);
-  const list = where.length ? where.join(', ') : 'Switzerland only';
+  const list = where.length ? where.join(', ') : t('why.chOnly');
   if (meta.aggregation === 'not_aggregatable')
-    return `Not aggregatable (a median, index or travel time cannot be summed up to ${lvlLabel(level)}). Available for: ${list}.`;
-  return `Not published for ${lvlLabel(level)}. Available for: ${list}.`;
+    return t('why.notAgg', { level: lvlLabel(level), list });
+  return t('why.notPub', { level: lvlLabel(level), list });
 }
 
 /** Periods of a metric that the year slider can show at a level (series files exist for some levels only). */

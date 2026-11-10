@@ -1,8 +1,9 @@
 <script lang="ts">
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
+  import { ml, t as tr } from '../lib/i18n.svelte';
   import { sourceHref } from '../lib/nav';
-  import { partialCantons, type MetricMeta, type Source } from '../lib/data';
+  import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import {
     axisDomain, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
     type Method, type Scale,
@@ -77,23 +78,23 @@
   const nGap = $derived(nUnits - scale.n);
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
-  const unitText = $derived(meta.unit || 'value');
+  const unitText = $derived(meta.unit || tr('fp.value'));
 </script>
 
 <div class="legend" class:compact>
   <div class="head">
-    <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ' · log scale' : ''}</span></span>
-    <div class="seg" role="radiogroup" aria-label="Classification">
+    <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ` · ${tr('lg.log')}` : ''}</span></span>
+    <div class="seg" role="radiogroup" aria-label={tr('lg.class')}>
       {#each ['quantile', 'equal', 'continuous'] as const as m}
-        <button type="button" role="radio" aria-checked={method === m} title={METHOD_LABEL[m]} onclick={() => onmethod(m)}>
-          {m === 'quantile' ? 'Quantile' : m === 'equal' ? 'Equal' : 'Cont.'}
+        <button type="button" role="radio" aria-checked={method === m} title={tr(`lg.m.${m}`)} onclick={() => onmethod(m)}>
+          {tr(`lg.s.${m}`)}
         </button>
       {/each}
     </div>
   </div>
 
   <div class="plot" bind:clientWidth={w}>
-    <svg width={w} height={H + 22} role="img" aria-label="Distribution of {meta.label_en} across {fmtNumber(scale.n, 0)} {unitWord}">
+    <svg width={w} height={H + 22} role="img" aria-label={`${ml(meta)} · n = ${fmtNumber(scale.n, 0)} ${unitWord}`}>
       {#each bins as b}
         {#if b.h}<rect x={b.x} y={H - b.h} width={b.w} height={b.h} fill={b.fill} />{/if}
       {/each}
@@ -108,7 +109,7 @@
       {#if Number.isFinite(median)}
         <path d="M{px(median) - 3.5},0 h7 l-3.5,4.5 z" class="md" />
         <text x={Math.min(PAD + W - 2, Math.max(PAD + 2, px(median) + 6))} y="7" class="mdl" text-anchor={px(median) > PAD + W - 70 ? 'end' : 'start'}
-          dx={px(median) > PAD + W - 70 ? -12 : 0}>median {fmtTick(median, meta)}</text>
+          dx={px(median) > PAD + W - 70 ? -12 : 0}>{tr('lg.median')} {fmtTick(median, meta)}</text>
       {/if}
       {#each ticks as t}
         <line x1={px(t)} x2={px(t)} y1={H + 7} y2={H + 10} class="tk" />
@@ -131,14 +132,14 @@
 
   <p class="meta">
     <span class="num">n = {fmtNumber(scale.n, 0)}</span>
-    {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> no data</span>{/if}
-    {#if scale.method === 'continuous'}<span> · scale clamped at P2/P98</span>{/if}
-    {#if dom.clipLo || dom.clipHi}<span> · axis clipped at P1/P99</span>{/if}
-    {#if scale.diverging}<span> · centred on 0</span>{/if}
+    {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
+    {#if scale.method === 'continuous'}<span> · {tr('lg.clamped')}</span>{/if}
+    {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}</span>{/if}
+    {#if scale.diverging}<span> · {tr('lg.centred')}</span>{/if}
   </p>
   <p class="foot">
-    Source: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {meta.precision}{cov ? '' : ' · national'}
-    {#if cov}<span class="partial"> · partial: {cov.length} of 26 cantons</span>{/if}
+    {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
+    {#if cov}<span class="partial"> · {tr('p.partial', { n: cov.length })}</span>{/if}
   </p>
 </div>
 

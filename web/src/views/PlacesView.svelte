@@ -51,7 +51,7 @@
   import PctBar from '../components/PctBar.svelte';
   import Search from '../components/Search.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, PRECISION_TEXT, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
+  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
   import { levelName, ml, t, themeName } from '../lib/i18n.svelte';
   import { profileHref, sourceHref } from '../lib/nav';
   import { parseRef, type UnitRef } from '../lib/places';
@@ -169,7 +169,7 @@
   <tr>
     <th scope="row" class="mcol">
       <span class="lbl">{ml(m)}</span>
-      <span class="tags">{m.unit ? m.unit + ' · ' : ''}{PRECISION_TEXT[m.precision] ?? m.precision}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
+      <span class="tags">{m.unit ? m.unit + ' · ' : ''}{precisionText(m.precision)}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
     </th>
     {#each es as e, k}
       {@const mark = mk ? (mk.hi === k ? markText(m, 'hi') : mk.lo === k ? markText(m, 'lo') : null) : null}

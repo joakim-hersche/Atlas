@@ -2,6 +2,7 @@
   // Scatter plot of metric A (x) against metric B (y) for every municipality with data in both,
   // drawn on a canvas: points by language region, optional population size, least-squares line,
   // and n, Pearson r, Spearman rho and population-weighted Pearson r.
+  import { ml, t as tr } from '../lib/i18n.svelte';
   import type { MetricMeta } from '../lib/data';
   import {
     fmtNumber, fmtPeriod, fmtR, fmtTick, fmtValue, logTicks, niceTicks, pearson, sortedValues, spearman, wantsLog,
@@ -154,9 +155,9 @@
     g.font = `500 11px ${getComputedStyle(document.documentElement).getPropertyValue('--font-sans')}`;
     g.textAlign = 'left';
     g.textBaseline = 'alphabetic';
-    g.fillText(`↑ ${yMeta.label_en}${yMeta.unit ? ` (${yMeta.unit})` : ''}${logY ? ', log' : ''}`, 4, 12, w - 8);
+    g.fillText(`↑ ${ml(yMeta)}${yMeta.unit ? ` (${yMeta.unit})` : ''}${logY ? ', log' : ''}`, 4, 12, w - 8);
     g.textAlign = 'right';
-    g.fillText(`${xMeta.label_en}${xMeta.unit ? ` (${xMeta.unit})` : ''}${logX ? ', log' : ''} →`, w - M.r, h - 2, w - M.l);
+    g.fillText(`${ml(xMeta)}${xMeta.unit ? ` (${xMeta.unit})` : ''}${logX ? ', log' : ''} →`, w - M.r, h - 2, w - M.l);
 
     // points, largest first so small ones stay visible
     const { idx, px, py } = pts;
@@ -270,16 +271,16 @@
 <div class="scatter">
   <div class="plotcol">
     <div class="bar">
-      <span class="caps">A × B · each point a {unitOne}</span>
+      <span class="caps">A × B · {tr('sc.each', { one: unitOne })}</span>
       <span class="opts">
-        <label><input type="checkbox" bind:checked={sizeByPop} /> size by population</label>
+        <label><input type="checkbox" bind:checked={sizeByPop} /> {tr('sc.sizePop')}</label>
         <label><input type="checkbox" bind:checked={logX} /> log x</label>
         <label><input type="checkbox" bind:checked={logY} /> log y</label>
       </span>
     </div>
     <div class="plot" bind:clientWidth={w} bind:clientHeight={h}>
       <canvas bind:this={canvas} style="width:{w}px;height:{h}px" onpointermove={move} onpointerleave={leave} onpointerdown={click}
-        aria-label="Scatter plot of {yMeta.label_en} against {xMeta.label_en}"></canvas>
+        aria-label={tr('sc.aria', { y: ml(yMeta), x: ml(xMeta) })}></canvas>
       {#if tip}
         <div class="tip" style="left:{tip.left}px; top:{tip.top}px" class:flip={tip.left > w * 0.6}>
           <strong>{names[tip.i]}</strong>{#if !names[tip.i].includes('(')}&nbsp;<span class="muted">{cantons[tip.i]}</span>{/if}
@@ -288,42 +289,42 @@
         </div>
       {/if}
     </div>
-    <div class="regions" aria-label="Language regions">
+    <div class="regions" aria-label={tr('p.lang')}>
       {#each regionNames as name, k}
         <span><i style="background:{cols[k]}"></i>{name} <span class="num muted">{fmtNumber(regionCount[k], 0)}</span></span>
       {/each}
-      <span class="muted">— least squares</span>
+      <span class="muted">— {tr('sc.ols')}</span>
     </div>
   </div>
 
   <div class="stats">
-    <div class="caps">Association</div>
+    <div class="caps">{tr('sc.assoc')}</div>
     {#if stats}
       <table>
         <tbody>
           <tr><th>n</th><td class="num">{fmtNumber(stats.n, 0)}</td></tr>
           <tr><th>Pearson r</th><td class="num strong">{fmtR(stats.fit.r)}</td></tr>
           <tr><th>Spearman <i class="gr">ρ</i></th><td class="num strong">{fmtR(stats.rho)}</td></tr>
-          <tr><th>Pearson r, pop.-weighted</th><td class="num">{fmtR(stats.rw)}</td></tr>
-          <tr><th>OLS slope</th><td class="num">{Number.isFinite(stats.fit.slope) ? fmtNumber(stats.fit.slope, Math.abs(stats.fit.slope) < 0.01 ? 5 : Math.abs(stats.fit.slope) < 1 ? 3 : 2) : '–'}</td></tr>
+          <tr><th>{tr('sc.rw')}</th><td class="num">{fmtR(stats.rw)}</td></tr>
+          <tr><th>{tr('sc.slope')}</th><td class="num">{Number.isFinite(stats.fit.slope) ? fmtNumber(stats.fit.slope, Math.abs(stats.fit.slope) < 0.01 ? 5 : Math.abs(stats.fit.slope) < 1 ? 3 : 2) : '–'}</td></tr>
         </tbody>
       </table>
       <p class="foot">
-        {logX || logY ? `Computed on ${[logX ? 'log₁₀ A' : '', logY ? 'log₁₀ B' : ''].filter(Boolean).join(' and ')}. ` : ''}Weighted r uses resident population (STATPOP) as weights.
-        {both - stats.n > 0 ? `${fmtNumber(both - stats.n, 0)} non-positive values left out of the log axis.` : ''}
-        Correlation across {unitWord}, not individuals.
+        {logX || logY ? `${tr('sc.on', { what: [logX ? 'log₁₀ A' : '', logY ? 'log₁₀ B' : ''].filter(Boolean).join(tr('sc.and')) })} ` : ''}{tr('sc.weights')}
+        {both - stats.n > 0 ? tr('sc.nonpos', { n: fmtNumber(both - stats.n, 0) }) : ''}
+        {tr('sc.across', { units: unitWord })}
       </p>
     {:else}
-      <p class="muted">Fewer than 3 {unitWord} have both values.</p>
+      <p class="muted">{tr('sc.few', { units: unitWord })}</p>
     {/if}
     <div class="sel">
       {#if focus !== null}
-        <div class="caps">{sel !== null ? 'Selected' : 'Hover'}</div>
+        <div class="caps">{sel !== null ? tr('st.selected') : tr('sc.hover')}</div>
         <div class="sname"><strong>{names[focus]}</strong>{#if !names[focus].includes('(')}&nbsp;<span class="muted">{cantons[focus]}</span>{/if}</div>
         <div class="num"><span class="k">A</span> {fmt(x[focus], xMeta)} <span class="muted">{fmtPeriod(xPeriod)}</span></div>
         <div class="num"><span class="k">B</span> {fmt(y[focus], yMeta)} <span class="muted">{fmtPeriod(yPeriod)}</span></div>
       {:else}
-        <p class="foot">Hover or tap a {unitOne} on either map or in the plot; it is outlined in all three views.</p>
+        <p class="foot">{tr('sc.hint')}</p>
       {/if}
     </div>
   </div>
