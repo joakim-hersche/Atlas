@@ -68,10 +68,19 @@ def build_units() -> list[dict]:
             name = g[name_col].iloc[0] if name_col else uid
             if lvl == "bezirk":
                 name = _district_name(uid)
+            elif lvl == "kanton":
+                name = _canton_name(uid)
             units.append({"id": str(uid), "level": lvl, "name": name, "label": lab.get(lvl, {}).get(str(uid)),
                           "n_gemeinden": len(g), "kanton": g["kanton"].iloc[0] if g["kanton"].nunique() == 1 else None})
     units.append({"id": "CH", "level": "schweiz", "name": "Schweiz", "n_gemeinden": len(m)})
     return units
+
+
+def _canton_name(code: str) -> str:
+    """Official register name of the canton (BFS register, e.g. 'Bern / Berne'); the code if missing."""
+    reg = pd.read_parquet(interim_path("backbone", "canton.parquet"))
+    hit = reg[reg["canton"] == str(code)]
+    return hit["name"].iloc[0] if len(hit) else str(code)
 
 
 def _district_name(nr: str) -> str:
