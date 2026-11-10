@@ -81,10 +81,10 @@
   tr + tr { border-top: 1px solid var(--border); }
   .who { display: block; font-family: var(--font-sans); font-size: 0.72rem; color: var(--faint); }
   .muted { color: var(--muted); }
-  .strong { font-weight: 500; font-size: 0.95rem; }
+  .strong { font-weight: 700; font-size: 1rem; }
   .foot { margin: 6px 0 0; }
-  .selblock { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-strong); }
+  .selblock { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
   .sname { margin: 3px 0 0; font-size: 0.95rem; }
-  .pbar { position: relative; height: 6px; margin: 8px 0 2px; background: linear-gradient(to right, var(--border), var(--border-strong)); }
-  .pbar span { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--text); transform: translateX(-1px); }
+  .pbar { position: relative; height: 6px; margin: 8px 0 2px; background: var(--border); }
+  .pbar span { position: absolute; top: -3px; width: 3px; height: 12px; background: var(--accent); transform: translateX(-1px); }
 </style>

@@ -83,13 +83,13 @@
 
 <style>
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .label { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+  .label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
   .count { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .count strong { color: var(--text); }
   .slider { position: relative; height: 36px; }
   .track {
     position: absolute; left: 11px; right: 11px; top: 16px; height: 3px; border-radius: 0;
-    background: linear-gradient(to right, var(--border) var(--a), var(--accent) var(--a), var(--accent) var(--b), var(--border) var(--b));
+    background: linear-gradient(to right, var(--border) var(--a), var(--ink) var(--a), var(--ink) var(--b), var(--border) var(--b));
   }
   .slider input {
     position: absolute; inset: 0; width: 100%; margin: 0; background: none; pointer-events: none;
@@ -99,20 +99,20 @@
   .slider input::-moz-range-track { background: none; }
   .slider input::-webkit-slider-thumb {
     -webkit-appearance: none; pointer-events: auto; width: 18px; height: 18px; margin-top: 9px; border-radius: 50%;
-    background: var(--panel); border: 2px solid var(--accent); cursor: grab;
+    background: var(--panel); border: 2px solid var(--ink); cursor: grab;
   }
   .slider input::-moz-range-thumb {
     pointer-events: auto; width: 18px; height: 18px; border-radius: 50%;
-    background: var(--panel); border: 2px solid var(--accent); cursor: grab;
+    background: var(--panel); border: 2px solid var(--ink); cursor: grab;
   }
   .inputs { display: flex; gap: 8px; align-items: end; }
-  .inputs label { display: flex; flex-direction: column; font-size: 0.8rem; color: var(--muted); flex: 1; min-width: 0; }
+  .inputs label { display: flex; flex-direction: column; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
   .inputs input {
-    width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2);
+    width: 100%; padding: 6px 8px; border: 1px solid var(--ink); background: var(--panel);
     font-size: 16px; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   }
   .reset {
-    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); cursor: pointer;
+    padding: 7px 10px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-weight: 500;
   }
   .reset:disabled { opacity: 0.45; cursor: default; }
 </style>
