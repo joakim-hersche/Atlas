@@ -49,9 +49,31 @@ bfs_accessibility:
 
 kt_crime:
   status: cleared
+  cantons: [ZH, BS]   # AR, AI, BL (PDF reports) not checked yet
   evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json, dataset 1202@kantonspolizei-kanton-zuerich, file KTZH_00001202_00003600.csv licence 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'; ZH OGD terms https://www.zh.ch/de/politik-staat/opendata.html 'Sie duerfen offene Daten vervielfaeltigen, verbreiten und weiter zugaenglich machen, anreichern und bearbeiten, kommerziell nutzen'. BS: https://data.bs.ch dataset 100508 licence 'CC BY 4.0'. Checked 2026-11-10."
 
 kt_landprice:
   status: cleared
+  cantons: [ZH, BL]
   metrics: [land_price_m2, land_price_model_m2]
   evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json lists KANTON_ZUERICH_199.csv (296@statistisches-amt) and _477.csv (332@statistisches-amt) with 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'. BL: https://data.bl.ch/terms/terms-and-conditions/ 'Alle Datensaetze koennen unter der Lizenz CC-BY (freie Nutzung mit Quellenangabe) weiterverarbeitet und kommerziell genutzt werden'; dataset 10200 dcat_ap_ch terms_by. land_transactions stays held back: ZH indicator 402 is not in the OGD catalogue (no licence). Checked 2026-11-10."
+
+kt_hazards:
+  status: cleared
+  cantons: [AG, AI, AR, BE, BL, FR, GE, GL, JU, LU, NE, SH, SO, SZ, TG, TI, VS, ZG, ZH]
+  evidence: "geodienste.ch lists each canton's hazard-map terms; most state 'Freie Nutzung. Quellenangabe ist Pflicht.' (recorded in pipeline/sources/kt_hazards/meta.yaml). GR and SG carry no licence statement on geodienste.ch ('keine Angabe') and stay out. NE allows commercial use only with permission; Gemeindebank is non-commercial. FR hazard data is not CC BY-SA (the BY-SA note concerns FR statistics). Reviewed 2026-11-10."
+
+kt_finance:
+  status: cleared
+  cantons: [ZH, BL, GR, TG, GE]
+  evidence: "ZH: OGD catalogue lists Gemeindeporträt indicators 431, 434, 297 with terms_by (NonCommercialAllowed-CommercialAllowed-ReferenceRequired). BL: data.bl.ch terms 'CC-BY (freie Nutzung mit Quellenangabe)'. GR: data.gr.ch CC0 1.0. TG: data.tg.ch CC0 1.0. GE: OCSTAT clauses d'utilisation 'L'utilisation ou la reproduction des résultats statistiques ... est libre, pour autant que leur origine et leur source soient indiquées.' Not shipped: LU, SO, AG, VD (written permission required), FR (CC BY-SA, share-alike), ZG, SG, TI (not yet checked). Excerpts: scratchpad samples/licences/_cantonal_publishers.txt, 2026-11-10."
+
+kt_unemployment:
+  status: cleared
+  cantons: [ZH, GE]
+  evidence: "ZH: OGD catalogue lists indicator 107 with terms_by. GE: OCSTAT clauses d'utilisation (free use with source). Not shipped: VD (permission required), SG (not checked)."
+
+kt_pupils:
+  status: cleared
+  cantons: [BL]
+  evidence: "BL: data.bl.ch CC-BY. Not shipped: ZH (indicators 143/147/149 not in the OGD catalogue), FR (CC BY-SA), ZG (not checked)."

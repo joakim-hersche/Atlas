@@ -10,6 +10,10 @@
       kindergarten, primary, lower secondary, special-needs schooling and private schools, 2014–2024.
 - FR  15_02_eleves_lieu_domicile (OFS SDL): Scolarité obligatoire = primary 1-2, 3-8, lower
       secondary and special-needs schooling (enseignement séparatif), 2010–2024.
+- ZG  data.zg.ch 'Schülerinnen und Schüler an öffentlichen Schulen' (store/1/resource/682, source
+      BFS SDL): Kindergarten + Primarstufe + Sekundarstufe I per municipality, 1997/98–2024/25.
+      Public schools only (no private or special schools), counted by the municipality's school
+      (Risch includes pupils living in Meierskappel LU): not strictly by residence.
 Period = first calendar year of the school year (2024 = school year 2024/25).
 TG and SG count pupils by school district (Schulgemeinde / Schulträger), several of which span
 more than one political municipality: not included (no 1:1 mapping).
@@ -19,7 +23,7 @@ from __future__ import annotations
 import pandas as pd
 
 from pipeline.harmonize.helpers import emit
-from pipeline.sources.kt_finance.kthelp import complete, ods_csv, to_ref, zh_current
+from pipeline.sources.kt_finance.kthelp import complete, fetch_retry, ods_csv, to_ref, zh_current
 
 SOURCE = "kt_pupils"
 M = "pup_compulsory"
@@ -58,9 +62,20 @@ def fr() -> pd.DataFrame:
     return w.rename(columns={"commune_id_domicile": "bfs_nr", "annee": "period"})
 
 
+ZG_URL = "https://data.zg.ch/store/1/resource/682"
+
+
+def zg() -> pd.DataFrame:
+    d = pd.read_csv(fetch_retry(ZG_URL, SOURCE, "zg_resource_682.csv"))
+    d = d[d["stufe"].isin(["Kindergarten", "Primarstufe", "Sekundarstufe I"])]
+    w = d.groupby(["bfscode", "schuljahr"])["anzahl"].sum(min_count=3).rename("n").reset_index()
+    w["period"] = w["schuljahr"].str[:4].astype(int)
+    return w.rename(columns={"bfscode": "bfs_nr"})[["bfs_nr", "period", "n"]]
+
+
 def observations() -> pd.DataFrame:
     parts, natives, cov = [], [], {}
-    for kt, fn in (("ZH", zh), ("BL", bl), ("FR", fr)):
+    for kt, fn in (("ZH", zh), ("BL", bl), ("FR", fr), ("ZG", zg)):
         res = fn()
         w, k = res if isinstance(res, tuple) else (res, None)
         w["period"] = w["period"].astype(int).astype(str)
@@ -71,5 +86,5 @@ def observations() -> pd.DataFrame:
             natives.append(emit(k, {"n": M}, "period", SOURCE, level="kanton", unit_col="unit",
                                 provenance="native"))
     obs = pd.concat(parts, ignore_index=True)
-    obs = complete(obs, SOURCE, {M: {"ZH", "BL", "FR"}}, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
+    obs = complete(obs, SOURCE, {M: {"ZH", "BL", "FR", "ZG"}}, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
     return pd.concat([obs, *natives], ignore_index=True)

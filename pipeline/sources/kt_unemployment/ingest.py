@@ -10,6 +10,9 @@ All are SECO AVAM/PLASTA extracts (same definition: registered unemployed at the
 - VD  Statistique Vaud DE_Chomeurs_Taux_com.xlsx: monthly snapshot (latest month, previous month,
       same month a year earlier), only communes with more than 1000 economically active
       residents and values of at least 6; other communes -> suppressed. Periods 'YYYY-MM'.
+- SG  STADA2 (Fachstelle für Statistik SG) indicator 39 'Registrierte Arbeitslose' (SECO), all 75
+      political municipalities, 2009–2025. STADA2 shows the annual mean for completed years and
+      the latest month for the current year: the current year (2026) is left out.
 Derived: per 100 residents aged 20–64 (STATPOP pop_age_20_64). The 20–64 group is used because
 STATPOP delivers it for every municipality; ZH's own rate uses the 15–64 population and SECO's
 rate the labour force (Structural Survey), so values are not the official unemployment rate.
@@ -19,6 +22,8 @@ from __future__ import annotations
 import pandas as pd
 
 from pipeline.harmonize.helpers import emit
+from pipeline.common import REFERENCE_DATE
+from pipeline.sources.kt_finance.fetch import stada2_export
 from pipeline.sources.kt_finance.kthelp import complete, fetch_retry, match_names, ref_units, to_ref, zh_current
 
 SOURCE = "kt_unemployment"
@@ -28,8 +33,8 @@ VD_URL = "https://www.vd.ch/fileadmin/user_upload/organisation/dfin/statvd/Dom_0
 MONTHS = {"janvier": 1, "février": 2, "fevrier": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6, "juillet": 7,
           "août": 8, "aout": 8, "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12, "decembre": 12}
 VD_NAMES = {"Bussigny-près-Lausanne": 5624, "Arzier": 5702}  # older names used by Statistique Vaud
+SG_LAST_YEAR = 2025  # last completed year (STADA2 shows the latest month for the running year)
 NOT_COVERED = {
-    "SG": "St.Gallen's STADA2 database host (stada2.sg.ch) is not reachable from the pipeline",
     "AG": "Aargau publishes municipal unemployment only as monthly PDFs",
     "LU": "Lucerne publishes municipal unemployment only in PDF profiles",
     "BS": "Basel-Stadt publishes only a rate for Riehen and Bettingen (no counts)",
@@ -105,17 +110,28 @@ def vd() -> pd.DataFrame:
     return pd.concat([w, pd.DataFrame(extra, columns=w.columns)], ignore_index=True)
 
 
+def sg() -> tuple[pd.DataFrame, pd.DataFrame]:
+    d = stada2_export([39], range(2009, SG_LAST_YEAR + 1), SOURCE, "sg_stada2_unemployment.zip")
+    d = d[d["INDIKATOR_ID"].astype(int) == 39]
+    w = pd.DataFrame({"bfs_nr": d["BFS_NR"].astype(int), "period": d["INDIKATOR_JAHR"].astype(int),
+                      "n": pd.to_numeric(d["INDIKATOR_VALUE"], errors="coerce")})
+    w = w[w["period"] <= SG_LAST_YEAR]
+    kt = w[w["bfs_nr"] == 17].drop(columns="bfs_nr").assign(unit="SG")
+    return w[w["bfs_nr"] != 17], kt
+
+
 def observations() -> pd.DataFrame:
     parts, natives, cov = [], [], {}
-    for kt, fn in (("ZH", zh), ("GE", ge), ("VD", vd)):
+    for kt, fn in (("ZH", zh), ("GE", ge), ("VD", vd), ("SG", sg)):
         res = fn()
         w, k = res if isinstance(res, tuple) else (res, None)
         w["period"] = w["period"].astype(str)
-        o = to_ref(w, {"n": M}, SOURCE, kt)
+        o = to_ref(w, {"n": M}, SOURCE, kt, vintage=REFERENCE_DATE if kt == "SG" else None)
         sup = o["status"].eq("suppressed")
         o.loc[sup, "note"] = {"ZH": "not published by ZH (small numbers)",
                               "GE": "not published",
-                              "VD": "not published by VD (fewer than 1000 economically active residents or fewer than 6 unemployed)"}[kt]
+                              "VD": "not published by VD (fewer than 1000 economically active residents or fewer than 6 unemployed)",
+                              "SG": "not published"}[kt]
         if kt == "VD":
             o.loc[~sup, "note"] = "monthly count (VD publishes only the latest months)"
         parts.append(o)
@@ -130,6 +146,6 @@ def observations() -> pd.DataFrame:
                 e["note"] = "commune of residence not specified (in the canton total only)"
                 natives.append(e)
     obs = pd.concat(parts, ignore_index=True)
-    obs = complete(obs, SOURCE, {M: {"ZH", "GE", "VD"}}, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
+    obs = complete(obs, SOURCE, {M: {"ZH", "GE", "VD", "SG"}}, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
     nat = pd.concat(natives, ignore_index=True)
     return pd.concat([obs, nat[nat["status"] == "ok"]], ignore_index=True)
