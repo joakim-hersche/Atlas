@@ -274,10 +274,10 @@
     </div>
     <div class="plot" bind:clientWidth={w} bind:clientHeight={h}>
       <canvas bind:this={canvas} style="width:{w}px;height:{h}px" onpointermove={move} onpointerleave={leave} onpointerdown={click}
-        aria-label="Scatter plot of {yMeta.label_en} against {xMeta.label_en}" role="img"></canvas>
+        aria-label="Scatter plot of {yMeta.label_en} against {xMeta.label_en}"></canvas>
       {#if tip}
         <div class="tip" style="left:{tip.left}px; top:{tip.top}px" class:flip={tip.left > w * 0.6}>
-          <strong>{names[tip.i]}</strong> <span class="muted">{cantons[tip.i]}</span>
+          <strong>{names[tip.i]}</strong>{#if !names[tip.i].includes('(')}&nbsp;<span class="muted">{cantons[tip.i]}</span>{/if}
           <div class="num"><span class="k">A</span> {fmt(x[tip.i], xMeta)}</div>
           <div class="num"><span class="k">B</span> {fmt(y[tip.i], yMeta)}</div>
         </div>
@@ -298,7 +298,7 @@
         <tbody>
           <tr><th>n</th><td class="num">{fmtNumber(stats.n, 0)}</td></tr>
           <tr><th>Pearson r</th><td class="num strong">{fmtR(stats.fit.r)}</td></tr>
-          <tr><th>Spearman ρ</th><td class="num strong">{fmtR(stats.rho)}</td></tr>
+          <tr><th>Spearman <i class="gr">ρ</i></th><td class="num strong">{fmtR(stats.rho)}</td></tr>
           <tr><th>Pearson r, pop.-weighted</th><td class="num">{fmtR(stats.rw)}</td></tr>
           <tr><th>OLS slope</th><td class="num">{Number.isFinite(stats.fit.slope) ? fmtNumber(stats.fit.slope, Math.abs(stats.fit.slope) < 0.01 ? 5 : Math.abs(stats.fit.slope) < 1 ? 3 : 2) : '–'}</td></tr>
         </tbody>
@@ -314,7 +314,7 @@
     <div class="sel">
       {#if focus !== null}
         <div class="caps">{sel !== null ? 'Selected' : 'Hover'}</div>
-        <div class="sname"><strong>{names[focus]}</strong> <span class="muted">{cantons[focus]}</span></div>
+        <div class="sname"><strong>{names[focus]}</strong>{#if !names[focus].includes('(')}&nbsp;<span class="muted">{cantons[focus]}</span>{/if}</div>
         <div class="num"><span class="k">A</span> {fmt(x[focus], xMeta)} <span class="muted">{fmtPeriod(xPeriod)}</span></div>
         <div class="num"><span class="k">B</span> {fmt(y[focus], yMeta)} <span class="muted">{fmtPeriod(yPeriod)}</span></div>
       {:else}
@@ -347,6 +347,7 @@
   th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 0; font-size: 0.8rem; }
   td { text-align: right; padding: 4px 0; font-size: 0.9rem; }
   tr + tr { border-top: 1px solid var(--border); }
+  .gr { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05em; }
   .strong { font-weight: 500; font-size: 1.05rem; }
   .foot { margin: 6px 0 0; }
   .sel { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 0.82rem; }

@@ -1,7 +1,7 @@
 <script lang="ts">
   // Summary statistics of the shaded metric across municipalities, plus the selected unit.
   import { partialCantons, type MetricMeta, type Source } from '../lib/data';
-  import { fmtNumber, fmtPeriod, fmtValue, mean, quantile, rankOf, sortedValues } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -28,12 +28,13 @@
   });
   const rank = $derived(sel === null ? null : rankOf(v, sel, meta.direction));
   const cov = $derived(partialCantons(meta));
-  const f = (x: number) => fmtValue(x, meta);
+  const f = (x: number) => fmtNumber(x, meta.decimals);
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
 </script>
 
 <div class="stats">
   <div class="caps">Distribution across municipalities</div>
+  <div class="unit">{meta.unit || 'value'} · {fmtPeriod(period)}</div>
   {#if s.length}
     <table>
       <tbody>
@@ -41,8 +42,8 @@
         <tr><th>Mean <span class="muted">(unweighted)</span></th><td class="num">{f(mean(s))}</td></tr>
         <tr><th>Median</th><td class="num">{f(quantile(s, 0.5))}</td></tr>
         <tr><th>P10 / P90</th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
-        <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]} {cantons[ext.lo]}</span></td></tr>
-        <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]} {cantons[ext.hi]}</span></td></tr>
+        <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
+        <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
         <tr><th>Switzerland</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
       </tbody>
     </table>
@@ -73,6 +74,7 @@
 
 <style>
   .stats { font-size: 0.82rem; }
+  .unit { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
   table { width: 100%; border-collapse: collapse; margin-top: 4px; }
   th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 8px 4px 0; vertical-align: top; white-space: nowrap; }
   td { text-align: right; padding: 4px 0; }
