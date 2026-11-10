@@ -7,15 +7,16 @@
   import MetricPicker from '../components/MetricPicker.svelte';
   import RangeFilter from '../components/RangeFilter.svelte';
   import ReachControls from '../components/ReachControls.svelte';
+  import SizeLegend from '../components/SizeLegend.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
   import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta,
-    type ReachFile,
+    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData,
+    type MetricMeta, type ReachFile, type UnitRow,
   } from '../lib/data';
   import { T_MAX, type ReachMode } from '../lib/hash';
-  import { CH_BOUNDS, UnitMap } from '../lib/mapview';
+  import { CH_BOUNDS, UnitMap, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
@@ -30,6 +31,10 @@
   let { base, ld, cols, desktop, onrendered }: Props = $props();
 
   const MIN_PER_SECOND = 30; // Play speed: 0 -> 180 min in 6 s
+  /** radius in px of the largest value at the reference zoom, per level */
+  const R_MAX: Record<string, number> = {
+    gemeinde: 22, bezirk: 24, kanton: 30, grossregion: 36, sprachgebiet: 36, agglomeration: 26, arbeitsmarktgebiet: 24, stadt_land: 36,
+  };
 
   let mapReady = $state(false);
   let hover = $state<number | null>(null);
@@ -40,6 +45,8 @@
   let reachError = $state<string | null>(null);
   let hubs = $state.raw<Hub[]>([{ slug: 'zuerich', name: 'Zürich HB' }]);
   let carFiles = $state.raw<Set<string> | null>(null);
+  let unitRows = $state.raw<UnitRow[] | null>(null);
+  let zf = $state(1);
   let mapEl: HTMLDivElement;
   let panelEl = $state<HTMLElement>();
   let view: UnitMap | null = null;
@@ -71,6 +78,50 @@
     });
     return () => (live = false);
   });
+
+  // ------------------------------------------------------------------ size (proportional symbols)
+  const symbolsMode = $derived(app.display === 'symbols');
+  const sizeMeta = $derived<MetricMeta | undefined>(metas.get(app.size ?? (symbolsMode ? 'pop_total' : '')));
+  const whyS = $derived(sizeMeta ? unavailableReason(sizeMeta, ld.level) : null);
+  const sizeRef = $derived(sizeMeta && !whyS ? cols.get(ld, sizeMeta.id, app.year) : null);
+  // units.json (names, label points, regions) is loaded once symbols or categorical filters are used
+  const needRows = $derived(!!sizeMeta || app.filters.some((f) => f.kind === 'cat'));
+  $effect(() => {
+    if (needRows && !unitRows) loadUnits().then((u) => (unitRows = u));
+  });
+  const labels = $derived.by(() => {
+    if (!unitRows) return null;
+    const out: ([number, number] | null)[] = new Array(nUnits).fill(null);
+    for (const r of unitRows) {
+      if (r.level !== ld.level || !r.label) continue;
+      const i = ld.index.get(r.id);
+      if (i !== undefined) out[i] = r.label;
+    }
+    return out;
+  });
+  const sizeData = $derived.by(() => {
+    if (!sizeRef || !labels) return null;
+    const v = sizeRef.col.v;
+    let vmax = 0, nMissing = 0, nNonPositive = 0;
+    for (const x of v) {
+      if (x === null) nMissing++;
+      else if (x <= 0) nNonPositive++;
+      else if (x > vmax) vmax = x;
+    }
+    if (!(vmax > 0)) return null;
+    const rMax = R_MAX[ld.level] ?? 24;
+    const syms: Symbol[] = [];
+    for (let i = 0; i < v.length; i++) {
+      const x = v[i];
+      const p = labels[i];
+      if (x !== null && x > 0 && p) syms.push({ i, lngLat: p, r: rMax * Math.sqrt(x / vmax) });
+    }
+    return { syms, vmax, rMax, nMissing, nNonPositive };
+  });
+  function setDisplay(d: 'choropleth' | 'symbols') {
+    app.display = d;
+    if (d === 'symbols' && !app.size) app.size = 'pop_total';
+  }
 
   // ------------------------------------------------------------------ filters (population)
   const popIdx = $derived(app.filters.findIndex((f) => f.kind === 'num' && f.metric === 'pop_total'));
@@ -148,10 +199,12 @@
   onMount(() => {
     view = new UnitMap(mapEl, base, { onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; } });
     overlay = new ReachOverlay(view.map, mapEl);
+    view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
     if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = view.map;
     view.ready.then(() => {
       mapReady = true;
       fit();
+      zf = zoomScale(view!.map.getZoom());
       view!.map.once('idle', () => onrendered?.());
     });
     const ro = new ResizeObserver(() => view?.map.resize());
@@ -203,9 +256,20 @@
     if (mapReady) view!.setLevel(d);
   });
   $effect(() => {
-    const c = colours;
+    const d = app.display;
+    if (mapReady) view!.setDisplay(d);
+  });
+  $effect(() => {
+    const sd = sizeData;
+    const style = symbolsMode ? 'filled' : 'hollow';
     void ld;
-    if (mapReady) view!.setColours(c);
+    if (mapReady) view!.setSymbols(sd ? sd.syms : null, style);
+  });
+  $effect(() => {
+    const c = colours;
+    const m = match.m;
+    void ld;
+    if (mapReady) view!.setColours(c, filtered ? m.map((x) => 1 - x) as Uint8Array : undefined);
   });
   $effect(() => {
     const s = selIdx;
@@ -284,12 +348,19 @@
     }
     const i = selIdx;
     const sub = ld.level === 'gemeinde' ? `${ld.canton[i]} · BFS ${ld.units[i]}` : ld.level === 'kanton' ? li.one : `${li.one}${ld.canton[i] ? ` · ${ld.canton[i]}` : ''}`;
-    return { i, reach, sub };
+    const extra = [];
+    if (sizeMeta && sizeRef && sizeMeta.id !== metaA.id) {
+      const x = sizeRef.col.v[i];
+      extra.push({ label: `Size: ${sizeMeta.label_en}`, value: x === null ? 'no data' : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
+    }
+    return { i, reach, sub, extra };
   });
   const tip = $derived.by(() => {
     if (hover === null || !hoverAt || !colA) return null;
-    const x = colA.v[hover];
-    return x === null || x === undefined ? 'no data' : fmtValue(x, metaA);
+    const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? 'no data' : fmtValue(x, m));
+    const rows = [fmt(colA.v[hover], metaA)];
+    if (sizeMeta && sizeRef && sizeMeta.id !== metaA.id) rows.push(`○ ${fmt(sizeRef.col.v[hover], sizeMeta)}`);
+    return rows;
   });
 </script>
 
@@ -315,6 +386,33 @@
             <p class="foot">Loading…</p>
           {/if}
         </div>
+      </section>
+
+      <section class="extra">
+        <div class="row2">
+          <span class="caps">Size by</span>
+          <div class="seg" role="radiogroup" aria-label="Map type">
+            <button type="button" role="radio" aria-checked={!symbolsMode} onclick={() => setDisplay('choropleth')}>Choropleth</button>
+            <button type="button" role="radio" aria-checked={symbolsMode} onclick={() => setDisplay('symbols')}>Symbols</button>
+          </div>
+        </div>
+        <MetricPicker metrics={base.metrics} level={ld.level} value={sizeMeta?.id ?? ''} none={symbolsMode ? undefined : 'None'}
+          onpick={(id) => (app.size = id || null)} />
+        {#if whyS}
+          <p class="why sp">{whyS}</p>
+        {:else if sizeMeta && sizeData && sizeRef}
+          <div class="sp">
+            <SizeLegend meta={sizeMeta} period={sizeRef.col.period} vmax={sizeData.vmax} rmax={sizeData.rMax * zf} filled={symbolsMode}
+              nDrawn={sizeData.syms.length} nMissing={sizeData.nMissing} nNonPositive={sizeData.nNonPositive} unitWord={word} />
+          </div>
+        {:else if sizeMeta}
+          <p class="foot sp">Loading…</p>
+        {/if}
+        <p class="foot sp">
+          {#if symbolsMode}Circles at each {li.one}'s label point take the shade colour; the polygons are grey.
+          {:else if sizeMeta}Rings over the shaded map. “Symbols” draws filled circles in the shade colour instead.
+          {:else}Optional: a second metric as circle size.{/if}
+        </p>
       </section>
 
       <section class="reach">
@@ -356,7 +454,7 @@
       {#if tip && hover !== null && hoverAt && desktop}
         <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
           <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
-          <div class="num">{tip}</div>
+          {#each tip as r}<div class="num">{r}</div>{/each}
         </div>
       {/if}
     </div>
@@ -367,7 +465,7 @@
       {#if card && refA && colA}
         <div class="caps lab">Selected {li.one}</div>
         <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} docked onclose={() => (app.sel = null)} />
+          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)} />
       {:else}
         <p class="foot hint">Tap or click a {li.one} for its value, rank and percentile.</p>
       {/if}
@@ -383,7 +481,7 @@
   {#if !desktop && card && refA && colA}
     <div class="card-wrap">
       <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-        source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} onclose={() => (app.sel = null)} />
+        source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)} />
     </div>
   {/if}
 
@@ -404,6 +502,10 @@
   .muted { color: var(--muted); }
   .lab { margin-bottom: 6px; }
   .why { margin: 0; font-size: 0.8rem; }
+  .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .row2 .seg button { padding: 3px 8px; font-size: 0.76rem; }
+  .sp { margin-top: 8px; }
+  p.sp { margin-bottom: 0; }
   .status {
     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); color: var(--muted);
     padding: 8px 14px; border: 1px solid var(--border); z-index: 40; max-width: 90vw;
