@@ -1669,5 +1669,5 @@ Shipped notes, gap reasons, curation reasons, reach footnotes and Sources texts 
 
 | Language | Distinct texts | Fully translated | Untranslated parts |
 |---|---|---|---|
-| de | 19,830 | 19,828 | 2 |
-| fr | 19,830 | 19,828 | 2 |
+| de | 19,837 | 19,837 | 0 |
+| fr | 19,837 | 19,837 | 0 |
