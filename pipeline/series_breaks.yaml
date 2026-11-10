@@ -75,6 +75,31 @@ breaks:
         file: data/raw/bfs_rents/*/rent_canton_chf_36398431.xlsx
         quote: "Aufgrund methodischer Änderungen ab dem Jahr 2018 im Bereich der Erhebungsmethode, der Gewichtung sowie der Detektierung von Ausreissern können die Ergebnisse nur bedingt mit den Erhebungen vor 2018 verglichen werden."
 
+  - id: rents_amr_2015_questionnaire
+    period: "2015"
+    metrics: [rent_amr_chf_m2]
+    note_en: "Structural Survey questionnaire changed in 2015: only partly comparable with earlier years (BFS)."
+    note_de: "Fragebogen der Strukturerhebung 2015 angepasst: nur bedingt mit früheren Jahren vergleichbar (BFS)."
+    note_fr: "Questionnaire du relevé structurel modifié en 2015 : comparaison limitée avec les années précédentes (OFS)."
+    evidence:
+      - url: https://statistik.admin.ch/de/asset/36398431
+        file: data/raw/bfs_rents/*/rent_canton_chf_36398431.xlsx
+        quote: "Da der Fragebogen 2015 angepasst wurde, können die Ergebnisse nur bedingt mit den Erhebungen vor 2015 verglichen werden."
+
+  - id: rents_amr_2018_method
+    period: "2018"
+    metrics: [rent_amr_chf_m2]
+    note_en: "Method changes from 2018 (survey method, weighting, outlier detection): only partly comparable with earlier years; BFS flags every 2018 value as a time series break."
+    note_de: "Methodische Änderungen ab 2018 (Erhebungsmethode, Gewichtung, Ausreisser): nur bedingt mit früheren Jahren vergleichbar; das BFS markiert jeden Wert 2018 als Zeitreihenbruch."
+    note_fr: "Changements de méthode dès 2018 (méthode d’enquête, pondération, valeurs aberrantes) : comparaison limitée avec les années précédentes ; l’OFS marque chaque valeur 2018 comme rupture de série."
+    evidence:
+      - url: https://disseminate.stats.swiss/rest/data/CH1.RDISP,DF_RDISP_2,1.0.0/.SA1048V..
+        file: data/raw/bfs_amr_rents/*/DF_RDISP_2_SA1048V.csv
+        quote: "12033: Zürich,SA1048V: Monatlicher Netto-Mietzins pro m² (in CHF),OBS: Observed Value,A: Annual,2018,21.2,,F: Free (free for publication),B: Time series break"
+      - url: https://statistik.admin.ch/de/asset/36398431
+        file: data/raw/bfs_rents/*/rent_canton_chf_36398431.xlsx
+        quote: "Aufgrund methodischer Änderungen ab dem Jahr 2018 im Bereich der Erhebungsmethode, der Gewichtung sowie der Detektierung von Ausreissern können die Ergebnisse nur bedingt mit den Erhebungen vor 2018 verglichen werden."
+
   # ------------------------------------------------------------------ mobility (vehicle registers)
   - id: vehicles_2018_location
     period: "2018"

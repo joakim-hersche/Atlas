@@ -29,6 +29,13 @@ levels:
 #   levels: {level: {v: show|note|hide, reason}}
 #   note: text          shown levels carry this note
 metrics:
+  # ---- review round 3: new sources (data-gaps agent) ----
+  tax_mult_muni_nat:
+    maps: false
+    reason: "a percentage of each canton's simple tax, so it compares municipalities within one canton only; only canton Zürich is covered: shown on the profiles of Zürich municipalities, never as a map"
+  re:aircraft_.*:
+    reason: "coverage note only; the map verdict follows the rule (D38)"
+    note: "only municipalities near the 8 civil aerodromes in the FOCA noise cadastre (Zürich, Genève, Basel-Mulhouse, Bern, Lugano-Agno, Saanen, Samedan, St. Gallen-Altenrhein) are computed; military airfields are not covered, so a missing value does not mean quiet"
   # ---- M7: duplicates that disagree or repeat another metric; keep one on maps (BFS) ----
   en_ecar_share:
     maps: false
