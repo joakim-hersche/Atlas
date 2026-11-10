@@ -178,6 +178,6 @@
   .empty { padding: 10px; color: var(--muted); margin: 0; }
   .hint { padding: 8px 10px 0; margin: 0; }
   @media (max-width: 899px) {
-    .pop { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; width: auto; max-width: none; max-height: 72vh; }
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 72vh; }
   }
 </style>

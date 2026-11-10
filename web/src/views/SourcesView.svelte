@@ -113,7 +113,7 @@
       {#if s.attribution}<dt>{t('s.attribution')}</dt><dd class="attr">{s.attribution}</dd>{/if}
       {#if s.vintage}<dt>{t('s.vintage')}</dt><dd>{s.vintage}</dd>{/if}
       {#if s.years}<dt>{t('s.years')}</dt><dd>{s.years}</dd>{/if}
-      {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest, true)}</dd>{/if}
+      {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest)}</dd>{/if}
       {#if s.fetched}<dt>{t('s.fetched')}</dt><dd class="num">{s.fetched}</dd>{/if}
       {#if s.status_note}<dt>{t('s.note')}</dt><dd>{s.status_note}</dd>{/if}
     </dl>

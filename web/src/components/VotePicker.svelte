@@ -1,7 +1,7 @@
 <script lang="ts">
   // Vote picker (D32): any federal vote, searchable by title (all languages) and date, newest first.
   // Each entry shows the national yes share and the official outcome where known.
-  import { fmtNumber } from '../lib/classify';
+  import { fmtNumber, voteTitle } from '../lib/classify';
   import { t } from '../lib/i18n.svelte';
   import { norm } from '../lib/places';
   import { app } from '../lib/state.svelte';
@@ -21,9 +21,9 @@
   let root: HTMLDivElement;
   let input = $state<HTMLInputElement>();
 
-  const titleOf = (v: VoteEntry) => v.title[app.lang] ?? v.title.en ?? v.title.de ?? v.title.fr ?? Object.values(v.title)[0] ?? '';
+  const titleOf = (v: VoteEntry) => v.title[app.lang] ?? v.title.en ?? v.title.de ?? v.title.fr ?? Object.values(v.title)[0] ?? voteTitle(v.period) ?? t('vt.untitled');
   const votes = $derived(index.votes.slice().sort((a, b) => b.date.localeCompare(a.date) || Number(b.id) - Number(a.id)));
-  const keyed = $derived(votes.map((v) => ({ v, key: norm(`${v.date} ${v.date.slice(0, 4)} ${Object.values(v.title).join(' ')}`) })));
+  const keyed = $derived(votes.map((v) => ({ v, key: norm(`${v.date} ${v.date.slice(0, 4)} ${Object.values(v.title).join(' ')} ${voteTitle(v.period) ?? ''}`) })));
   const list = $derived.by(() => {
     const words = norm(q).split(' ').filter(Boolean);
     const hits = words.length ? keyed.filter((k) => words.every((w) => k.key.includes(w))).map((k) => k.v) : votes;
@@ -123,6 +123,6 @@
   .empty { padding: 10px; margin: 0; color: var(--muted); }
   .hint { padding: 8px 10px 0; margin: 0; }
   @media (max-width: 899px) {
-    .pop { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; width: auto; max-width: none; max-height: 76vh; }
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 76vh; }
   }
 </style>

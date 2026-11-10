@@ -591,7 +591,7 @@
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
         : null;
       const src = base.sources.get(metaA.source);
-      const sub = [unitOf(metaA), fmtPeriod(colA.period), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
+      const sub = [unitOf(metaA), fmtPeriod(colA.period, true), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
       const extra: string[] = [];
       if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
       if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);

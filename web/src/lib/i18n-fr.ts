@@ -20,6 +20,7 @@ export const FR: Dict = {
   'fl.annual': `Années isolées${n}: {label}`,
   'fl.key': '△ petits nombres (instable) · M élection majoritaire · ° valeur publiée · p provisoire',
   'vt.vote': 'Votation fédérale',
+  'vt.untitled': '(pas de titre dans les données)',
   'vt.choose': 'Choisir une votation fédérale',
   'vt.search': 'Rechercher parmi {n} votations par titre ou date',
   'vt.searchL': 'Rechercher des votations',

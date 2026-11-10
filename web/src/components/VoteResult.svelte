@@ -1,7 +1,7 @@
 <script lang="ts">
   // Result of one federal vote (D32): national yes share and turnout, the official outcome where known,
   // the cantons' count (Ständemehr: half cantons count ½) and every canton's yes share around 50 %.
-  import { fmtNumber } from '../lib/classify';
+  import { fmtNumber, voteTitle } from '../lib/classify';
   import { t } from '../lib/i18n.svelte';
   import { app } from '../lib/state.svelte';
   import { standText, type VoteEntry, type VoteIndex } from '../lib/votes';
@@ -12,7 +12,7 @@
   }
   let { index, entry }: Props = $props();
 
-  const title = $derived(entry.title[app.lang] ?? entry.title.en ?? entry.title.de ?? Object.values(entry.title)[0] ?? '');
+  const title = $derived(entry.title[app.lang] ?? entry.title.en ?? entry.title.de ?? Object.values(entry.title)[0] ?? voteTitle(entry.period) ?? t('vt.untitled'));
   const rows = $derived(
     index.cantons
       .map((kt, k) => ({ kt, v: entry.canton_yes_pct[k] ?? null, half: index.half_cantons.includes(kt) }))

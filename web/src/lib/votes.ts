@@ -41,7 +41,8 @@ export function loadVoteIndex(): Promise<VoteIndex | null> {
   if (!ixP) {
     ixP = getOptionalJSON<VoteIndex>('web/votes/index.json')
       .then((ix) => {
-        if (ix?.votes) for (const v of ix.votes) if (v.title) periodTitles.set(v.period, v.title);
+        // an empty title in the index does not replace the title metrics.json gives for the latest vote
+        if (ix?.votes) for (const v of ix.votes) if (v.title && Object.keys(v.title).length) periodTitles.set(v.period, v.title);
         return ix?.votes ? ix : null;
       })
       .catch(() => null);

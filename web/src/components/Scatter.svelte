@@ -308,7 +308,7 @@
       const blob = await figurePNG({
         layers: [canvas], scale: canvas.width / Math.max(1, w),
         title: `${ml(yMeta)} (B) × ${ml(xMeta)} (A)`,
-        subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${unitOf(xMeta)})` : ''}, ${fmtPeriod(xPeriod)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${unitOf(yMeta)})` : ''}, ${fmtPeriod(yPeriod)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
+        subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${unitOf(xMeta)})` : ''}, ${fmtPeriod(xPeriod, true)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${unitOf(yMeta)})` : ''}, ${fmtPeriod(yPeriod, true)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
         legend, credits: [...credits, tr('ex.made')], link: tr('ex.view', { url: location.href }),
       });
       downloadBlob(blob, `gemeindebank-${slug(ml(yMeta))}-vs-${slug(ml(xMeta))}.png`);

@@ -393,12 +393,12 @@ export function voteTitle(p: string): string | null {
   if (!t) return null;
   return t[app.lang] ?? t.en ?? t.de ?? t.fr ?? Object.values(t)[0] ?? null;
 }
-/** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14 · <title>' when the title is known,
- *  else the date alone (no internal vote number in the UI). `short` omits the title. */
-export function fmtPeriod(p: string, short = false): string {
+/** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14' (no internal vote number in the UI);
+ *  `withTitle` appends the vote's title where there is room for it (exports). */
+export function fmtPeriod(p: string, withTitle = false): string {
   const [a, b] = p.split('#');
   if (!b) return a;
-  const title = short ? null : voteTitle(p);
+  const title = withTitle ? voteTitle(p) : null;
   return title ? `${a} · ${title}` : a;
 }
 
