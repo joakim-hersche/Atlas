@@ -4,6 +4,7 @@
 #   make geometry  web geometry and label points
 #   make validate  backbone validation report (docs/backbone_report.md)
 #   make observations / metrics / quality   ingest all sources, build all levels, plausibility sweep
+#   make profile   search (names, postal codes), identity, boundary history, neighbours for the web app
 #   make web-data  copy the data files the web app reads into web/public/data/
 #   make web-app   install pinned npm deps and build the static site (web/dist/)
 #   make test      unit tests
@@ -11,9 +12,9 @@
 
 PY := uv run python
 
-.PHONY: data backbone geometry validate observations metrics quality web reach web-data web-app test clean-interim
+.PHONY: data backbone geometry validate observations metrics quality web profile reach web-data web-app test clean-interim
 
-data: backbone geometry validate observations metrics quality web reach
+data: backbone geometry validate observations metrics quality web profile reach
 
 backbone:
 	$(PY) -m pipeline.backbone.build
@@ -35,6 +36,10 @@ quality: metrics
 
 web: metrics geometry
 	$(PY) -m pipeline.build.web
+
+# needs units.json (web) and the reference-state polygons (geometry)
+profile: web geometry
+	$(PY) -m pipeline.build.profile
 
 reach: geometry
 	$(PY) -m pipeline.reach.run
