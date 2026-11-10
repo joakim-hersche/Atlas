@@ -155,3 +155,15 @@ Export (CSV of ranking/filtered table, PNG of maps/charts with a source line), a
 
 ### D33. Hosting: separate public site repository (owner, 2026-11-10)
 The Atlas repository stays private. The built site is pushed to a separate public repository created by the owner and served by GitHub Pages. Work is merged into `main` via pull request first (PR #2). The initial commit was rewritten to the owner's GitHub no-reply address at the owner's request; `main` and the work branch were force-pushed.
+
+### D34. Regression panel, option B (owner, 2026-11-10)
+In the browser, OLS on municipalities (or any level):
+- Pick an outcome and 1–6 explanatory variables, with optional log transforms.
+- Controls: language region or canton fixed effects.
+- Optional population weights; option to drop values flagged as unreliable (D32).
+- Canton-clustered standard errors.
+- Coefficient table with confidence intervals and standardized coefficients; R², n, and units dropped and why.
+- A residual map ("more X than predicted"), plus CSV export.
+- Ecological-fallacy and spatial-autocorrelation caveats in plain words.
+
+Spatial diagnostics (Moran's I, LISA, spatial lag) stay on the backlog (option C).
