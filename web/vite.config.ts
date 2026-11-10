@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 // base './' keeps every asset and data URL relative, so the build works from any subpath
@@ -10,5 +10,10 @@ export default defineConfig({
     outDir: 'dist',
     target: 'es2022',
     chunkSizeWarningLimit: 1200,
+  },
+  test: {
+    include: ['src/**/*.test.ts'],
+    environment: 'node',
+    setupFiles: ['src/test-setup.ts'],
   },
 });
