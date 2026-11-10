@@ -10,7 +10,17 @@
       Bettingen. A missing title row in a year with a 'Total StGB' row is 0 (sparse table).
       'Gemeinde unbekannt' is only in the canton total (native kanton row); kept as level 'pseudo'
       (unit_id 'BS:unbekannt') so the canton total can be reconciled.
-Cantons with PDF reports only (LU, SO, FR, GR, SZ, GE, BE, VD, ...) are out of scope here.
+- ZH  burglaries: Kantonspolizei Zürich OGD KTZH_00001202_00006848 'Anzahl Einbrüche nach
+      Gemeinden' (all municipalities, 2009–2025; 'Einbrüche insgesamt' = Einbruchdiebstahl +
+      Einschleichdiebstahl). Zürich = sum over its Stadtkreise incl. 'unbekannt'. The ZH OGD
+      files moved to daten.statistik.zh.ch (2026).
+- AR, AI, BL  cantonal PKS annual report 2025 (BFS template, PDF), table 'Strafgesetzbuch:
+      Straftaten nach Gemeinde' (2019–2025, StGB total only; see pks_pdf.py). The table lists at
+      most 40 municipalities (BL: the 40 with most offences in 2025; the other 46 are lumped as
+      'Übrige Gemeinden' -> `not_published`, kept as a pseudo unit). 'Unbekannt <KT>' (no known
+      municipality) is a pseudo unit. Municipality rows + pseudo rows = 'Total Kanton' exactly
+      (checked 2019–2025). The template back-casts earlier years on the 2025 state.
+Other cantons with PDF reports only (LU, SO, FR, GR, SZ, GE, BE, VD, ...) are not parsed here.
 Period = year the offence was registered (Ausgangsjahr).
 """
 from __future__ import annotations
@@ -18,17 +28,29 @@ from __future__ import annotations
 import pandas as pd
 
 from pipeline.harmonize.helpers import emit
-from pipeline.sources.kt_finance.kthelp import complete, fetch_retry, ods_csv, ref_units, to_ref
+import re
+
+from pipeline.common import REFERENCE_DATE
+from pipeline.sources.kt_crime.pks_pdf import stgb_by_gemeinde
+from pipeline.sources.kt_finance.kthelp import complete, fetch_retry, match_names, ods_csv, ref_units, to_ref
 
 SOURCE = "kt_crime"
-ZH_URL = "https://www.web.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00003600.csv"
+ZH_URL = "https://daten.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00003600.csv"
+ZH_BURGLARY_URL = "https://daten.statistik.zh.ch/ogd/daten/ressourcen/KTZH_00001202_00006848.csv"
+PKS_PDF = {
+    "AR": "https://ar.ch/fileadmin/user_upload/Departement_Inneres_Sicherheit/Kapo/Kriminalpolizei/Statistiken/Kriminalstatistik_2025.pdf",
+    "BL": ("https://bl-api.webcloud7.ch/politik-und-behorden/direktionen/sicherheitsdirektion/polizei/"
+           "statistik/downloads-statistiken/kriminalstatistik-2025.pdf"),
+}
+AI_LIST = "https://www.ai.ch/themen/sicherheit/kantonspolizei/statistik/kriminalstatistiken"
+PKS_YEAR = 2025
 MAP = {"stgb": "crime_stgb_offences", "prop": "crime_stgb_property", "viol": "crime_stgb_violent"}
+BURG = "crime_burglaries"
 ZH_TITLES = {"Total gegen das Vermögen": "prop", "Total gegen Leib und Leben": "viol"}
 BS_ROWS = {"Total StGB": "stgb", "Total Gegen das Vermögen": "prop", "Total Gegen Leib und Leben": "viol"}
 PDF = "this canton publishes offences per municipality only in its PDF police statistics report (not parsed)"
 NOT_COVERED = {k: PDF for k in ("LU", "SO", "FR", "GR", "SZ", "GE", "BE", "VD")}
-NOT_COVERED.update({k: "the police statistics report of this canton is on a host not available to the pipeline"
-                    for k in ("AR", "AI", "BL", "GL")})
+NOT_COVERED["GL"] = "the police statistics report of Glarus is on a host not available to the pipeline"
 DEFAULT_NC = "this canton publishes no offences per municipality"
 
 
