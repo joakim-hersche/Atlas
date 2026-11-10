@@ -30,6 +30,8 @@ export class ReachOverlay {
   private g: CanvasRenderingContext2D;
   private segs: Seg[] = [];
   private hub: [number, number] | null = null;
+  /** the hub's position (longitude, latitude), for the label layer to keep its name clear of the hub dot */
+  hubLngLat: [number, number] | null = null;
   private t = 0;
   private visible = false;
 
@@ -46,6 +48,7 @@ export class ReachOverlay {
   setNetwork(file: ReachFile | null) {
     this.segs = [];
     this.hub = null;
+    this.hubLngLat = null;
     if (file) {
       for (const [ts, te, kind, c] of file.segments) {
         const n = c.length / 2;
@@ -60,7 +63,10 @@ export class ReachOverlay {
       }
       this.segs.sort((a, b) => a.ts - b.ts);
       const first = file.segments.find((s) => s[0] === 0);
-      if (first) this.hub = [mx(first[3][0]), my(first[3][1])];
+      if (first) {
+        this.hub = [mx(first[3][0]), my(first[3][1])];
+        this.hubLngLat = [first[3][0], first[3][1]];
+      }
     }
     this.draw();
   }

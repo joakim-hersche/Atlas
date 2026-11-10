@@ -634,6 +634,7 @@
           <span><b>{t('rg.r2adj')}</b> {fmtNumber(ok.res.r2adj, 3)}</span>
           <span class="sel">{seText}</span>
         </div>
+        <p class="plain">{t('ux.r2Plain', { p: fmtNumber(Math.max(0, ok.res.r2) * 100, 0), y: ml(yInfo.meta), units: word })}</p>
         <div class="tw">
           <table class="coef">
             <thead>
@@ -766,15 +767,16 @@
 </main>
 
 <style>
+  .plain { margin: var(--sp-2) 0 0; font-size: var(--fs-small); line-height: var(--lh-small); }
   .presets {
     flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--rule);
     overflow-x: auto; scrollbar-width: none;
   }
   .presets .caps { margin: 0 4px 0 8px; flex: none; }
   .chip {
-    flex: none; padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer; font-size: 0.8rem; font-weight: 500; white-space: nowrap;
+    flex: none; min-height: var(--ctl-h); padding: 0 var(--sp-3); border: 1px solid var(--ink); background: none; cursor: pointer; font-size: var(--fs-body); font-weight: 500; white-space: nowrap; color: var(--text);
   }
-  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .chip:hover { background: var(--surface-2); }
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
   .fbar {
     flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 5px 16px; font-size: 0.78rem;
@@ -798,7 +800,7 @@
   .lg input, .chk input { accent-color: var(--ink); margin: 0; }
   .rm { flex: none; width: 26px; height: 26px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-size: 1rem; line-height: 1; color: var(--text); }
   .vnote { margin: -1px 0 6px; font-size: 0.74rem; border-left: 3px solid var(--accent); padding-left: 6px; color: var(--text); }
-  .add { border: 1px dashed var(--ink); background: none; padding: 4px 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .add { border: 1px solid var(--ink); background: none; min-height: var(--ctl-h); padding: 0 var(--sp-3); cursor: pointer; font-size: var(--fs-body); font-weight: 500; color: var(--text); }
   .seg { flex-wrap: wrap; margin-bottom: 4px; }
   .seg button { padding: 4px 9px; font-size: 0.78rem; }
   .chk { display: flex; align-items: flex-start; gap: 6px; font-size: 0.8rem; margin: 4px 0; cursor: pointer; }
@@ -873,7 +875,9 @@
     .res { overflow-y: auto; border-top: 0; border-right: 1px solid var(--rule); min-height: 0; }
   }
   @media (max-width: 899px) {
-    .presets { padding: 6px 16px; }
+    /* U16: the example chips wrap instead of running off the screen */
+    .presets { padding: var(--sp-2) var(--gutter); flex-wrap: wrap; overflow: visible; row-gap: var(--sp-2); }
+    .presets .caps { margin-left: 0; }
     .stage { overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .viz { border-top: 1px solid var(--rule); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
     .mapbox { height: 300px; }

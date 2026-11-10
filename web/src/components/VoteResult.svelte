@@ -1,7 +1,7 @@
 <script lang="ts">
   // Result of one federal vote (D32): national yes share and turnout, the official outcome where known,
   // the cantons' count (Ständemehr: half cantons count ½) and every canton's yes share around 50 %.
-  import { fmtNumber, voteTitle } from '../lib/classify';
+  import { fmtDate, fmtNumber, voteTitle } from '../lib/classify';
   import { t } from '../lib/i18n.svelte';
   import { app } from '../lib/state.svelte';
   import { standText, type VoteEntry, type VoteIndex } from '../lib/votes';
@@ -24,7 +24,7 @@
 <section class="vr" aria-label={t('vt.result')}>
   <div class="caps">{t('vt.result')}</div>
   <p class="tt">{title}</p>
-  <p class="dt">{entry.date}{#if entry.provisional} · <strong>{t('vt.provL')}</strong>{/if}</p>
+  <p class="dt">{fmtDate(entry.date)}{#if entry.provisional}{' · '}<strong>{t('vt.provL')}</strong>{/if}</p>
   <table class="nat">
     <tbody>
       <tr><th>{t('vt.ch')}</th><td class="num strong">{entry.yes_pct !== null ? `${fmtNumber(entry.yes_pct, 1)}% ${t('vt.yes')}` : '–'}</td></tr>

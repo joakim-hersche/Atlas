@@ -1,7 +1,7 @@
 <script lang="ts">
   // Vote picker (D32): any federal vote, searchable by title (all languages) and date, newest first.
   // Each entry shows the national yes share and the official outcome where known.
-  import { fmtNumber, voteTitle } from '../lib/classify';
+  import { fmtDate, fmtNumber, voteTitle } from '../lib/classify';
   import { t } from '../lib/i18n.svelte';
   import { norm } from '../lib/places';
   import { app } from '../lib/state.svelte';
@@ -68,7 +68,7 @@
 <div class="vp" bind:this={root}>
   <button type="button" class="btn" aria-haspopup="listbox" aria-expanded={open} onclick={toggle}>
     <span class="lbl">
-      <span class="caps">{t('vt.vote')} · {current?.date ?? ''}{current?.provisional ? ` · ${t('vt.prov')}` : ''}</span>
+      <span class="caps">{t('vt.vote')} · {current ? fmtDate(current.date) : ''}{current?.provisional ? ` · ${t('vt.prov')}` : ''}</span>
       <span class="ttl">{current ? titleOf(current) : value}</span>
     </span>
     <svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" /></svg>
@@ -86,7 +86,7 @@
           {@const oc = outcome(v)}
           <button type="button" role="option" class="opt" class:active={k === active} aria-selected={v.id === value}
             onclick={() => pick(v)} onpointerenter={() => (active = k)}>
-            <span class="od num">{v.date}</span>
+            <span class="od num">{fmtDate(v.date)}</span>
             <span class="ot">{titleOf(v)}</span>
             <span class="om num">
               {v.yes_pct !== null ? `${fmtNumber(v.yes_pct, 1)}% ${t('vt.yes')}` : '–'}{#if oc}{' · '}<span class:acc={v.accepted}>{oc}</span>{/if}{#if v.provisional}{' · '}{t('vt.prov')}{/if}

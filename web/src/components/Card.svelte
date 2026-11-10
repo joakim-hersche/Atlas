@@ -77,7 +77,8 @@
   const value = $derived(col.v[index]);
   /** D37: a single-seat canton's value, kept apart from classes and ranks (shown here, labelled) */
   const majVal = $derived(value === null ? majorityValue(col, index) : null);
-  const rank = $derived(rankOf(col.v, index, meta.direction));
+  // U6: a regional value attached to municipalities (canton rent) has no municipal rank or percentile
+  const rank = $derived(regional ? null : rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
@@ -105,7 +106,8 @@
           <span class="sval">{fmtValue(value, meta)}</span>
           <span class="yr">{fmtPeriod(col.period)}</span>
           {#if ci}<span class="sci">± {fmtSig(ci.half, 2)}</span>{/if}
-          {#if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
+          {#if regional}<span class="srank">· {t('ux.regionValue', { level: levelName(regional, false) })}</span>
+          {:else if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
           {#if flags.length}<span class="smark">{flags.map((f) => f.split(' ')[0]).join('')}</span>{/if}
         {:else if majVal !== null}
           <span class="sval">{fmtValue(majVal, meta)}</span>
@@ -141,10 +143,13 @@
       <span class="val">{fmtValue(value, meta)}</span>
       {#if ci}<span class="hw num" title={t('rl.cardCi', { lo: fmtValue(ci.lo, meta), hi: fmtValue(ci.hi, meta) })}>± {fmtSig(ci.half, 2)}</span>{/if}
       <span class="yr">{fmtPeriod(col.period)}</span>
-      {#if rank}
+      {#if regional}
+        <span class="rank">{t('ux.regionValue', { level: levelName(regional, false).replace(/^./, (c) => c.toUpperCase()) })}<span class="muted">{" · "}{t("ux.regionNoRank", { level: levelName(regional, false) })}</span></span>
+      {:else if rank}
         <span class="rank">
-          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)} · P{Math.round(rank.pct)}<Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
-          <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span></span>
+          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)}
+          <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span>
+          · <span title={t('ux.pctT', { p: Math.round(rank.pct), units: unitWord })}>{t('ux.pctPlain', { p: Math.round(rank.pct), units: unitWord })}</span><Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}</span>
         </span>
       {/if}
     </div>

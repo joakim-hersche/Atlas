@@ -219,7 +219,14 @@
     </header>
 
     {#if !units.length}
-      <p class="foot">{t('pl.empty')}</p>
+      <!-- U18: an empty comparison says what to do and offers ready-made sets -->
+      <section class="empty">
+        <p class="eh">{t('ux.placesEmpty')}</p>
+        <p class="foot">{t('ux.placesTry')}</p>
+        <div class="exs">
+          {#each EXAMPLES as ex}<button type="button" class="btn" onclick={() => setIds(ex.ids)}>{t(ex.key)}</button>{/each}
+        </div>
+      </section>
     {:else}
       {#if units.length === 1}<p class="foot">{t('pl.one')}</p>{/if}
       <p class="foot legend">{t('pl.legend')}</p>
@@ -258,6 +265,9 @@
 </main>
 
 <style>
+  .empty { margin: var(--sp-6) 0; padding: var(--sp-6) 0; border-top: var(--rule-heavy); }
+  .eh { margin: 0 0 var(--sp-2); font-size: var(--fs-lead); line-height: var(--lh-lead); font-weight: 600; }
+  .exs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
   .pg:focus { outline: none; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 16px 24px 40px; }

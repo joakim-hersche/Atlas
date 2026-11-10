@@ -396,7 +396,7 @@
           <li>
             <span class="mn">{lbl(m.id)}{#if sim.skipped.includes(m.id)}<span class="miss"> – {t('sim.noValue')}</span>{/if}</span>
             <div class="ctl">
-              <input type="range" min={W_MIN} max={W_MAX} step={W_STEP} value={m.w} aria-label={t('sim.weight', { m: lbl(m.id) })}
+              <input type="range" min={W_MIN} max={W_MAX} step={W_STEP} value={m.w} style="--pct:{(100 * (m.w - W_MIN)) / (W_MAX - W_MIN)}%" aria-label={t('sim.weight', { m: lbl(m.id) })}
                 oninput={(e) => setW(m.id, Number(e.currentTarget.value))} />
               <output class="num">×{fmtNumber(m.w, m.w % 1 ? 1 : 0)}</output>
               <label class="lg" title={t('sim.logT')}><input type="checkbox" checked={m.log} onchange={(e) => setLog(m.id, e.currentTarget.checked)} />{t('sim.log')}</label>
@@ -542,7 +542,7 @@
   .mn { display: block; font-size: 0.8rem; font-weight: 600; line-height: 1.25; }
   .miss { font-weight: 400; color: var(--muted); }
   .ctl { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
-  .ctl input[type='range'] { flex: 1; min-width: 0; height: 28px; accent-color: var(--ink); }
+  .ctl input[type='range'] { flex: 1; min-width: 0; }
   .ctl output { width: 2.6em; text-align: right; font-size: 0.78rem; }
   .lg { display: inline-flex; align-items: center; gap: 3px; font-size: 0.72rem; color: var(--muted); white-space: nowrap; min-height: 32px; }
   .lg input { width: 16px; height: 16px; accent-color: var(--ink); }

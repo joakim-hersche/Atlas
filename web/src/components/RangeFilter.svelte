@@ -89,9 +89,9 @@
   {/if}
   <div class="slider" style="--a:{(loPos / STEPS) * 100}%; --b:{(hiPos / STEPS) * 100}%">
     <div class="track"></div>
-    <input type="range" min="0" max={STEPS} value={loPos} aria-label="{label} minimum"
+    <input type="range" class="dual" min="0" max={STEPS} value={loPos} aria-label="{label} minimum"
       oninput={(e) => setLoPos(+e.currentTarget.value)} />
-    <input type="range" min="0" max={STEPS} value={hiPos} aria-label="{label} maximum"
+    <input type="range" class="dual" min="0" max={STEPS} value={hiPos} aria-label="{label} maximum"
       oninput={(e) => setHiPos(+e.currentTarget.value)} />
   </div>
   <div class="inputs">
@@ -112,24 +112,25 @@
   .label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
   .count { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: auto; }
   .count strong { color: var(--text); }
-  .slider { position: relative; height: 36px; }
+  .slider { position: relative; height: 40px; }
   .track {
-    position: absolute; left: 11px; right: 11px; top: 16px; height: 3px; border-radius: 0;
+    position: absolute; left: 7px; right: 7px; top: 19px; height: 2px; border-radius: 0;
     background: linear-gradient(to right, var(--border) var(--a), var(--ink) var(--a), var(--ink) var(--b), var(--border) var(--b));
   }
   .slider input {
     position: absolute; inset: 0; width: 100%; margin: 0; background: none; pointer-events: none;
-    -webkit-appearance: none; appearance: none; height: 36px;
+    -webkit-appearance: none; appearance: none; height: 40px;
   }
-  .slider input::-webkit-slider-runnable-track { background: none; height: 36px; }
+  .slider input::-webkit-slider-runnable-track { background: none; height: 40px; }
   .slider input::-moz-range-track { background: none; }
   .slider input::-webkit-slider-thumb {
-    -webkit-appearance: none; pointer-events: auto; width: 18px; height: 18px; margin-top: 9px; border-radius: 50%;
-    background: var(--panel); border: 2px solid var(--ink); cursor: grab;
+    /* D8: the same 14 px black square knob as every slider; a 40 px touch strip */
+    -webkit-appearance: none; pointer-events: auto; width: 14px; height: 14px; margin-top: 13px; border-radius: 0;
+    background: var(--ink); border: 0; cursor: grab;
   }
   .slider input::-moz-range-thumb {
-    pointer-events: auto; width: 18px; height: 18px; border-radius: 50%;
-    background: var(--panel); border: 2px solid var(--ink); cursor: grab;
+    pointer-events: auto; width: 14px; height: 14px; border-radius: 0;
+    background: var(--ink); border: 0; cursor: grab;
   }
   .inputs { display: flex; gap: 8px; align-items: end; }
   .inputs label { display: flex; flex-direction: column; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }

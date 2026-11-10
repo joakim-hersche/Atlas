@@ -414,10 +414,27 @@ export function voteTitle(p: string): string | null {
 /** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14' (no internal vote number in the UI);
  *  `withTitle` appends the vote's title where there is room for it (exports). */
 export function fmtPeriod(p: string, withTitle = false): string {
-  const [a, b] = p.split('#');
+  const [a0, b] = p.split('#');
+  const a = fmtDate(a0);
   if (!b) return a;
   const title = withTitle ? voteTitle(p) : null;
   return title ? `${a} · ${title}` : a;
+}
+
+// U8: dates as "27 Sep 2026" / "27. Sept. 2026" / "27 sept. 2026", never raw ISO
+const MONTHS: Record<string, string[]> = {
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  de: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'],
+  fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+};
+/** An ISO date (YYYY-MM-DD) in the UI language; anything else is returned unchanged. */
+export function fmtDate(iso: string, lang: string = app.lang): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  const mon = (MONTHS[lang] ?? MONTHS.en)[Number(m[2]) - 1];
+  if (!mon) return iso;
+  const d = Number(m[3]);
+  return lang === 'de' ? `${d}. ${mon} ${m[1]}` : `${d} ${mon} ${m[1]}`;
 }
 
 export function fmtR(r: number): string {

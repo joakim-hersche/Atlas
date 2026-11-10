@@ -181,7 +181,7 @@
   import PctBar from '../components/PctBar.svelte';
   import ElectionBar from '../components/ElectionBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
-  import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
+  import { fmtDate, fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
   import { coverageLabel, loadTheme, placeName, precisionText, shortName, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
   import { historyFr, isDe, levelName, ml, t, themeName, tiedText, unitName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
@@ -440,7 +440,10 @@
       <div class="mv"><span class="v">{fmtValue(e.value, m)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span><span class="yr">{fmtPeriod(e.period)}</span>
         {#each e.flags as f}<span class="fx">{f}</span>{/each}{#if e.note}<span class="fx">{e.note}</span>{/if}</div>
       <div class="mr">
-        {#if e.rank}
+        {#if e.regional}
+          <span class="rk">{t('ux.regionValue', { level: levelName(e.regional, false) })}</span>
+          <span class="rk muted">{t('ux.regionNoRank', { level: levelName(e.regional, false) })}</span>
+        {:else if e.rank}
           <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}{tiedText(e.rank)}</span>
           {#if e.rankKt}<span class="rk num muted">{t('p.rankKt', { r: fmtNumber(e.rankKt.rank, 0), n: fmtNumber(e.rankKt.n, 0), kt: pl!.canton[idx!] })}{tiedText(e.rankKt)}</span>{/if}
           <PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />
@@ -566,7 +569,7 @@
                 {#each reachRows.filter((r) => r.note) as r}<li>* {r.hub}: {r.note}</li>{/each}
                 {#if !reachWhy.length && reachRows.some((r) => r.pt === null || r.car === null || (hasSt && r.st === null))}<li>{t('p.reachNoneNote')}</li>{/if}
               </ul>
-              <p class="foot">{t('p.reachDate', { d: reach?.service_date ?? '' })} <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
+              <p class="foot">{t('p.reachDate', { d: fmtDate(reach?.service_date ?? '') })} <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
             {:else}
               <p class="foot">…</p>
             {/if}

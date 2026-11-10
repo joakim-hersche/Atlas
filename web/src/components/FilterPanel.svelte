@@ -150,7 +150,7 @@
             <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
-        <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} aria-label={t('fp.maxTime')}
+        <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} style="--pct:{(100 * f.max) / T_MAX}%" aria-label={t('fp.maxTime')}
           oninput={(ev) => update(k, { ...f, max: +ev.currentTarget.value })} />
         {#if e.status === 'active'}
           <p class="cf num">
@@ -198,7 +198,7 @@
   .opt input { accent-color: var(--ink); margin: 0; flex: none; }
   .rr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .strong { font-weight: 700; }
-  .rng { width: 100%; accent-color: var(--ink); margin: 6px 0 0; }
+  .rng { width: 100%; margin: var(--sp-1) 0 0; }
   .sel {
     min-width: 0; padding: 3px 24px 3px 6px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); cursor: pointer;
     -webkit-appearance: none; appearance: none; font-size: 0.82rem;

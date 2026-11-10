@@ -103,7 +103,7 @@
     <span>{t(leKey)}</span>
     <output class="num strong">{f.hi ?? limitMax} min</output>
   </div>
-  <input type="range" class="rng" min="0" max={limitMax} step="5" value={Math.min(f.hi ?? limitMax, limitMax)} aria-label={t('cm.maxTime')}
+  <input type="range" class="rng" min="0" max={limitMax} step="5" value={Math.min(f.hi ?? limitMax, limitMax)} style="--pct:{(100 * Math.min(f.hi ?? limitMax, limitMax)) / limitMax}%" aria-label={t('cm.maxTime')}
     oninput={(ev) => onchange({ ...f, lo: null, hi: +ev.currentTarget.value })} />
 {/if}
 {#if e.status === 'active'}
@@ -124,7 +124,7 @@
   .mode { margin-top: 6px; }
   .lim { margin-top: 8px; }
   .strong { font-weight: 700; }
-  .rng { width: 100%; accent-color: var(--ink); margin: 6px 0 0; }
+  .rng { width: 100%; margin: var(--sp-1) 0 0; }
   .sel {
     min-width: 0; padding: 3px 24px 3px 6px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); cursor: pointer;
     -webkit-appearance: none; appearance: none; font-size: 0.82rem; color: var(--text);

@@ -62,7 +62,7 @@
           <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 2v12l10-6z" /></svg>
         {/if}
       </button>
-      <input type="range" min="0" max={T_MAX} step="1" value={t} aria-label={tr('rc.minutes')}
+      <input type="range" min="0" max={T_MAX} step="1" value={t} style="--pct:{(100 * t) / T_MAX}%" aria-label={tr('rc.minutes')}
         oninput={(e) => ont(+e.currentTarget.value)} />
       <output class="tval num">{Math.round(t)} min</output>
     </div>
@@ -89,7 +89,7 @@
   .ptm .seg button { padding: 2px 8px; font-size: 0.74rem; }
   .short { display: none; }
   .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-  .time input { flex: 1; accent-color: var(--ink); min-width: 0; height: 24px; }
+  .time input { flex: 1; min-width: 0; }
   .play {
     width: 28px; height: 28px; border-radius: 0; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text);
     display: grid; place-items: center; cursor: pointer; flex: none;

@@ -134,6 +134,38 @@ button, select, input { font: inherit; color: inherit; }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
 .maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }
 
+/* buttons (D8): primary black, secondary 1 px outline, text link; 32 px high on desktop, 40 px on touch */
+.btn, .btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2); min-height: var(--ctl-h); padding: 0 var(--sp-3);
+  border: 1px solid var(--ink); background: var(--panel); color: var(--text); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 500;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.btn:hover { background: var(--surface-2); }
+.btn-primary { background: var(--ink); color: var(--ink-text); }
+.btn-primary:hover { background: #262626; }
+.btn:disabled, .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-link {
+  display: inline; border: 0; background: none; padding: 0; color: var(--text); font: inherit; font-weight: 500; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+/* one slider (D8): 2 px track, black up to the value (--pct, set by the component), #d6d6d6 after it; 14 px black
+   square knob. The input itself is a full control height, so the whole strip is a touch target. */
+input[type='range']:not(.dual) {
+  -webkit-appearance: none; appearance: none; height: var(--ctl-h-sm); margin: 0; padding: 0; background: transparent; cursor: pointer;
+  accent-color: var(--ink);
+}
+input[type='range']:not(.dual)::-webkit-slider-runnable-track {
+  height: 2px; background: linear-gradient(to right, var(--ink) var(--pct, 0%), var(--border) var(--pct, 0%));
+}
+input[type='range']:not(.dual)::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -6px; border: 0; border-radius: 0; background: var(--ink);
+}
+input[type='range']:not(.dual)::-moz-range-track { height: 2px; background: var(--border); }
+input[type='range']:not(.dual)::-moz-range-progress { height: 2px; background: var(--ink); }
+input[type='range']:not(.dual)::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 0; background: var(--ink); }
+input[type='range']:not(.dual):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
 .reach-canvas, .ref-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 ::placeholder { color: var(--muted); opacity: 1; }
 

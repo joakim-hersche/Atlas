@@ -327,12 +327,12 @@
   }
   .presets .caps { margin: 0 4px 0 8px; flex: none; }
   .chip {
-    flex: none; padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer;
-    font-size: 0.8rem; font-weight: 500; white-space: nowrap;
+    flex: none; min-height: var(--ctl-h); padding: 0 var(--sp-3); border: 1px solid var(--ink); background: none; cursor: pointer;
+    font-size: var(--fs-body); font-weight: 500; white-space: nowrap; color: var(--text); display: inline-flex; align-items: center;
   }
-  .chip:hover { color: var(--accent); border-color: var(--accent); }
+  .chip:hover { background: var(--surface-2); }
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
-  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: dashed; }
+  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: solid; }
 
   .stage { flex: 1; min-height: 0; position: relative; }
   .fbar {
@@ -370,7 +370,9 @@
     }
   }
   @media (max-width: 899px) {
-    .presets { padding: 6px 16px; }
+    /* U16: the example chips wrap instead of running off the screen */
+    .presets { padding: var(--sp-2) var(--gutter); flex-wrap: wrap; overflow: visible; row-gap: var(--sp-2); }
+    .presets .caps { margin-left: 0; }
     .stage { overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .pane { border-bottom: 1px solid var(--rule); }
     .mapbox { flex: none; height: 250px; }

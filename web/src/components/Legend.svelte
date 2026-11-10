@@ -30,16 +30,36 @@
     rel?: { kind: 'ci' | 'survey' | 'modelled'; text: string; extra?: string | null } | null;
     /** further notes under the count line (fixed class limits, change maps) */
     notes?: string[];
+    /** U10: active filters (1 = matching): the histogram and the class counts show the matching units */
+    mask?: Uint8Array | null;
+    /** U11: a title line above the legend (change maps: what changed, between which years, in which unit) */
+    title?: string | null;
+    /** U13: a warning shown at the top (sparse coverage), with an optional action */
+    warn?: { text: string; action?: string; onaction?: () => void } | null;
+    /** a small legend over the map (phone with the sheet folded, embeds): unit, the coloured axis, nothing else */
+    mini?: boolean;
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [] }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [], mask = null, title = null, warn = null, mini = false }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
-  const H = $derived(compact ? 34 : vertical ? 58 : 46);
+  const H = $derived(mini ? 22 : compact ? 34 : vertical ? 58 : 46);
   const PAD = 6;
 
-  const s = $derived(sortedValues(v));
-  const sAxis = $derived(axisRef && axisRef.length ? axisRef : s);
+  const s = $derived(sortedValues(mask ? v.map((x, i) => (mask[i] ? x : null)) : v));
+  /** units per class among the matching units (all units without a filter) */
+  const counts = $derived.by(() => {
+    if (!mask) return scale.counts;
+    const c = new Array(scale.counts.length).fill(0);
+    for (const x of s) {
+      let k = 0;
+      while (k < scale.breaks.length && x >= scale.breaks[k]) k++;
+      c[Math.min(k, c.length - 1)]++;
+    }
+    return c;
+  });
+  // the axis stays that of all units (or all years), so filtering does not rescale it
+  const sAxis = $derived(axisRef && axisRef.length ? axisRef : mask ? sortedValues(v) : s);
   const log = $derived(wantsLog(sAxis));
   const dom = $derived(sAxis.length ? axisDomain(sAxis, log) : { lo: 0, hi: 1, clipLo: false, clipHi: false });
   const f = $derived(log ? Math.log10 : (x: number) => x);
@@ -90,7 +110,7 @@
           hi: k === scale.breaks.length ? scale.max : scale.breaks[k],
           /** a class holding one value only (a block of ties, e.g. 0) is labelled with that value */
           single: scale.counts[k] > 0 && scale.classMin[k] === scale.classMax[k] ? scale.classMin[k] : null,
-          n: scale.counts[k],
+          n: counts[k],
         })));
   const fixedL = $derived(scale.fixed ? fixedLabels(scale, meta) : null);
   /** D37: units of single-seat cantons kept apart (own pattern), or merged in by the toggle */
@@ -108,43 +128,45 @@
   const nrw = $derived(meta.id.startsWith('nrw_'));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
-  const unitText = $derived(unitOf(meta) || tr('fp.value'));
+  // U9: 'pp' spelled out in the legend (the first place a reader meets it)
+  const unitText = $derived(meta.unit === 'pp' ? tr('ux.ppFirst') : unitOf(meta) || tr('fp.value'));
+  const blocs = $derived(meta.id === 'nrw_leaning' || meta.id.startsWith('nrw_share_bloc_'));
 </script>
 
-<div class="legend" class:compact>
+<div class="legend" class:compact class:mini>
+  {#if warn}
+    <p class="warnbar">{warn.text}{#if warn.action && warn.onaction}{' '}<button type="button" class="link" onclick={warn.onaction}>{warn.action}</button>{/if}</p>
+  {/if}
+  {#if title}<p class="ltitle">{title}</p>{/if}
   <div class="head">
-    <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ` · ${tr('lg.log')}` : ''}</span></span>
-    <span class="mterm"><Term k={method === 'quantile' ? 'quantile' : method === 'equal' ? 'equal_intervals' : 'continuous'} /></span>
-    <div class="seg" role="radiogroup" aria-label={tr('lg.class')}>
-      {#each ['quantile', 'equal', 'continuous'] as const as m}
-        <button type="button" role="radio" aria-checked={method === m} title={tr(`lg.m.${m}`)} onclick={() => onmethod(m)}>
-          {tr(`lg.s.${m}`)}
-        </button>
-      {/each}
-    </div>
+    <span class="unit">{unitText}<span class="per">{' · '}{fmtPeriod(period)}{log ? ` · ${tr('lg.log')}` : ''}</span></span>
+    {#if !mini && !scale.fixed}
+      <span class="mterm"><Term k={method === 'quantile' ? 'quantile' : method === 'equal' ? 'equal_intervals' : 'continuous'} /></span>
+      <div class="seg" role="radiogroup" aria-label={tr('lg.class')}>
+        {#each ['quantile', 'equal', 'continuous'] as const as m}
+          <button type="button" role="radio" aria-checked={method === m} title={tr(`lg.m.${m}`)} onclick={() => onmethod(m)}>
+            {tr(`lg.s.${m}`)}
+          </button>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   <div class="plot" bind:clientWidth={w}>
-    <svg width={w} height={H + 22} role="img" aria-label={`${ml(meta)} · n = ${fmtNumber(scale.n, 0)} ${unitWord}`}>
+    <svg width={w} height={H + 24} role="img" aria-label={`${ml(meta)} · n = ${fmtNumber(scale.n, 0)} ${unitWord}`}>
       {#each bins as b}
         {#if b.h}<rect x={b.x} y={H - b.h} width={b.w} height={b.h} fill={b.fill} />{/if}
       {/each}
       <line x1={PAD} x2={PAD + W} y1={H + 0.5} y2={H + 0.5} class="base" />
-      {#each strip as r}<rect x={r.x} y={H + 2} width={r.w} height="5" fill={r.fill} />{/each}
-      {#if scale.method !== 'continuous'}
-        {#each scale.breaks as b}
-          {#if b > dom.lo && b < dom.hi}<line x1={px(b)} x2={px(b)} y1="4" y2={H + 7} class="brk" />{/if}
-        {/each}
-      {/if}
+      {#each strip as r}<rect x={r.x} y={H + 2} width={r.w} height="6" fill={r.fill} />{/each}
       {#if scale.diverging && dom.lo < scale.centre && dom.hi > scale.centre}<line x1={px(scale.centre)} x2={px(scale.centre)} y1="0" y2={H + 7} class="zero" />{/if}
-      {#if Number.isFinite(median)}
-        <path d="M{px(median) - 3.5},0 h7 l-3.5,4.5 z" class="md" />
-        <text x={Math.min(PAD + W - 2, Math.max(PAD + 2, px(median) + 6))} y="7" class="mdl" text-anchor={px(median) > PAD + W - 70 ? 'end' : 'start'}
-          dx={px(median) > PAD + W - 70 ? -12 : 0}>{tr('lg.median')} {fmtTick(median, meta)}</text>
+      {#if Number.isFinite(median) && !mini}
+        <line x1={px(median) + 0.5} x2={px(median) + 0.5} y1="2" y2={H} class="md" />
+        <text x={px(median) + (px(median) > PAD + W - 80 ? -4 : 4)} y="9" class="mdl" text-anchor={px(median) > PAD + W - 80 ? 'end' : 'start'}>{tr('lg.median')} {fmtTick(median, meta)}</text>
       {/if}
       {#each ticks as t}
-        <line x1={px(t)} x2={px(t)} y1={H + 7} y2={H + 10} class="tk" />
-        <text x={px(t)} y={H + 20} class="tl" text-anchor="middle">{fmtTick(t, meta)}</text>
+        <line x1={px(t)} x2={px(t)} y1={H + 8} y2={H + 11} class="tk" />
+        <text x={px(t)} y={H + 22} class="tl" text-anchor="middle">{fmtTick(t, meta)}</text>
       {/each}
     </svg>
   </div>
@@ -154,6 +176,7 @@
   {:else if scale.fixed && meta.id === 'nrw_leaning'}
     <div class="sides"><span>← {tr('lg.leftLean')}</span><span>{tr('lg.rightLean')} →</span></div>
   {/if}
+  {#if !mini}
   {#if classes.length && !compact}
     <div class="classes" class:vertical style="grid-template-columns: repeat({vertical ? 1 : classes.length}, 1fr)">
       {#each classes as c, k}
@@ -167,7 +190,7 @@
   {/if}
 
   <p class="meta">
-    <span class="num">n = {fmtNumber(scale.n, 0)}</span>
+    {#if mask}<span class="num">{tr('ux.nMatching', { n: fmtNumber(s.length, 0) })}</span> · {/if}<span class="num">n = {fmtNumber(scale.n, 0)}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> <span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}<Term k="majority_election" />
       <button type="button" class="link" onclick={() => (app.maj = true)}>{tr('lg.majInclude')}</button></span>
@@ -179,6 +202,7 @@
   </p>
   {#if older}<p class="older">{tr('lg.older', { p: fmtPeriod(period), n: fmtPeriod(older) })}{olderWhy ? ` (${olderWhy})` : ''}</p>{/if}
   {#if meta.id === 'nrw_leaning'}<p class="dnote">{tr('lg.leanNote')}</p>{/if}
+  {#if blocs && !compact}<p class="dnote">{tr('ux.blocs')}</p>{/if}
   {#if !compact && mdesc(meta)}
     <details class="def"><summary>ⓘ {tr('lg.definition')}</summary><p>{mdesc(meta)}</p></details>
   {/if}
@@ -191,54 +215,59 @@
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
     {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
   </p>
+  {/if}
 </div>
 
 <style>
-  .legend { font-size: 0.8rem; min-width: 0; }
-  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; margin-bottom: 4px; }
+  .legend { font-size: var(--fs-small); line-height: var(--lh-small); min-width: 0; }
+  .ltitle { margin: 0 0 var(--sp-1); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 600; }
+  .warnbar { margin: 0 0 var(--sp-2); padding-left: var(--sp-2); border-left: 3px solid var(--ink); font-size: var(--fs-small); line-height: var(--lh-small); }
+  .warnbar .link { border: 0; background: none; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font: inherit; font-weight: 600; color: var(--text); }
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--sp-1) var(--sp-2); margin-bottom: var(--sp-1); }
   .unit { color: var(--text); font-weight: 600; min-width: 0; flex: 1 1 120px; }
   .seg { flex: none; }
   .mterm { margin-left: auto; }
-  .per { color: var(--muted); font-weight: 400; }
-  .seg button { padding: 2px 7px; font-size: 0.72rem; }
+  .per { color: var(--text-2); font-weight: 400; }
+  .seg button { min-height: var(--ctl-h-sm); padding: 0 var(--sp-2); font-size: var(--fs-meta); }
   .plot { width: 100%; }
   svg { display: block; overflow: visible; }
   .base { stroke: var(--ink); stroke-width: 1; }
-  .brk { stroke: var(--text); stroke-width: 0.75; stroke-dasharray: 2 2; opacity: 0.7; }
-  .zero { stroke: var(--text); stroke-width: 1; }
-  .md { fill: var(--text); }
-  .mdl { font: 700 10px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+  .zero { stroke: var(--ink); stroke-width: 1; }
+  .md { stroke: var(--ink); stroke-width: 1; }
+  .mdl { font: 600 var(--fs-cap) var(--font-sans); fill: var(--text); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
   .tk { stroke: var(--plot-axis); }
-  .tl { font: 10px var(--font-mono); fill: var(--text); }
-  .classes { display: grid; gap: 0 3px; margin-top: 2px; }
-  .sides { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.72rem; font-weight: 600; }
-  .sides span:first-child { color: #a4541f; }
-  .sides span:last-child { color: #244f7c; }
+  .tl { font: var(--fs-cap) var(--font-sans); font-variant-numeric: tabular-nums; fill: var(--text); }
+  .classes { display: grid; gap: 0 var(--sp-1); margin-top: var(--sp-1); }
+  .sides { display: flex; justify-content: space-between; margin-top: var(--sp-1); font-size: var(--fs-meta); font-weight: 600; }
+  .sides span:first-child { color: var(--div-n3); }
+  .sides span:last-child { color: var(--div-p3); }
   .cls { display: flex; flex-direction: column; min-width: 0; }
-  .sw { height: 4px; margin-bottom: 2px; }
-  .rng { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cn { font-size: 0.7rem; color: var(--text); }
-  .meta { margin: 5px 0 0; color: var(--muted); font-size: 0.74rem; }
+  .sw { height: 6px; margin-bottom: 2px; }
+  .rng { font-size: var(--fs-cap); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .cn { font-size: var(--fs-cap); color: var(--text); font-variant-numeric: tabular-nums; }
+  .meta { margin: var(--sp-1) 0 0; color: var(--text-2); font-size: var(--fs-meta); line-height: var(--lh-meta); }
   .foot { margin: 2px 0 0; }
   .majp { display: inline-block; width: 12px; height: 9px; vertical-align: -1px; border: 1px solid var(--nodata-line);
-    background: radial-gradient(circle, var(--ink) 1px, transparent 1.3px) 0 0 / 4px 4px, var(--panel); }
-  .majl .link { margin-left: 4px; border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
-  .older { margin: 4px 0 0; font-size: 0.74rem; color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; }
-  .dnote { margin: 3px 0 0; font-size: 0.72rem; color: var(--muted); }
-  .def { margin: 4px 0 0; font-size: 0.74rem; }
+    background: radial-gradient(circle, #9a9a9a 1px, transparent 1.3px) 0 0 / 5px 5px, var(--surface-2); }
+  .majl .link { margin-left: var(--sp-1); border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
+  .older { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text); border-left: 3px solid var(--ink); padding-left: var(--sp-2); }
+  .dnote { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-2); }
+  .def { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); }
   .def summary { cursor: pointer; color: var(--text); font-weight: 600; }
-  .def p { margin: 3px 0 0; color: var(--text); line-height: 1.35; }
-  .nt { margin-top: 3px; }
-  .rel { margin: 5px 0 0; font-size: 0.74rem; line-height: 1.35; }
-  .rb { display: inline-block; padding: 0 5px; border: 1px solid var(--ink); font-size: 0.68rem; font-weight: 600; white-space: nowrap; vertical-align: 1px; }
+  .def p { margin: var(--sp-1) 0 0; color: var(--text); font-size: var(--fs-small); line-height: var(--lh-small); }
+  .nt { margin-top: var(--sp-1); }
+  .rel { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); }
+  .rb { display: inline-block; padding: 0 var(--sp-1); border: 1px solid var(--ink); font-size: var(--fs-cap); font-weight: 600; white-space: nowrap; vertical-align: 1px; }
   .rb-ci { background: var(--ink); color: var(--ink-text); }
-  .rx { color: var(--muted); }
+  .rx { color: var(--text-2); }
   .partial { color: var(--text); }
   .foot a { color: inherit; }
   .compact .head { margin-bottom: 2px; }
-  .classes.vertical { gap: 0; margin-top: 6px; }
-  .vertical .cls { flex-direction: row; align-items: center; gap: 8px; padding: 2px 0; border-bottom: 1px solid var(--border); }
+  .mini .head { margin-bottom: 0; }
+  .mini .unit { font-size: var(--fs-meta); line-height: var(--lh-meta); }
+  .classes.vertical { gap: 0; margin-top: var(--sp-2); }
+  .vertical .cls { flex-direction: row; align-items: center; gap: var(--sp-2); min-height: 24px; border-bottom: var(--rule-row); }
   .vertical .sw { width: 14px; height: 10px; margin: 0; flex: none; }
-  .vertical .rng { flex: 1; font-size: 0.72rem; color: var(--text); }
-  .vertical .cn { color: var(--muted); }
+  .vertical .rng { flex: 1; font-size: var(--fs-meta); color: var(--text); }
+  .vertical .cn { color: var(--text-2); font-size: var(--fs-meta); }
 </style>

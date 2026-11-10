@@ -39,7 +39,7 @@
   import { majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter, type MatchResult } from '../lib/filters';
@@ -228,25 +228,110 @@
     metaRaw.pooled ? metas.get(metaRaw.pooled.of) ?? null : (base.metrics.find((m) => m.pooled?.of === metaRaw.id && m.levels.includes(ld.level)) ?? null),
   );
   const colA = $derived(refA?.col);
+  // U6: a regional value (canton rent on municipalities) is one value per region: classes, legend, histogram and
+  // statistics count the regions (26 cantons), not the 2'110 municipal copies
+  const regionKey = $derived.by<string[] | null | undefined>(() => {
+    const r = regional;
+    if (!r) return null;
+    if (r === 'kanton') return ld.canton;
+    if (!unitRows) return undefined;
+    const out: string[] = new Array(nUnits).fill('');
+    for (const row of unitRows) {
+      if (row.level !== 'gemeinde') continue;
+      const i = ld.index.get(row.id);
+      const k = (row as unknown as Record<string, unknown>)[r];
+      if (i !== undefined && typeof k === 'string') out[i] = k;
+    }
+    return out;
+  });
+  const native = $derived.by(() => {
+    const key = regionKey;
+    if (!key || !colA || !regional) return null;
+    const first = new Map<string, number>();
+    const inMask = new Map<string, number>();
+    for (let i = 0; i < nUnits; i++) {
+      const k = key[i];
+      if (!k) continue;
+      if (!first.has(k)) first.set(k, i);
+      if (match.m[i]) inMask.set(k, 1);
+    }
+    const ks = [...first.keys()];
+    const idx = ks.map((k) => first.get(k)!);
+    const rowName = (k: string) => {
+      const r = unitRows?.find((u) => u.level === regional && u.id === k);
+      return r ? shortName(regional, placeName(regional, k, r.name)) : k;
+    };
+    return {
+      v: idx.map((i) => colA.v[i]),
+      names: ks.map(rowName),
+      cantons: ks.map((k, j) => (regional === 'kanton' ? '' : ld.canton[idx[j]])),
+      mask: Uint8Array.from(ks, (k) => inMask.get(k) ?? 0),
+      word: levelWord(regional),
+    };
+  });
   const scaleA = $derived.by(() => {
     if (!colA) return null;
-    const s = sortedValues(colA.v);
-    return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA), fixedRef ?? undefined) : null;
+    const v = native?.v ?? colA.v;
+    const s = sortedValues(v);
+    return s.length ? buildScale(v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA), fixedRef ?? undefined) : null;
+  });
+  /** colour of every unit (a regional scale is built on the regions, then applied to their municipalities) */
+  const unitColours = $derived.by(() => {
+    if (!scaleA || !colA) return null;
+    if (!native) return scaleA.unitColour;
+    return colA.v.map((x) => (x === null || !Number.isFinite(x) ? null : scaleA!.colourOf(x)));
   });
   // class limits fixed across years (hash fx): from all years pooled, so the slider does not re-classify
   const fixedOn = $derived(app.fixed && !cmpActive && !vdiff && !whyA && yearPeriods.length > 1);
   const pooledRef = $derived(fixedOn ? pooledValues(metaRaw, ld.level) : null);
   const fixedRef = $derived(pooledRef ?? null);
   const periodNotes = $derived(periodMarks(metaRaw));
+  // U8: a vote far from 50 % (|CH - 50| > 15 points) colours almost every place the same: show it as the
+  // difference from Switzerland by default (once per vote; the reader can switch back) and say why
+  let vdAuto: string | null = null;
+  let vdAutoOn = $state<string | null>(null);
+  const lopsided = $derived(metaRaw.id === 'vote_yes_share' && !!chA && !!refRaw && chA.period === refRaw.col.period && Math.abs(chA.value - 50) > 15);
+  $effect(() => {
+    const id = voteShown;
+    if (!id || metaRaw.id !== 'vote_yes_share' || !chA || !refRaw || chA.period !== refRaw.col.period || vdAuto === id) return;
+    vdAuto = id;
+    if (lopsided && !app.vdiff) {
+      replaceNext();
+      app.vdiff = true;
+      vdAutoOn = id;
+    }
+  });
   const legendNotes = $derived.by(() => {
     const out: string[] = [];
-    if (cmpActive) out.push(ml(metaA));
+    if (lopsided && chA) out.push(t(vdiff && vdAutoOn === voteShown ? 'ux.voteDiffAuto' : vdiff ? 'ux.voteOneSide' : 'ux.voteOneSide', { pct: `${fmtNumber(chA.value, 1)} %` }));
     if (fixedOn) {
       if (pooledRef === undefined) out.push(t('yc.fixedWait'));
       else if (pooledRef) out.push(t('yc.fixedNote', { span: pooledSpan(metaRaw) }));
     }
     return out;
   });
+  /** U11: "Change in X, 2010→2025 (percentage points)" */
+  const legendTitle = $derived.by(() => {
+    if (!cmpActive || !metaChg || !app.cmpFrom || !cmpTo) return null;
+    const u = metaChg.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaChg);
+    return `${t('ux.chgTitle', { metric: ml(metaRaw), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
+  });
+  /** U13: sparse metrics (partial coverage): the warning goes on top of the legend, with a zoom to the data */
+  const sparse = $derived.by(() => {
+    if (!colA || whyA || native) return null;
+    let n = 0;
+    for (const x of colA.v) if (x !== null) n++;
+    if (n === 0 || n >= nUnits * 0.6) return null;
+    const idx: number[] = [];
+    for (let i = 0; i < nUnits; i++) if (colA.v[i] !== null) idx.push(i);
+    return { n, idx };
+  });
+  const legendWarn = $derived(
+    sparse
+      ? { text: t('ux.sparse', { n: fmtNumber(sparse.n, 0), total: fmtNumber(nUnits, 0), units: word, pct: `${fmtNumber((100 * sparse.n) / nUnits, 0)} %` }),
+          action: t('ux.zoomData'), onaction: () => zoomTo(sparse!.idx) }
+      : null,
+  );
   const smPooled = $derived(app.multi !== null && yearPeriods.length > 1 ? pooledValues(metaRaw, ld.level) : undefined);
 
   // reliability of survey and modelled values: the published 95 % interval (companion metric <id>_ci), else a badge
@@ -346,7 +431,7 @@
   const whyS = $derived(sizeMeta ? unavailableReason(sizeMeta, ld.level) : null);
   const sizeRef = $derived(sizeMeta && !whyS ? cols.get(ld, sizeMeta.id, app.year) : null);
   // units.json (names, label points, regions) is loaded once symbols or categorical filters are used
-  const needRows = $derived(!!sizeMeta || app.filters.some((f) => f.kind === 'cat') || app.tab === 'rank');
+  const needRows = $derived(!!sizeMeta || app.filters.some((f) => f.kind === 'cat') || app.tab === 'rank' || (!!regional && regional !== 'kanton') || (!desktop && mapReady));
   $effect(() => {
     if (needRows && !unitRows) loadUnits().then((u) => (unitRows = u));
   });
@@ -403,9 +488,21 @@
       app.size = id;
       app.display = 'symbols';
       autoSym = id;
+      // U7: never a silent switch: a short toast says why, with the way back
+      showToast(t('ux.symToast', { metric: ml(m) }));
     }
   }
+  let toast = $state<string | null>(null);
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  function showToast(text: string) {
+    toast = text;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (toast = null), 6000);
+  }
+  /** U7: circles sized by the shaded count: one circle colour, the legend shows the circles only */
+  const sizeOnly = $derived(symbolsMode && !!sizeMeta && sizeMeta.id === metaA.id);
   function shadeInstead() {
+    toast = null;
     keepChoro = true;
     if (app.size === autoSym) app.size = null;
     app.display = 'choropleth';
@@ -526,21 +623,57 @@
     }
   });
   function select(i: number | null) {
+    choose = null;
     app.sel = i === null ? null : ld.units[i];
     if (i !== null && !desktop) sheetOpen = false;
+  }
+  // U16: on a phone at the national zoom a finger covers several small municipalities. A tap snaps to the
+  // nearest label point among the units around it (a tap on the Zürich dot selects Zürich, not Neftenbach);
+  // when two label points are about equally near, the three nearest are offered.
+  let choose = $state<{ x: number; y: number; w: number; ids: number[] } | null>(null);
+  const SNAP_ZOOM = 9.5;
+  function tap(i: number | null, p: { x: number; y: number }) {
+    if (!view || desktop || !labels || view.map.getZoom() >= SNAP_ZOOM) {
+      select(i);
+      return;
+    }
+    const near = view.unitsNear(p, 16);
+    if (near.length <= 1) {
+      select(i ?? near[0] ?? null);
+      return;
+    }
+    const scored = near
+      .map((k) => {
+        const lp = labels![k];
+        if (!lp) return { k, d: Infinity };
+        const q = view!.map.project(lp as [number, number]);
+        return { k, d: Math.hypot(q.x - p.x, q.y - p.y) };
+      })
+      .filter((x) => Number.isFinite(x.d))
+      .sort((a, b) => a.d - b.d);
+    if (!scored.length) {
+      select(i);
+      return;
+    }
+    const [a, b] = scored;
+    if (b && a.d < 14 && b.d < 14 && b.d < a.d * 1.25) {
+      choose = { x: p.x, y: p.y, w: mapEl.clientWidth, ids: scored.slice(0, 3).map((x) => x.k) };
+      return;
+    }
+    select(a.d < 18 ? a.k : i);
   }
 
   // ------------------------------------------------------------------ map
   onMount(() => {
     view = new UnitMap(mapEl, base, {
-      onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
+      onSelect: select, onTap: tap, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
       ...(app.embed ? {} : { onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full }),
       onLabels: () => (app.labels = !app.labels), labelsLabel: () => t('lb.toggle'), labelsOn: () => app.labels,
     });
     refLayer = new RefLayer(view.map, mapEl);
     refLayer.setVisible(app.labels);
-    loadRefData(base).then((d) => refLayer?.setData(d)).catch(() => {});
+    // U17: city and lake names only once the polygons are drawn
     overlay = new ReachOverlay(view.map, mapEl);
     view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
     view.map.on('movestart', (e) => {
@@ -551,9 +684,16 @@
       mapReady = true;
       fit();
       zf = zoomScale(view!.map.getZoom());
-      view!.map.once('idle', () => onrendered?.());
+      view!.map.once('idle', () => {
+        onrendered?.();
+        loadRefData(base).then((d) => refLayer?.setData(d)).catch(() => {});
+      });
     });
-    const ro = new ResizeObserver(() => view?.map.resize());
+    // the map follows its box (sheet folded or opened, reach bar shown): refit while the reader has not moved it
+    const ro = new ResizeObserver(() => {
+      view?.map.resize();
+      if (mapReady && !userMoved && !focus) fit();
+    });
     ro.observe(mapEl);
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && full && setFull(false);
     window.addEventListener('keydown', esc);
@@ -585,9 +725,10 @@
     userMoved = false;
   }
   function mapPadding() {
-    if (desktop) return { top: 24, bottom: 24, left: 24, right: 48 };
+    if (desktop) return { top: 56, bottom: 24, left: 24, right: 56 };
     // phone: the level bar on top; the sheet sits below the map (it does not cover it)
-    return { top: 46, bottom: 12, left: 10, right: 10 };
+    // the floating legend sits at the bottom of the map while the sheet is folded
+    return { top: 52, bottom: !sheetOpen && selIdx === null ? 100 : 12, left: 10, right: 10 };
   }
   /** the user panned or zoomed since the last fit: then a resize keeps their view */
   let userMoved = false;
@@ -645,7 +786,8 @@
   const colours = $derived.by(() => {
     if (!scaleA || whyA) return ld.units.map(() => null);
     const outFill = token('--muted-fill') || '#ececec';
-    const out = (spatialColours ?? scaleA.unitColour).slice();
+    const one = token('--seq-3') || '#6290bb';
+    const out = (spatialColours ?? (sizeOnly && colA ? colA.v.map((x) => (x === null ? null : one)) : null) ?? unitColours ?? scaleA.unitColour).slice();
     for (let i = 0; i < out.length; i++) {
       const c = out[i];
       if (c === null || c === undefined) continue;
@@ -693,7 +835,11 @@
   });
   $effect(() => {
     const f = reachFile ?? null;
-    if (mapReady) overlay!.setNetwork(f);
+    const on = reachOn;
+    if (mapReady) {
+      overlay!.setNetwork(f);
+      refLayer!.setAvoid(on ? overlay!.hubLngLat : null);
+    }
   });
   $effect(() => {
     const on = reachOn;
@@ -758,8 +904,20 @@
   const phoneTab = $derived(PHONE_TABS.some((t) => t.id === app.tab) ? app.tab! : 'map');
   const deskTab = $derived(app.tab === 'rank' ? 'rank' : 'stats');
   function openTab(id: string) {
+    // the open tab tapped again folds the sheet away
+    if (sheetOpen && phoneTab === id) {
+      sheetOpen = false;
+      return;
+    }
     app.tab = id === 'map' ? null : id;
     sheetOpen = true;
+  }
+  let dragY: number | null = null;
+  /** the reach bar's hub button: the Map tab, scrolled to the reach controls */
+  function openReach() {
+    app.tab = null;
+    sheetOpen = true;
+    tick().then(() => document.getElementById('reach-sec')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
   }
   const rankCols = $derived.by(() => {
     const out: RankColumn[] = [];
@@ -992,8 +1150,8 @@
 {#snippet statsSnip()}
   {#if voteIx && voteEntry && !whyA}<VoteResult index={voteIx} entry={voteEntry} />{/if}
   {#if colA && !whyA}
-    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={names} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : cmpActive ? chCmp : chA} sel={null}
-      source={base.sources.get(metaA.source)} unitWord={word} mask={filtered ? match.m : null} />
+    <StatsBlock meta={metaA} v={native?.v ?? colA.v} period={colA.period} names={native?.names ?? names} cantons={native?.cantons ?? ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : cmpActive ? chCmp : chA} sel={null}
+      source={base.sources.get(metaA.source)} unitWord={native?.word ?? word} mask={filtered ? (native?.mask ?? match.m) : null} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
   {/if}
@@ -1002,13 +1160,27 @@
 <main class="stage" class:full={full || app.embed} class:embed={app.embed} id="main" tabindex="-1">
   <h1 class="sr-only">{t('mv.h1', { metric: ml(metaA), units: levelName(ld.level) })}</h1>
   <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label={t('mv.controls')}>
-    <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
-      <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="20" height="12" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
-      <span class="summary">
-        {(filtered ? `${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })} · ` : '') + (sheetOpen ? t('mv.less') : t('mv.more'))}
-      </span>
-    </button>
     {#if !desktop}
+      <button type="button" class="handle" aria-expanded={sheetOpen} aria-label={sheetOpen ? t('mv.less') : t('mv.more')}
+        onclick={() => (sheetOpen = !sheetOpen)} onpointerdown={(e) => (dragY = e.clientY)}
+        onpointerup={(e) => { if (dragY !== null && Math.abs(e.clientY - dragY) > 24) { sheetOpen = e.clientY < dragY; e.preventDefault(); } dragY = null; }}>
+        <span class="grab" aria-hidden="true"></span>
+      </button>
+      {#if reachOn}
+        <!-- U16: reach stays at hand on a phone: Play, hub and mode, time slider -->
+        <div class="rbar">
+          <button type="button" class="rplay" onclick={play} aria-label={app.playing ? t('rc.pause') : t('rc.play')}>
+            {#if app.playing}<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>
+            {:else}<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2v12l10-6z" /></svg>{/if}
+          </button>
+          <button type="button" class="rhub" onclick={openReach} title={t('rc.from')}>
+            <span class="rh">{hub.name}</span><span class="rm">{reachMode === 'car' ? t('common.car') : t('common.pt')}</span>
+          </button>
+          <input type="range" min="0" max={T_MAX} step="1" value={app.t} aria-label={t('rc.minutes')} style="--pct:{(100 * app.t) / T_MAX}%"
+            oninput={(e) => { stop(); app.t = +e.currentTarget.value; }} />
+          <output class="rt num">{Math.round(app.t)} min</output>
+        </div>
+      {/if}
       <div class="tabs sheet-tabs" role="tablist" aria-label={t('mv.panel')}>
         {#each PHONE_TABS as tb}
           <button type="button" role="tab" aria-selected={phoneTab === tb.id} onclick={() => openTab(tb.id)}>
@@ -1044,8 +1216,12 @@
               compact={!desktop && !sheetOpen} onoff={() => (app.spatial = 'off')} />
           {:else if whyA}
             <p class="why">{whyA}</p>
+          {:else if sizeOnly && sizeMeta && sizeData && sizeRef}
+            <SizeLegend meta={sizeMeta} period={sizeRef.col.period} vmax={sizeData.vmax} rmax={sizeData.rMax * zf} filled
+              nDrawn={sizeData.syms.length} nMissing={sizeData.nMissing} nNonPositive={sizeData.nNonPositive} unitWord={word} />
           {:else if scaleA && colA}
-            <Legend meta={metaA} col={colA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
+            <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
+              mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle} warn={legendWarn}
               method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
@@ -1124,7 +1300,7 @@
         </p>
       </section>
 
-      <section class="reach">
+      <section class="reach" id="reach-sec">
         <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable} {station} ptm={app.ptm}
           onptm={(m) => (app.ptm = m)}
           only={app.ronly} ononly={ld.level === 'gemeinde' ? (v) => (app.ronly = v) : undefined}
@@ -1191,15 +1367,36 @@
             ci={card.ci} relText={card.relText} />
         </div>
       {/if}
-      {#if (full || app.embed) && scaleA && colA && !whyA}
+      {#if choose}
+        <div class="choose" role="dialog" aria-label={t('ux.nearest')} style="left:{Math.max(8, Math.min(choose.x - 110, choose.w - 228))}px; top:{choose.y + 12}px">
+          <p>{t('ux.nearest')}</p>
+          {#each choose.ids as k}<button type="button" onclick={() => select(k)}>{names[k]}{#if ld.canton[k] && ld.level !== 'kanton'}<span class="kt">{ld.canton[k]}</span>{/if}</button>{/each}
+          <button type="button" class="cx" aria-label={t('common.close')} onclick={() => (choose = null)}>×</button>
+        </div>
+      {/if}
+      {#if filtered && match.n === 0 && mapReady}
+        <div class="zero" role="status">
+          <p>{t('ux.zero')}</p>
+          <button type="button" class="btn-primary" onclick={() => { app.filters = []; app.ronly = false; }}>{t('ux.clear')}</button>
+        </div>
+      {/if}
+      {#if toast}
+        <div class="toast" role="status">
+          <span>{toast}</span>
+          {#if autoSym}<button type="button" class="link" onclick={shadeInstead}>{t('ux.symKeep')}</button>{/if}
+          <button type="button" class="tx" aria-label={t('common.dismiss')} onclick={() => (toast = null)}>×</button>
+        </div>
+      {/if}
+      {#if (full || app.embed || (!desktop && !sheetOpen && !card)) && scaleA && colA && !whyA}
         <div class="flegend">
           {#if spatialMode}
             <div class="fl-t">{spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : t('sp.legendTitle', { metric: ml(metaA) })}</div>
             <SpatialLegend mode={spatialMode} lisa={lisaCls} counts={biRes?.counts ?? null} labelA={ml(metaA)} labelB={metaB ? ml(metaB) : ''} compact />
           {:else}
             <div class="fl-t">{ml(metaA)}</div>
-            <Legend meta={metaA} col={colA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact />
+            <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
+              mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle}
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} />
           {/if}
         </div>
       {/if}
@@ -1255,6 +1452,28 @@
     border: 1px solid var(--ink); padding: 6px 9px; font-size: 0.8rem; white-space: nowrap;
   }
   .muted { color: var(--muted); }
+  .choose {
+    position: absolute; z-index: 8; width: 220px; background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy); padding: 0 0 var(--sp-1);
+  }
+  .choose p { margin: 0; padding: var(--sp-2) 44px var(--sp-1) var(--sp-3); font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-2); }
+  .choose button:not(.cx) {
+    display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0 var(--sp-3); border: 0; border-top: var(--rule-row);
+    background: none; text-align: left; font-size: var(--fs-body); font-weight: 600; cursor: pointer; color: var(--text);
+  }
+  .choose .kt { font-weight: 400; color: var(--text-2); font-size: var(--fs-meta); }
+  .choose .cx { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border: 0; background: none; font-size: var(--fs-lead); cursor: pointer; color: var(--text); }
+  .zero {
+    position: absolute; z-index: 6; left: 50%; top: 40%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-6); background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy); max-width: calc(100% - 32px); text-align: center;
+  }
+  .zero p { margin: 0; font-size: var(--fs-lead); line-height: var(--lh-lead); font-weight: 600; }
+  .toast {
+    position: absolute; z-index: 7; left: 50%; bottom: var(--sp-6); transform: translateX(-50%); width: max-content; max-width: min(460px, calc(100% - 24px));
+    display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-1) var(--sp-2) var(--sp-3); background: var(--ink); color: var(--ink-text);
+    font-size: var(--fs-small); line-height: var(--lh-small);
+  }
+  .toast .link { color: var(--ink-text); font-weight: 600; white-space: nowrap; }
+  .toast .tx { flex: none; width: var(--ctl-h); height: var(--ctl-h); border: 0; background: none; color: var(--ink-text); cursor: pointer; font-size: var(--fs-lead); }
   .rhead { margin: 0 0 var(--sp-2); font-size: var(--fs-small); line-height: var(--lh-small); padding-left: var(--sp-2); border-left: 3px solid var(--ink); }
   .rhead .link { margin-left: var(--sp-1); }
   .lab { margin-bottom: 6px; }
@@ -1315,7 +1534,8 @@
   }
   .embed-foot .credit { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .embed-foot .open { flex: none; color: var(--text); font-weight: 700; font-size: 0.76rem; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
-  .stage.embed .flegend { bottom: 10px; width: min(280px, calc(100% - 20px)); }
+  /* D16: the embed legend sits top-left, clear of Genève */
+  .stage.embed .flegend { top: 10px; bottom: auto; width: min(260px, calc(100% - 20px)); }
   /* full-screen map: header and panels hidden, the map fills the viewport */
   :global(html.mapfull .app > header.top) { display: none; }
   .stage.full { display: block; }
@@ -1331,33 +1551,40 @@
   }
 
   @media (max-width: 899px) {
-    /* phone: map on top, the sheet below it (it never covers the map); opening the sheet shrinks the map */
+    /* phone (D7, U16): map on top, the sheet below it. Folded, the sheet is the grab handle and the tab row
+       (plus the reach bar while reach is on), so the map keeps most of the screen; opening it shrinks the map. */
     .stage { display: flex; flex-direction: column; }
-    .pane { order: 0; flex: 1 1 auto; min-height: 38%; }
-    .controls {
-      order: 1; flex: none; border-top: 2px solid var(--rule); max-height: 46%;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .controls.open { max-height: 62%; }
+    .pane { order: 0; flex: 1 1 auto; min-height: 30%; }
+    .controls { order: 1; flex: none; border-top: var(--rule-heavy); max-height: 64%; padding-bottom: env(safe-area-inset-bottom); }
+    .controls:not(.open) .body { display: none; }
     .controls .body { min-height: 0; }
-    .sheet-tabs { flex: none; padding: 0 12px; }
-    .sheet-tabs button { padding: 5px 2px 6px; }
-    .handle {
-      display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 2px; border: 0; background: none; cursor: pointer; flex: none;
+    .sheet-tabs { flex: none; padding: 0 var(--sp-3); }
+    .sheet-tabs button { min-height: 44px; padding: 0 2px; }
+    .handle { display: grid; place-items: center; width: 100%; height: 24px; padding: 0; border: 0; background: none; cursor: grab; flex: none; touch-action: none; }
+    .grab { display: block; width: 36px; height: 4px; background: var(--ink); }
+    .rbar { flex: none; display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--sp-3) var(--sp-2); }
+    .rplay { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; }
+    .rplay svg { fill: currentColor; }
+    .rhub {
+      flex: 0 1 auto; min-width: 0; max-width: 40%; height: 40px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 var(--sp-2);
+      border: 1px solid var(--ink); background: var(--panel); color: var(--text); cursor: pointer; text-align: left;
     }
-    .chev { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: square; transition: transform 0.15s; }
-    .chev.up { transform: rotate(180deg); }
-    @media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
-    .summary { color: var(--text); font-weight: 500; font-size: 0.76rem; font-variant-numeric: tabular-nums; }
-    .body section { padding: 9px 0; }
-    .legend-wrap { margin-top: 6px; }
-    .extra { display: none; }
-    .controls.open .extra { display: block; }
-    .controls:not(.open) .detail { display: none; }
+    .rh { max-width: 100%; font-size: var(--fs-small); line-height: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rm { font-size: var(--fs-cap); line-height: var(--lh-cap); color: var(--text-2); }
+    .rbar input { flex: 1; min-width: 60px; }
+    .rt { flex: none; min-width: 3.6em; text-align: right; font-size: var(--fs-body); font-weight: 600; }
+    .body section { padding: var(--sp-3) 0; }
+    .legend-wrap { margin-top: var(--sp-2); }
+    /* the Map tab on a phone: shade, then reach (so it is reached without scrolling past everything), size, patterns */
+    .body { display: flex; flex-direction: column; }
+    .body > section.reach { order: 1; }
+    .body > section.extra { order: 2; }
+    .body > section.spsec { order: 3; }
     /* zoom buttons hidden on phones (pinch); the reset button stays */
     :global(.single .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-btn)) { display: none; }
-    .lvlbar { top: 8px; left: 8px; }
+    .lvlbar { top: var(--sp-2); left: var(--sp-2); }
     /* phone: the card is a short strip at the bottom of the map (expands on tap, up to the level bar) */
-    .card-wrap { top: auto; bottom: 8px; right: 34px; max-height: calc(100% - 52px); display: flex; flex-direction: column; justify-content: flex-end; }
+    .card-wrap { top: auto; bottom: 8px; right: 52px; max-height: calc(100% - 56px); display: flex; flex-direction: column; justify-content: flex-end; }
+    .flegend { left: var(--sp-2); bottom: var(--sp-2); width: min(300px, calc(100% - 64px)); }
   }
 </style>

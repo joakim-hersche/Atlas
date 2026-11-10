@@ -8,6 +8,7 @@
   import SourcesView from './views/SourcesView.svelte';
   import Search from './components/Search.svelte';
   import ShareButton from './components/ShareButton.svelte';
+  import Locator from './components/Locator.svelte';
   import { initRadioGroups } from './lib/a11y';
   import { fmtNumber } from './lib/classify';
   import { ColumnStore } from './lib/columns.svelte';
@@ -208,7 +209,12 @@
   {/if}
 
   {#if (!base || (isMap && !ld)) && !loadError}
-    <div class="status" role="status">{isMap ? t('status.loadingMap') : t('status.loading')}</div>
+    <!-- U17: Switzerland's outline (the canton file comes first) and a progress line while the map data loads -->
+    <div class="loading" role="status">
+      {#if base && isMap}<div class="lshape"><Locator kanton={base.kanton} lakes={base.lakes} shapes={[]} label={t('ux.loadingData')} /></div>{/if}
+      <p>{isMap ? (base ? t('ux.loadingData') : t('status.loadingMap')) : t('status.loading')}</p>
+      <span class="bar" aria-hidden="true"><i></i></span>
+    </div>
   {/if}
   {#if loadError || cols?.error}
     <div class="status err" role="alert">{t('status.error', { e: loadError ?? cols?.error ?? '' })}</div>
@@ -261,6 +267,16 @@
     padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); z-index: 40; max-width: 90vw;
   }
   .status.err { color: var(--text); }
+  .loading {
+    position: absolute; inset: 52px 0 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-3);
+    background: var(--bg); pointer-events: none; padding: var(--sp-4);
+  }
+  .loading p { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text-2); }
+  .lshape { width: min(520px, 86vw); opacity: 0.55; }
+  .bar { position: relative; display: block; width: 160px; height: 2px; background: var(--border); overflow: hidden; }
+  .bar i { position: absolute; top: 0; bottom: 0; width: 40%; background: var(--ink); animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { left: -40%; } to { left: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .bar i { animation: none; left: 0; width: 100%; } }
   .notice {
     flex: none; display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--gutter);
     border-bottom: var(--rule-edge); background: var(--surface-2); font-size: var(--fs-small); line-height: var(--lh-small); position: relative; z-index: 45;

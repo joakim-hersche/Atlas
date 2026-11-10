@@ -53,10 +53,11 @@
     </div>
     <p class="foot">{problem ?? t('yc.note', { from: from ?? '', to })}{#if !problem && mode === 'pct'}{' '}{t('yc.notePct')}{/if}</p>
   {/if}
-  <label class="fx" class:off={changing} title={t('yc.fixedT')}>
+  <label class="fx" class:off={changing} title={changing ? t('ux.fixedOffWhy') : t('yc.fixedT')}>
     <input type="checkbox" checked={fixed && !changing} disabled={changing} onchange={(e) => onfixed(e.currentTarget.checked)} />
     <span>{t('yc.fixed')}</span>
   </label>
+  {#if changing}<p class="foot">{t('ux.fixedOffWhy')}</p>{/if}
 </div>
 
 <style>

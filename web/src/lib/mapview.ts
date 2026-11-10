@@ -101,6 +101,9 @@ export function geomBounds(g: Geometry | null): [number, number, number, number]
 
 export interface MapEvents {
   onSelect: (unitIndex: number | null) => void;
+  /** U16: a tap or click with the unit under it and the point (the view may snap it to a nearby label point);
+   *  when set, it replaces onSelect for clicks */
+  onTap?: (unitIndex: number | null, point: { x: number; y: number }) => void;
   onHover?: (unitIndex: number | null, point: { x: number; y: number } | null) => void;
   /** reset button pressed: fit Switzerland (the view knows its padding) */
   onReset?: () => void;
@@ -208,7 +211,11 @@ export class UnitMap {
       const f = this.map.queryRenderedFeatures(p, { layers })[0];
       return f && typeof f.id === 'number' ? f.id : undefined;
     };
-    this.map.on('click', (e) => ev.onSelect(at(e.point) ?? null));
+    this.map.on('click', (e) => {
+      const i = at(e.point) ?? null;
+      if (ev.onTap) ev.onTap(i, { x: e.point.x, y: e.point.y });
+      else ev.onSelect(i);
+    });
     if (ev.onHover) {
       const onHover = ev.onHover;
       this.map.on('mousemove', (e) => {
@@ -335,6 +342,13 @@ export class UnitMap {
     if (d === this.display) return;
     this.display = d;
     this.styleUnits();
+  }
+
+  /** Units drawn within `r` px of a screen point (distinct indices). */
+  unitsNear(p: { x: number; y: number }, r: number): number[] {
+    if (!this.isReady) return [];
+    const fs = this.map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: ['unit-fill'] });
+    return [...new Set(fs.map((f) => f.id).filter((x): x is number => typeof x === 'number'))];
   }
 
   /** Proportional symbols (null = none); 'filled' takes the shade colour, 'hollow' is a black ring. */
