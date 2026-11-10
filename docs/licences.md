@@ -132,6 +132,7 @@ Both are partial (cities or regions only); they are recorded in the catalog as `
 | `bfs_naturalisation` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_nrw` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_sdmx` | OPEN-BY – open use, the source must be provided (termsOfUse of the statistik.admin.ch asset linked from each dataflow's EXT_RESOURCE, checked for 12 flows) |
+| `bfs_rents` | OPEN-BY – open use, the source must be provided (statistik.admin.ch assets 36398431, 36398447, 36503090; checked 2026-11-10) |
 | `bfs_se_language_bezirk` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_social_assistance` | OPEN-BY – open use, the source must be provided (BFS termsOfUse, DAM 36878678) |
 | `bfs_statent` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |

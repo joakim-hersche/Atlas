@@ -105,3 +105,7 @@ bag_premiums:
   status: blocked
   missing: "The licence of opendata.swiss dataset health-insurance-premiums (where priminfo says the data is published)."
   evidence: "https://www.priminfo.admin.ch/de/downloads/aktuell: 'Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar' -> https://opendata.swiss/de/dataset/health-insurance-premiums (403 from the session). priminfo has no imprint/terms page (404); BAG pages link 'Rechtliches' to admin.ch (403). Cached PDFs/xlsx carry no licence. Checked 2026-11-10."
+
+bfs_rents:
+  status: cleared
+  evidence: "BFS asset pages https://statistik.admin.ch/de/asset/36398431 (rent by canton), /36398447 (rent per m2 by canton) and /36503090 (SSV cities, 2026 edition): 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Files carry '© BFS 2026' and 'Quellen: BFS – SE, GWS'. Checked 2026-11-10."
