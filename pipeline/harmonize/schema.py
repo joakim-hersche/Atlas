@@ -43,6 +43,11 @@ THEMES = ["Geography & identity", "Population & demography", "Migration & nation
 METRIC_KEYS = {"id", "theme", "label_en", "label_de", "unit", "decimals", "direction",
                "aggregation", "kind", "precision", "coverage", "native_level"}
 
+# optional keys; anything else is a typo or an unquoted comma in a YAML flow mapping
+OPTIONAL_METRIC_KEYS = {"description", "source_note", "volatile", "zero_when", "plausibility_note",
+                        "additivity_note", "additivity_rounding", "additivity_tolerance", "bounded_0_100",
+                        "allow_negative", "source_id"}
+
 SOURCES_DIR = Path(__file__).resolve().parents[1] / "sources"
 
 
@@ -62,6 +67,9 @@ def load_metrics(source_id: str | None = None) -> pd.DataFrame:
 def validate_metrics(df: pd.DataFrame) -> list[str]:
     errors = []
     for m in df.to_dict("records"):
+        unknown = {str(k) for k, v in m.items() if v is not None and v == v} - METRIC_KEYS - OPTIONAL_METRIC_KEYS
+        if unknown:
+            errors.append(f"{m.get('id')}: unknown keys {sorted(unknown)} (quote values containing commas)")
         missing = METRIC_KEYS - {k for k, v in m.items() if v is not None and v == v}
         if missing:
             errors.append(f"{m.get('id')}: missing {sorted(missing)}")
