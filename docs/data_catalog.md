@@ -178,3 +178,7 @@ Each theme lists what exists, how far back, how reliable, effort, and the propos
 6. Hub list and reach parameters (departure window, rail only vs. all PT, car free-flow vs. typical).
 7. Hosts: allow BAG/priminfo and upload.wikimedia.org? Pursue cantonal hosts?
 8. Car reach fallback while OSM is blocked: NPVM car matrices, swissTLMRegio roads, or try OSM from another environment?
+
+## Addendum 2026-11-10: backlog item "More data"
+
+Built: `estv_median_income` (modelled median taxable income from the ESTV classes, 2020–2023), `bafu_noise` (sonBASE 2021 exposure of residents, modelled), `bfs_gwr` (school and university buildings, GWR class 1263), `bfs_se_language_cities` (SE main languages, 5-year pools, statistical cities, partial coverage). Rejected and recorded in the CSV: childcare places (no open source beyond one canton's PDF and Stadt Zürich quartiers), Structural Survey languages for MS regions or all municipalities (not published), cantonal school-site lists (four cantons or cities, licences unverifiable).
