@@ -348,6 +348,7 @@ def run() -> str:
     L += [f"- {r.check}: {r.result}" + (f" — worst: {r.worst}" if isinstance(getattr(r, 'worst', None), list) else "")
           for r in E.itertuples()]
     L += curation_section()
+    L += texts_section()
     path = ROOT / "docs" / "quality_report.md"
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return str(path)
@@ -376,6 +377,22 @@ def curation_section() -> list[str]:
     L += ["", f"Metrics with no map at any level: {len(none)} (by theme: "
           + ", ".join(f"{k} {n}" for k, n in v[v["metric_id"].isin(none)].drop_duplicates("metric_id")
                       .groupby("theme").size().sort_values(ascending=False).items()) + ")."]
+    return L
+
+
+def texts_section() -> list[str]:
+    """I. German and French for pipeline texts (review round 3, A4): coverage from the last `make texts`."""
+    import json
+    p = interim_path("texts_coverage.json")
+    L = ["", "## I. Translations of pipeline texts (`data/out/web/texts.json`)", ""]
+    if not p.exists():
+        return L + ["Not built yet (run `make texts`)."]
+    cov = json.loads(p.read_text(encoding="utf-8"))
+    L += ["Shipped notes, gap reasons, curation reasons, reach footnotes and Sources texts with a German and a French "
+          "translation, from the last `make texts`; untranslated parts are listed in `data/interim/texts_untranslated.csv` "
+          "and stay English in the app.", "", "| Language | Distinct texts | Fully translated | Untranslated parts |",
+          "|---|---|---|---|"]
+    L += [f"| {l} | {c['strings']:,} | {c['translated']:,} | {c['untranslated_segments']} |" for l, c in cov.items()]
     return L
 
 

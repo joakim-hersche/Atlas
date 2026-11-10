@@ -1,12 +1,12 @@
 # Data quality report
 
-Generated 2026-11-10T18:39 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-10T22:54 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
-Metrics: 911 defined (671 base, 240 derived) · rows: 33,195,817
+Metrics: 929 defined (682 base, 247 derived) · rows: 33,316,706
 
 ## A. Additivity — municipalities vs. published district/canton/national values
 
-Summary: 643 metric×level comparisons, 619 pass, 24 with failures.
+Summary: 641 metric×level comparisons, 617 pass, 24 with failures.
 
 | Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Documented difference | Fail | Max rel. residual |
 |---|---|---|---|---|---|---|---|---|---|
@@ -618,29 +618,27 @@ Summary: 643 metric×level comparisons, 619 pass, 24 with failures.
 | bfs_votes_gemeinde | schweiz | vote_no | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_valid | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_yes | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_federal_tax_chf | 97 | 36 | 1 | 46 | 12 ¹ | 0 | 2.965% |
-| estv_dbst | kanton | tax_np_net_income_chf | 97 | 36 | 1 | 57 | 1 ¹ | 0 | 0.701% |
-| estv_dbst | kanton | tax_np_normal_taxable_100k_plus | 56 | 49 | 1 | 1 | 0 | 0 | 0.005% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_0 | 51 | 45 | 1 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_100_200k | 58 | 51 | 0 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_1_30k | 91 | 86 | 4 | 1 | 0 | 0 | 0.022% |
+| estv_dbst | kanton | tax_np_federal_tax_chf | 9 | 0 | 1 | 6 | 0 ¹ | 0 | 0.495% |
+| estv_dbst | kanton | tax_np_federal_tax_normal_chf | 10 | 0 | 6 | 4 | 0 | 0 | 0.018% |
+| estv_dbst | kanton | tax_np_net_income_chf | 9 | 0 | 1 | 6 | 0 ¹ | 0 | 0.101% |
+| estv_dbst | kanton | tax_np_net_income_normal_chf | 9 | 0 | 6 | 3 | 0 | 0 | 0.006% |
+| estv_dbst | kanton | tax_np_normal_taxable_100k_plus | 6 | 0 | 1 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_0 | 6 | 0 | 1 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_100_200k | 7 | 0 | 0 | 0 | 0 | 0 | nan% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_1_30k | 5 | 0 | 4 | 1 | 0 | 0 | 0.022% |
 | estv_dbst | kanton | tax_np_normal_taxable_class_1m_plus | 10 | 0 | 0 | 0 | 0 | 0 | nan% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_200_500k | 36 | 26 | 0 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_30_40k | 72 | 66 | 2 | 1 | 0 | 0 | 0.015% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_40_50k | 74 | 67 | 3 | 1 | 0 | 0 | 0.007% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_500k_1m | 15 | 5 | 0 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_50_75k | 86 | 79 | 3 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_normal_taxable_class_75_100k | 60 | 54 | 2 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | kanton | tax_np_taxable_income_chf | 97 | 36 | 1 | 57 | 1 ¹ | 0 | 0.792% |
-| estv_dbst | kanton | tax_np_taxpayers | 97 | 36 | 1 | 58 | 0 | 0 | 0.071% |
-| estv_dbst | kanton | tax_np_taxpayers_no_federal_tax | 88 | 36 | 0 | 49 | 0 | 0 | 0.218% |
-| estv_dbst | kanton | tax_np_taxpayers_normal | 102 | 93 | 6 | 3 | 0 | 0 | 0.004% |
-| estv_dbst | schweiz | tax_np_federal_tax_chf | 15 | 9 | 0 | 6 | 0 ¹ | 0 | 0.219% |
-| estv_dbst | schweiz | tax_np_net_income_chf | 4 | 1 | 0 | 3 | 0 ¹ | 0 | 0.063% |
-| estv_dbst | schweiz | tax_np_taxable_income_chf | 4 | 1 | 0 | 3 | 0 ¹ | 0 | 0.070% |
-| estv_dbst | schweiz | tax_np_taxpayers | 4 | 0 | 0 | 4 | 0 | 0 | 0.008% |
-| estv_dbst | schweiz | tax_np_taxpayers_no_federal_tax | 2 | 0 | 0 | 2 | 0 | 0 | 0.013% |
-| estv_dbst | schweiz | tax_np_taxpayers_normal | 3 | 3 | 0 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_200_500k | 10 | 0 | 0 | 0 | 0 | 0 | nan% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_30_40k | 6 | 0 | 2 | 1 | 0 | 0 | 0.015% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_40_50k | 7 | 0 | 3 | 1 | 0 | 0 | 0.007% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_500k_1m | 10 | 0 | 0 | 0 | 0 | 0 | nan% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_50_75k | 7 | 0 | 3 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_75_100k | 6 | 0 | 2 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_taxable_income_chf | 9 | 0 | 1 | 6 | 0 ¹ | 0 | 0.115% |
+| estv_dbst | kanton | tax_np_taxable_income_normal_chf | 9 | 0 | 6 | 3 | 0 | 0 | 0.007% |
+| estv_dbst | kanton | tax_np_taxpayers | 9 | 0 | 1 | 6 | 0 | 0 | 0.014% |
+| estv_dbst | kanton | tax_np_taxpayers_no_federal_tax | 10 | 0 | 0 | 7 | 0 | 0 | 0.177% |
+| estv_dbst | kanton | tax_np_taxpayers_no_federal_tax_normal | 9 | 0 | 6 | 3 | 0 | 0 | 0.014% |
+| estv_dbst | kanton | tax_np_taxpayers_normal | 9 | 0 | 6 | 3 | 0 | 0 | 0.004% |
 | geo_identity | kanton | geo_area_lake_ha | 26 | 26 | 0 | 0 | 0 | 0 | 0.000% |
 | geo_identity | kanton | geo_area_land_ha | 26 | 26 | 0 | 0 | 0 | 0 | 0.000% |
 | geo_identity | kanton | geo_area_total_ha | 26 | 26 | 0 | 0 | 0 | 0 | 0.000% |
@@ -682,13 +680,13 @@ Worst unexplained differences:
 - bfs_nrw / kanton / nrw_fw_cvp: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 7351.0, 'value_agg': 7182.634275377565, 'explained': 4.245668978789234}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 7118.0, 'value_agg': 6972.472559877706, 'explained': 8.45936726556872}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 6450.0, 'value_agg': 6317.482561394099, 'explained': 4.905698900663455}]
 - bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255869, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.401611529561, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395095, 'explained': 576.7845709381374}]
 - bfs_nrw / kanton / nrw_fw_other: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 7467.0, 'value_agg': 7137.5399986146585, 'explained': 9.295116111977606}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 3739.0, 'value_agg': 3693.379016908547, 'explained': 19.37925026715989}]
-- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.7622136599741, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999065, 'explained': -1113.659691801661}]
+- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.7622136599734, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999063, 'explained': -1113.659691801661}]
 - bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.414646877877, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005552, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634847, 'explained': 445.8648439036694}]
 - bfs_nrw / kanton / nrw_fw_svp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 520.0, 'value_agg': 795.9472029858425, 'explained': 323.25424458201536}]
 - bfs_nrw / kanton / nrw_fw_total: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 23784.0, 'value_agg': 27057.97368113954, 'explained': 4103.58409916491}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 19762.0, 'value_agg': 21206.27255990177, 'explained': 2105.9489065535427}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 25722.0, 'value_agg': 28304.02802366238, 'explained': 3436.876982299561}]
 - bfs_nrw / schweiz / nrw_fw_csp: [{'unit_id': 'CH', 'period': '1983', 'value_pub': 7808.0, 'value_agg': 7718.956233117641, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1987', 'value_pub': 5889.0, 'value_agg': 5842.560003024102, 'explained': -0.0}]
 - bfs_nrw / schweiz / nrw_fw_other: [{'unit_id': 'CH', 'period': '1979', 'value_pub': 34396.0, 'value_agg': 34056.85462778591, 'explained': -0.0}]
-- bfs_nrw / schweiz / nrw_fw_sep: [{'unit_id': 'CH', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 2826.0843149960356, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 3927.333502800726, 'explained': -0.0}]
+- bfs_nrw / schweiz / nrw_fw_sep: [{'unit_id': 'CH', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 2826.084314996035, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 3927.333502800724, 'explained': -0.0}]
 - bfs_vehicles / kanton / mfz_newreg_bev: [{'unit_id': 'SG', 'period': '2025', 'value_pub': 3124.0, 'value_agg': 3226.0, 'explained': 0.0}]
 - bfs_votes_gemeinde / kanton / vote_eligible: [{'unit_id': 'BS', 'period': '2003-05-18#4980', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#4990', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#5000', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}]
 - bfs_votes_gemeinde / kanton / vote_no: [{'unit_id': 'JU', 'period': '1995-03-12#4210', 'value_pub': 2622.0, 'value_agg': 3024.0, 'explained': 382.0}, {'unit_id': 'JU', 'period': '1995-03-12#4190', 'value_pub': 5989.0, 'value_agg': 6983.0, 'explained': 961.0}, {'unit_id': 'JU', 'period': '1996-03-10#4280', 'value_pub': 3838.0, 'value_agg': 4277.0, 'explained': 419.0}]
@@ -696,10 +694,10 @@ Worst unexplained differences:
 
 ## B. Ranges
 
-- **vote_turnout**: 9.0 values outside 0–100 — e.g. agglomeration 6621 1977-12-04#2780: 308.518
-- **pks_bicycle_theft**: 192.0 negative counts — e.g. bezirk 1901 2009: -9999.0
-- **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
 - **pks_theft**: 180.0 negative counts — e.g. bezirk 1901 2009: -9999.0
+- **vote_turnout**: 9.0 values outside 0–100 — e.g. agglomeration 6621 1977-12-04#2770: 308.523
+- **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
+- **pks_bicycle_theft**: 192.0 negative counts — e.g. bezirk 1901 2009: -9999.0
 
 ## C. Year-on-year jumps (> 50% and > 200 units)
 
@@ -725,43 +723,44 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | bil_emigration | 23 | 13 | [{'unit_id': '5586', 'year': 2010, 'prev': 1847.0, 'value': 4526.0, 'precision': 'exact'}, {'unit_id': '6253', 'year': 2012, 'prev': 246.0, 'value': 839.0, 'precision': 'exact'}] |
 | mig_immigration_foreign | 22 | 17 | [{'unit_id': '6253', 'year': 2012, 'prev': 251.0, 'value': 1043.0, 'precision': 'exact'}, {'unit_id': '56', 'year': 2017, 'prev': 791.0, 'value': 210.0, 'precision': 'exact'}] |
 | bil_naturalisations | 21 | 12 | [{'unit_id': '6621', 'year': 2015, 'prev': 847.0, 'value': 2295.0, 'precision': 'exact'}, {'unit_id': '6621', 'year': 2020, 'prev': 2250.0, 'value': 1071.0, 'precision': 'exact'}] |
-| mig_intracant_in_swiss | 19 | 14 | [{'unit_id': '6633', 'year': 2021, 'prev': 303.0, 'value': 1040.0, 'precision': 'exact'}, {'unit_id': '6633', 'year': 2022, 'prev': 1040.0, 'value': 424.0, 'precision': 'exact'}] |
 | gws_bld_pre1919 | 19 | 12 | [{'unit_id': '230', 'year': 2011, 'prev': 3525.0, 'value': 22.0, 'precision': 'exact'}, {'unit_id': '230', 'year': 2012, 'prev': 22.0, 'value': 3420.0, 'precision': 'exact'}] |
+| mig_intracant_in_swiss | 19 | 14 | [{'unit_id': '6633', 'year': 2021, 'prev': 303.0, 'value': 1040.0, 'precision': 'exact'}, {'unit_id': '6633', 'year': 2022, 'prev': 1040.0, 'value': 424.0, 'precision': 'exact'}] |
 | gws_bld_1919_1945 | 18 | 11 | [{'unit_id': '3203', 'year': 2011, 'prev': 497.0, 'value': 1706.0, 'precision': 'exact'}, {'unit_id': '3443', 'year': 2011, 'prev': 55.0, 'value': 848.0, 'precision': 'exact'}] |
 | ent_jobs_s2 | 17 | 15 | [{'unit_id': '1707', 'year': 2023, 'prev': 1422.0, 'value': 4523.0, 'precision': 'exact'}, {'unit_id': '1707', 'year': 2022, 'prev': 4369.0, 'value': 1422.0, 'precision': 'exact'}] |
 | ent_fte_s2 | 17 | 15 | [{'unit_id': '1707', 'year': 2023, 'prev': 1279.0, 'value': 4261.0, 'precision': 'exact'}, {'unit_id': '1707', 'year': 2022, 'prev': 4131.0, 'value': 1279.0, 'precision': 'exact'}] |
+| ent_jobs_ict | 13 | 10 | [{'unit_id': '362', 'year': 2014, 'prev': 198.0, 'value': 1262.0, 'precision': 'exact'}, {'unit_id': '62', 'year': 2021, 'prev': 786.3348671236736, 'value': 1818.4618274016339, 'precision': 'boundary_estimate'}] |
 | unemp_registered | 13 | 9 | [{'unit_id': '261', 'year': 1992, 'prev': 2515.1, 'value': 6653.3, 'precision': 'exact'}, {'unit_id': '6621', 'year': 1991, 'prev': 1345.6666666666667, 'value': 2953.75, 'precision': 'exact'}] |
 | gws_heat_district | 13 | 12 | [{'unit_id': '355', 'year': 2022, 'prev': 132.0, 'value': 1378.0, 'precision': 'exact'}, {'unit_id': '355', 'year': 2023, 'prev': 1378.0, 'value': 205.0, 'precision': 'exact'}] |
-| ent_jobs_ict | 13 | 10 | [{'unit_id': '362', 'year': 2014, 'prev': 198.0, 'value': 1262.0, 'precision': 'exact'}, {'unit_id': '62', 'year': 2021, 'prev': 786.3348671236736, 'value': 1818.4618274016339, 'precision': 'boundary_estimate'}] |
-| bil_intercant_in | 12 | 10 | [{'unit_id': '6621', 'year': 1982, 'prev': 4258.0, 'value': 2002.0, 'precision': 'exact'}, {'unit_id': '27', 'year': 1991, 'prev': 594.0, 'value': 119.0, 'precision': 'exact'}] |
 | bil_intercant_out | 12 | 11 | [{'unit_id': '1701', 'year': 1990, 'prev': 801.0, 'value': 355.0, 'precision': 'exact'}, {'unit_id': '27', 'year': 1991, 'prev': 530.0, 'value': 96.0, 'precision': 'exact'}] |
+| bil_intercant_in | 12 | 10 | [{'unit_id': '6621', 'year': 1982, 'prev': 4258.0, 'value': 2002.0, 'precision': 'exact'}, {'unit_id': '27', 'year': 1991, 'prev': 594.0, 'value': 119.0, 'precision': 'exact'}] |
 | nat_total | 10 | 7 | [{'unit_id': '6621', 'year': 2015, 'prev': 847.0, 'value': 2295.0, 'precision': 'exact'}, {'unit_id': '6621', 'year': 2020, 'prev': 2250.0, 'value': 1071.0, 'precision': 'exact'}] |
 | ent_jobs_finance | 8 | 8 | [{'unit_id': '131', 'year': 2016, 'prev': 3348.0, 'value': 1606.0, 'precision': 'exact'}, {'unit_id': '69', 'year': 2014, 'prev': 993.0, 'value': 2557.0, 'precision': 'exact'}] |
 | gws_bld_partly_res | 8 | 7 | [{'unit_id': '567', 'year': 2013, 'prev': 83.0, 'value': 369.0, 'precision': 'exact'}, {'unit_id': '6082', 'year': 2019, 'prev': 27.0, 'value': 290.0, 'precision': 'exact'}] |
+| ent_jobs_health | 7 | 6 | [{'unit_id': '5412', 'year': 2020, 'prev': 131.0, 'value': 1963.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 218.0, 'value': 1304.0, 'precision': 'exact'}] |
 | agr_goats | 7 | 6 | [{'unit_id': '5812', 'year': 2012, 'prev': 695.0, 'value': 0.0, 'precision': 'exact'}, {'unit_id': '1214', 'year': 1997, 'prev': 539.0, 'value': 0.0, 'precision': 'exact'}] |
 | vac_rooms_1_2 | 7 | 7 | [{'unit_id': '6621', 'year': 2001, 'prev': 790.0, 'value': 314.0, 'precision': 'exact'}, {'unit_id': '2701', 'year': 1997, 'prev': 394.0, 'value': 812.0, 'precision': 'exact'}] |
 | gws_heat_wood | 7 | 7 | [{'unit_id': '5192', 'year': 2024, 'prev': 599.0, 'value': 1264.0, 'precision': 'exact'}, {'unit_id': '5050', 'year': 2024, 'prev': 451.0, 'value': 937.0, 'precision': 'exact'}] |
-| ent_jobs_health | 7 | 6 | [{'unit_id': '5412', 'year': 2020, 'prev': 131.0, 'value': 1963.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 218.0, 'value': 1304.0, 'precision': 'exact'}] |
-| mfz_cars_hev | 6 | 3 | [{'unit_id': '3101', 'year': 2023, 'prev': 954.0, 'value': 4039.0, 'precision': 'exact'}, {'unit_id': '3101', 'year': 2021, 'prev': 675.0, 'value': 2255.0, 'precision': 'exact'}] |
+| mfz_cars_petrol | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 3589.0, 'value': 10124.0, 'precision': 'exact'}, {'unit_id': '6240', 'year': 2011, 'prev': 4496.0, 'value': 1169.0, 'precision': 'exact'}] |
 | ent_jobs | 6 | 6 | [{'unit_id': '5412', 'year': 2020, 'prev': 868.0, 'value': 2775.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 996.0, 'value': 2041.0, 'precision': 'exact'}] |
+| agr_area_ha | 6 | 4 | [{'unit_id': '4511', 'year': 1997, 'prev': 859.0, 'value': 0.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 830.0, 'precision': 'exact'}] |
 | agr_area_organic_ha | 6 | 6 | [{'unit_id': '3396', 'year': 1998, 'prev': 201.0, 'value': 634.0, 'precision': 'exact'}, {'unit_id': '6638', 'year': 1997, 'prev': 504.0, 'value': 74.0, 'precision': 'exact'}] |
 | ent_fte | 6 | 5 | [{'unit_id': '5412', 'year': 2020, 'prev': 714.0, 'value': 2233.0, 'precision': 'exact'}, {'unit_id': '4065', 'year': 2023, 'prev': 590.0, 'value': 1260.0, 'precision': 'exact'}] |
-| agr_area_ha | 6 | 4 | [{'unit_id': '4511', 'year': 1997, 'prev': 859.0, 'value': 0.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 830.0, 'precision': 'exact'}] |
-| mfz_cars | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 5390.0, 'value': 18360.0, 'precision': 'exact'}, {'unit_id': '6253', 'year': 2011, 'prev': 3662.0, 'value': 7808.0, 'precision': 'exact'}] |
 | mig_emigration_foreign | 6 | 3 | [{'unit_id': '6253', 'year': 2012, 'prev': 183.0, 'value': 809.0, 'precision': 'exact'}, {'unit_id': '5236', 'year': 2013, 'prev': 360.0, 'value': 80.0, 'precision': 'exact'}] |
 | mfz_cars_diesel | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 1710.0, 'value': 7961.0, 'precision': 'exact'}, {'unit_id': '1702', 'year': 2018, 'prev': 7378.0, 'value': 3508.0, 'precision': 'exact'}] |
-| mfz_cars_petrol | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 3589.0, 'value': 10124.0, 'precision': 'exact'}, {'unit_id': '6240', 'year': 2011, 'prev': 4496.0, 'value': 1169.0, 'precision': 'exact'}] |
-| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4506', 'year': 1998, 'prev': 1011.0, 'value': 373.0, 'precision': 'exact'}] |
+| mfz_cars_hev | 6 | 3 | [{'unit_id': '3101', 'year': 2023, 'prev': 954.0, 'value': 4039.0, 'precision': 'exact'}, {'unit_id': '3101', 'year': 2021, 'prev': 675.0, 'value': 2255.0, 'precision': 'exact'}] |
+| mfz_cars | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 5390.0, 'value': 18360.0, 'precision': 'exact'}, {'unit_id': '6253', 'year': 2011, 'prev': 3662.0, 'value': 7808.0, 'precision': 'exact'}] |
+| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 638.0, 'precision': 'exact'}] |
 | ent_jobs_retail | 5 | 5 | [{'unit_id': '540', 'year': 2017, 'prev': 121.0, 'value': 586.0, 'precision': 'exact'}, {'unit_id': '412', 'year': 2013, 'prev': 331.0, 'value': 740.0, 'precision': 'exact'}] |
 | vac_new | 5 | 3 | [{'unit_id': '3203', 'year': 2022, 'prev': 365.0, 'value': 103.0, 'precision': 'exact'}, {'unit_id': '3203', 'year': 2017, 'prev': 44.0, 'value': 283.0, 'precision': 'exact'}] |
 | ent_jobs_care_social | 5 | 5 | [{'unit_id': '6633', 'year': 2022, 'prev': 418.0, 'value': 994.0, 'precision': 'exact'}, {'unit_id': '5568', 'year': 2018, 'prev': 81.0, 'value': 331.0, 'precision': 'exact'}] |
+| ent_fte_s3 | 4 | 4 | [{'unit_id': '5412', 'year': 2020, 'prev': 590.0, 'value': 2125.0, 'precision': 'exact'}, {'unit_id': '2527', 'year': 2023, 'prev': 1214.0, 'value': 560.0, 'precision': 'exact'}] |
+| mig_immigration_swiss | 4 | 2 | [{'unit_id': '3673', 'year': 2014, 'prev': 541.0, 'value': 1.0, 'precision': 'exact'}, {'unit_id': '3673', 'year': 2013, 'prev': 5.0, 'value': 541.0, 'precision': 'exact'}] |
 | udemo_jobs_closures | 4 | 2 | [{'unit_id': '66', 'year': 2019, 'prev': 400.0, 'value': 131.0, 'precision': 'exact'}, {'unit_id': '66', 'year': 2018, 'prev': 135.0, 'value': 400.0, 'precision': 'exact'}] |
 | mfz_cars_phev | 4 | 3 | [{'unit_id': '3101', 'year': 2023, 'prev': 326.0, 'value': 969.0, 'precision': 'exact'}, {'unit_id': '3101', 'year': 2020, 'prev': 57.0, 'value': 519.0, 'precision': 'exact'}] |
-| mig_immigration_swiss | 4 | 2 | [{'unit_id': '3673', 'year': 2014, 'prev': 541.0, 'value': 1.0, 'precision': 'exact'}, {'unit_id': '3673', 'year': 2013, 'prev': 5.0, 'value': 541.0, 'precision': 'exact'}] |
 | ent_jobs_s3 | 4 | 4 | [{'unit_id': '5412', 'year': 2020, 'prev': 733.0, 'value': 2658.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 580.0, 'value': 1639.0, 'precision': 'exact'}] |
-| ent_fte_s3 | 4 | 4 | [{'unit_id': '5412', 'year': 2020, 'prev': 590.0, 'value': 2125.0, 'precision': 'exact'}, {'unit_id': '2527', 'year': 2023, 'prev': 1214.0, 'value': 560.0, 'precision': 'exact'}] |
-| mig_intracant_out_swiss | 3 | 3 | [{'unit_id': '5002', 'year': 2017, 'prev': 1319.0, 'value': 637.0, 'precision': 'exact'}, {'unit_id': '3112', 'year': 2013, 'prev': 2.0, 'value': 224.0, 'precision': 'exact'}] |
+| nat_eu_efta | 3 | 3 | [{'unit_id': '6621', 'year': 2015, 'prev': 404.0, 'value': 1234.0, 'precision': 'exact'}, {'unit_id': '6628', 'year': 2015, 'prev': 102.0, 'value': 319.0, 'precision': 'exact'}] |
 | mig_intracant_in_foreign | 3 | 3 | [{'unit_id': '5583', 'year': 2024, 'prev': 375.0, 'value': 885.0, 'precision': 'exact'}, {'unit_id': '6633', 'year': 2021, 'prev': 191.0, 'value': 545.0, 'precision': 'exact'}] |
+| mig_intracant_out_swiss | 3 | 3 | [{'unit_id': '5002', 'year': 2017, 'prev': 1319.0, 'value': 637.0, 'precision': 'exact'}, {'unit_id': '3112', 'year': 2013, 'prev': 2.0, 'value': 224.0, 'precision': 'exact'}] |
 | tax_np_normal_taxable_class_1_30k | 3 | 3 | [{'unit_id': '843', 'year': 2021, 'prev': 1381.0, 'value': 674.0, 'precision': 'exact'}, {'unit_id': '584', 'year': 2021, 'prev': 824.0, 'value': 309.0, 'precision': 'exact'}] |
 | ent_jobs_women | 3 | 3 | [{'unit_id': '5412', 'year': 2020, 'prev': 404.0, 'value': 1813.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 529.0, 'value': 1373.0, 'precision': 'exact'}] |
 | bevnat_divorces | 3 | 2 | [{'unit_id': '2701', 'year': 2000, 'prev': 534.0, 'value': 211.0, 'precision': 'exact'}, {'unit_id': '351', 'year': 2000, 'prev': 502.0, 'value': 183.0, 'precision': 'exact'}] |
@@ -770,37 +769,37 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | crime_stgb_property | 3 | 3 | [{'unit_id': '66', 'year': 2011, 'prev': 1622.0, 'value': 707.0, 'precision': 'exact'}, {'unit_id': '2703', 'year': 2012, 'prev': 632.0, 'value': 1300.0, 'precision': 'exact'}] |
 | ent_jobs_education | 3 | 3 | [{'unit_id': '5214', 'year': 2021, 'prev': 475.0, 'value': 162.0, 'precision': 'exact'}, {'unit_id': '6623', 'year': 2022, 'prev': 171.0, 'value': 424.0, 'precision': 'exact'}] |
 | vac_for_sale | 3 | 3 | [{'unit_id': '6248', 'year': 2020, 'prev': 40.0, 'value': 270.0, 'precision': 'exact'}, {'unit_id': '1024', 'year': 2022, 'prev': 237.0, 'value': 24.0, 'precision': 'exact'}] |
-| nat_eu_efta | 3 | 3 | [{'unit_id': '6621', 'year': 2015, 'prev': 404.0, 'value': 1234.0, 'precision': 'exact'}, {'unit_id': '6628', 'year': 2015, 'prev': 102.0, 'value': 319.0, 'precision': 'exact'}] |
 | nat_outside_europe | 3 | 1 | [{'unit_id': '6621', 'year': 2020, 'prev': 806.0, 'value': 237.0, 'precision': 'exact'}, {'unit_id': '6621', 'year': 2015, 'prev': 331.0, 'value': 768.0, 'precision': 'exact'}] |
 | mfz_cars_bev | 3 | 2 | [{'unit_id': '3101', 'year': 2023, 'prev': 245.0, 'value': 898.0, 'precision': 'exact'}, {'unit_id': '86', 'year': 2018, 'prev': 251.0, 'value': 576.0, 'precision': 'exact'}] |
 | gws_dw_2001plus | 3 | 3 | [{'unit_id': '131', 'year': 2011, 'prev': 353.0, 'value': 988.0, 'precision': 'exact'}, {'unit_id': '5583', 'year': 2020, 'prev': 581.0, 'value': 1212.0, 'precision': 'exact'}] |
-| nat_women | 2 | 1 | [{'unit_id': '6621', 'year': 2015, 'prev': 485.0, 'value': 1233.0, 'precision': 'exact'}, {'unit_id': '6621', 'year': 2020, 'prev': 1182.0, 'value': 563.0, 'precision': 'exact'}] |
+| sh_recipients | 2 | 2 | [{'unit_id': '131', 'year': 2008, 'prev': 708.0, 'value': 345.0, 'precision': 'exact'}, {'unit_id': '1632', 'year': 2008, 'prev': 87.0, 'value': 306.0, 'precision': 'exact'}] |
+| tax_np_taxpayers_no_federal_tax_normal | 2 | 2 | [{'unit_id': '584', 'year': 2021, 'prev': 831.0, 'value': 307.0, 'precision': 'exact'}, {'unit_id': '571', 'year': 2021, 'prev': 401.0, 'value': 198.0, 'precision': 'exact'}] |
 | mig_intracant_out_foreign | 2 | 1 | [{'unit_id': '56', 'year': 2017, 'prev': 849.0, 'value': 323.0, 'precision': 'exact'}, {'unit_id': '56', 'year': 2016, 'prev': 337.0, 'value': 849.0, 'precision': 'exact'}] |
-| bil_pop_dec | 2 | 2 | [{'unit_id': '4536', 'year': 1999, 'prev': 3082.0, 'value': 1476.0, 'precision': 'exact'}, {'unit_id': '4741', 'year': 1995, 'prev': 2119.0, 'value': 925.0, 'precision': 'exact'}] |
-| bil_pop_jan | 2 | 2 | [{'unit_id': '4536', 'year': 1999, 'prev': 3120.0, 'value': 1456.0, 'precision': 'exact'}, {'unit_id': '4741', 'year': 1995, 'prev': 2021.0, 'value': 908.0, 'precision': 'exact'}] |
 | bil_pop_foreign_jan | 2 | 2 | [{'unit_id': '564', 'year': 2007, 'prev': 303.0, 'value': 37.0, 'precision': 'exact'}, {'unit_id': '4741', 'year': 1995, 'prev': 338.0, 'value': 106.0, 'precision': 'exact'}] |
+| bil_pop_jan | 2 | 2 | [{'unit_id': '4536', 'year': 1999, 'prev': 3120.0, 'value': 1456.0, 'precision': 'exact'}, {'unit_id': '4741', 'year': 1995, 'prev': 2021.0, 'value': 908.0, 'precision': 'exact'}] |
+| bil_pop_dec | 2 | 2 | [{'unit_id': '4536', 'year': 1999, 'prev': 3082.0, 'value': 1476.0, 'precision': 'exact'}, {'unit_id': '4741', 'year': 1995, 'prev': 2119.0, 'value': 925.0, 'precision': 'exact'}] |
 | bevnat_births | 2 | 2 | [{'unit_id': '352', 'year': 1983, 'prev': 463.0, 'value': 91.0, 'precision': 'exact'}, {'unit_id': '363', 'year': 1983, 'prev': 0.0, 'value': 248.0, 'precision': 'exact'}] |
 | tax_np_taxpayers_normal | 2 | 1 | [{'unit_id': '3790', 'year': 2022, 'prev': 1078.0, 'value': 528.0, 'precision': 'exact'}, {'unit_id': '3790', 'year': 2021, 'prev': 530.0, 'value': 1078.0, 'precision': 'exact'}] |
-| mig_emigration_swiss | 2 | 1 | [{'unit_id': '6487', 'year': 2013, 'prev': 442.0, 'value': 42.0, 'precision': 'exact'}, {'unit_id': '6487', 'year': 2012, 'prev': 50.0, 'value': 442.0, 'precision': 'exact'}] |
-| sh_recipients | 2 | 2 | [{'unit_id': '131', 'year': 2008, 'prev': 708.0, 'value': 345.0, 'precision': 'exact'}, {'unit_id': '1632', 'year': 2008, 'prev': 87.0, 'value': 306.0, 'precision': 'exact'}] |
+| nat_women | 2 | 1 | [{'unit_id': '6621', 'year': 2015, 'prev': 485.0, 'value': 1233.0, 'precision': 'exact'}, {'unit_id': '6621', 'year': 2020, 'prev': 1182.0, 'value': 563.0, 'precision': 'exact'}] |
+| gws_dw_rooms_1_2 | 2 | 2 | [{'unit_id': '5061', 'year': 2013, 'prev': 923.0, 'value': 225.0, 'precision': 'exact'}, {'unit_id': '5633', 'year': 2014, 'prev': 144.0, 'value': 410.0, 'precision': 'exact'}] |
 | gws_heat_other | 2 | 2 | [{'unit_id': '6205', 'year': 2022, 'prev': 300.0, 'value': 1.0, 'precision': 'exact'}, {'unit_id': '3871', 'year': 2022, 'prev': 1.0, 'value': 215.0, 'precision': 'exact'}] |
 | gws_heat_none | 2 | 2 | [{'unit_id': '5226', 'year': 2024, 'prev': 61.0, 'value': 288.0, 'precision': 'exact'}, {'unit_id': '5192', 'year': 2024, 'prev': 114.0, 'value': 321.0, 'precision': 'exact'}] |
+| mig_emigration_swiss | 2 | 1 | [{'unit_id': '6487', 'year': 2013, 'prev': 442.0, 'value': 42.0, 'precision': 'exact'}, {'unit_id': '6487', 'year': 2012, 'prev': 50.0, 'value': 442.0, 'precision': 'exact'}] |
 | gws_heat_oil | 2 | 2 | [{'unit_id': '4001', 'year': 2025, 'prev': 1551.0, 'value': 763.0, 'precision': 'exact'}, {'unit_id': '3271', 'year': 2025, 'prev': 1126.0, 'value': 478.0, 'precision': 'exact'}] |
-| gws_dw_rooms_1_2 | 2 | 2 | [{'unit_id': '5061', 'year': 2013, 'prev': 923.0, 'value': 225.0, 'precision': 'exact'}, {'unit_id': '5633', 'year': 2014, 'prev': 144.0, 'value': 410.0, 'precision': 'exact'}] |
 | ent_jobs_accommodation | 1 | 1 | [{'unit_id': '1505', 'year': 2017, 'prev': 83.0, 'value': 284.0, 'precision': 'exact'}] |
 | crime_stgb_offences | 1 | 1 | [{'unit_id': '2703', 'year': 2012, 'prev': 869.0, 'value': 1837.0, 'precision': 'exact'}] |
-| bevnat_marriages | 1 | 1 | [{'unit_id': '352', 'year': 1983, 'prev': 236.0, 'value': 24.0, 'precision': 'exact'}] |
 | agr_workers_fulltime | 1 | 1 | [{'unit_id': '1146', 'year': 2025, 'prev': 236.0, 'value': 23.0, 'precision': 'exact'}] |
+| bevnat_marriages | 1 | 1 | [{'unit_id': '352', 'year': 1983, 'prev': 236.0, 'value': 24.0, 'precision': 'exact'}] |
 | agr_area_permanent_crops_ha | 1 | 1 | [{'unit_id': '5861', 'year': 2023, 'prev': 15.0, 'value': 254.0, 'precision': 'exact'}] |
-| gws_bld_2011plus | 1 | 1 | [{'unit_id': '261', 'year': 2011, 'prev': 0.0, 'value': 273.0, 'precision': 'exact'}] |
 | gws_bld_mfh | 1 | 1 | [{'unit_id': '5061', 'year': 2013, 'prev': 688.0, 'value': 271.0, 'precision': 'exact'}] |
+| gws_bld_2011plus | 1 | 1 | [{'unit_id': '261', 'year': 2011, 'prev': 0.0, 'value': 273.0, 'precision': 'exact'}] |
 | gws_bld_1946_1980 | 1 | 1 | [{'unit_id': '6087', 'year': 2015, 'prev': 185.0, 'value': 442.0, 'precision': 'exact'}] |
-| gws_heat_electric | 1 | 1 | [{'unit_id': '6205', 'year': 2022, 'prev': 39.0, 'value': 416.0, 'precision': 'exact'}] |
-| gws_bld_sfh | 1 | 1 | [{'unit_id': '5061', 'year': 2013, 'prev': 157.0, 'value': 562.0, 'precision': 'exact'}] |
 | gws_dw_area_lt60 | 1 | 1 | [{'unit_id': '5633', 'year': 2014, 'prev': 135.0, 'value': 403.0, 'precision': 'exact'}] |
+| gws_bld_sfh | 1 | 1 | [{'unit_id': '5061', 'year': 2013, 'prev': 157.0, 'value': 562.0, 'precision': 'exact'}] |
 | gws_dw_rooms_3 | 1 | 1 | [{'unit_id': '5192', 'year': 2012, 'prev': 3671.0, 'value': 11549.0, 'precision': 'exact'}] |
-| mig_intercant_in_swiss | 1 | 1 | [{'unit_id': '4040', 'year': 2025, 'prev': 186.0, 'value': 403.0, 'precision': 'exact'}] |
+| gws_heat_electric | 1 | 1 | [{'unit_id': '6205', 'year': 2022, 'prev': 39.0, 'value': 416.0, 'precision': 'exact'}] |
 | mfz_cars_private | 1 | 1 | [{'unit_id': '905', 'year': 2025, 'prev': 641.0, 'value': 1435.0, 'precision': 'exact'}] |
+| mig_intercant_in_swiss | 1 | 1 | [{'unit_id': '4040', 'year': 2025, 'prev': 186.0, 'value': 403.0, 'precision': 'exact'}] |
 | tax_np_taxpayers | 1 | 1 | [{'unit_id': '5151', 'year': 2010, 'prev': 3247.0, 'value': 1489.0, 'precision': 'exact'}] |
 | xb_commuters | 1 | 1 | [{'unit_id': '2703', 'year': 1997, 'prev': 12.7156015, 'value': 476.728855, 'precision': 'modelled'}] |
 
@@ -894,6 +893,13 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | air_pm25_above_limit_residents | 3 | 2015 | 2025 | 2110 / 2110 | – |
 | air_pm25_above_limit_share | 3 | 2015 | 2025 | 2110 / 2110 | – |
 | air_pm25_pop | 3 | 2015 | 2025 | 2110 / 2110 | – |
+| aircraft_day_60_residents | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_igw2_residents | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_night_55_residents | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_noise_residents | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_share_day_60 | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_share_igw2 | 1 | 2021 | 2021 | 817 / 2110 | – |
+| aircraft_share_night_55 | 1 | 2021 | 2021 | 817 / 2110 | – |
 | area_agriculture_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
 | area_building_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
 | area_glacier_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
@@ -1073,9 +1079,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | ent_workplaces_s2 | 14 | 2011 | 2024 | 1824 / 2110 | {'suppressed': 286} |
 | ent_workplaces_s3 | 14 | 2011 | 2024 | 2067 / 2110 | {'suppressed': 43} |
 | fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'no_data': 605, 'not_applicable': 2, 'not_covered': 955} |
-| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'no_data': 560, 'not_applicable': 72} |
-| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
-| fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
+| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'no_data': 560, 'not_applicable': 72, 'not_covered': 700} |
+| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'no_data': 260, 'not_covered': 1610} |
+| fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'no_data': 260, 'not_covered': 1610} |
 | geo_area_lake_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | geo_area_land_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | geo_area_total_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
@@ -1146,7 +1152,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | gws_share_sfh | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | gws_share_wood | 5 | 2021 | 2025 | 2110 / 2110 | – |
 | haz_hectare_residents | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
+| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
 | haz_residents_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_residents_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
@@ -1243,7 +1249,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | noise_share_road_day_60 | 1 | 2021 | 2021 | 2110 / 2110 | – |
 | noise_share_road_night_50 | 1 | 2021 | 2021 | 2110 / 2110 | – |
 | nrw_ballots_blank | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
-| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'no_data': 65, 'not_published': 5} |
+| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'no_data': 65} |
 | nrw_ballots_invalid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_ballots_unchanged | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_ballots_valid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
@@ -1252,8 +1258,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_fw_csp | 14 | 1971 | 2023 | 119 / 2110 | {'not_applicable': 1991} |
 | nrw_fw_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_published': 5, 'not_applicable': 606} |
-| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_applicable': 287, 'not_published': 5} |
-| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_applicable': 27, 'not_published': 5} |
+| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_published': 5, 'not_applicable': 287} |
+| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_published': 5, 'not_applicable': 27} |
 | nrw_fw_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1950} |
 | nrw_fw_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
@@ -1262,24 +1268,24 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_fw_lega | 14 | 1971 | 2023 | 100 / 2110 | {'not_applicable': 2010} |
 | nrw_fw_lps | 14 | 1971 | 2023 | 3 / 2110 | {'not_applicable': 2107} |
 | nrw_fw_mcr | 14 | 1971 | 2023 | 45 / 2110 | {'not_applicable': 2065} |
-| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'not_published': 5, 'not_applicable': 7} |
-| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'not_published': 5, 'not_applicable': 164} |
+| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'not_applicable': 7, 'not_published': 5} |
+| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'not_applicable': 164, 'not_published': 5} |
 | nrw_fw_pda | 14 | 1971 | 2023 | 802 / 2110 | {'not_applicable': 1308} |
 | nrw_fw_poch | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_psa | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_rep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_applicable': 1461, 'not_published': 5} |
+| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_published': 5, 'not_applicable': 1461} |
 | nrw_fw_sep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_sol | 14 | 1971 | 2023 | 369 / 2110 | {'not_applicable': 1741} |
 | nrw_fw_sp | 14 | 1971 | 2023 | 2043 / 2110 | {'not_applicable': 62, 'not_published': 5} |
 | nrw_fw_svp | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_fw_total | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
-| nrw_leaning | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 5, 'majority_election': 65} |
+| nrw_leaning | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_applicable': 5} |
 | nrw_share_bdp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_bloc_centre | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 12, 'majority_election': 58} |
 | nrw_share_bloc_left | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 3, 'not_applicable': 67} |
 | nrw_share_bloc_other | 14 | 1971 | 2023 | 1894 / 2110 | {'not_applicable': 169, 'majority_election': 47} |
-| nrw_share_bloc_right | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_applicable': 5} |
+| nrw_share_bloc_right | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 5, 'majority_election': 65} |
 | nrw_share_csp | 14 | 1971 | 2023 | 119 / 2110 | {'not_applicable': 1991} |
 | nrw_share_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_applicable': 606, 'not_published': 5} |
@@ -1287,24 +1293,24 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_share_fdp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 27, 'majority_election': 38, 'not_published': 5} |
 | nrw_share_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1950} |
 | nrw_share_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_share_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 65, 'not_published': 5} |
+| nrw_share_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
 | nrw_share_gruene | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
 | nrw_share_ldu | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_share_left_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 3, 'not_published': 5, 'not_applicable': 62} |
+| nrw_share_left_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 62, 'majority_election': 3, 'not_published': 5} |
 | nrw_share_lega | 14 | 1971 | 2023 | 100 / 2110 | {'not_applicable': 2010} |
 | nrw_share_lps | 14 | 1971 | 2023 | 3 / 2110 | {'not_applicable': 2107} |
 | nrw_share_mcr | 14 | 1971 | 2023 | 45 / 2110 | {'not_applicable': 2065} |
 | nrw_share_mitte | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 12, 'majority_election': 58} |
-| nrw_share_other | 14 | 1971 | 2023 | 1894 / 2110 | {'majority_election': 47, 'not_published': 5, 'not_applicable': 164} |
+| nrw_share_other | 14 | 1971 | 2023 | 1894 / 2110 | {'not_applicable': 164, 'majority_election': 47, 'not_published': 5} |
 | nrw_share_pda | 14 | 1971 | 2023 | 802 / 2110 | {'not_applicable': 1308} |
 | nrw_share_poch | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_psa | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_rep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_right_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_published': 5} |
-| nrw_share_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_applicable': 1461, 'not_published': 5} |
+| nrw_share_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_published': 5, 'not_applicable': 1461} |
 | nrw_share_sep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_sol | 14 | 1971 | 2023 | 369 / 2110 | {'not_applicable': 1741} |
-| nrw_share_sp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 62, 'not_published': 5, 'majority_election': 3} |
+| nrw_share_sp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'majority_election': 3, 'not_applicable': 62} |
 | nrw_share_svp | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_published': 5} |
 | nrw_turnout | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_unchanged_share | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
@@ -1355,8 +1361,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | pt_stops_rail | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_total | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_tram_metro | 1 | 2026 | 2026 | 2110 / 2110 | – |
-| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'no_data': 160, 'not_covered': 1734} |
-| pup_compulsory_per_1000 | 28 | 1997 | 2024 | 216 / 2110 | {'no_data': 160, 'not_covered': 1734} |
+| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'not_covered': 1734, 'no_data': 160} |
+| pup_compulsory_per_1000 | 28 | 1997 | 2024 | 216 / 2110 | {'not_covered': 1734, 'no_data': 160} |
 | rail_boardings_daily | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | rail_boardings_weekday | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | reach_car_aarau | 1 | 2026 | 2026 | 2110 / 2110 | – |
@@ -1381,60 +1387,60 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | reach_car_winterthur | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_zuerich | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_zug | 1 | 2026 | 2026 | 2110 / 2110 | – |
-| reach_pt_aarau | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 7, 'no_data': 3} |
-| reach_pt_baden | 1 | 2026 | 2026 | 2095 / 2110 | {'not_applicable': 12, 'no_data': 3} |
+| reach_pt_aarau | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 3, 'not_applicable': 7} |
+| reach_pt_baden | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 3, 'not_applicable': 12} |
 | reach_pt_basel | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 3, 'not_applicable': 10} |
 | reach_pt_bellinzona | 1 | 2026 | 2026 | 1782 / 2110 | {'not_applicable': 325, 'no_data': 3} |
-| reach_pt_bern | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 3, 'not_applicable': 10} |
-| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
+| reach_pt_bern | 1 | 2026 | 2026 | 2097 / 2110 | {'not_applicable': 10, 'no_data': 3} |
+| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 3, 'not_applicable': 20} |
 | reach_pt_chur | 1 | 2026 | 2026 | 2053 / 2110 | {'not_applicable': 54, 'no_data': 3} |
 | reach_pt_fribourg | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
-| reach_pt_geneve | 1 | 2026 | 2026 | 1954 / 2110 | {'not_applicable': 153, 'no_data': 3} |
-| reach_pt_lausanne | 1 | 2026 | 2026 | 2054 / 2110 | {'not_applicable': 53, 'no_data': 3} |
+| reach_pt_geneve | 1 | 2026 | 2026 | 1954 / 2110 | {'no_data': 3, 'not_applicable': 153} |
+| reach_pt_lausanne | 1 | 2026 | 2026 | 2054 / 2110 | {'no_data': 3, 'not_applicable': 53} |
 | reach_pt_lugano | 1 | 2026 | 2026 | 1778 / 2110 | {'not_applicable': 329, 'no_data': 3} |
-| reach_pt_luzern | 1 | 2026 | 2026 | 2093 / 2110 | {'no_data': 3, 'not_applicable': 14} |
+| reach_pt_luzern | 1 | 2026 | 2026 | 2093 / 2110 | {'not_applicable': 14, 'no_data': 3} |
 | reach_pt_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
 | reach_pt_neuchatel | 1 | 2026 | 2026 | 2066 / 2110 | {'no_data': 3, 'not_applicable': 41} |
 | reach_pt_olten | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 3, 'not_applicable': 9} |
-| reach_pt_schaffhausen | 1 | 2026 | 2026 | 2080 / 2110 | {'not_applicable': 27, 'no_data': 3} |
+| reach_pt_schaffhausen | 1 | 2026 | 2026 | 2080 / 2110 | {'no_data': 3, 'not_applicable': 27} |
 | reach_pt_sion | 1 | 2026 | 2026 | 1975 / 2110 | {'not_applicable': 132, 'no_data': 3} |
 | reach_pt_stgallen | 1 | 2026 | 2026 | 2050 / 2110 | {'not_applicable': 57, 'no_data': 3} |
 | reach_pt_thun | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 3, 'not_applicable': 20} |
-| reach_pt_winterthur | 1 | 2026 | 2026 | 2095 / 2110 | {'not_applicable': 12, 'no_data': 3} |
-| reach_pt_zuerich | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 5, 'no_data': 3} |
+| reach_pt_winterthur | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 3, 'not_applicable': 12} |
+| reach_pt_zuerich | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 3, 'not_applicable': 5} |
 | reach_pt_zug | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 3, 'not_applicable': 9} |
 | reach_ptst_aarau | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 7, 'not_applicable': 8} |
 | reach_ptst_baden | 1 | 2026 | 2026 | 2088 / 2110 | {'no_data': 7, 'not_applicable': 15} |
-| reach_ptst_basel | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 7, 'not_applicable': 12} |
+| reach_ptst_basel | 1 | 2026 | 2026 | 2091 / 2110 | {'not_applicable': 12, 'no_data': 7} |
 | reach_ptst_bellinzona | 1 | 2026 | 2026 | 1729 / 2110 | {'not_applicable': 374, 'no_data': 7} |
-| reach_ptst_bern | 1 | 2026 | 2026 | 2093 / 2110 | {'not_applicable': 10, 'no_data': 7} |
-| reach_ptst_biel | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
+| reach_ptst_bern | 1 | 2026 | 2026 | 2093 / 2110 | {'no_data': 7, 'not_applicable': 10} |
+| reach_ptst_biel | 1 | 2026 | 2026 | 2081 / 2110 | {'not_applicable': 22, 'no_data': 7} |
 | reach_ptst_chur | 1 | 2026 | 2026 | 2021 / 2110 | {'not_applicable': 82, 'no_data': 7} |
 | reach_ptst_fribourg | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
 | reach_ptst_geneve | 1 | 2026 | 2026 | 1924 / 2110 | {'not_applicable': 179, 'no_data': 7} |
-| reach_ptst_lausanne | 1 | 2026 | 2026 | 2037 / 2110 | {'not_applicable': 66, 'no_data': 7} |
-| reach_ptst_lugano | 1 | 2026 | 2026 | 1724 / 2110 | {'no_data': 7, 'not_applicable': 379} |
-| reach_ptst_luzern | 1 | 2026 | 2026 | 2086 / 2110 | {'not_applicable': 17, 'no_data': 7} |
+| reach_ptst_lausanne | 1 | 2026 | 2026 | 2037 / 2110 | {'no_data': 7, 'not_applicable': 66} |
+| reach_ptst_lugano | 1 | 2026 | 2026 | 1724 / 2110 | {'not_applicable': 379, 'no_data': 7} |
+| reach_ptst_luzern | 1 | 2026 | 2026 | 2086 / 2110 | {'no_data': 7, 'not_applicable': 17} |
 | reach_ptst_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
 | reach_ptst_neuchatel | 1 | 2026 | 2026 | 2049 / 2110 | {'no_data': 7, 'not_applicable': 54} |
 | reach_ptst_olten | 1 | 2026 | 2026 | 2094 / 2110 | {'no_data': 7, 'not_applicable': 9} |
-| reach_ptst_schaffhausen | 1 | 2026 | 2026 | 2070 / 2110 | {'not_applicable': 33, 'no_data': 7} |
+| reach_ptst_schaffhausen | 1 | 2026 | 2026 | 2070 / 2110 | {'no_data': 7, 'not_applicable': 33} |
 | reach_ptst_sion | 1 | 2026 | 2026 | 1950 / 2110 | {'not_applicable': 153, 'no_data': 7} |
 | reach_ptst_stgallen | 1 | 2026 | 2026 | 2017 / 2110 | {'not_applicable': 86, 'no_data': 7} |
 | reach_ptst_thun | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
 | reach_ptst_winterthur | 1 | 2026 | 2026 | 2088 / 2110 | {'not_applicable': 15, 'no_data': 7} |
-| reach_ptst_zuerich | 1 | 2026 | 2026 | 2096 / 2110 | {'not_applicable': 7, 'no_data': 7} |
-| reach_ptst_zug | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 7, 'not_applicable': 12} |
+| reach_ptst_zuerich | 1 | 2026 | 2026 | 2096 / 2110 | {'no_data': 7, 'not_applicable': 7} |
+| reach_ptst_zug | 1 | 2026 | 2026 | 2091 / 2110 | {'not_applicable': 12, 'no_data': 7} |
 | reach_spread_from_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
 | reach_spread_from_pt_p50_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
 | reach_spread_from_pt_p90_nearest_hub | 1 | 2026 | 2026 | 2088 / 2110 | {'not_applicable': 19, 'no_data': 3} |
-| reach_spread_from_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 3, 'no_data': 7} |
-| reach_spread_from_ptst_p50_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 7, 'not_applicable': 3} |
+| reach_spread_from_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 7, 'not_applicable': 3} |
+| reach_spread_from_ptst_p50_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 3, 'no_data': 7} |
 | reach_spread_from_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2065 / 2110 | {'not_applicable': 38, 'no_data': 7} |
 | reach_spread_to_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
 | reach_spread_to_pt_p90_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
-| reach_spread_to_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
-| reach_spread_to_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 1, 'no_data': 7} |
+| reach_spread_to_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 1, 'no_data': 7} |
+| reach_spread_to_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
 | rent_city_r3 | 2 | 2022 | 2023 | 180 / 2110 | – |
 | rent_city_r3_ci | 2 | 2022 | 2023 | 180 / 2110 | – |
 | rent_city_r4 | 2 | 2022 | 2023 | 179 / 2110 | {'suppressed': 1} |
@@ -1476,15 +1482,21 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | tax_burden_single_80k_municipal | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_cantonal_income | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_cantonal_wealth | 17 | 2010 | 2026 | 2110 / 2110 | – |
+| tax_mult_muni_nat | 15 | 2012 | 2026 | 158 / 2110 | {'not_covered': 1950, 'no_data': 2} |
 | tax_mult_municipal_income | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_municipal_wealth | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_np_federal_tax_chf | 21 | 2003 | 2023 | 2110 / 2110 | – |
+| tax_np_federal_tax_normal_chf | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_federal_tax_per_capita | 18 | 2003 | 2023 | 2110 / 2110 | – |
 | tax_np_federal_tax_per_taxpayer | 21 | 2003 | 2023 | 2110 / 2110 | – |
+| tax_np_federal_tax_per_taxpayer_normal | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_mean_net_income | 20 | 2003 | 2023 | 2110 / 2110 | – |
+| tax_np_mean_net_income_normal | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_mean_taxable_income | 20 | 2003 | 2023 | 2110 / 2110 | – |
+| tax_np_mean_taxable_income_normal | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_median_taxable_income | 4 | 2020 | 2023 | 2108 / 2110 | {'suppressed': 2} |
 | tax_np_net_income_chf | 16 | 2008 | 2023 | 2110 / 2110 | – |
+| tax_np_net_income_normal_chf | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_normal_taxable_100k_plus | 4 | 2020 | 2023 | 2062 / 2110 | {'suppressed': 48} |
 | tax_np_normal_taxable_class_0 | 4 | 2020 | 2023 | 2067 / 2110 | {'suppressed': 43} |
 | tax_np_normal_taxable_class_100_200k | 4 | 2020 | 2023 | 2082 / 2110 | {'suppressed': 28} |
@@ -1497,10 +1509,13 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | tax_np_normal_taxable_class_50_75k | 4 | 2020 | 2023 | 2108 / 2110 | {'suppressed': 2} |
 | tax_np_normal_taxable_class_75_100k | 4 | 2020 | 2023 | 2097 / 2110 | {'suppressed': 13} |
 | tax_np_share_no_federal_tax | 21 | 2003 | 2023 | 2109 / 2110 | {'suppressed': 1} |
+| tax_np_share_no_federal_tax_normal | 4 | 2020 | 2023 | 2109 / 2110 | {'suppressed': 1} |
 | tax_np_share_taxable_100k_plus | 4 | 2020 | 2023 | 2062 / 2110 | {'suppressed': 48} |
 | tax_np_taxable_income_chf | 16 | 2008 | 2023 | 2110 / 2110 | – |
+| tax_np_taxable_income_normal_chf | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | tax_np_taxpayers | 21 | 2003 | 2023 | 2110 / 2110 | – |
 | tax_np_taxpayers_no_federal_tax | 21 | 2003 | 2023 | 2109 / 2110 | {'suppressed': 1} |
+| tax_np_taxpayers_no_federal_tax_normal | 4 | 2020 | 2023 | 2109 / 2110 | {'suppressed': 1} |
 | tax_np_taxpayers_normal | 4 | 2020 | 2023 | 2110 / 2110 | – |
 | taxb_city_married2c_100k | 2 | 2023 | 2024 | 179 / 2110 | – |
 | taxb_city_married2c_150k | 2 | 2023 | 2024 | 179 / 2110 | – |
@@ -1542,8 +1557,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | udemo_jobs_births | 11 | 2013 | 2023 | 1032 / 2110 | {'suppressed': 1078} |
 | udemo_jobs_closures | 11 | 2013 | 2023 | 0 / 2110 | {'no_data': 2110} |
 | udemo_jobs_per_enterprise | 11 | 2013 | 2023 | 1944 / 2110 | {'suppressed': 166} |
-| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'not_covered': 1530, 'no_data': 280, 'suppressed': 213} |
-| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'not_covered': 1530, 'no_data': 280, 'suppressed': 213} |
+| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'no_data': 280, 'suppressed': 213, 'not_covered': 1530} |
+| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'no_data': 280, 'suppressed': 213, 'not_covered': 1530} |
 | vac_dwelling_stock | 16 | 2011 | 2026 | 2110 / 2110 | – |
 | vac_dwellings | 32 | 1995 | 2026 | 2110 / 2110 | – |
 | vac_for_rent | 32 | 1995 | 2026 | 2110 / 2110 | – |
@@ -1647,3 +1662,12 @@ Verdicts from the last web build: shown, shown with a partial-coverage note, hid
 | **all** | 4459 | 61 | 880 | 64 |
 
 Metrics with no map at any level: 133 (by theme: Language & religion 32, Income & tax 26, Safety 21, Real estate prices 20, Education 5, Energy & climate 4, Public finances 4, Mobility & accessibility 4, Environment & hazards 4, Households & family 3, Migration & nationality 3, Housing & buildings 3, Economy & jobs 2, Population & demography 2).
+
+## I. Translations of pipeline texts (`data/out/web/texts.json`)
+
+Shipped notes, gap reasons, curation reasons, reach footnotes and Sources texts with a German and a French translation, from the last `make texts`; untranslated parts are listed in `data/interim/texts_untranslated.csv` and stay English in the app.
+
+| Language | Distinct texts | Fully translated | Untranslated parts |
+|---|---|---|---|
+| de | 19,653 | 19,652 | 2 |
+| fr | 19,653 | 19,652 | 2 |

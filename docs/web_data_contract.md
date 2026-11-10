@@ -349,3 +349,82 @@ The frontend also accepts a plain list of periods or period → text (`web/src/l
 Frontend: year-slider markers and the note for the year in view (existing), a dashed tick in the profile sparklines,
 and a warning in the change-between-two-years view (and on the change map's legend) when the two years lie on both
 sides of a break.
+
+## 11. Review round 3 (data/pipeline fixes A1–A6) — additive, two meanings change
+
+### 11.1 `texts.json` — NEW: German and French for every pipeline-generated text (A4)
+
+`data/out/web/texts.json` (copied to `web/public/data/web/texts.json`; about 140 kB raw, load it only when the UI
+language is `de` or `fr`). The data files keep their English texts; this file translates them as keyed messages:
+
+```jsonc
+{"version": 1, "langs": ["de", "fr"],
+ "exact":    {"published canton value": {"de": "veröffentlichter Wert des Kantons", "fr": "valeur publiée du canton"}, ...},
+ "patterns": [{"en": "([\\d,]+) of ([\\d,]+) municipalities without a value: (.+)",
+               "de": "{1|n} von {2|n} Gemeinden ohne Wert: {3|l}", "fr": "{1|n} communes sur {2|n} sans valeur : {3|l}"}, ...],
+ "numbers":  {"de": {"group": "'", "decimal": "."}, "fr": {"group": " ", "decimal": ","}}}
+```
+
+`tx(text, lang)` (reference: `translate()` in `pipeline/build/texts.py`, tests in `pipeline/tests/test_round3.py`):
+1. `exact[text][lang]`, else the first pattern whose `en` regex matches the **whole** text (`new RegExp('^(?:' + en + ')$')`);
+2. else split the text at `"; "` and, from each position, take the **longest** run of segments that matches as one
+   (step 1 on the joined run); a segment without a match stays English; join the parts with `"; "` (fr: `" ; "`);
+3. templates: `{1}` group as is; `{1|n}` numbers in the group re-formatted (`1,234.5` → de `1'234.5`, fr `1 234,5`,
+   group/decimal from `numbers`); `{1|t}` the group translated again with steps 1–2; `{1|l}` the group split at `", "`
+   and each item translated (steps 1–2). If a `t`/`l` group has no translation, try the next pattern.
+Regexes use numbered groups, `(?:…)` and `(?!…)` only (valid in JavaScript and Python).
+
+Apply `tx` to: column `notes` (latest/*, vintage/*), `metrics.json` `unavailable_levels[*]` and `curation[*].why`,
+`reach_times.json` `reasons` and `notes`, `reach/<hub>_spread.json` `reasons`, `sources.json` `title`, `publisher`,
+`license`, `attribution`, `vintage`, `years`, `status_note`, `status_text`, and `excluded_sources.json` texts.
+Coverage per build: `docs/quality_report.md` section I (2026-11-10: all but a handful of strings).
+
+### 11.2 `metrics.json`
+
+- **New metrics (A2, ESTV normal cases, 2020–2023, all levels):** `tax_np_mean_taxable_income_normal` (**headline income
+  metric**, featured map 6; same population as `tax_np_median_taxable_income`), `tax_np_mean_net_income_normal`,
+  `tax_np_share_no_federal_tax_normal`, `tax_np_federal_tax_per_taxpayer_normal`; base sums
+  `tax_np_taxable_income_normal_chf`, `tax_np_net_income_normal_chf`, `tax_np_federal_tax_normal_chf`,
+  `tax_np_taxpayers_no_federal_tax_normal`. Each with `description`, `description_de`, `description_fr`.
+- **Relabelled, same ids and values (⚠ label changes):** `tax_np_mean_taxable_income`, `tax_np_mean_net_income`,
+  `tax_np_share_no_federal_tax`, `tax_np_federal_tax_per_taxpayer` → "…, all tax units incl. special cases (ESTV)";
+  their definitions list ESTV's special-case categories. Frontend presets that use `tax_np_mean_taxable_income`
+  (CompareView, RegressView, similar.ts, summary.ts, regmodel.ts) should switch to `tax_np_mean_taxable_income_normal`
+  (note: 2020–2023 only, the all-cases series goes back to 2008).
+- `geo_lake_share` label → "Lake share of the area" (de "Seeanteil an der Fläche", fr "Part lacustre de la surface");
+  `acc_dist_*` labels → "Average road distance from residents to the nearest …".
+- **⚠ meaning changes (A1):** `reliability.base` is now the **whole denominator** (`"vote_yes+vote_no"`), or
+  `"mean:bil_pop_jan+bil_pop_dec"` for a mean population (compared as residents). Flags (bit 1) change accordingly:
+  vote yes share 864 → 117 municipalities. `mfz_cars_per_1000` has its own rule (`min_base` 100, own `rule_*`).
+- `unavailable_levels[*]` (curation) is one clause without the "not offered as a map:" prefix and without a closing
+  full stop (C5). A metric with no map at any level (e.g. `land_price_m2`, `tax_mult_muni_nat`) has `levels` without
+  any map level: the frontend should say "no map at any level" instead of "Available for: Switzerland only".
+- `incomplete_periods[p].label_fr` added.
+
+### 11.3 Value notes and flags (`latest/<level>/*.json`)
+
+- Canton/district values on today's boundaries for a period when the unit's territory differed (D16): note
+  "on today's boundaries: includes Moutier (then canton BE), so it differs …" (one part per moved municipality, joined
+  with "; "). Votes (`vote_*`) and elections (`nrw_*`) do not get it (the app's own Moutier notes).
+- ESTV canton/Swiss amounts and taxpayer counts are ESTV's published totals where the territory matches (D7): note
+  starts with `published total`; **no** bit 8 (`published_value`) for these, which stays "published value because the
+  municipal sum is incomplete". Ratios of them: note "computed from the published totals of the source".
+- Canton/Swiss median income: note "ATLAS estimate from the income classes ESTV publishes for this unit (not an ESTV
+  figure)" instead of "published value" (D10).
+- JU social assistance rate 2024 is recomputed on today's boundaries (note names BFS's old-boundary value) (D3).
+- Lakeside municipalities at 0 % lake share: note "lake share 0 %: the municipality borders <lake>, but that lake is
+  canton territory, not divided among the municipalities" (X7).
+- Bit 64 `special` (cars per 1,000 above 1,000: fleets): the frontend should show `special.rule_<lang>` as the reason
+  ("hidden: special case: …"), not "hidden: small numbers" (D4).
+- A split or exchange wholly inside a unit no longer makes the unit's value a `boundary_estimate` (D9).
+
+### 11.4 `search.json` — former names (A6)
+
+New keys: `former_fields` = `["name", "hist_id", "kanton", "valid_from", "valid_to", "to", "vintages"]`, `former` = rows,
+`former_note`. One row per former name and place: names of municipality versions valid on or after 1960 that no
+current municipality carries (1,258). `kanton` = canton at the time; `to` = `[[bfs_nr, share], …]` the current
+municipalities holding its territory, largest share first (share 1.0 for mergers and renames); `vintages` =
+`{"2010": "<unit id>", "2000": "<unit id>"}` its unit id on the older boundary states (web/vintage/<id>/units.json `id`)
+where it existed on that date, else null. Example: `["Obstalden", 12498, "GL", "1887-01-01", "2010-12-31",
+[["1630", 1.0]], {"2010": "1624", "2000": "1624"}]`. Search should match `name` accent-insensitively like `alt_names`
+and show it as "Obstalden (until 2010) → Glarus Nord".
