@@ -38,6 +38,7 @@ const FILES = dedupe([
   // profile page and search (make profile)
   ['web/search.json', true],
   ['web/identity.json', true],
+  ['web/reach_times.json', false],
   ['web/history.json', true],
   ['web/neighbours.json', true],
   // every theme file of every level (D23, loaded on first use), incl. the national values

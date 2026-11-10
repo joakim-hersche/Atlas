@@ -380,6 +380,28 @@ def build_neighbours(min_shared_m: float = 10.0, tol_m: float = 1.0) -> dict:
                     f"boundaries G1, state {REFERENCE_DATE.isoformat()})", "levels": out}
 
 
+# ---------------------------------------------------------------- reach times
+
+def build_reach_times() -> dict:
+    """Travel time (minutes) from every hub to every municipality, both modes, in one small file.
+
+    Taken from the reach_<mode>_<hub> metrics in latest/gemeinde/mobility_accessibility.json (same
+    values the map shows), so the profile page and the reach filter need not load the whole theme file.
+    """
+    src = json.loads(out_path("web", "latest", "gemeinde", "mobility_accessibility.json").read_text(encoding="utf-8"))
+    idx = json.loads(out_path("reach", "index.json").read_text(encoding="utf-8"))
+    out = {"units": src["units"], "hubs": [[h["slug"], h["name"]] for h in idx["hubs"]],
+           "service_date": idx.get("service_date"), "pt": {}, "car": {}, "periods": {}}
+    for h in idx["hubs"]:
+        for mode in ("pt", "car"):
+            m = src["metrics"].get(f"reach_{mode}_{h['slug']}")
+            if m is None:
+                continue
+            out[mode][h["slug"]] = m["v"]
+            out["periods"][mode] = m.get("period")
+    return out
+
+
 # ---------------------------------------------------------------- run
 
 def run() -> dict:
@@ -392,6 +414,7 @@ def run() -> dict:
         "identity": _dump(build_identity(units, identity, cantons), "identity.json"),
         "history": _dump(build_history(units), "history.json"),
         "neighbours": _dump(build_neighbours(), "neighbours.json"),
+        "reach_times": _dump(build_reach_times(), "reach_times.json"),
     }
     return written
 
