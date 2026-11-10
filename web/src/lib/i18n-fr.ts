@@ -1,5 +1,6 @@
 // French UI strings (D32). Loaded only when the French UI is chosen; a missing key falls back to English.
 // Swiss French usage (commune, district, canton, TP); a non-breaking space before : ; ? ! and inside « ».
+import { FR_FILTERS } from './i18n-filters-strings';
 type Dict = Record<string, string>;
 const n = ' ';
 
@@ -606,3 +607,6 @@ export const HISTORY_FR: Record<string, string> = {
   canton_change: 'changement de canton',
   renumbering: 'nouveau numéro OFS',
 };
+
+// commute filters, filtered aggregate and ranking-table options (strings live in i18n-filters-strings.ts)
+Object.assign(FR, FR_FILTERS);

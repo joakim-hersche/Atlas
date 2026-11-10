@@ -31,6 +31,10 @@ export class AppState {
   vote = $state<string | null>(null);
   vdiff = $state(false);
   unstable = $state<'show' | 'light' | 'hide'>('show');
+  agg = $state<string | null>(null);
+  xcols = $state<string[]>([]);
+  rmin = $state<number | null>(null);
+  rflag = $state(false);
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
   /** level the user picked although the shaded metric does not exist there: asked before swapping */
@@ -71,6 +75,10 @@ export class AppState {
     this.vote = v.vote;
     this.vdiff = v.vdiff;
     this.unstable = v.unstable;
+    this.agg = v.agg;
+    this.xcols = v.xcols;
+    this.rmin = v.rmin;
+    this.rflag = v.rflag;
     this.preset = v.preset;
     this.loads++;
   }
@@ -79,7 +87,7 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, unstable: this.unstable, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params },
     };
   }
 
