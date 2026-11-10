@@ -306,7 +306,7 @@ def ti() -> tuple[pd.DataFrame, pd.DataFrame]:
             rh = [str(v).strip() for v in rev.iloc[1]]
             c40 = next(i for i, h in enumerate(rh) if re.match(r"40\b", h))
             for _, r in rev.iloc[2:].iterrows():
-                if str(r[0]).strip().upper().startswith("TOTALE") and pd.notna(pd.to_numeric(r[c40], errors="coerce")):
+                if str(r[0]).strip().upper() == "TOTALE" and pd.notna(pd.to_numeric(r[c40], errors="coerce")):
                     totals.append((year, float(r[c40]) * 1000))
                 n = _ti_name(r[0], year)
                 v = pd.to_numeric(r[c40], errors="coerce")

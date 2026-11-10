@@ -1,18 +1,18 @@
 source_id: kt_unemployment
 title: Registered unemployed per municipality (compiled from cantonal sources, *)
-publisher: Statistisches Amt ZH; OCSTAT Genève; Statistique Vaud (data SECO)
+publisher: Statistisches Amt ZH; OCSTAT Genève; Statistique Vaud; Fachstelle für Statistik St.Gallen (data SECO)
 url: https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_107.csv
 license: "Per publisher (see publishers)"
-attribution: "Compiled by Gemeindebank from: SECO via Statistisches Amt Kanton Zürich; OCSTAT / Office cantonal de l'emploi Genève; Statistique Vaud / SECO / Service de l'emploi VD"
-vintage: "ZH per year: merged municipalities take ZH's back-cast value where published, otherwise their predecessors valid on 31 Dec of the year (summed for counts, ratios only if 1:1); GE 45 communes (stable); VD current communes (matched by name)"
-years: "ZH 1991–2024, GE 1990–2025, VD 2025-10, 2026-09, 2026-10"
-catalog_ids: [kt_unemployment_gemeinde_compiled, kt_zh_unemployment, kt_ge_unemployment, kt_vd_unemployment]
+attribution: "Compiled by Gemeindebank from: SECO via Statistisches Amt Kanton Zürich; OCSTAT / Office cantonal de l'emploi Genève; Statistique Vaud / SECO / Service de l'emploi VD; SECO via Fachstelle für Statistik Kanton St.Gallen (STADA2)"
+vintage: "ZH per year: merged municipalities take ZH's back-cast value where published, otherwise their predecessors valid on 31 Dec of the year (summed for counts, ratios only if 1:1); GE 45 communes (stable); VD current communes (matched by name); SG current municipalities (STADA2 back-casts)"
+years: "ZH 1991–2024, GE 1990–2025, SG 2009–2025, VD 2025-10, 2026-09, 2026-10"
+catalog_ids: [kt_unemployment_gemeinde_compiled, kt_zh_unemployment, kt_ge_unemployment, kt_vd_unemployment, kt_sg_unemployment]
 publishers:
-  ZH: {publisher: "Statistisches Amt Kanton Zürich – Gemeindeporträt indicator 107 (data SECO/AWA)", url: "https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_107.csv", license: "UNVERIFIED: ZH OGD, open use (licence not stated in the file)", attribution: "Source: SECO / Statistisches Amt Kanton Zürich"}
+  ZH: {publisher: "Statistisches Amt Kanton Zürich – Gemeindeporträt indicator 107 (data SECO/AWA)", url: "https://www.web.statistik.zh.ch/ogd/data/KANTON_ZUERICH_107.csv", license: "terms_by: NonCommercialAllowed-CommercialAllowed-ReferenceRequired (ZH OGD catalogue zhweb.json, dataset 36)", attribution: "Source: SECO / Statistisches Amt Kanton Zürich"}
   GE: {publisher: "OCSTAT – T 03.03.4.01 Chômeurs inscrits par commune de résidence", url: "https://statistique.ge.ch/tel/domaines/03/03_03/T_03_03_4_01.xlsx", license: "UNVERIFIED: OCSTAT terms (reproduction with source mention)", attribution: "Source: SECO / OCE – Statistique du marché du travail; OCSTAT"}
   VD: {publisher: "Statistique Vaud – Demandeurs d'emploi, chômeurs et taux de chômage par commune", url: "https://www.vd.ch/fileadmin/user_upload/organisation/dfin/statvd/Dom_03/Tableaux/DE_Chomeurs_Taux_com.xlsx", license: "UNVERIFIED: not stated; openly downloadable", attribution: "Source: STATVD (PISE) / SECO (PLASTA) / Service de l'emploi VD", note: "snapshot file; earlier months are not online, archive monthly to build a series"}
+  SG: {publisher: "Fachstelle für Statistik Kanton St.Gallen – STADA2 indicator 39 Registrierte Arbeitslose (data SECO)", url: "https://stada2.sg.ch/?tab=export&indikatoren=39", license: "UNVERIFIED: STADA2 terms (media/docs/agb.pdf) refer to the sg.ch legal disclaimer; the daten.sg.ch catalogue entry for STADA2 states CC BY", attribution: "Source: SECO; Fachstelle für Statistik Kanton St.Gallen (STADA2)"}
 excluded:
-  SG: "STADA2 (stada2.sg.ch) blocked"
   AG: "monthly PDFs only"
   LU: "PDF profiles only"
   BS: "rate for Riehen/Bettingen only, no counts"

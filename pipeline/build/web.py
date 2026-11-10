@@ -144,8 +144,36 @@ def run() -> dict:
     con.execute(f"SET memory_limit='{os.environ.get('GB_DUCKDB_MEMORY', '3GB')}'")
     con.register("keep_df", pd.DataFrame({"metric_id": keep}))
     src = f"read_parquet('{interim_path('metrics_all.parquet')}')"
-    con.execute(f"CREATE VIEW m AS SELECT * FROM {src} WHERE metric_id IN (SELECT metric_id FROM keep_df) "
-                "AND level NOT IN ('unallocated', 'pseudo')")
+    # per-canton clearance (licence_review `cantons:`): municipalities of other cantons become
+    # 'not_covered' with a licence note; only cleared cantons keep canton rows; other levels dropped
+    canton_rows = []
+    if not include_all:
+        for sid, r in review.items():
+            if r.get("status") == "cleared" and r.get("cantons"):
+                for mid in meta.index[meta["source_id"] == sid]:
+                    for kt in r["cantons"]:
+                        canton_rows.append((mid, kt))
+    con.register("kt_ok", pd.DataFrame(canton_rows or [("", "")], columns=["metric_id", "kanton"]))
+    mem = membership()[["bfs_nr", "kanton"]].assign(unit_id=lambda d: d["bfs_nr"].astype(str))
+    con.register("mem_kt", mem[["unit_id", "kanton"]])
+    con.execute(f"""CREATE VIEW m AS
+        WITH base AS (SELECT * FROM {src} WHERE metric_id IN (SELECT metric_id FROM keep_df)
+                      AND level NOT IN ('unallocated', 'pseudo')),
+             limited AS (SELECT DISTINCT metric_id FROM kt_ok WHERE metric_id <> '')
+        SELECT b.* FROM base b WHERE b.metric_id NOT IN (SELECT metric_id FROM limited)
+        UNION ALL
+        SELECT b.unit_id, b.level, b.metric_id, b.period,
+               CASE WHEN k.kanton IS NOT NULL THEN b.value END AS value,
+               CASE WHEN k.kanton IS NOT NULL THEN b.status ELSE 'not_covered' END AS status,
+               b.precision, b.provenance, b.n_units, b.n_missing,
+               CASE WHEN k.kanton IS NOT NULL THEN b.note
+                    ELSE 'not shipped: licence of this canton''s publisher not cleared' END AS note
+        FROM base b JOIN mem_kt g ON b.level = 'gemeinde' AND b.unit_id = g.unit_id
+        LEFT JOIN kt_ok k ON k.metric_id = b.metric_id AND k.kanton = g.kanton
+        WHERE b.metric_id IN (SELECT metric_id FROM limited)
+        UNION ALL
+        SELECT b.* FROM base b JOIN kt_ok k ON b.level = 'kanton' AND b.metric_id = k.metric_id
+                                         AND b.unit_id = k.kanton""")
     written = {"units": _dump(build_units(), "units.json"),
                "sources": _dump([{**{k: v.get(k) for k in ("source_id", "title", "publisher", "url", "license",
                                                               "attribution", "vintage", "years")},
