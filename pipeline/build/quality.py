@@ -107,7 +107,10 @@ def transfer_effect(metric_rows: pd.DataFrame, source_state: dt.date, level: str
     frac = (m["p"] / m["to_hist_id"].map(tot).replace(0, np.nan))
     # single predecessor (pure transfer) -> whole target moved
     n_pred = allpred.groupby("to_hist_id")["from_hist_id"].nunique()
-    frac = frac.where(m["to_hist_id"].map(n_pred) > 1, 1.0).fillna(1.0)
+    # no population for the predecessor versions (states before 2010): equal split, not 1 each
+    # (1.0 each double-counted e.g. the Jura municipalities merged into Haute-Sorne in 2013)
+    frac = frac.fillna(1.0 / m["to_hist_id"].map(n_pred))
+    frac = frac.where(m["to_hist_id"].map(n_pred) > 1, 1.0)
     m["v"] = m["to_bfs_nr"].astype(str).map(vals) * frac
     gain = m.groupby(m["u_now"].astype(str))["v"].sum()
     loss = m.groupby(m["u_then"].astype(str))["v"].sum()
@@ -178,6 +181,11 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
             # persons the source could not attribute to a municipality are in the national total
             un = obs[(obs["source_id"] == sid) & (obs["level"] == "unallocated") & (obs["metric_id"] == metric)]
             j["explained"] = -j["period"].map(un.set_index("period")["value"]).fillna(0).values
+            # NRW: pseudo-units (Swiss abroad, postal voting; D17) are in the national total too.
+            # Other sources' pseudo rows are canton-level remainders already covered by 'unallocated'.
+            ps = pseudo[(pseudo["source_id"] == sid) & (pseudo["metric_id"] == metric)]
+            if sid == "bfs_nrw" and len(ps):
+                j["explained"] = j["explained"] - j["period"].map(ps.groupby("period")["value"].sum()).fillna(0).values
         j["residual"] = j["diff"] - j["explained"]
         j["rel"] = j["residual"].abs() / j["value_pub"].abs().replace(0, np.nan)
         md = meta.set_index("id").loc[metric] if metric in set(meta["id"]) else {}

@@ -214,3 +214,28 @@ Escalations for the lead (shared modules, not edited):
 - bfs_statent, estv_dbst, kt_finance metrics.yaml — plausibility notes / volatile
 - kt_crime/ingest.py, kt_unemployment/ingest.py — 'Gemeinde unbekannt' / 'Non spécifié' → pseudo
 - New metrics.yaml keys used: additivity_rounding, plausibility_note (documentation; read by nothing yet).
+
+## 2026-11-10 — National Council: municipalities counted with a neighbour
+
+**Finding (frontend review).** `nrw_share_svp` and every other party share were blank for canton BE and districts 243, 245, 246 in 2023. Cause: BFS counts a few very small municipalities together with a neighbour (2023: Meienried, Hellsau, Deisswil bei Münchenbuchsee, Oberhünigen, Niedermuhlern; 5–25 per election back to 1971). Their votes are inside the neighbour's figures. They were `no_data`, so the all-or-nothing aggregation blanked the whole district and canton.
+
+**Fix.**
+- `bfs_nrw/ingest.py`: a municipality with no result, in a canton (at the election) where others have results, gets `not_published` with the note "counted with another municipality in the BFS results".
+- `metrics.yaml` key `zero_when` (new, read by `pipeline/build/metrics.py`): these statuses, and "party did not stand", count as 0 in sums and ratio terms. Municipal rows keep their status.
+- Result: every canton and district has party shares for 2023. BE SVP 30.9 %, left bloc 31.4 %.
+
+**Effect on the additivity sweep.** These canton and national values used to be blank, so they were never compared with the published ones. They are now compared.
+- Two fixes to the check itself:
+  - National NRW totals now include pseudo-units (Swiss abroad, D17).
+  - `transfer_effect` split a merged target 1.0 per predecessor when pre-2010 population was missing. It now splits equally. The old rule double-counted e.g. the Jura municipalities merged into Haute-Sorne.
+- The summary is 611 / 633 pass (was 620 / 633 with these values hidden).
+
+**Open (documented, not fixed).**
+
+| Comparison | Residual | Likely cause |
+|---|---|---|
+| JU 1979–1995 party votes and totals | 2–5 % | Early Jura territory changes (Vellerat 1996) and the canton constant for fictitious voters in the first JU elections; historical only |
+| BE 1987 / 1995 SEP, invalid ballots | ≈ 0.5–0.7 % | Rounding around the 0.5 % tolerance |
+| CH FDP 2011–2023 | 1.6–3.6 % | Known: from 2011 BFS counts LPS under FDP in the national total only (see `bfs_nrw/metrics.yaml` header) |
+
+None affects current (2023) municipal, district or canton values.
