@@ -44,7 +44,7 @@ import pandas as pd
 from pipeline.common import interim_path
 from pipeline.harmonize.helpers import emit
 from pipeline.harmonize.schema import OBS_COLUMNS
-from pipeline.sources.bfs_pks.fetch import SOURCE, VIEWS, coldata, indic_meta, px_offences, refdata
+from pipeline.sources.bfs_pks.fetch import SOURCE, VIEWS, coldata, dam_asset, indic_meta, px_offences, refdata
 
 # Map Explorer indicator -> (raw count variable, metric id)
 INDICS = {
@@ -97,7 +97,7 @@ def _national_hz(indic: str, view: str) -> pd.Series:
 def _matrix(indic: str, var: str, level: str) -> pd.DataFrame:
     view, nivgeo = VIEWS[level]
     m = json.loads(indic_meta(indic, view).read_text(encoding="utf-8"))["content"]["indic"]["frmType"]
-    if m["type"] != "p1*var1/var2" or m["var1"] != var or m["var2"] != "pop" or int(m["p1"]) != 1000:
+    if m["type"] != "p1*var1/var2" or var not in (m["var1"], m["var2"]) or m["var2"] != "pop" or int(m["p1"]) != 1000:
         raise ValueError(f"{indic}: unexpected formula {m}")
     codes = json.loads(refdata(nivgeo).read_text(encoding="utf-8"))["content"]["territories"]["codgeo"]
     vals = np.array(json.loads(coldata(indic, var, view).read_text(encoding="utf-8"))["content"][var], dtype=float)
@@ -117,6 +117,12 @@ def _px() -> pd.DataFrame:
         columns={"0": "all", "2": "cleared"}).reset_index()
 
 
+def _px_ch(px: pd.DataFrame) -> pd.Series:
+    """Published Swiss StGB total per year (int index)."""
+    c = px[px["Kanton"] == "8100"]
+    return pd.Series(c["all"].to_numpy(), index=c["Jahr"].astype(int).to_numpy())
+
+
 def _checks(bez: dict, kt: dict, px: pd.DataFrame, id2ab: dict) -> None:
     pop_b, pop_k = bez[POP], kt[POP]
     kt_of = {c: c[:-2] for c in pop_b.index}   # district number = canton id + 2 digits
@@ -133,7 +139,7 @@ def _checks(bez: dict, kt: dict, px: pd.DataFrame, id2ab: dict) -> None:
     p["Jahr"] = p["Jahr"].astype(int)
     pk = p.pivot(index="Kanton", columns="Jahr", values="all").reindex(kt["pks_stgb"].index)
     CHECKS["canton_stgb_vs_stattab_max_abs_diff"] = float((pk - kt["pks_stgb"]).abs().max().max())
-    ch = px[px["Kanton"] == "8100"].set_index(px.loc[px["Kanton"] == "8100", "Jahr"].astype(int))["all"]
+    ch = _px_ch(px)
     hz = (ch / pop_k.sum() * 1000).round(1)
     pub = _national_hz("stgbprotausend", VIEWS["bezirk"][0]).reindex(hz.index)
     CHECKS["national_hz_max_abs_diff"] = round(float((hz - pub).abs().max()), 3)
@@ -164,6 +170,9 @@ def _obs(d: pd.DataFrame, level: str, vintage: dt.date) -> pd.DataFrame:
 
 
 def observations() -> pd.DataFrame:
+    terms = json.loads(dam_asset().read_text(encoding="utf-8"))["description"]["categorization"]["termsOfUse"]
+    if [t["code"] for t in terms] != ["OPEN-BY"]:
+        raise ValueError(f"terms of use changed: {terms}")
     cp = pd.read_parquet(interim_path("backbone", "canton.parquet"))
     id2ab = dict(zip(cp["canton_id"].astype(int).astype(str), cp["canton"]))
     bez, kt = {}, {}
@@ -186,8 +195,7 @@ def observations() -> pd.DataFrame:
     ok = _obs(_long(kt, id2ab), "kanton", KANTON_STATE)
     # Switzerland: sum of cantons; StGB total from STAT-TAB (published, incl. unassigned offences)
     chs = {mid: m.sum().to_frame("CH").T for mid, m in kt.items()}
-    pch = px[px["Kanton"] == "8100"].copy()
-    chs["pks_stgb"] = pd.DataFrame([pch.set_index(pch["Jahr"].astype(int))["all"]], index=["CH"])
+    chs["pks_stgb"] = _px_ch(px).to_frame("CH").T
     och = _obs(_long(chs), "schweiz", KANTON_STATE)
     och["note"] = np.where(och["metric_id"] == "pks_stgb", NOTE_CH_PX, NOTE_CH_SUM)
     och.loc[och["metric_id"] == POP, "note"] = "sum of the 26 published canton values"

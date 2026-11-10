@@ -31,6 +31,9 @@ Rules
   numerator over years t-k+1..t divided by the sum of the denominator over the same years (shifted by
   <lag> years, e.g. previous-year population), period 't-k+1-t'. All k years must be present.
 - Base metrics whose native level is above the municipality (e.g. district survey values) are passed through.
+- National Council (decision D37, pipeline/build/elections.py): LPS counted under FDP above canton level from
+  2011; derived metrics with `majority_election: true` get status 'majority_election' in single-seat cantons
+  (value kept) and are computed from proportional cantons only for regions and typologies.
 Runs out of core with a memory cap, so the full catalog (≈20M rows) fits the build machine.
 """
 from __future__ import annotations
@@ -90,7 +93,7 @@ def _missing_note(prefix: str = "") -> str:
 
 def run() -> str:
     meta = load_metrics().drop_duplicates("id")
-    for c in ("include_pseudo", "zero_when"):
+    for c in ("include_pseudo", "zero_when", "majority_election"):
         if c not in meta:
             meta[c] = None
     tmp = interim_path("duckdb_tmp", "x").parent
@@ -246,6 +249,11 @@ def run() -> str:
                      FROM nat WHERE metric_id IN ({_q(notagg)})""")
     parts.append("SELECT * FROM native_only")
     con.execute("CREATE TABLE base_all AS " + " UNION ALL ".join(parts))
+    # National Council (D37): LPS under FDP above canton level from 2011 (pipeline/build/elections.py)
+    from pipeline.build import elections
+    has_nrw = "nrw_fw_fdp" in set(meta["id"])
+    if has_nrw:
+        print("D37 LPS -> FDP above canton level:", elections.merge_lps(con), "rows")
     # ratio inputs: usable base rows (ok, or a zero_when status counted as 0), materialized once
     con.execute(f"""
         CREATE TABLE base_terms AS
@@ -329,6 +337,9 @@ def run() -> str:
         con.execute(f"INSERT INTO der SELECT {cols} FROM ({d})")
     for mid, ids in gap_list:
         con.execute(f"INSERT INTO der SELECT {cols} FROM ({gaps(mid, ids)})")
+    if has_nrw:  # D37: single-seat cantons (majority election) in party shares, blocs and leaning
+        print("D37 majority election:", elections.apply_majority(
+            con, meta, [l for l in AGG_LEVELS if l not in ("bezirk", "kanton", "schweiz")], elections.majority_cantons()))
     con.execute(f"COPY (SELECT {cols} FROM base_all UNION ALL SELECT {cols} FROM der) "
                 f"TO '{out}' (FORMAT PARQUET, COMPRESSION ZSTD)")
     con.close()

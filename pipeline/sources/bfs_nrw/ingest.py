@@ -16,7 +16,8 @@ strength (checked: max deviation 0.2 pp, all from rounding of 1971 published per
 
 Parties are kept as published (25 BFS party codes). CVP and BDP merged into Die Mitte in 2021:
 up to 2019 they are nrw_fw_cvp / nrw_fw_bdp, from 2023 nrw_fw_mitte. LPS merged into FDP in 2009.
-A party code without a value ('...') means the party did not stand: status not_applicable.
+A party code without a value ('...') means the party did not stand: status not_applicable (also in
+municipalities counted with a neighbour and in tacit elections, _no_list).
 """
 from __future__ import annotations
 
@@ -100,6 +101,10 @@ def _party_wide() -> pd.DataFrame:
     return w.reset_index().rename(columns={GEO105: GEO})
 
 
+DID_NOT_STAND = "party did not stand (no list in this canton)"
+TACIT = "tacit election (stille Wahl): no vote was held in this canton"
+
+
 def _status_party(obs: pd.DataFrame) -> pd.DataFrame:
     """Party value missing while the unit has election results -> the party did not stand."""
     tot = obs[(obs["metric_id"] == "nrw_fw_total") & (obs["status"] == "ok")]
@@ -108,7 +113,7 @@ def _status_party(obs: pd.DataFrame) -> pd.DataFrame:
     key = pd.Series(list(zip(obs["level"], obs["unit_id"], obs["period"])), index=obs.index)
     na = party & key.isin(has)
     obs.loc[na, "status"] = "not_applicable"
-    obs.loc[na, "note"] = "party did not stand (BFS '...')"
+    obs.loc[na, "note"] = DID_NOT_STAND
     return obs
 
 
@@ -195,8 +200,45 @@ def _pooled(obs: pd.DataFrame) -> pd.DataFrame:
     return obs
 
 
+def _no_list(obs: pd.DataFrame) -> pd.DataFrame:
+    """Municipalities without a result of their own (counted with a neighbour, or tacit election).
+
+    A party with no list in the canton at the election (cube 104 '...') did not stand there either:
+    not_applicable, as in the municipalities with results (D37 rule 4; before, these stayed no_data
+    and blanked every aggregate containing them). In a tacit election (stille Wahl: canton-year with
+    no party value at all in cube 104, e.g. ZG 1971, OW 1999, NW 2007) no vote was held: every party
+    and the total are not_applicable with that reason, so aggregates add up without them, as BFS's
+    national totals do.
+    """
+    k = canton_parties()
+    k = k[k["Ergebnisse"] == "2"].assign(metric_id=lambda x: "nrw_fw_" + x["Partei"].map(PARTY_SLUG))
+    k = k.rename(columns={"Kanton": "kt", "Jahr": "period"})
+    stood = k.groupby(["kt", "period"])["value"].transform(lambda x: x.notna().any())
+    tacit = set(map(tuple, k.loc[~stood, ["kt", "period"]].drop_duplicates().to_numpy()))
+    absent = set(map(tuple, k.loc[k["value"].isna(), ["kt", "period", "metric_id"]].to_numpy()))
+    gem = (obs["level"] == "gemeinde") & obs["metric_id"].str.startswith("nrw_fw_") & obs["value"].isna() \
+        & obs["status"].isin(["no_data", "not_published"])
+    if not gem.any():
+        return obs
+    years = sorted(obs.loc[gem, "period"].unique())
+    kt = {(str(u), y): c for y in years for u, c in canton_at_election(int(y)).items()}
+    sub = obs.loc[gem, ["unit_id", "period", "metric_id"]]
+    kts = [kt.get((u, p)) for u, p in zip(sub["unit_id"], sub["period"])]
+    is_tacit = pd.Series([(c, p) in tacit for c, p in zip(kts, sub["period"])], index=sub.index)
+    no_list = pd.Series([(c, p, m) in absent for c, p, m in zip(kts, sub["period"], sub["metric_id"])],
+                        index=sub.index)
+    t = is_tacit[is_tacit].index
+    obs.loc[t, "status"] = "not_applicable"
+    obs.loc[t, "note"] = TACIT
+    n = no_list[no_list & ~is_tacit].index
+    obs.loc[n, "status"] = "not_applicable"
+    obs.loc[n, "note"] = DID_NOT_STAND
+    return obs
+
+
 def observations() -> pd.DataFrame:
     obs = pd.concat([_parties(), _turnout()], ignore_index=True)
     obs = _pooled(obs)
+    obs = _no_list(obs)
     obs.loc[(obs["status"] == "no_data") & obs["note"].isna(), "note"] = NO_RESULT
     return obs[OBS_COLUMNS]
