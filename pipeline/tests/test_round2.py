@@ -113,6 +113,8 @@ def test_built_curation_enforced():
     if not any("profile_levels" in m for m in ms.values()):
         pytest.skip("web output built before D38")
     for m in ms.values():
+        if m.get("hidden"):
+            continue      # never offered; its levels are kept for companion lookups
         for lvl, c in (m.get("curation") or {}).items():
             if c["v"] == "hide":
                 assert lvl not in m["levels"], (m["id"], lvl)
@@ -145,3 +147,26 @@ def test_built_aggregates_not_blank():
     if r.empty:
         pytest.skip("no STATENT 2024")
     assert (r["status"] == "ok").all(), r
+
+
+# ---- M9: generic small-number rule ----------------------------------------------------------------
+def test_auto_reliability_rule():
+    from pipeline.build.web import _auto_rule
+    meta = pd.DataFrame([
+        {"id": "a_share", "kind": "derived", "aggregation": "ratio:a/b*100", "unit": "%", "native_level": "gemeinde"},
+        {"id": "a_rate", "kind": "derived", "aggregation": "ratio:a/pop_total*1000", "unit": "per 1000", "native_level": "gemeinde"},
+        {"id": "a_mean", "kind": "derived", "aggregation": "ratio:chf/b", "unit": "CHF", "native_level": "gemeinde"},
+        {"id": "a_density", "kind": "derived", "aggregation": "ratio:a/area", "unit": "per km²", "native_level": "gemeinde"},
+        {"id": "a", "kind": "base", "aggregation": "sum", "unit": "persons", "native_level": "gemeinde"},
+        {"id": "b", "kind": "base", "aggregation": "sum", "unit": "taxpayers", "native_level": "gemeinde"},
+        {"id": "chf", "kind": "base", "aggregation": "sum", "unit": "CHF", "native_level": "gemeinde"},
+        {"id": "pop_total", "kind": "base", "aggregation": "sum", "unit": "persons", "native_level": "gemeinde"},
+        {"id": "area", "kind": "base", "aggregation": "sum", "unit": "ha", "native_level": "gemeinde"},
+    ]).set_index("id")
+    cfg = {"auto": {"share": {"min_base": 100}, "rate": {"min_base": 1000}, "mean": {"min_base": 500}}}
+    assert _auto_rule("a_share", meta, cfg)["min_base"] == 100
+    assert _auto_rule("a_rate", meta, cfg)["min_base"] == 1000
+    r = _auto_rule("a_mean", meta, cfg)
+    assert r["min_base"] == 500 and r["base"] == "b" and r["count"] is None
+    assert _auto_rule("a_density", meta, cfg) is None      # area denominators are exact
+    assert _auto_rule("a", meta, cfg) is None              # base metrics need an explicit rule

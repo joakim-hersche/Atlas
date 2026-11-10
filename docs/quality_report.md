@@ -1,20 +1,20 @@
 # Data quality report
 
-Generated 2026-11-10T16:52 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-10T18:39 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
-Metrics: 871 defined (638 base, 233 derived) · rows: 32,869,543
+Metrics: 911 defined (671 base, 240 derived) · rows: 33,195,817
 
 ## A. Additivity — municipalities vs. published district/canton/national values
 
-Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
+Summary: 643 metric×level comparisons, 619 pass, 24 with failures.
 
 | Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Documented difference | Fail | Max rel. residual |
 |---|---|---|---|---|---|---|---|---|---|
-| bfs_votes_gemeinde | kanton | vote_eligible | 12731 | 11359 | 629 | 616 | 0 | **133** | 3.701% |
+| bfs_votes_gemeinde | kanton | vote_eligible | 12963 | 11359 | 629 | 616 | 0 | **133** | 3.701% |
 | bfs_arealstatistik | bezirk | area_total_ha | 632 | 614 | 0 | 9 | 0 | **9** | 1.777% |
 | bfs_arealstatistik | bezirk | area_water_ha | 632 | 623 | 0 | 0 | 0 | **9** | 0.590% |
 | bfs_arealstatistik | bezirk | area_wooded_ha | 632 | 619 | 0 | 4 | 0 | **9** | 8.642% |
-| bfs_votes_gemeinde | kanton | vote_valid | 12731 | 11734 | 631 | 465 | 0 | **6** | 7.078% |
+| bfs_votes_gemeinde | kanton | vote_valid | 12963 | 11734 | 631 | 465 | 0 | **6** | 7.078% |
 | bfs_nrw | kanton | nrw_fw_cvp | 279 | 239 | 22 | 15 | 0 | **5** | 2.348% |
 | bfs_nrw | kanton | nrw_fw_fdp | 311 | 271 | 19 | 19 | 0 | **5** | 4.372% |
 | bfs_nrw | kanton | nrw_fw_total | 357 | 325 | 19 | 11 | 0 | **5** | 3.488% |
@@ -22,9 +22,9 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_arealstatistik | bezirk | area_unproductive_ha | 632 | 619 | 0 | 9 | 0 | **4** | 2.764% |
 | bfs_nrw | kanton | nrw_fw_sp | 303 | 262 | 18 | 22 | 0 | **4** | 5.170% |
 | bfs_nrw | kanton | nrw_ballots_invalid | 357 | 325 | 28 | 1 | 0 | **3** | 2.941% |
-| bfs_votes_gemeinde | kanton | vote_no | 12731 | 11740 | 653 | 440 | 0 | **3** | 0.763% |
+| bfs_votes_gemeinde | kanton | vote_no | 12963 | 11740 | 653 | 440 | 0 | **3** | 0.763% |
 | bfs_census_1970_2000 | kanton | vz_rel_other_christian | 104 | 92 | 4 | 6 | 0 | **2** | 1.747% |
-| bfs_construction | kanton | con_exp_maintenance | 806 | 9 | 738 | 57 | 0 | **2** | 2.935% |
+| bfs_construction | kanton | con_exp_maintenance | 806 | 709 | 38 | 57 | 0 | **2** | 2.935% |
 | bfs_nrw | kanton | nrw_fw_csp | 29 | 25 | 2 | 1 | 0 | **2** | 2.916% |
 | bfs_nrw | kanton | nrw_fw_other | 277 | 256 | 15 | 5 | 0 | **2** | 4.537% |
 | bfs_nrw | kanton | nrw_fw_sep | 7 | 0 | 2 | 3 | 0 | **2** | 0.665% |
@@ -33,8 +33,8 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_census_1970_2000 | kanton | vz_rel_no_answer | 104 | 94 | 6 | 3 | 0 | **1** | 0.559% |
 | bfs_nrw | kanton | nrw_fw_svp | 249 | 212 | 19 | 20 | 0 | **1** | 9.098% |
 | bfs_nrw | schweiz | nrw_fw_other | 14 | 9 | 0 | 4 | 0 | **1** | 0.986% |
-| bfs_vehicles | kanton | mfz_newreg_bev | 416 | 301 | 113 | 2 | 0 | **1** | 3.265% |
-| bfe_energy | kanton | en_charging_spots | 815 | 815 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_newreg_bev | 416 | 396 | 17 | 2 | 0 | **1** | 3.265% |
+| bfe_energy | kanton | en_charging_spots | 623 | 623 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_ecar_count | 1592 | 1592 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_elec_consumption_mwh | 978 | 978 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_heat_nonrenewable_count | 1592 | 1592 | 0 | 0 | 0 | 0 | 0.000% |
@@ -43,7 +43,7 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfe_energy | kanton | en_renelec_hydro_mwh | 855 | 855 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_renelec_production_mwh | 855 | 855 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | kanton | en_renelec_solar_mwh | 852 | 852 | 0 | 0 | 0 | 0 | 0.000% |
-| bfe_energy | schweiz | en_charging_spots | 33 | 33 | 0 | 0 | 0 | 0 | 0.000% |
+| bfe_energy | schweiz | en_charging_spots | 25 | 25 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_ecar_count | 66 | 66 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_elec_consumption_mwh | 40 | 40 | 0 | 0 | 0 | 0 | 0.000% |
 | bfe_energy | schweiz | en_heat_nonrenewable_count | 66 | 66 | 0 | 0 | 0 | 0 | 0.000% |
@@ -149,44 +149,45 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_bevnat_bilanz | bezirk | bil_pop_dec | 6355 | 6308 | 45 | 2 | 0 | 0 | 0.063% |
 | bfs_bevnat_bilanz | bezirk | bil_pop_foreign_jan | 6355 | 6308 | 45 | 2 | 0 | 0 | 0.042% |
 | bfs_bevnat_bilanz | bezirk | bil_pop_jan | 6355 | 6308 | 45 | 2 | 0 | 0 | 0.062% |
-| bfs_bevnat_bilanz | kanton | bil_births | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_deaths | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_emigration | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_immigration | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_intercant_in | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_intercant_out | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_intracant_in | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_intracant_out | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_natural_balance | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_naturalisations | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_net_intercant | 1140 | 1064 | 76 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_net_international | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_net_migration | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_pop_dec | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_pop_foreign_jan | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | kanton | bil_pop_jan | 1140 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_births | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_deaths | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_emigration | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_immigration | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_intercant_in | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_intercant_out | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_intracant_in | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_intracant_out | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_natural_balance | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_naturalisations | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_net_intercant | 1152 | 1064 | 76 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_net_international | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_net_migration | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_pop_dec | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_pop_foreign_jan | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | kanton | bil_pop_jan | 1152 | 1062 | 78 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_births | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_deaths | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_emigration | 27 | 12 | 15 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_immigration | 27 | 12 | 15 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_emigration | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_immigration | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_intercant_in | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_intercant_out | 27 | 21 | 6 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_intercant_out | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_intracant_in | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_intracant_out | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_natural_balance | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_naturalisations | 27 | 26 | 1 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_net_intercant | 27 | 21 | 6 | 0 | 0 | 0 | nan% |
-| bfs_bevnat_bilanz | schweiz | bil_net_international | 27 | 12 | 15 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_bilanz | schweiz | bil_net_migration | 27 | 12 | 15 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_naturalisations | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_net_intercant | 27 | 27 | 0 | 0 | 0 | 0 | nan% |
+| bfs_bevnat_bilanz | schweiz | bil_net_international | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_bilanz | schweiz | bil_net_migration | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_pop_dec | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_pop_foreign_jan | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | schweiz | bil_pop_jan | 27 | 27 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | bezirk | bevnat_births | 4191 | 4191 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | bezirk | bevnat_divorces | 964 | 964 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | bezirk | bevnat_marriages | 2324 | 2324 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | kanton | bevnat_births | 462 | 462 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | kanton | bevnat_divorces | 110 | 110 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_bevnat_sdmx | kanton | bevnat_marriages | 305 | 305 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | bezirk | bevnat_births | 7305 | 7248 | 45 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | bezirk | bevnat_divorces | 1021 | 964 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | bezirk | bevnat_marriages | 2381 | 2324 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | kanton | bevnat_births | 1289 | 1176 | 90 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | kanton | bevnat_divorces | 224 | 110 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | kanton | bevnat_marriages | 419 | 305 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_bevnat_sdmx | schweiz | bevnat_births | 45 | 45 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_census_1970_2000 | kanton | vz_hh_collective | 104 | 95 | 7 | 2 | 0 | 0 | 0.081% |
 | bfs_census_1970_2000 | kanton | vz_hh_couple_children | 104 | 92 | 4 | 8 | 0 | 0 | 0.028% |
 | bfs_census_1970_2000 | kanton | vz_hh_couple_no_children | 104 | 92 | 4 | 8 | 0 | 0 | 0.021% |
@@ -246,26 +247,26 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_census_1970_2000 | schweiz | vz_rel_reformed | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_census_1970_2000 | schweiz | vz_rel_total | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_commuting | schweiz | com_employed_residents | 3 | 3 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | kanton | con_exp_private | 806 | 194 | 572 | 40 | 0 | 0 | 0.067% |
-| bfs_construction | kanton | con_exp_public | 806 | 0 | 747 | 59 | 0 | 0 | 0.170% |
-| bfs_construction | kanton | con_exp_total | 806 | 0 | 741 | 65 | 0 | 0 | 0.100% |
-| bfs_construction | kanton | con_inv_new | 806 | 1 | 775 | 30 | 0 | 0 | 0.050% |
-| bfs_construction | kanton | con_inv_renovation | 806 | 0 | 770 | 36 | 0 | 0 | 0.279% |
-| bfs_construction | kanton | con_inv_residential | 806 | 553 | 231 | 22 | 0 | 0 | 0.039% |
-| bfs_construction | kanton | con_inv_total | 806 | 0 | 761 | 45 | 0 | 0 | 0.057% |
-| bfs_construction | kanton | con_new_dw_mfh | 602 | 588 | 14 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | kanton | con_new_dw_sfh | 602 | 576 | 26 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | kanton | con_new_dwellings | 602 | 576 | 26 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | kanton | con_new_res_buildings | 602 | 576 | 26 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | kanton | con_new_sfh_buildings | 602 | 576 | 26 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_exp_maintenance | 31 | 0 | 23 | 8 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_exp_private | 31 | 0 | 31 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_exp_public | 31 | 0 | 23 | 8 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_exp_total | 31 | 0 | 23 | 8 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_inv_new | 31 | 0 | 31 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_inv_renovation | 31 | 0 | 31 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_inv_residential | 31 | 2 | 29 | 0 | 0 | 0 | 0.000% |
-| bfs_construction | schweiz | con_inv_total | 31 | 0 | 31 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | kanton | con_exp_private | 806 | 724 | 42 | 40 | 0 | 0 | 0.067% |
+| bfs_construction | kanton | con_exp_public | 806 | 709 | 38 | 59 | 0 | 0 | 0.170% |
+| bfs_construction | kanton | con_exp_total | 806 | 706 | 35 | 65 | 0 | 0 | 0.100% |
+| bfs_construction | kanton | con_inv_new | 806 | 729 | 47 | 30 | 0 | 0 | 0.050% |
+| bfs_construction | kanton | con_inv_renovation | 806 | 727 | 43 | 36 | 0 | 0 | 0.279% |
+| bfs_construction | kanton | con_inv_residential | 806 | 734 | 50 | 22 | 0 | 0 | 0.039% |
+| bfs_construction | kanton | con_inv_total | 806 | 722 | 39 | 45 | 0 | 0 | 0.057% |
+| bfs_construction | kanton | con_new_dw_mfh | 652 | 588 | 14 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | kanton | con_new_dw_sfh | 652 | 576 | 26 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | kanton | con_new_dwellings | 652 | 576 | 26 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | kanton | con_new_res_buildings | 652 | 576 | 26 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | kanton | con_new_sfh_buildings | 652 | 576 | 26 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_exp_maintenance | 31 | 23 | 0 | 8 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_exp_private | 31 | 31 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_exp_public | 31 | 23 | 0 | 8 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_exp_total | 31 | 23 | 0 | 8 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_inv_new | 31 | 31 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_inv_renovation | 31 | 31 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_inv_residential | 31 | 31 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_construction | schweiz | con_inv_total | 31 | 31 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_construction | schweiz | con_new_dw_mfh | 12 | 12 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_construction | schweiz | con_new_dw_sfh | 12 | 12 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_construction | schweiz | con_new_dwellings | 12 | 12 | 0 | 0 | 0 | 0 | 0.000% |
@@ -343,16 +344,16 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_households | bezirk | hh_size2 | 1987 | 1981 | 6 | 0 | 0 | 0 | 0.000% |
 | bfs_households | bezirk | hh_size3 | 1867 | 1867 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_households | bezirk | hh_size4 | 1803 | 1803 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_households | bezirk | hh_size5 | 1533 | 1533 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_households | bezirk | hh_size6plus | 886 | 886 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_households | bezirk | hh_size5 | 1544 | 1533 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_households | bezirk | hh_size6plus | 900 | 886 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_households | bezirk | hh_total | 2002 | 1988 | 14 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_persons | 364 | 336 | 28 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_size1 | 338 | 318 | 20 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_size2 | 349 | 329 | 20 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_size3 | 270 | 260 | 10 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_size4 | 266 | 260 | 6 | 0 | 0 | 0 | 0.000% |
-| bfs_households | kanton | hh_size5 | 199 | 199 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_households | kanton | hh_size6plus | 123 | 123 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_households | kanton | hh_size5 | 202 | 199 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_households | kanton | hh_size6plus | 151 | 123 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_households | kanton | hh_total | 364 | 336 | 28 | 0 | 0 | 0 | 0.000% |
 | bfs_households | schweiz | hh_persons | 14 | 14 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_households | schweiz | hh_size1 | 2 | 2 | 0 | 0 | 0 | 0 | 0.000% |
@@ -390,22 +391,22 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_migration | kanton | mig_net_intercant_swiss | 390 | 360 | 30 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | kanton | mig_net_intl_foreign | 390 | 360 | 30 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | kanton | mig_net_intl_swiss | 390 | 362 | 28 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_emigration_foreign | 15 | 0 | 15 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_emigration_swiss | 15 | 14 | 1 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_immigration_foreign | 15 | 0 | 15 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_emigration_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_emigration_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_immigration_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_immigration_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intercant_in_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intercant_in_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_intercant_out_foreign | 15 | 9 | 6 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_intercant_out_swiss | 15 | 9 | 6 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_intercant_out_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_intercant_out_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intracant_in_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intracant_in_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intracant_out_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_migration | schweiz | mig_intracant_out_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_net_intercant_foreign | 15 | 9 | 6 | 0 | 0 | 0 | nan% |
-| bfs_migration | schweiz | mig_net_intercant_swiss | 15 | 9 | 6 | 0 | 0 | 0 | nan% |
-| bfs_migration | schweiz | mig_net_intl_foreign | 15 | 0 | 15 | 0 | 0 | 0 | 0.000% |
-| bfs_migration | schweiz | mig_net_intl_swiss | 15 | 14 | 1 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_net_intercant_foreign | 15 | 15 | 0 | 0 | 0 | 0 | nan% |
+| bfs_migration | schweiz | mig_net_intercant_swiss | 15 | 15 | 0 | 0 | 0 | 0 | nan% |
+| bfs_migration | schweiz | mig_net_intl_foreign | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_migration | schweiz | mig_net_intl_swiss | 15 | 15 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_naturalisation | bezirk | nat_eu_efta | 2145 | 2130 | 15 | 0 | 0 | 0 | 0.000% |
 | bfs_naturalisation | bezirk | nat_other_europe | 2145 | 2130 | 15 | 0 | 0 | 0 | 0.000% |
 | bfs_naturalisation | bezirk | nat_outside_europe | 2145 | 2130 | 15 | 0 | 0 | 0 | 0.000% |
@@ -481,8 +482,21 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_nrw | schweiz | nrw_fw_svp | 14 | 4 | 0 | 10 | 0 | 0 | 0.023% |
 | bfs_nrw | schweiz | nrw_fw_total | 14 | 3 | 0 | 11 | 0 | 0 | 0.047% |
 | bfs_nrw | schweiz | nrw_voters | 9 | 9 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_social_assistance | kanton | sh_recipients | 165 | 11 | 0 | 23 | 131 ¹ | 0 | 14.860% |
-| bfs_statent | schweiz | ent_fte | 10 | 0 | 0 | 10 | 0 | 0 | 0.001% |
+| bfs_social_assistance | kanton | sh_recipients | 201 | 11 | 0 | 23 | 131 ¹ | 0 | 14.860% |
+| bfs_statent | kanton | ent_fte | 352 | 99 | 2 | 0 | 251 | 0 | 0.024% |
+| bfs_statent | kanton | ent_fte_s1 | 111 | 30 | 1 | 0 | 61 | 0 | 1.695% |
+| bfs_statent | kanton | ent_fte_s2 | 28 | 2 | 0 | 0 | 12 | 0 | 0.021% |
+| bfs_statent | kanton | ent_fte_s3 | 91 | 10 | 0 | 8 | 68 | 0 | 0.026% |
+| bfs_statent | kanton | ent_jobs | 351 | 323 | 17 | 22 | 0 | 0 | 0.019% |
+| bfs_statent | kanton | ent_jobs_s1 | 136 | 117 | 13 | 0 | 0 | 0 | 0.000% |
+| bfs_statent | kanton | ent_jobs_s2 | 24 | 22 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_statent | kanton | ent_jobs_s3 | 115 | 115 | 0 | 1 | 0 | 0 | 0.016% |
+| bfs_statent | kanton | ent_jobs_women | 238 | 237 | 0 | 1 | 0 | 0 | 0.005% |
+| bfs_statent | kanton | ent_workplaces | 340 | 312 | 17 | 20 | 0 | 0 | 0.022% |
+| bfs_statent | kanton | ent_workplaces_s1 | 85 | 60 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_statent | kanton | ent_workplaces_s2 | 3 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_statent | kanton | ent_workplaces_s3 | 39 | 38 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_statent | schweiz | ent_fte | 10 | 0 | 0 | 0 | 10 | 0 | 0.001% |
 | bfs_statent | schweiz | ent_jobs | 10 | 10 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_statent | schweiz | ent_workplaces | 2 | 2 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_statpop | bezirk | pop_age_0_19 | 2288 | 2272 | 16 | 0 | 0 | 0 | 0.000% |
@@ -527,6 +541,16 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_statpop | schweiz | pop_swiss | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_statpop | schweiz | pop_total | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_statpop | schweiz | pop_widowed | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_active | 133 | 110 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_active_s2 | 133 | 111 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_active_s3 | 191 | 183 | 6 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_births | 5 | 1 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_births_s2 | 12 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_births_s3 | 37 | 22 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_closures | 4 | 0 | 0 | 0 | 0 | 0 | nan% |
+| bfs_udemo | kanton | udemo_jobs_active | 176 | 160 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_jobs_births | 43 | 12 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_udemo | kanton | udemo_jobs_closures | 37 | 10 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_vacancy | bezirk | vac_dwellings | 4608 | 4608 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_vacancy | bezirk | vac_for_rent | 4608 | 4608 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_vacancy | bezirk | vac_for_sale | 4608 | 4608 | 0 | 0 | 0 | 0 | 0.000% |
@@ -565,38 +589,55 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 | bfs_vehicles | bezirk | mfz_cars_private | 1430 | 1420 | 10 | 0 | 0 | 0 | 0.000% |
 | bfs_vehicles | bezirk | mfz_newreg_bev | 2288 | 2277 | 9 | 2 | 0 | 0 | 0.389% |
 | bfs_vehicles | bezirk | mfz_newreg_cars | 2288 | 2271 | 16 | 1 | 0 | 0 | 0.091% |
-| bfs_vehicles | kanton | mfz_cars | 416 | 192 | 224 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_cars_bev | 416 | 243 | 173 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_cars_diesel | 416 | 192 | 224 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_cars_hev | 416 | 215 | 200 | 1 | 0 | 0 | 0.005% |
-| bfs_vehicles | kanton | mfz_cars_petrol | 416 | 192 | 224 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_cars_phev | 416 | 259 | 157 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_cars_private | 260 | 48 | 212 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | kanton | mfz_newreg_cars | 416 | 216 | 199 | 1 | 0 | 0 | 0.010% |
-| bfs_vehicles | schweiz | mfz_cars | 16 | 0 | 16 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_bev | 16 | 8 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_diesel | 16 | 7 | 9 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_hev | 16 | 8 | 7 | 1 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_petrol | 16 | 0 | 16 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_phev | 16 | 8 | 8 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_cars_private | 10 | 0 | 10 | 0 | 0 | 0 | 0.000% |
-| bfs_vehicles | schweiz | mfz_newreg_bev | 16 | 8 | 7 | 1 | 0 | 0 | 0.197% |
-| bfs_vehicles | schweiz | mfz_newreg_cars | 16 | 8 | 7 | 1 | 0 | 0 | 0.001% |
-| bfs_votes_gemeinde | bezirk | vote_ballots | 69673 | 69673 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_eligible | 69692 | 69692 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_no | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_valid | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_yes | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | kanton | vote_ballots | 12725 | 11640 | 631 | 465 | 0 | 0 | 0.319% |
-| bfs_votes_gemeinde | kanton | vote_yes | 12731 | 11740 | 659 | 437 | 0 | 0 | 0.299% |
+| bfs_vehicles | kanton | mfz_cars | 416 | 384 | 32 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_cars_bev | 416 | 390 | 26 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_cars_diesel | 416 | 384 | 32 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_cars_hev | 416 | 383 | 32 | 1 | 0 | 0 | 0.005% |
+| bfs_vehicles | kanton | mfz_cars_petrol | 416 | 384 | 32 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_cars_phev | 416 | 396 | 20 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_cars_private | 260 | 240 | 20 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | kanton | mfz_newreg_cars | 416 | 384 | 31 | 1 | 0 | 0 | 0.010% |
+| bfs_vehicles | schweiz | mfz_cars | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_bev | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_diesel | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_hev | 16 | 15 | 0 | 1 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_petrol | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_phev | 16 | 16 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_cars_private | 10 | 10 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_vehicles | schweiz | mfz_newreg_bev | 16 | 15 | 0 | 1 | 0 | 0 | 0.197% |
+| bfs_vehicles | schweiz | mfz_newreg_cars | 16 | 15 | 0 | 1 | 0 | 0 | 0.001% |
+| bfs_votes_gemeinde | bezirk | vote_ballots | 70222 | 69673 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_eligible | 70241 | 69692 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_no | 70776 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_valid | 70776 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_yes | 70776 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | kanton | vote_ballots | 12957 | 11640 | 631 | 465 | 0 | 0 | 0.319% |
+| bfs_votes_gemeinde | kanton | vote_yes | 12963 | 11740 | 659 | 437 | 0 | 0 | 0.299% |
 | bfs_votes_gemeinde | schweiz | vote_ballots | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_eligible | 396 | 191 | 0 | 205 | 0 | 0 | 0.091% |
 | bfs_votes_gemeinde | schweiz | vote_no | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_valid | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_yes | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
-| estv_dbst | schweiz | tax_np_federal_tax_chf | 15 | 9 | 0 | 6 | 0 | 0 | 0.219% |
-| estv_dbst | schweiz | tax_np_net_income_chf | 4 | 1 | 0 | 3 | 0 | 0 | 0.063% |
-| estv_dbst | schweiz | tax_np_taxable_income_chf | 4 | 1 | 0 | 3 | 0 | 0 | 0.070% |
+| estv_dbst | kanton | tax_np_federal_tax_chf | 97 | 36 | 1 | 46 | 12 ¹ | 0 | 2.965% |
+| estv_dbst | kanton | tax_np_net_income_chf | 97 | 36 | 1 | 57 | 1 ¹ | 0 | 0.701% |
+| estv_dbst | kanton | tax_np_normal_taxable_100k_plus | 56 | 49 | 1 | 1 | 0 | 0 | 0.005% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_0 | 51 | 45 | 1 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_100_200k | 58 | 51 | 0 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_1_30k | 91 | 86 | 4 | 1 | 0 | 0 | 0.022% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_1m_plus | 10 | 0 | 0 | 0 | 0 | 0 | nan% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_200_500k | 36 | 26 | 0 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_30_40k | 72 | 66 | 2 | 1 | 0 | 0 | 0.015% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_40_50k | 74 | 67 | 3 | 1 | 0 | 0 | 0.007% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_500k_1m | 15 | 5 | 0 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_50_75k | 86 | 79 | 3 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_normal_taxable_class_75_100k | 60 | 54 | 2 | 0 | 0 | 0 | 0.000% |
+| estv_dbst | kanton | tax_np_taxable_income_chf | 97 | 36 | 1 | 57 | 1 ¹ | 0 | 0.792% |
+| estv_dbst | kanton | tax_np_taxpayers | 97 | 36 | 1 | 58 | 0 | 0 | 0.071% |
+| estv_dbst | kanton | tax_np_taxpayers_no_federal_tax | 88 | 36 | 0 | 49 | 0 | 0 | 0.218% |
+| estv_dbst | kanton | tax_np_taxpayers_normal | 102 | 93 | 6 | 3 | 0 | 0 | 0.004% |
+| estv_dbst | schweiz | tax_np_federal_tax_chf | 15 | 9 | 0 | 6 | 0 ¹ | 0 | 0.219% |
+| estv_dbst | schweiz | tax_np_net_income_chf | 4 | 1 | 0 | 3 | 0 ¹ | 0 | 0.063% |
+| estv_dbst | schweiz | tax_np_taxable_income_chf | 4 | 1 | 0 | 3 | 0 ¹ | 0 | 0.070% |
 | estv_dbst | schweiz | tax_np_taxpayers | 4 | 0 | 0 | 4 | 0 | 0 | 0.008% |
 | estv_dbst | schweiz | tax_np_taxpayers_no_federal_tax | 2 | 0 | 0 | 2 | 0 | 0 | 0.013% |
 | estv_dbst | schweiz | tax_np_taxpayers_normal | 3 | 3 | 0 | 0 | 0 | 0 | 0.000% |
@@ -621,6 +662,9 @@ Summary: 602 metric×level comparisons, 578 pass, 24 with failures.
 - agr_area_organic_ha: BFS rounds every cell of px-x-0702000000_104 to whole hectares independently at each level (all 237,000 area values are integers). Σ rounded municipalities can therefore differ from the rounded district/canton value by up to 0.5 ha per municipality: every non-transfer residual is ≤ 0.5 ha × municipalities (e.g. district 248 arable land 2000: published 1 ha, municipalities 0 ha). Relative differences are large only for tiny totals (permanent crops, arable land in alpine districts).
 - agr_area_permanent_crops_ha: BFS rounds every cell of px-x-0702000000_104 to whole hectares independently at each level (all 237,000 area values are integers). Σ rounded municipalities can therefore differ from the rounded district/canton value by up to 0.5 ha per municipality: every non-transfer residual is ≤ 0.5 ha × municipalities (e.g. district 248 arable land 2000: published 1 ha, municipalities 0 ha). Relative differences are large only for tiny totals (permanent crops, arable land in alpine districts).
 - sh_recipients: BFS (Map Explorer, indicator description): "Wer im Verlaufe eines Jahres den Wohnort wechselt und sowohl am alten als auch am neuen Ort Sozialhilfe bezieht, wird zweimal ... gezählt. Bei kantonalen Auswertungen wird dieselbe Unterstützungseinheit nur einmal gezählt ... Demzufolge stimmen die Summen ... aller Gemeinden nicht mit dem Kantonstotal überein." Observed for all canton-years with a counted (integer) canton total: municipal sum between +0.0 % and +6.04 % (NW 2012), never below. Non-integer canton totals (GL 2007, AR 2014/15, 2024–2025) are BFS estimates (precision modelled) and are not expected to add up.
+- tax_np_federal_tax_chf: ESTV workbook header (2020+ files): «Zahlen werden nur ausgewiesen, falls Datenschutz und Steuergeheimnis nicht beeinträchtigt wird. Dies kann dazu führen, dass Summen einzelner Ergebnisse nicht den Summen von Gesamtergebnissen entsprechen.» Canton totals of amounts therefore differ from the sum of municipalities (round 2: up to 3.0 % for the federal tax yield, GR 2021, UR 2021/2023; up to 0.8 % for incomes).
+- tax_np_net_income_chf: ESTV workbook header (2020+ files): «Zahlen werden nur ausgewiesen, falls Datenschutz und Steuergeheimnis nicht beeinträchtigt wird. Dies kann dazu führen, dass Summen einzelner Ergebnisse nicht den Summen von Gesamtergebnissen entsprechen.» Canton totals of amounts therefore differ from the sum of municipalities (round 2: up to 3.0 % for the federal tax yield, GR 2021, UR 2021/2023; up to 0.8 % for incomes).
+- tax_np_taxable_income_chf: ESTV workbook header (2020+ files): «Zahlen werden nur ausgewiesen, falls Datenschutz und Steuergeheimnis nicht beeinträchtigt wird. Dies kann dazu führen, dass Summen einzelner Ergebnisse nicht den Summen von Gesamtergebnissen entsprechen.» Canton totals of amounts therefore differ from the sum of municipalities (round 2: up to 3.0 % for the federal tax yield, GR 2021, UR 2021/2023; up to 0.8 % for incomes).
 - fin_tax_revenue_chf: TI canton total (SEL annex TOTALE row) includes communes listed with an earlier accounting year (e.g. 'Rovio (2012)') and, in 2022, the merged commune Val Mara, which are skipped at municipality level: commune sums are 0–1.1% below the total (max 2010: −1.06%); 2015–2021 and 2023–2024 match exactly.
 
 Worst unexplained differences:
@@ -632,30 +676,30 @@ Worst unexplained differences:
 - bfs_arealstatistik / bezirk / area_wooded_ha: [{'unit_id': '1005', 'period': '1979/85', 'value_pub': 2997.0, 'value_agg': 2738.0, 'explained': 0.0}, {'unit_id': '1005', 'period': '1992/97', 'value_pub': 3021.0, 'value_agg': 2763.0, 'explained': 0.0}, {'unit_id': '1005', 'period': '2020/25', 'value_pub': 3051.0, 'value_agg': 2793.0, 'explained': 0.0}]
 - bfs_census_1970_2000 / kanton / vz_rel_no_answer: [{'unit_id': 'FR', 'period': '1990', 'value_pub': 537.0, 'value_agg': 540.0, 'explained': 0.0}]
 - bfs_census_1970_2000 / kanton / vz_rel_other_christian: [{'unit_id': 'FR', 'period': '1980', 'value_pub': 744.0, 'value_agg': 757.0, 'explained': 0.0}, {'unit_id': 'FR', 'period': '1970', 'value_pub': 358.0, 'value_agg': 364.0, 'explained': 0.0}]
-- bfs_construction / kanton / con_exp_maintenance: [{'unit_id': 'JU', 'period': '1994', 'value_pub': 12945.0, 'value_agg': 12286.0, 'explained': -1039.0}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 10573.0, 'value_agg': 9085.0, 'explained': -1688.0}]
+- bfs_construction / kanton / con_exp_maintenance: [{'unit_id': 'JU', 'period': '1994', 'value_pub': 12945.0, 'value_agg': 14231.0, 'explained': 906.0}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 10573.0, 'value_agg': 11389.0, 'explained': 616.0}]
 - bfs_nrw / kanton / nrw_ballots_invalid: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 68.0, 'value_agg': 72.0, 'explained': 2.0}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 120.0, 'value_agg': 132.0, 'explained': 11.0}, {'unit_id': 'BE', 'period': '1987', 'value_pub': 394.0, 'value_agg': 387.0, 'explained': -5.0}]
 - bfs_nrw / kanton / nrw_fw_csp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 3028.0, 'value_agg': 2939.700017501897, 'explained': 0.0}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 1793.0, 'value_agg': 1747.0415785447506, 'explained': 0.0}]
 - bfs_nrw / kanton / nrw_fw_cvp: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 7351.0, 'value_agg': 7182.634275377565, 'explained': 4.245668978789234}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 7118.0, 'value_agg': 6972.472559877706, 'explained': 8.45936726556872}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 6450.0, 'value_agg': 6317.482561394099, 'explained': 4.905698900663455}]
-- bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255868, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.40161152956, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395097, 'explained': 576.7845709381374}]
+- bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255869, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.401611529561, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395095, 'explained': 576.7845709381374}]
 - bfs_nrw / kanton / nrw_fw_other: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 7467.0, 'value_agg': 7137.5399986146585, 'explained': 9.295116111977606}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 3739.0, 'value_agg': 3693.379016908547, 'explained': 19.37925026715989}]
-- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.762213659973, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999061, 'explained': -1113.659691801661}]
-- bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.414646877878, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005554, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634849, 'explained': 445.8648439036694}]
+- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.7622136599741, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999065, 'explained': -1113.659691801661}]
+- bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.414646877877, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005552, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634847, 'explained': 445.8648439036694}]
 - bfs_nrw / kanton / nrw_fw_svp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 520.0, 'value_agg': 795.9472029858425, 'explained': 323.25424458201536}]
-- bfs_nrw / kanton / nrw_fw_total: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 23784.0, 'value_agg': 27057.97368113954, 'explained': 4103.58409916491}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 19762.0, 'value_agg': 21206.272559901772, 'explained': 2105.9489065535427}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 25722.0, 'value_agg': 28304.028023662373, 'explained': 3436.876982299561}]
-- bfs_nrw / schweiz / nrw_fw_csp: [{'unit_id': 'CH', 'period': '1983', 'value_pub': 7808.0, 'value_agg': 7718.95623311764, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1987', 'value_pub': 5889.0, 'value_agg': 5842.560003024101, 'explained': -0.0}]
-- bfs_nrw / schweiz / nrw_fw_other: [{'unit_id': 'CH', 'period': '1979', 'value_pub': 34396.0, 'value_agg': 34056.85462778594, 'explained': -0.0}]
-- bfs_nrw / schweiz / nrw_fw_sep: [{'unit_id': 'CH', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 2826.084314996034, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 3927.333502800723, 'explained': -0.0}]
-- bfs_vehicles / kanton / mfz_newreg_bev: [{'unit_id': 'SG', 'period': '2025', 'value_pub': 3124.0, 'value_agg': 3124.0, 'explained': -102.0}]
+- bfs_nrw / kanton / nrw_fw_total: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 23784.0, 'value_agg': 27057.97368113954, 'explained': 4103.58409916491}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 19762.0, 'value_agg': 21206.27255990177, 'explained': 2105.9489065535427}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 25722.0, 'value_agg': 28304.02802366238, 'explained': 3436.876982299561}]
+- bfs_nrw / schweiz / nrw_fw_csp: [{'unit_id': 'CH', 'period': '1983', 'value_pub': 7808.0, 'value_agg': 7718.956233117641, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1987', 'value_pub': 5889.0, 'value_agg': 5842.560003024102, 'explained': -0.0}]
+- bfs_nrw / schweiz / nrw_fw_other: [{'unit_id': 'CH', 'period': '1979', 'value_pub': 34396.0, 'value_agg': 34056.85462778591, 'explained': -0.0}]
+- bfs_nrw / schweiz / nrw_fw_sep: [{'unit_id': 'CH', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 2826.0843149960356, 'explained': -0.0}, {'unit_id': 'CH', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 3927.333502800726, 'explained': -0.0}]
+- bfs_vehicles / kanton / mfz_newreg_bev: [{'unit_id': 'SG', 'period': '2025', 'value_pub': 3124.0, 'value_agg': 3226.0, 'explained': 0.0}]
 - bfs_votes_gemeinde / kanton / vote_eligible: [{'unit_id': 'BS', 'period': '2003-05-18#4980', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#4990', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#5000', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}]
 - bfs_votes_gemeinde / kanton / vote_no: [{'unit_id': 'JU', 'period': '1995-03-12#4210', 'value_pub': 2622.0, 'value_agg': 3024.0, 'explained': 382.0}, {'unit_id': 'JU', 'period': '1995-03-12#4190', 'value_pub': 5989.0, 'value_agg': 6983.0, 'explained': 961.0}, {'unit_id': 'JU', 'period': '1996-03-10#4280', 'value_pub': 3838.0, 'value_agg': 4277.0, 'explained': 419.0}]
 - bfs_votes_gemeinde / kanton / vote_valid: [{'unit_id': 'SO', 'period': '1972-03-05#2272', 'value_pub': 40437.0, 'value_agg': 37575.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '1972-12-03#2321', 'value_pub': 3241.0, 'value_agg': 3042.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '1972-12-03#2322', 'value_pub': 3235.0, 'value_agg': 3106.0, 'explained': 0.0}]
 
 ## B. Ranges
 
-- **vote_turnout**: 9.0 values outside 0–100 — e.g. arbeitsmarktgebiet 1013 1977-12-04#2760: 145.393
-- **pks_theft**: 180.0 negative counts — e.g. bezirk 1901 2009: -9999.0
-- **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
+- **vote_turnout**: 9.0 values outside 0–100 — e.g. agglomeration 6621 1977-12-04#2780: 308.518
 - **pks_bicycle_theft**: 192.0 negative counts — e.g. bezirk 1901 2009: -9999.0
+- **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
+- **pks_theft**: 180.0 negative counts — e.g. bezirk 1901 2009: -9999.0
 
 ## C. Year-on-year jumps (> 50% and > 200 units)
 
@@ -716,7 +760,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | mig_immigration_swiss | 4 | 2 | [{'unit_id': '3673', 'year': 2014, 'prev': 541.0, 'value': 1.0, 'precision': 'exact'}, {'unit_id': '3673', 'year': 2013, 'prev': 5.0, 'value': 541.0, 'precision': 'exact'}] |
 | ent_jobs_s3 | 4 | 4 | [{'unit_id': '5412', 'year': 2020, 'prev': 733.0, 'value': 2658.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 580.0, 'value': 1639.0, 'precision': 'exact'}] |
 | ent_fte_s3 | 4 | 4 | [{'unit_id': '5412', 'year': 2020, 'prev': 590.0, 'value': 2125.0, 'precision': 'exact'}, {'unit_id': '2527', 'year': 2023, 'prev': 1214.0, 'value': 560.0, 'precision': 'exact'}] |
-| mig_intracant_out_swiss | 3 | 3 | [{'unit_id': '5002', 'year': 2017, 'prev': 1319.0, 'value': 637.0, 'precision': 'exact'}, {'unit_id': '3101', 'year': 2013, 'prev': 2.0, 'value': 224.0, 'precision': 'exact'}] |
+| mig_intracant_out_swiss | 3 | 3 | [{'unit_id': '5002', 'year': 2017, 'prev': 1319.0, 'value': 637.0, 'precision': 'exact'}, {'unit_id': '3112', 'year': 2013, 'prev': 2.0, 'value': 224.0, 'precision': 'exact'}] |
 | mig_intracant_in_foreign | 3 | 3 | [{'unit_id': '5583', 'year': 2024, 'prev': 375.0, 'value': 885.0, 'precision': 'exact'}, {'unit_id': '6633', 'year': 2021, 'prev': 191.0, 'value': 545.0, 'precision': 'exact'}] |
 | tax_np_normal_taxable_class_1_30k | 3 | 3 | [{'unit_id': '843', 'year': 2021, 'prev': 1381.0, 'value': 674.0, 'precision': 'exact'}, {'unit_id': '584', 'year': 2021, 'prev': 824.0, 'value': 309.0, 'precision': 'exact'}] |
 | ent_jobs_women | 3 | 3 | [{'unit_id': '5412', 'year': 2020, 'prev': 404.0, 'value': 1813.0, 'precision': 'exact'}, {'unit_id': '3021', 'year': 2024, 'prev': 529.0, 'value': 1373.0, 'precision': 'exact'}] |
@@ -868,9 +912,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | area_unproductive_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
 | area_water_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
 | area_wooded_ha | 5 | 1979/85 | 2020/25 | 1007 / 2110 | {'not_covered': 1103} |
-| bevnat_birth_rate | 57 | 1969 | 2025 | 1829 / 2110 | {'suppressed': 281} |
-| bevnat_birth_rate_3y | 14 | 2010-2012 | 2023-2025 | 1645 / 2110 | – |
-| bevnat_births | 57 | 1969 | 2025 | 1829 / 2110 | {'suppressed': 281} |
+| bevnat_birth_rate | 57 | 1969 | 2025 | 2110 / 2110 | – |
+| bevnat_birth_rate_3y | 43 | 1981-1983 | 2023-2025 | 2110 / 2110 | – |
+| bevnat_births | 57 | 1969 | 2025 | 2110 / 2110 | – |
 | bevnat_divorce_rate | 57 | 1969 | 2025 | 1300 / 2110 | {'suppressed': 810} |
 | bevnat_divorces | 57 | 1969 | 2025 | 1300 / 2110 | {'suppressed': 810} |
 | bevnat_marriage_rate | 57 | 1969 | 2025 | 1563 / 2110 | {'suppressed': 547} |
@@ -959,10 +1003,10 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | con_share_new_dw_mfh | 30 | 1995 | 2024 | 1528 / 2110 | – |
 | crime_burglaries | 17 | 2009 | 2025 | 160 / 2110 | {'not_covered': 1950} |
 | crime_burglaries_per_1000 | 17 | 2009 | 2025 | 160 / 2110 | {'not_covered': 1950} |
-| crime_property_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
+| crime_property_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
 | crime_stgb_offences | 17 | 2009 | 2025 | 102 / 2110 | {'not_published': 172, 'not_covered': 1836} |
 | crime_stgb_per_1000 | 17 | 2009 | 2025 | 102 / 2110 | {'not_published': 172, 'not_covered': 1836} |
-| crime_stgb_property | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
+| crime_stgb_property | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
 | crime_stgb_violent | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
 | crime_violent_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
 | edu_compulsory_25_64 | 9 | 1990 | 2023 | 2035 / 2110 | {'suppressed': 75} |
@@ -1028,8 +1072,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | ent_workplaces_s1 | 14 | 2011 | 2024 | 1840 / 2110 | {'suppressed': 270} |
 | ent_workplaces_s2 | 14 | 2011 | 2024 | 1824 / 2110 | {'suppressed': 286} |
 | ent_workplaces_s3 | 14 | 2011 | 2024 | 2067 / 2110 | {'suppressed': 43} |
-| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'not_covered': 955, 'no_data': 605, 'not_applicable': 2} |
-| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'not_applicable': 72, 'no_data': 560} |
+| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'no_data': 605, 'not_applicable': 2, 'not_covered': 955} |
+| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'no_data': 560, 'not_applicable': 72} |
 | fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | geo_area_lake_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
@@ -1053,6 +1097,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | gk_share_c | 15 | 2012 | 2026 | 2110 / 2110 | – |
 | gk_share_d | 15 | 2012 | 2026 | 2110 / 2110 | – |
 | gk_share_none | 15 | 2012 | 2026 | 2110 / 2110 | – |
+| gwr_resident_base | 1 | 2026 | 2026 | 2110 / 2110 | – |
+| gwr_school_buildings | 1 | 2026 | 2026 | 2110 / 2110 | – |
+| gwr_school_buildings_per_1000 | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | gws_bld_1919_1945 | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | gws_bld_1946_1980 | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | gws_bld_1981_2000 | 16 | 2010 | 2025 | 2110 / 2110 | – |
@@ -1102,7 +1149,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
 | haz_residents_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_residents_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
+| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
 | haz_share_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_high_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
@@ -1123,9 +1170,22 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | kvg_std300_mean_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_median_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_min_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
-| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'no_data': 192, 'not_covered': 1864, 'suppressed': 24} |
+| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'not_covered': 1864, 'suppressed': 24, 'no_data': 192} |
 | land_price_model_m2 | 51 | 1974 | 2024 | 160 / 2110 | {'not_covered': 1950} |
-| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'no_data': 160, 'not_covered': 1864, 'suppressed': 24} |
+| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'not_covered': 1864, 'suppressed': 24, 'no_data': 160} |
+| lang_sec_de_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_de_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_en_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_en_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_fr_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_fr_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_it_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_it_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_other_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_other_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_pop | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
+| lang_sec_rm_share | 11 | 2010-2014 | 2020-2024 | 113 / 2110 | {'suppressed': 57} |
+| lang_sec_rm_share_ci | 11 | 2010-2014 | 2020-2024 | 113 / 2110 | {'suppressed': 57} |
 | mfz_bev_share | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars_bev | 16 | 2010 | 2025 | 2110 / 2110 | – |
@@ -1165,12 +1225,25 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nat_other_europe | 15 | 2011 | 2025 | 2110 / 2110 | – |
 | nat_outside_europe | 15 | 2011 | 2025 | 2110 / 2110 | – |
 | nat_per_1000 | 15 | 2011 | 2025 | 2110 / 2110 | – |
-| nat_rate | 15 | 2011 | 2025 | 2109 / 2110 | – |
+| nat_rate | 33 | 1981 | 2025 | 2109 / 2110 | – |
 | nat_share_eu_efta | 15 | 2011 | 2025 | 1660 / 2110 | – |
 | nat_total | 15 | 2011 | 2025 | 2110 / 2110 | – |
 | nat_women | 15 | 2011 | 2025 | 2110 / 2110 | – |
+| noise_any_60_50_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_any_65_55_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_rail_day_60_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_rail_night_50_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_road_day_60_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_road_night_50_residents | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_any_60_50 | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_any_65_55 | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_rail_day_60 | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_rail_night_50 | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_road_day_60 | 1 | 2021 | 2021 | 2110 / 2110 | – |
+| noise_share_road_night_50 | 1 | 2021 | 2021 | 2110 / 2110 | – |
 | nrw_ballots_blank | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
-| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'no_data': 65} |
+| nrw_ballots_changed | 14 | 1971 | 2023 | 2040 / 2110 | {'no_data': 65, 'not_published': 5} |
 | nrw_ballots_invalid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_ballots_unchanged | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_ballots_valid | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
@@ -1179,8 +1252,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_fw_csp | 14 | 1971 | 2023 | 119 / 2110 | {'not_applicable': 1991} |
 | nrw_fw_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_published': 5, 'not_applicable': 606} |
-| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_published': 5, 'not_applicable': 287} |
-| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_published': 5, 'not_applicable': 27} |
+| nrw_fw_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_applicable': 287, 'not_published': 5} |
+| nrw_fw_fdp | 14 | 1971 | 2023 | 2078 / 2110 | {'not_applicable': 27, 'not_published': 5} |
 | nrw_fw_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1950} |
 | nrw_fw_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
@@ -1189,24 +1262,24 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_fw_lega | 14 | 1971 | 2023 | 100 / 2110 | {'not_applicable': 2010} |
 | nrw_fw_lps | 14 | 1971 | 2023 | 3 / 2110 | {'not_applicable': 2107} |
 | nrw_fw_mcr | 14 | 1971 | 2023 | 45 / 2110 | {'not_applicable': 2065} |
-| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'not_applicable': 7, 'not_published': 5} |
-| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'not_applicable': 164, 'not_published': 5} |
+| nrw_fw_mitte | 14 | 1971 | 2023 | 2098 / 2110 | {'not_published': 5, 'not_applicable': 7} |
+| nrw_fw_other | 14 | 1971 | 2023 | 1941 / 2110 | {'not_published': 5, 'not_applicable': 164} |
 | nrw_fw_pda | 14 | 1971 | 2023 | 802 / 2110 | {'not_applicable': 1308} |
 | nrw_fw_poch | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_psa | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_rep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_published': 5, 'not_applicable': 1461} |
+| nrw_fw_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_applicable': 1461, 'not_published': 5} |
 | nrw_fw_sep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_fw_sol | 14 | 1971 | 2023 | 369 / 2110 | {'not_applicable': 1741} |
 | nrw_fw_sp | 14 | 1971 | 2023 | 2043 / 2110 | {'not_applicable': 62, 'not_published': 5} |
 | nrw_fw_svp | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_fw_total | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
-| nrw_leaning | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_applicable': 5} |
+| nrw_leaning | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 5, 'majority_election': 65} |
 | nrw_share_bdp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_bloc_centre | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 12, 'majority_election': 58} |
 | nrw_share_bloc_left | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 3, 'not_applicable': 67} |
 | nrw_share_bloc_other | 14 | 1971 | 2023 | 1894 / 2110 | {'not_applicable': 169, 'majority_election': 47} |
-| nrw_share_bloc_right | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 5, 'majority_election': 65} |
+| nrw_share_bloc_right | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_applicable': 5} |
 | nrw_share_csp | 14 | 1971 | 2023 | 119 / 2110 | {'not_applicable': 1991} |
 | nrw_share_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_applicable': 606, 'not_published': 5} |
@@ -1214,24 +1287,24 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_share_fdp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 27, 'majority_election': 38, 'not_published': 5} |
 | nrw_share_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1950} |
 | nrw_share_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_share_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
+| nrw_share_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 65, 'not_published': 5} |
 | nrw_share_gruene | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
 | nrw_share_ldu | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
-| nrw_share_left_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 62, 'majority_election': 3, 'not_published': 5} |
+| nrw_share_left_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 3, 'not_published': 5, 'not_applicable': 62} |
 | nrw_share_lega | 14 | 1971 | 2023 | 100 / 2110 | {'not_applicable': 2010} |
 | nrw_share_lps | 14 | 1971 | 2023 | 3 / 2110 | {'not_applicable': 2107} |
 | nrw_share_mcr | 14 | 1971 | 2023 | 45 / 2110 | {'not_applicable': 2065} |
 | nrw_share_mitte | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 12, 'majority_election': 58} |
-| nrw_share_other | 14 | 1971 | 2023 | 1894 / 2110 | {'not_applicable': 164, 'majority_election': 47, 'not_published': 5} |
+| nrw_share_other | 14 | 1971 | 2023 | 1894 / 2110 | {'majority_election': 47, 'not_published': 5, 'not_applicable': 164} |
 | nrw_share_pda | 14 | 1971 | 2023 | 802 / 2110 | {'not_applicable': 1308} |
 | nrw_share_poch | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_psa | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_rep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_right_bloc | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_published': 5} |
-| nrw_share_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_published': 5, 'not_applicable': 1461} |
+| nrw_share_sd | 14 | 1971 | 2023 | 644 / 2110 | {'not_applicable': 1461, 'not_published': 5} |
 | nrw_share_sep | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_sol | 14 | 1971 | 2023 | 369 / 2110 | {'not_applicable': 1741} |
-| nrw_share_sp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'majority_election': 3, 'not_applicable': 62} |
+| nrw_share_sp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 62, 'not_published': 5, 'majority_election': 3} |
 | nrw_share_svp | 14 | 1971 | 2023 | 2040 / 2110 | {'majority_election': 65, 'not_published': 5} |
 | nrw_turnout | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
 | nrw_unchanged_share | 14 | 1971 | 2023 | 2105 / 2110 | {'not_published': 5} |
@@ -1287,6 +1360,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | rail_boardings_daily | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | rail_boardings_weekday | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | reach_car_aarau | 1 | 2026 | 2026 | 2110 / 2110 | – |
+| reach_car_baden | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_basel | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_bellinzona | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_bern | 1 | 2026 | 2026 | 2110 / 2110 | – |
@@ -1307,48 +1381,60 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | reach_car_winterthur | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_zuerich | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_car_zug | 1 | 2026 | 2026 | 2110 / 2110 | – |
-| reach_pt_aarau | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 10} |
-| reach_pt_basel | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 13} |
-| reach_pt_bellinzona | 1 | 2026 | 2026 | 1782 / 2110 | {'no_data': 328} |
-| reach_pt_bern | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 13} |
-| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 23} |
-| reach_pt_chur | 1 | 2026 | 2026 | 2053 / 2110 | {'no_data': 57} |
-| reach_pt_fribourg | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 23} |
-| reach_pt_geneve | 1 | 2026 | 2026 | 1954 / 2110 | {'no_data': 156} |
-| reach_pt_lausanne | 1 | 2026 | 2026 | 2054 / 2110 | {'no_data': 56} |
-| reach_pt_lugano | 1 | 2026 | 2026 | 1778 / 2110 | {'no_data': 332} |
-| reach_pt_luzern | 1 | 2026 | 2026 | 2093 / 2110 | {'no_data': 17} |
-| reach_pt_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 4} |
-| reach_pt_neuchatel | 1 | 2026 | 2026 | 2066 / 2110 | {'no_data': 44} |
-| reach_pt_olten | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 12} |
-| reach_pt_schaffhausen | 1 | 2026 | 2026 | 2080 / 2110 | {'no_data': 30} |
-| reach_pt_sion | 1 | 2026 | 2026 | 1975 / 2110 | {'no_data': 135} |
-| reach_pt_stgallen | 1 | 2026 | 2026 | 2050 / 2110 | {'no_data': 60} |
-| reach_pt_thun | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 23} |
-| reach_pt_winterthur | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 15} |
-| reach_pt_zuerich | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 8} |
-| reach_pt_zug | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 12} |
-| reach_ptst_aarau | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 15} |
-| reach_ptst_basel | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 19} |
-| reach_ptst_bellinzona | 1 | 2026 | 2026 | 1729 / 2110 | {'no_data': 381} |
-| reach_ptst_bern | 1 | 2026 | 2026 | 2092 / 2110 | {'no_data': 18} |
-| reach_ptst_biel | 1 | 2026 | 2026 | 2080 / 2110 | {'no_data': 30} |
-| reach_ptst_chur | 1 | 2026 | 2026 | 2023 / 2110 | {'no_data': 87} |
-| reach_ptst_fribourg | 1 | 2026 | 2026 | 2080 / 2110 | {'no_data': 30} |
-| reach_ptst_geneve | 1 | 2026 | 2026 | 1924 / 2110 | {'no_data': 186} |
-| reach_ptst_lausanne | 1 | 2026 | 2026 | 2034 / 2110 | {'no_data': 76} |
-| reach_ptst_lugano | 1 | 2026 | 2026 | 1725 / 2110 | {'no_data': 385} |
-| reach_ptst_luzern | 1 | 2026 | 2026 | 2086 / 2110 | {'no_data': 24} |
-| reach_ptst_nearest_hub | 1 | 2026 | 2026 | 2101 / 2110 | {'no_data': 9} |
-| reach_ptst_neuchatel | 1 | 2026 | 2026 | 2048 / 2110 | {'no_data': 62} |
-| reach_ptst_olten | 1 | 2026 | 2026 | 2093 / 2110 | {'no_data': 17} |
-| reach_ptst_schaffhausen | 1 | 2026 | 2026 | 2071 / 2110 | {'no_data': 39} |
-| reach_ptst_sion | 1 | 2026 | 2026 | 1947 / 2110 | {'no_data': 163} |
-| reach_ptst_stgallen | 1 | 2026 | 2026 | 2019 / 2110 | {'no_data': 91} |
-| reach_ptst_thun | 1 | 2026 | 2026 | 2080 / 2110 | {'no_data': 30} |
-| reach_ptst_winterthur | 1 | 2026 | 2026 | 2088 / 2110 | {'no_data': 22} |
-| reach_ptst_zuerich | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 15} |
-| reach_ptst_zug | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 19} |
+| reach_pt_aarau | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 7, 'no_data': 3} |
+| reach_pt_baden | 1 | 2026 | 2026 | 2095 / 2110 | {'not_applicable': 12, 'no_data': 3} |
+| reach_pt_basel | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 3, 'not_applicable': 10} |
+| reach_pt_bellinzona | 1 | 2026 | 2026 | 1782 / 2110 | {'not_applicable': 325, 'no_data': 3} |
+| reach_pt_bern | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 3, 'not_applicable': 10} |
+| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
+| reach_pt_chur | 1 | 2026 | 2026 | 2053 / 2110 | {'not_applicable': 54, 'no_data': 3} |
+| reach_pt_fribourg | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
+| reach_pt_geneve | 1 | 2026 | 2026 | 1954 / 2110 | {'not_applicable': 153, 'no_data': 3} |
+| reach_pt_lausanne | 1 | 2026 | 2026 | 2054 / 2110 | {'not_applicable': 53, 'no_data': 3} |
+| reach_pt_lugano | 1 | 2026 | 2026 | 1778 / 2110 | {'not_applicable': 329, 'no_data': 3} |
+| reach_pt_luzern | 1 | 2026 | 2026 | 2093 / 2110 | {'no_data': 3, 'not_applicable': 14} |
+| reach_pt_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_pt_neuchatel | 1 | 2026 | 2026 | 2066 / 2110 | {'no_data': 3, 'not_applicable': 41} |
+| reach_pt_olten | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 3, 'not_applicable': 9} |
+| reach_pt_schaffhausen | 1 | 2026 | 2026 | 2080 / 2110 | {'not_applicable': 27, 'no_data': 3} |
+| reach_pt_sion | 1 | 2026 | 2026 | 1975 / 2110 | {'not_applicable': 132, 'no_data': 3} |
+| reach_pt_stgallen | 1 | 2026 | 2026 | 2050 / 2110 | {'not_applicable': 57, 'no_data': 3} |
+| reach_pt_thun | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 3, 'not_applicable': 20} |
+| reach_pt_winterthur | 1 | 2026 | 2026 | 2095 / 2110 | {'not_applicable': 12, 'no_data': 3} |
+| reach_pt_zuerich | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 5, 'no_data': 3} |
+| reach_pt_zug | 1 | 2026 | 2026 | 2098 / 2110 | {'no_data': 3, 'not_applicable': 9} |
+| reach_ptst_aarau | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 7, 'not_applicable': 8} |
+| reach_ptst_baden | 1 | 2026 | 2026 | 2088 / 2110 | {'no_data': 7, 'not_applicable': 15} |
+| reach_ptst_basel | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 7, 'not_applicable': 12} |
+| reach_ptst_bellinzona | 1 | 2026 | 2026 | 1729 / 2110 | {'not_applicable': 374, 'no_data': 7} |
+| reach_ptst_bern | 1 | 2026 | 2026 | 2093 / 2110 | {'not_applicable': 10, 'no_data': 7} |
+| reach_ptst_biel | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
+| reach_ptst_chur | 1 | 2026 | 2026 | 2021 / 2110 | {'not_applicable': 82, 'no_data': 7} |
+| reach_ptst_fribourg | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
+| reach_ptst_geneve | 1 | 2026 | 2026 | 1924 / 2110 | {'not_applicable': 179, 'no_data': 7} |
+| reach_ptst_lausanne | 1 | 2026 | 2026 | 2037 / 2110 | {'not_applicable': 66, 'no_data': 7} |
+| reach_ptst_lugano | 1 | 2026 | 2026 | 1724 / 2110 | {'no_data': 7, 'not_applicable': 379} |
+| reach_ptst_luzern | 1 | 2026 | 2026 | 2086 / 2110 | {'not_applicable': 17, 'no_data': 7} |
+| reach_ptst_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
+| reach_ptst_neuchatel | 1 | 2026 | 2026 | 2049 / 2110 | {'no_data': 7, 'not_applicable': 54} |
+| reach_ptst_olten | 1 | 2026 | 2026 | 2094 / 2110 | {'no_data': 7, 'not_applicable': 9} |
+| reach_ptst_schaffhausen | 1 | 2026 | 2026 | 2070 / 2110 | {'not_applicable': 33, 'no_data': 7} |
+| reach_ptst_sion | 1 | 2026 | 2026 | 1950 / 2110 | {'not_applicable': 153, 'no_data': 7} |
+| reach_ptst_stgallen | 1 | 2026 | 2026 | 2017 / 2110 | {'not_applicable': 86, 'no_data': 7} |
+| reach_ptst_thun | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
+| reach_ptst_winterthur | 1 | 2026 | 2026 | 2088 / 2110 | {'not_applicable': 15, 'no_data': 7} |
+| reach_ptst_zuerich | 1 | 2026 | 2026 | 2096 / 2110 | {'not_applicable': 7, 'no_data': 7} |
+| reach_ptst_zug | 1 | 2026 | 2026 | 2091 / 2110 | {'no_data': 7, 'not_applicable': 12} |
+| reach_spread_from_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_spread_from_pt_p50_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_spread_from_pt_p90_nearest_hub | 1 | 2026 | 2026 | 2088 / 2110 | {'not_applicable': 19, 'no_data': 3} |
+| reach_spread_from_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 3, 'no_data': 7} |
+| reach_spread_from_ptst_p50_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 7, 'not_applicable': 3} |
+| reach_spread_from_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2065 / 2110 | {'not_applicable': 38, 'no_data': 7} |
+| reach_spread_to_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_spread_to_pt_p90_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_spread_to_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
+| reach_spread_to_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 1, 'no_data': 7} |
 | rent_city_r3 | 2 | 2022 | 2023 | 180 / 2110 | – |
 | rent_city_r3_ci | 2 | 2022 | 2023 | 180 / 2110 | – |
 | rent_city_r4 | 2 | 2022 | 2023 | 179 / 2110 | {'suppressed': 1} |
@@ -1397,6 +1483,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | tax_np_federal_tax_per_taxpayer | 21 | 2003 | 2023 | 2110 / 2110 | – |
 | tax_np_mean_net_income | 20 | 2003 | 2023 | 2110 / 2110 | – |
 | tax_np_mean_taxable_income | 20 | 2003 | 2023 | 2110 / 2110 | – |
+| tax_np_median_taxable_income | 4 | 2020 | 2023 | 2108 / 2110 | {'suppressed': 2} |
 | tax_np_net_income_chf | 16 | 2008 | 2023 | 2110 / 2110 | – |
 | tax_np_normal_taxable_100k_plus | 4 | 2020 | 2023 | 2062 / 2110 | {'suppressed': 48} |
 | tax_np_normal_taxable_class_0 | 4 | 2020 | 2023 | 2067 / 2110 | {'suppressed': 43} |
@@ -1455,8 +1542,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | udemo_jobs_births | 11 | 2013 | 2023 | 1032 / 2110 | {'suppressed': 1078} |
 | udemo_jobs_closures | 11 | 2013 | 2023 | 0 / 2110 | {'no_data': 2110} |
 | udemo_jobs_per_enterprise | 11 | 2013 | 2023 | 1944 / 2110 | {'suppressed': 166} |
-| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'suppressed': 213, 'not_covered': 1530, 'no_data': 280} |
-| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'suppressed': 213, 'not_covered': 1530, 'no_data': 280} |
+| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'not_covered': 1530, 'no_data': 280, 'suppressed': 213} |
+| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'not_covered': 1530, 'no_data': 280, 'suppressed': 213} |
 | vac_dwelling_stock | 16 | 2011 | 2026 | 2110 / 2110 | – |
 | vac_dwellings | 32 | 1995 | 2026 | 2110 / 2110 | – |
 | vac_for_rent | 32 | 1995 | 2026 | 2110 / 2110 | – |
@@ -1539,5 +1626,24 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 
 - STATPOP population vs. demographic balance stock at 31 Dec (2011+; 2010 is ESPOP-based in the balance): 31602 of 31650 within 0.1% — worst: [{'unit_id': '5399', 'period': '2019', 'value_a': 802.0, 'value_b': 640.0}, {'unit_id': '5399', 'period': '2016', 'value_a': 819.0, 'value_b': 655.0}, {'unit_id': '5399', 'period': '2015', 'value_a': 830.0, 'value_b': 665.0}]
 - Persons in private households vs. STATPOP population (institutions explain the gap): 29386 of 29540 within 10.0% — worst: [{'unit_id': '5407', 'period': '2012', 'value_a': 2423.0, 'value_b': 3988.0}, {'unit_id': '5407', 'period': '2015', 'value_a': 2674.0, 'value_b': 4224.0}, {'unit_id': '5407', 'period': '2013', 'value_a': 2594.0, 'value_b': 4096.0}]
-- GWS dwellings of year t vs. dwelling stock in the vacancy count of year t+1 (BFS's own denominator): 33760 of 33760 within 0.1% — worst: [{'unit_id': '1150', 'period': '2010', 'value_a': 822.0, 'value_b': 822.0}, {'unit_id': '1150', 'period': '2011', 'value_a': 819.0, 'value_b': 819.0}, {'unit_id': '1150', 'period': '2012', 'value_a': 818.0, 'value_b': 818.0}]
+- GWS dwellings of year t vs. dwelling stock in the vacancy count of year t+1 (BFS's own denominator): 33760 of 33760 within 0.1% — worst: [{'unit_id': '1', 'period': '2010', 'value_a': 856.0, 'value_b': 856.0}, {'unit_id': '1', 'period': '2011', 'value_a': 856.0, 'value_b': 856.0}, {'unit_id': '1', 'period': '2012', 'value_a': 870.0, 'value_b': 870.0}]
 - Land area (swissBOUNDARIES3D 2026, without lakes) vs. land-use statistics total area 2013/18: 2104 of 2110 within 5.0% — worst: [{'unit_id': '4651', 'period': '2026', 'value_a': 31.0, 'value_b': 35.0}, {'unit_id': '5187', 'period': '2026', 'value_a': 71.0, 'value_b': 66.0}, {'unit_id': '5206', 'period': '2026', 'value_a': 89.0, 'value_b': 83.0}]
+
+## H. Map curation (D38, `pipeline/curation.yaml`)
+
+Verdicts from the last web build: shown, shown with a partial-coverage note, hidden as a map at that level (still on profiles), or hidden entirely (duplicates, confidence intervals). Rule: show at ≥ 80 % of units and of residents; note at ≥ 25 % of units, ≥ 50 % of residents and ≥ 20 units; levels with fewer than 20 units only when complete. Full list with reasons: `data/interim/curation_verdicts.csv`.
+
+| Level | show | note | hide | hidden |
+|---|---|---|---|---|
+| gemeinde | 619 | 26 | 94 | 11 |
+| bezirk | 570 | 13 | 37 | 18 |
+| kanton | 605 | 3 | 60 | 17 |
+| grossregion | 517 | 0 | 40 | 3 |
+| sprachgebiet | 517 | 0 | 36 | 3 |
+| agglomeration | 524 | 9 | 39 | 3 |
+| arbeitsmarktgebiet | 527 | 10 | 41 | 3 |
+| stadt_land | 73 | 0 | 480 | 3 |
+| gemeindetyp | 507 | 0 | 53 | 3 |
+| **all** | 4459 | 61 | 880 | 64 |
+
+Metrics with no map at any level: 133 (by theme: Language & religion 32, Income & tax 26, Safety 21, Real estate prices 20, Education 5, Energy & climate 4, Public finances 4, Mobility & accessibility 4, Environment & hazards 4, Households & family 3, Migration & nationality 3, Housing & buildings 3, Economy & jobs 2, Population & demography 2).

@@ -304,3 +304,28 @@ does not pick them up.
 `minutes_p10`, `minutes_p90` (now also for `gtfs_rcsa_popweighted`), new `minutes_wait_p10`, `minutes_wait_p90`
 (`minutes_incl_wait` is the with-wait median); new methods `gtfs_fcsa_mainstation` and `gtfs_fcsa_popweighted`
 (hub outwards, same definitions as the `rcsa` ones). The older `gtfs_csa_*` rows are unchanged.
+
+## 9. Audit round 2: curation, estimates, special values — NEW, additive (D40–D42)
+
+`metrics.json`, per metric:
+- `levels` now holds only the levels **offered as maps** (D38 curation, `pipeline/curation.yaml`). A level
+  curated away is removed here and gets `unavailable_levels[level] = "not offered as a map: <reason>"`.
+- `profile_levels` (new): every level with values. Profiles and the compare-places table use it, so a value
+  whose map is hidden at that level (e.g. land price for 30 municipalities) is still shown on its profile.
+- `curation` (new): `{level: {v: "show" | "note" | "hide", why}}`, the verdict and its reason per level.
+- `hidden: true` now also marks duplicates and confidence-interval companions (`*_ci`); their `levels` are
+  kept, because the reliability notes look up `<id>_ci` through them.
+- `special` (new): `{max, rule_en, rule_de, rule_fr}` for metrics with a plausibility cap (cars per 1,000
+  residents above 1,000: fleets registered at one address).
+- `reliability` now exists for every ratio (generic rule, `auto` in `pipeline/reliability.yaml`); the generic
+  entries carry `auto: "share" | "rate" | "mean"`.
+- `precision` is the precision of the values shown at the default period (e.g. social assistance 2024/25:
+  modelled), so card and statistics agree.
+
+`latest/<level>/*.json` flag bits (`flag_bits`): two new bits, additive.
+- `estimate` = 32: a sum (or a ratio of sums) that leaves out a few municipalities suppressed for small
+  numbers, holding at most 1 % of the unit's residents; the unit's note says how many and what share.
+- `special` = 64: the value exceeds the metric's `special.max`; the metric's `special.rule_*` says why.
+
+`featured.json` (new): `{note, maps: [{rank, metric, level, view, story, available, label_en, label_de}]}`,
+the 15 featured story maps (journalist, round 2); `available` is true when the metric is offered at that level.

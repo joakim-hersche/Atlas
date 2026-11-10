@@ -27,6 +27,8 @@ JUMP_REL, JUMP_MIN_ABS = 0.5, 200
 # sources whose published higher-level values refer to the territory at the date in `period`
 # (e.g. federal votes: canton results on the canton territory of the vote date)
 STATE_FROM_PERIOD = {"bfs_votes_gemeinde", "bfs_nrw"}
+# published canton tables on the canton territory of each year (audit round 2, M1): state 31 December
+STATE_YEAR_END = {"bfs_statent", "bfs_udemo", "estv_dbst"}
 
 
 def _state_from_period(period: str, default: dt.date) -> dt.date:
@@ -168,6 +170,8 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
                 # published canton results refer to the territory of the vote/election date;
                 # district results are on the source's own state (E2)
                 state = _state_from_period(per, state0) if (sid in STATE_FROM_PERIOD and lvl == "kanton") else state0
+                if sid in STATE_YEAR_END and lvl == "kanton" and str(per)[:4].isdigit():
+                    state = dt.date(int(str(per)[:4]), 12, 31)
                 eff = transfer_effect(gem[gem["period"] == per], state, lvl)
                 j.loc[jj.index, "explained"] = jj["unit_id"].astype(str).map(eff).fillna(0).values
         if lvl in ("kanton", "bezirk") and len(pseudo) and not with_pseudo:
