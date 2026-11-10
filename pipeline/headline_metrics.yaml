@@ -1,0 +1,35 @@
+# Headline metrics (decision D24): shown first per theme in the metric picker and loaded in the
+# core data file. All other metrics stay available under "all metrics" and in search.
+# Proposal for owner review (docs/headline_metrics.md). Metrics from sources still held back by
+# the licence gate are listed too; they appear once their licence is cleared.
+# hidden: metrics never offered in the picker (duplicates, technical denominators) — decision D28.
+
+headline:
+  Geography & identity: [geo_pop_density, geo_elev_mean, geo_lake_share]
+  Population & demography: [pop_total, pop_change_10y, share_age_65plus, old_age_dependency, bevnat_birth_rate]
+  Migration & nationality: [share_foreign, bil_net_migration_rate, nat_rate]
+  Language & religion: [vz_lang_de_share, vz_lang_fr_share, vz_lang_it_share, vz_rel_catholic_share]
+  Households & family: [hh_avg_size, hh_share_1p, share_married]
+  Economy & jobs: [ent_jobs_per_1000, ent_jobs_change_10y, ent_share_jobs_s3, xb_per_100_jobs]
+  Income & tax: [tax_np_mean_taxable_income, tax_np_share_taxable_100k_plus, tax_np_federal_tax_per_capita, tax_burden_single_80k, tax_burden_married2c_100k]
+  Public finances: [fin_net_debt_per_capita, fin_self_financing_ratio]
+  Housing & buildings: [vac_rate, zw_second_home_share, gws_share_sfh, gws_share_bld_2001plus, gws_share_heatpump, con_new_dwellings_per_1000]
+  Real estate prices: [land_price_m2]
+  Land use & built environment: [area_share_settlement, area_share_wooded, bz_area_per_inhabitant]
+  Mobility & accessibility: [reach_pt_nearest_hub, reach_car_nearest_hub, gk_share_ab, mfz_cars_per_1000, mfz_bev_share, acc_dist_supermarket]
+  Energy & climate: [en_ecar_share, en_solar_potential_used, en_pv_kwp_per_capita, en_heat_renewable_share, clim_temp_pop]
+  Environment & hazards: [air_no2_pop, haz_share_high_medium, pa_bln_share]
+  Health & social: [sh_rate, kvg_mean_premium_adult]
+  Education: [edu_share_tertiary, edu_labb_matura_rate]
+  Safety: [acc_injury_per_1000, crime_stgb_per_1000]
+  Politics: [vote_turnout, vote_yes_share, nrw_turnout, nrw_share_svp, nrw_share_sp, nrw_share_fdp, nrw_share_mitte, nrw_share_gruene]
+
+hidden:
+  - bil_births          # D28: births come from BEVNAT (bevnat_births, 1969+)
+  - bil_birth_rate      # D28
+  - area_settlement_base_ha  # technical denominator of area_settlement_index
+  - air_hectare_residents    # technical denominator
+  - acc_population           # technical weight
+  - haz_hectare_residents    # technical denominator
+  - gk_population            # technical denominator
+  - edu_imputation_share     # data-quality indicator, shown in the profile notes instead
