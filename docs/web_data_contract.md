@@ -15,12 +15,13 @@ indices are strings. "null" means the field is absent or null when it does not a
 
 | field | type | meaning |
 |---|---|---|
-| `label_fr` | string \| null | French label, from `pipeline/i18n/labels.yaml` (research agent) once it exists |
-| `unit_de`, `unit_fr` | string \| null | unit in German / French (same source); `unit` stays English |
+| `label_fr` | string \| null | French label, from `pipeline/i18n/labels.yaml` (research agent; 783 entries) |
+| `unit_de`, `unit_fr` | string \| null | unit in German / French (same source); `unit` stays as in metrics.yaml (English) |
 | `latest` | string | **⚠ meaning changes (F):** the *default* period = the newest period with near-complete coverage (rule below). Was: newest period with any value |
 | `latest_available` | string | newest period with any value at any level (≥ `latest`) |
-| `incomplete_periods` | object \| null | periods newer than `latest` with incomplete coverage: `{"2020/25": {"n": 1007, "of": 2110, "level": "gemeinde", "label_en": "in progress: 1,007 of 2,110 municipalities", "label_de": "in Bearbeitung: 1'007 von 2'110 Gemeinden"}}`. Still in `periods` and in `series/<id>.json` (year slider) |
+| `incomplete_periods` | object \| null | periods newer than `latest` with incomplete coverage: `{"2020/25": {"n": 1007, "of": 2110, "level": "gemeinde", "label_en": "incomplete: 1,007 of 2,110 municipalities", "label_de": "unvollständig: 1'007 von 2'110 Gemeinden"}}`. Still in `periods` and in `series/<id>.json` (year slider) |
 | `coverage` | string | **⚠ meaning changes (G):** computed from the data shipped for `latest`, same format as before: `"national"` or `"partial:AG,BE,..."` (cantons with data). A canton counts as covered when ≥ 50 % of its municipalities have a value or a suppressed/not-applicable status |
+| `native_level` | string | level the source publishes at (`gemeinde`, `bezirk`, `kanton`, `arbeitsmarktgebiet`, …); values of a metric whose native level is above the municipality are regional values (D21), e.g. tax burden by labour-market area `taxb_amr_*` |
 | `coverage_meta` | string | the coverage stated in metrics.yaml (old meaning of `coverage`) |
 | `coverage_detail` | object | `{"level": "gemeinde", "period": "2025", "n": 45, "of": 2110, "n_cantons": 1}` for `latest` at the lowest level with values |
 | `unavailable_levels` | object \| null | `{level: reason_en}` for levels without values, with the real reason, e.g. `"published only at district level (Structural Survey)"`, `"median: cannot be aggregated; no published value at this level"` (D) |
@@ -33,8 +34,10 @@ indices are strings. "null" means the field is absent or null when it does not a
 | `description` | string \| null | unchanged; texts added/clarified for lake share, area, vacancy, BEV shares, out-commuting (C, E, K) |
 
 **Default-period rule (F).** Per metric and level, coverage(p) = number of units with status `ok` in
-period p. The default period is the newest p with coverage(p) ≥ 95 % of the largest coverage
-over all periods of that metric and level. `latest/<level>/*.json` hold the default period of each
+period p. Starting from the newest period, the default steps back while a period has fewer than
+95 % of the units of the period before it (an incomplete newer round: Arealstatistik 2020/25 with
+1,007 of 2,110 → 2013/18; unemployment 2025 with GE only → 2024; social assistance 2025 → 2024). A
+metric that is small but steady (land price, 25–30 municipalities) keeps its newest period. `latest/<level>/*.json` hold the default period of each
 level (so a canton column can be on an older period than the municipality column only when the
 newer canton values are incomplete). Per-vote metrics: the newest vote.
 
@@ -109,11 +112,13 @@ the pooled-rate periods.
  "pt_station": {"zuerich": [..]}, // NEW headline figure: main station -> hub station time
  "car": {"zuerich": [..]},        // unchanged
  "periods": {"pt": "2026", "car": "2026", "pt_station": "2026"},
- "main_station": [["Winterthur", 8506000], null, ...],   // NEW, per unit (null: no stop in municipality)
+ "main_station": [["Winterthur", 8506000, true], null, ...],   // NEW, per unit: name, didok, inside the municipality (null: no stop within 2 km)
  "methods": {                                                 // NEW one-line method texts
    "pt_station": {"en": "...", "de": "..."}, "pt": {"en": "...", "de": "..."}, "car": {"en": "...", "de": "..."}},
- "reasons": {"pt": {"<unit idx>": "no stop within walking distance (1.5 km)"},       // NEW
-             "pt_station": {"<unit idx>": "no stop in the municipality"}, "car": {}}}
+ "main_station_fields": ["name", "didok", "inside_municipality"],
+ "reasons": {"pt": {"zuerich": {"<unit idx>": "no stop within walking distance (1.5 km) of where people live"}},  // NEW, per hub
+             "pt_station": {"geneve": {"<unit idx>": "no arrival at the hub by 10:30 on the service day"}}, "car": {}},
+ "notes": {"pt_station": {"geneve": {"<unit idx>": "no arrival by 08:30: median over the hour from the earliest possible arrival (08:55)"}}}}
 ```
 
 - **Station time** (`pt_station`, metric `reach_ptst_<hub>`): timetable journey time from the
@@ -126,6 +131,11 @@ the pooled-rate periods.
 - **Door-to-door** (`pt`, metric `reach_pt_<hub>`): towards the hub, same arrival window; each
   inhabited hectare walks (straight line × 1.3, 1.2 m/s) to the best stop within 1.5 km (min over
   stops of walk + stop's median journey); population-weighted median over hectares.
+- Far hubs: where the hub cannot be reached by 08:30 at all, the hour from the earliest possible
+  arrival is used (if by 10:30) and `notes` says so; otherwise the value is null with a reason.
+  About 27 % of hub–municipality pairs use this later window, 4 % have no arrival by 10:30.
+- Main station when the municipality has no stop: the station chosen the same way within 2 km of its
+  population-weighted centre (`inside_municipality` false; 37 municipalities).
 - The growing-lines files `reach/<hub>_<mode>.json` stay hub-outward and unchanged.
 
 ## 5. `votes/index.json` — NEW (B)
@@ -164,3 +174,18 @@ the pooled-rate periods.
 (null if the source has no manifest); `status_text`: plain wording such as
 "held back: licence not yet confirmed" instead of "UNVERIFIED" / "brief rule 5".
 `excluded_sources.json` `note` uses the same plain wording.
+
+## 7. Other files (added after the first version of this contract)
+
+- `glossary.json` (copied to `web/public/data/web/glossary.json`): `pipeline/i18n/glossary.yaml` as JSON,
+  `{key: {term_en, term_de, term_fr, en, de, fr}}` — plain-language explanations (quantile, P10/P90, …).
+- `votes/index.json` and every `votes/<date>_<id>.json` are now copied by `copy-data.mjs`.
+- Rents (`bfs_rents`, research agent): normal metrics; canton rows have `native_level` kanton, the
+  3-/4-room city rents are partial municipality coverage (`coverage: "partial:..."`, 180 cities).
+- `sources.json` rows also carry `status_note` where meta.yaml has one (e.g. STATPOP: definitive results).
+- Tax burden (`bfs_tax_burden`, research agent): `taxb_city_*` for 179 cities (partial municipal coverage,
+  tax years 2023–2024) and `taxb_amr_*` for the 101 labour-market areas (native level
+  `arbeitsmarktgebiet`, 2010–2025, in `latest/arbeitsmarktgebiet/*.json` only). Headline: married couple
+  with 2 children at CHF 100k and single at 80k (cities), and the two area series.
+- `search.json`: postal-code rows with less than 0.5 % of a locality's addresses are left out (Riehen in 4058).
+

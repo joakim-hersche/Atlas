@@ -3,7 +3,7 @@
   // at the current zoom, plus counts of units without a circle.
   import { t } from '../lib/i18n.svelte';
   import type { MetricMeta } from '../lib/data';
-  import { fmtNumber, fmtPeriod, fmtTick } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, fmtTick, unitOf } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -45,8 +45,8 @@
 </script>
 
 <div class="size">
-  <div class="head"><span class="unit">{meta.unit || t('fp.value')}</span><span class="per">&nbsp;· {fmtPeriod(period)} · {t('sz.area')}</span></div>
-  <svg width={W} height={H} role="img" aria-label="Circle sizes: {refs.map((r) => fmtTick(r.v, meta)).join(', ')} {meta.unit}">
+  <div class="head"><span class="unit">{unitOf(meta) || t('fp.value')}</span><span class="per">&nbsp;· {fmtPeriod(period)} · {t('sz.area')}</span></div>
+  <svg width={W} height={H} role="img" aria-label="{t('sz.aria')}: {refs.map((r) => fmtTick(r.v, meta)).join(', ')} {unitOf(meta)}">
     {#each refs as c, k}
       {@const cy = H - 2 - c.r}
       <circle cx={R + 1} {cy} r={Math.max(0.8, c.r)} class:filled class="c" />
@@ -55,9 +55,9 @@
     {/each}
   </svg>
   <p class="meta">
-    <span class="num">{fmtNumber(nDrawn, 0)}</span> {unitWord} drawn
-    {#if nMissing}· <span class="num">{fmtNumber(nMissing, 0)}</span> no data{/if}
-    {#if nNonPositive}· <span class="num">{fmtNumber(nNonPositive, 0)}</span> ≤ 0, no circle{/if}
+    {t('sz.drawn', { n: fmtNumber(nDrawn, 0), units: unitWord })}
+    {#if nMissing}· {t('sz.nodata', { n: fmtNumber(nMissing, 0) })}{/if}
+    {#if nNonPositive}· {t('sz.nonpos', { n: fmtNumber(nNonPositive, 0) })}{/if}
   </p>
 </div>
 

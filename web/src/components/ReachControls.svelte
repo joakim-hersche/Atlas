@@ -71,7 +71,7 @@
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
   .hl { flex-basis: 100%; }
   .hub {
-    flex: 1; min-width: 0; padding: 4px 26px 4px 8px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel);
+    flex: 1 1 9em; min-width: 0; padding: 4px 26px 4px 8px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel);
     font-size: 0.85rem; font-weight: 600; -webkit-appearance: none; appearance: none; cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 7px center; background-size: 12px;

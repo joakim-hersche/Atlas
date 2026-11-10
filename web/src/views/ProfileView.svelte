@@ -8,6 +8,10 @@
       'p.notFound': 'No place with the id “{id}”.',
       'p.population': 'Population',
       'p.area': 'Area',
+      'p.landArea': 'Land area',
+      'p.inclLakes': '{a} incl. lakes',
+      'p.noLakes': 'without lakes',
+      'p.densSub': 'per km² land area',
       'p.elevation': 'Elevation',
       'p.elevRange': 'lowest {lo} · highest {hi}',
       'p.density': 'Density',
@@ -59,6 +63,8 @@
       'p.similar': 'Similar places',
       'p.similarNote': 'Nearest {units} by z-scores of: {list}. Log scale for density, jobs and income; missing values skipped.',
       'p.similarNone': 'Not enough values to compare.',
+      'p.distH': 'Number = distance: 0 is identical on these metrics; two places picked at random are about 1.4 apart.',
+      'p.distT': 'Distance: root mean square of the z-score differences',
       'p.history': 'Boundary history',
       'p.historyNone': 'No mergers, splits, renames or canton or district changes since 1960.',
       'p.historyOnly': 'Boundary history is recorded for municipalities.',
@@ -77,6 +83,10 @@
       'p.notFound': 'Kein Ort mit der Kennung «{id}».',
       'p.population': 'Bevölkerung',
       'p.area': 'Fläche',
+      'p.landArea': 'Landfläche',
+      'p.inclLakes': '{a} mit Seen',
+      'p.noLakes': 'ohne Seen',
+      'p.densSub': 'Einw. pro km² Landfläche',
       'p.elevation': 'Höhe',
       'p.elevRange': 'tiefster Punkt {lo} · höchster {hi}',
       'p.density': 'Dichte',
@@ -128,6 +138,8 @@
       'p.similar': 'Ähnliche Orte',
       'p.similarNote': 'Nächste {units} nach z-Werten von: {list}. Dichte, Arbeitsplätze und Einkommen logarithmiert; fehlende Werte übersprungen.',
       'p.similarNone': 'Zu wenige Werte für einen Vergleich.',
+      'p.distH': 'Zahl = Abstand: 0 ist auf diesen Kennzahlen identisch; zwei zufällig gewählte Orte liegen etwa 1,4 auseinander.',
+      'p.distT': 'Abstand: quadratisches Mittel der Differenzen der z-Werte',
       'p.history': 'Gebietsgeschichte',
       'p.historyNone': 'Seit 1960 keine Fusionen, Teilungen, Umbenennungen, Kantons- oder Bezirkswechsel.',
       'p.historyOnly': 'Die Gebietsgeschichte wird für Gemeinden geführt.',
@@ -158,11 +170,13 @@
   // reason, D21), neighbours, similar places, travel times to the hubs and the boundary history.
   // Data loads on demand: the level's core file (+ geography for area), other theme files when opened.
   import Locator from '../components/Locator.svelte';
+  import Term from '../components/Term.svelte';
+  import { glossKeyOf } from '../lib/glossary.svelte';
   import PctBar from '../components/PctBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
-  import { isDe, levelName, ml, t, themeName, tiedText } from '../lib/i18n.svelte';
+  import { loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
+  import { historyFr, isDe, levelName, ml, t, themeName, tiedText, unitName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
   import {
     hideAltNames, loadHistory, loadIdentity, loadNeighbours, loadReachTimes, loadRows, loadSearch, parseRef, refOf,
@@ -239,7 +253,7 @@
 
   const idx = $derived(pl ? (pl.index.get(unit.id) ?? null) : null);
   const row = $derived(rows?.get(ref));
-  const name = $derived(pl && idx !== null ? pl.name[idx] : (row?.name ?? unit.id));
+  const name = $derived(placeName(unit.level, unit.id, pl && idx !== null ? pl.name[idx] : (row?.name ?? unit.id)));
   const blocks = $derived(themeBlocks(base, unit.level));
   const unitsWord = $derived(levelWord(unit.level));
 
@@ -260,8 +274,13 @@
     const out: { k: string; v: string; sub?: string }[] = [];
     const pop = val('pop_total');
     if (pop?.value != null) out.push({ k: t('p.population'), v: fmtNumber(pop.value, 0), sub: pop.period });
+    // header area: land area without lakes (contract C); the total incl. lakes as the second line
+    const land = base.metas.has('geo_area_land_ha') ? val('geo_area_land_ha') : undefined;
     const area = val('geo_area_total_ha');
-    if (area?.value != null) out.push({ k: t('p.area'), v: `${fmtNumber(area.value / 100, area.value < 1000 ? 2 : 1)} ${t('p.km2')}` });
+    const km2 = (ha: number) => `${fmtNumber(ha / 100, ha < 1000 ? 2 : 1)} ${t('p.km2')}`;
+    if (land?.value != null)
+      out.push({ k: t('p.landArea'), v: km2(land.value), sub: area?.value != null && area.value > land.value ? t('p.inclLakes', { a: km2(area.value) }) : t('p.noLakes') });
+    else if (area?.value != null) out.push({ k: t('p.area'), v: km2(area.value) });
     const el = val('geo_elev_mean');
     if (el?.value != null) {
       const lo = val('geo_elev_min')?.value;
@@ -272,7 +291,7 @@
       });
     }
     const d = val('geo_pop_density');
-    if (d?.value != null) out.push({ k: t('p.density'), v: `${fmtNumber(d.value, 0)}`, sub: isDe() ? 'Einw. pro km² Landfläche' : 'per km² land area' });
+    if (d?.value != null) out.push({ k: t('p.density'), v: `${fmtNumber(d.value, 0)}`, sub: t('p.densSub') });
     return out;
   });
 
@@ -291,7 +310,7 @@
     const add = (k: string, level: string, id: unknown) => {
       if (typeof id !== 'string' || !id) return;
       const u = rows!.get(refOf(level, id));
-      if (u) out.push({ k, ref: refOf(level, id), name: u.name });
+      if (u) out.push({ k, ref: refOf(level, id), name: unitName(u) });
     };
     if (unit.level !== 'kanton') add(t('p.canton'), 'kanton', r.kanton);
     if (unit.level === 'gemeinde') {
@@ -341,7 +360,7 @@
   const neigh = $derived.by(() => {
     const ids = neighbours?.levels[unit.level]?.[unit.id];
     if (!ids || !rows) return null;
-    return ids.map((id) => ({ ref: refOf(unit.level, id), name: rows!.get(refOf(unit.level, id))?.name ?? id, kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
+    return ids.map((id) => ({ ref: refOf(unit.level, id), name: placeName(unit.level, id, rows!.get(refOf(unit.level, id))?.name ?? id), kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
   });
   const similar = $derived(pl && idx !== null ? similarPlaces(pl, idx) : null);
@@ -366,7 +385,7 @@
     return out;
   });
   const events = $derived(unit.level === 'gemeinde' && history ? (history.units[unit.id] ?? []) : null);
-  const evType = (k: string) => (isDe() ? HISTORY_DE[k] : history?.types[k]) ?? k;
+  const evType = (k: string) => (isDe() ? HISTORY_DE[k] : app.lang === 'fr' ? historyFr(k) : history?.types[k]) ?? history?.types[k] ?? k;
   const names = (xs: [string, string][]) => xs.map(([id, n]) => `${n} (${id})`).join(', ');
 
   const publisher = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
@@ -385,7 +404,7 @@
   {@const e = entry(m)}
   <div class="mrow" class:gap={e && e.value === null}>
     <div class="ml">
-      <span class="lbl">{ml(m)}</span>
+      <span class="lbl">{ml(m)}<Term k={glossKeyOf(m)} /></span>
       <span class="tags">
         {#if e}<span class="tag">{precisionLabel(e.precision)}</span><span class="sep">·</span>{/if}
         {#if e?.partial}<span class="tag warn">{t('p.partial', { n: e.partial.length })}</span><span class="sep">·</span>{/if}
@@ -443,7 +462,7 @@
           {#if partOf.length || row?.n_gemeinden}
             <dl class="part">
               {#each partOf as p}
-                <div><dt>{p.k}</dt><dd><a href={profileHref(p.ref)}>{p.name}</a></dd></div>
+                <div><dt>{p.k}{#if p.k === t('p.amr')}<Term k="labour_market_area" />{:else if p.k === t('p.agglo')}<Term k="agglomeration" />{/if}</dt><dd><a href={profileHref(p.ref)}>{p.name}</a></dd></div>
               {/each}
               {#if row?.n_gemeinden}<div><dt>{t('p.members')}</dt><dd class="num">{fmtNumber(row.n_gemeinden, 0)}</dd></div>{/if}
             </dl>
@@ -532,13 +551,14 @@
           <section>
             <h2>{t('p.similar')}</h2>
             {#if similar && similar.list.length && pl}
+              <p class="dh foot">{t('p.distH')}</p>
               <ol class="sim">
                 {#each similar.list as s}
-                  <li><a href={profileHref(refOf(unit.level, pl.units[s.i]))}>{pl.name[s.i]}</a>{#if pl.canton[s.i] && unit.level === 'gemeinde'}<span class="muted"> {pl.canton[s.i]}</span>{/if}
-                    <span class="d num" title="distance (RMS of z-score differences)">{fmtNumber(s.d, 2)}</span></li>
+                  <li><a href={profileHref(refOf(unit.level, pl.units[s.i]))}>{placeName(unit.level, pl.units[s.i], pl.name[s.i])}</a>{#if pl.canton[s.i] && unit.level === 'gemeinde'}<span class="muted"> {pl.canton[s.i]}</span>{/if}
+                    <span class="d num" title={t('p.distT')}>{fmtNumber(s.d, 2)}</span></li>
                 {/each}
               </ol>
-              <p class="foot">{t('p.similarNote', { units: unitsWord, list: similar.used.map((id) => ml(base.metas.get(id))).join(', ') })}</p>
+              <p class="foot">{t('p.similarNote', { units: unitsWord, list: similar.used.map((id) => ml(base.metas.get(id))).join(', ') })}<Term k="z_score_similarity" /></p>
             {:else if similar}
               <p class="foot">{t('p.similarNone')}</p>
             {/if}
@@ -654,6 +674,7 @@
   .chips { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; font-size: 0.84rem; }
   .sim, .hist { list-style: none; margin: 6px 0 0; padding: 0; font-size: 0.84rem; }
   .sim li { display: flex; gap: 6px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .dh { margin: 4px 0 0; }
   .sim .d { margin-left: auto; color: var(--muted); font-size: 0.74rem; }
   .hist li { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .hd { font-weight: 700; font-size: 0.8rem; }

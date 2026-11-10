@@ -1,5 +1,7 @@
 <script lang="ts">
   import { ml, t, tiedText } from '../lib/i18n.svelte';
+  import Term from './Term.svelte';
+  import { glossKeyOf } from '../lib/glossary.svelte';
   import { flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
@@ -66,14 +68,14 @@
     {#if profile}<a class="prof" href={profile}>{profileLabel}&nbsp;→</a>{/if}
     <button type="button" class="close" aria-label={t('common.close')} onclick={onclose}>×</button>
   </div>
-  <p class="mlabel">{ml(meta)}</p>
+  <p class="mlabel">{ml(meta)}<Term k={glossKeyOf(meta)} /></p>
   {#if value !== null}
     <div class="valrow">
       <span class="val">{fmtValue(value, meta)}</span>
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
-          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
+          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)} · P{Math.round(rank.pct)}<Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
           <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span></span>
         </span>
       {/if}
@@ -85,7 +87,7 @@
       <span class="rank reason">{gapReason(file, col, index, meta, canton)}</span>
     </div>
   {/if}
-  {#each flags as f}<p class="flag">{f}</p>{/each}
+  {#each flags as f}<p class="flag">{f}{#if f.startsWith('M ')}<Term k="majority_election" />{/if}</p>{/each}
   {#if note}<p class="flag">{note}</p>{/if}
   {#each extra as x}
     <div class="extra"><span class="xl">{x.label}</span><span class="xv num">{x.value}</span></div>

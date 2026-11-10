@@ -8,7 +8,8 @@
 import type { Method } from './classify';
 
 export type ReachMode = 'off' | 'pt' | 'car';
-export type Lang = 'en' | 'de';
+export type Lang = 'en' | 'de' | 'fr';
+const LANGS: Lang[] = ['en', 'de', 'fr'];
 export type Display = 'choropleth' | 'symbols';
 export type CatField = 'kanton' | 'sprachgebiet' | 'gemeindetyp' | 'stadt_land' | 'agglomeration' | 'grossregion';
 export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 'stadt_land', 'agglomeration', 'grossregion'];
@@ -129,7 +130,7 @@ export function parseHash(hash: string): ViewState {
     t: t === null ? 60 : Math.max(0, Math.min(T_MAX, t)),
     sel: get('sel') ?? null,
     tab: get('tab') ?? null,
-    lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
+    lang: LANGS.includes(get('lang') as Lang) ? (get('lang') as Lang) : storedLang(),
     only: get('only') === '1',
     ptm: get('ptm') === 'dd' ? 'dd' : 'st',
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
@@ -143,7 +144,8 @@ export function parseHash(hash: string): ViewState {
 /** Language chosen earlier on this device (localStorage can throw or be empty: then English). */
 export function storedLang(): Lang {
   try {
-    return localStorage.getItem('gb-lang') === 'de' ? 'de' : 'en';
+    const l = localStorage.getItem('gb-lang') as Lang | null;
+    return l && LANGS.includes(l) ? l : 'en';
   } catch {
     return 'en';
   }

@@ -5,7 +5,7 @@
   import { ml, t as tr } from '../lib/i18n.svelte';
   import type { MetricMeta } from '../lib/data';
   import {
-    fmtNumber, fmtPeriod, fmtR, fmtTick, fmtValue, logTicks, niceTicks, pearson, slopeParts, sortedValues, spearman, wantsLog,
+    fmtNumber, fmtPeriod, fmtR, unitOf, fmtTick, fmtValue, logTicks, niceTicks, pearson, slopeParts, sortedValues, spearman, wantsLog,
   } from '../lib/classify';
   import { regionColours, token } from '../lib/theme';
   import { downloadBlob, figurePNG, slug, type LegendItem } from '../lib/export';
@@ -171,9 +171,9 @@
     g.font = `500 11px ${getComputedStyle(document.documentElement).getPropertyValue('--font-sans')}`;
     g.textAlign = 'left';
     g.textBaseline = 'alphabetic';
-    g.fillText(`↑ ${ml(yMeta)}${yMeta.unit ? ` (${yMeta.unit})` : ''}${logY ? ', log' : ''}`, 4, 12, w - 8);
+    g.fillText(`↑ ${ml(yMeta)}${yMeta.unit ? ` (${unitOf(yMeta)})` : ''}${logY ? ', log' : ''}`, 4, 12, w - 8);
     g.textAlign = 'right';
-    g.fillText(`${ml(xMeta)}${xMeta.unit ? ` (${xMeta.unit})` : ''}${logX ? ', log' : ''} →`, w - M.r, h - 2, w - M.l);
+    g.fillText(`${ml(xMeta)}${xMeta.unit ? ` (${unitOf(xMeta)})` : ''}${logX ? ', log' : ''} →`, w - M.r, h - 2, w - M.l);
 
     // points, largest first so small ones stay visible
     const { idx, px, py } = pts;
@@ -286,7 +286,7 @@
   const cols = regionColours();
   const focus = $derived(sel ?? hover);
   /** unit word in the slope text: '%' becomes percentage points */
-  const uw = (m: MetricMeta) => (m.unit.startsWith('%') ? tr('sc.pp') : m.unit || tr('fp.value'));
+  const uw = (m: MetricMeta) => (m.unit.startsWith('%') ? tr('sc.pp') : unitOf(m) || tr('fp.value'));
   const slopeText = $derived.by(() => {
     if (!stats) return '–';
     const p = slopeParts(stats.fit.slope, logX, logY);
@@ -307,7 +307,7 @@
       const blob = await figurePNG({
         layers: [canvas], scale: canvas.width / Math.max(1, w),
         title: `${ml(yMeta)} (B) × ${ml(xMeta)} (A)`,
-        subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${xMeta.unit})` : ''}, ${fmtPeriod(xPeriod)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${yMeta.unit})` : ''}, ${fmtPeriod(yPeriod)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
+        subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${unitOf(xMeta)})` : ''}, ${fmtPeriod(xPeriod)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${unitOf(yMeta)})` : ''}, ${fmtPeriod(yPeriod)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
         legend, credits: [...credits, tr('ex.made')], link: tr('ex.view', { url: location.href }),
       });
       downloadBlob(blob, `gemeindebank-${slug(ml(yMeta))}-vs-${slug(ml(xMeta))}.png`);
@@ -315,7 +315,7 @@
       pngBusy = false;
     }
   }
-  const fmt = (v: number | null, m: MetricMeta) => (v === null ? 'no data' : fmtValue(v, m));
+  const fmt = (v: number | null, m: MetricMeta) => (v === null ? tr('lg.noData') : fmtValue(v, m));
 </script>
 
 <div class="scatter">

@@ -2,10 +2,11 @@
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
   import { ml, t as tr } from '../lib/i18n.svelte';
+  import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import {
-    axisDomain, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
+    axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
     type Method, type Scale,
   } from '../lib/classify';
 
@@ -84,12 +85,13 @@
   const nGap = $derived(nUnits - scale.n);
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
-  const unitText = $derived(meta.unit || tr('fp.value'));
+  const unitText = $derived(unitOf(meta) || tr('fp.value'));
 </script>
 
 <div class="legend" class:compact>
   <div class="head">
     <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ` · ${tr('lg.log')}` : ''}</span></span>
+    <span class="mterm"><Term k={method === 'quantile' ? 'quantile' : method === 'equal' ? 'equal_intervals' : 'continuous'} /></span>
     <div class="seg" role="radiogroup" aria-label={tr('lg.class')}>
       {#each ['quantile', 'equal', 'continuous'] as const as m}
         <button type="button" role="radio" aria-checked={method === m} title={tr(`lg.m.${m}`)} onclick={() => onmethod(m)}>
@@ -140,7 +142,7 @@
     <span class="num">n = {fmtNumber(scale.n, 0)}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if scale.method === 'continuous'}<span> · {tr('lg.clamped')}</span>{/if}
-    {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}</span>{/if}
+    {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}<Term k="axis_clipped" /></span>{/if}
     {#if scale.diverging}<span> · {tr('lg.centredOn', { c: fmtTick(scale.centre, meta) + (meta.unit.startsWith('%') ? '%' : '') })}</span>{/if}
   </p>
   <p class="foot">
@@ -153,7 +155,8 @@
   .legend { font-size: 0.8rem; min-width: 0; }
   .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; margin-bottom: 4px; }
   .unit { color: var(--text); font-weight: 600; min-width: 0; flex: 1 1 120px; }
-  .seg { flex: none; margin-left: auto; }
+  .seg { flex: none; }
+  .mterm { margin-left: auto; }
   .per { color: var(--muted); font-weight: 400; }
   .seg button { padding: 2px 7px; font-size: 0.72rem; }
   .plot { width: 100%; }

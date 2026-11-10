@@ -36,6 +36,7 @@ SINCE = pd.Timestamp("1960-01-01")
 # typology levels: register levels-table column (labels <col>_de/_fr/_it/_en), as in backbone.levels
 LEVEL_LABEL_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomeration": "AGGL2020",
                     "arbeitsmarktgebiet": "BAE2018", "stadt_land": "STALAN2020", "gemeindetyp": "GDETYP2020_9"}
+MIN_SHARE = 0.5   # % of a postal locality's addresses (search.json)
 FREE_LICENCE = re.compile(r"^(public domain|pd|cc0|cc[ -]by(-sa)?[ -]\d(\.\d)?)", re.I)
 
 
@@ -147,6 +148,13 @@ def build_search(units, identity, cantons, plz) -> dict:
     if plz is None:
         out["plz_note"] = "postal codes not shipped: swisstopo_plz licence not cleared"
     if plz is not None:
+        # a municipality holding a tiny fraction of a locality's addresses (Riehen 0.049 % of 4058 Basel)
+        # would be listed as '0.0 %': rows below MIN_SHARE are left out unless they are the only one
+        n_all = plz.groupby("plz")["bfs_nr"].transform("size")
+        small = (plz["address_share"] < MIN_SHARE) & (n_all > 1)
+        out["plz_note"] += (f"; municipalities with less than {MIN_SHARE:g} % of a locality's addresses are left "
+                            f"out ({int(small.sum())} rows)")
+        plz = plz[~small]
         plz = plz.sort_values(["plz", "address_share"], ascending=[True, False], kind="stable")
         for code, g in plz.groupby("plz", sort=True):
             out["plz"][code] = [[str(int(b)), loc, (int(s) if float(s).is_integer() else round(float(s), 3))]
@@ -382,23 +390,53 @@ def build_neighbours(min_shared_m: float = 10.0, tol_m: float = 1.0) -> dict:
 
 # ---------------------------------------------------------------- reach times
 
-def build_reach_times() -> dict:
-    """Travel time (minutes) from every hub to every municipality, both modes, in one small file.
+REACH_METHODS = {
+    "pt_station": {"en": "Timetable journey from the municipality's main station to the hub station, arriving "
+                         "07:30–08:30 on a weekday (median, as in a journey planner: no waiting).",
+                   "de": "Fahrplan-Reisezeit vom Hauptbahnhof der Gemeinde zum Zentrumsbahnhof, Ankunft "
+                         "07:30–08:30 an einem Werktag (Median, wie im Online-Fahrplan: ohne Wartezeit)."},
+    "pt": {"en": "Door to door towards the hub, arriving 07:30–08:30: walk from where people live to the best stop "
+                 "within 1.5 km, then the timetable journey (population-weighted median).",
+           "de": "Tür zu Tür Richtung Zentrum, Ankunft 07:30–08:30: Fussweg vom Wohnort zur besten Haltestelle "
+                 "innerhalb 1,5 km, dann die Fahrplan-Reisezeit (bevölkerungsgewichteter Median)."},
+    "car": {"en": "Car travel time, average weekday, from the national passenger transport model (ARE NPVM 2023).",
+            "de": "Autofahrzeit, durchschnittlicher Werktag, aus dem Nationalen Personenverkehrsmodell (ARE NPVM 2023)."},
+}
 
-    Taken from the reach_<mode>_<hub> metrics in latest/gemeinde/mobility_accessibility.json (same
-    values the map shows), so the profile page and the reach filter need not load the whole theme file.
+
+def build_reach_times() -> dict:
+    """Travel times (minutes) between every hub and every municipality, all modes, in one small file
+    (docs/web_data_contract.md §4).
+
+    Values are the reach_<mode>_<hub> metrics in latest/gemeinde/mobility_accessibility.json (the same
+    values the map shows): pt = reach_pt_* (door-to-door towards the hub), pt_station = reach_ptst_*
+    (main station -> hub, D31), car = reach_car_*. Reasons for gaps come from the columns' notes; the
+    main station per municipality from data/interim/reach/travel_times.parquet.
     """
     src = json.loads(out_path("web", "latest", "gemeinde", "mobility_accessibility.json").read_text(encoding="utf-8"))
     idx = json.loads(out_path("reach", "index.json").read_text(encoding="utf-8"))
     out = {"units": src["units"], "hubs": [[h["slug"], h["name"]] for h in idx["hubs"]],
-           "service_date": idx.get("service_date"), "pt": {}, "car": {}, "periods": {}}
+           "service_date": idx.get("service_date"), "pt": {}, "pt_station": {}, "car": {}, "periods": {},
+           "methods": REACH_METHODS, "reasons": {"pt": {}, "pt_station": {}, "car": {}}, "notes": {}}
     for h in idx["hubs"]:
-        for mode in ("pt", "car"):
-            m = src["metrics"].get(f"reach_{mode}_{h['slug']}")
+        for mode, prefix in (("pt", "reach_pt_"), ("pt_station", "reach_ptst_"), ("car", "reach_car_")):
+            m = src["metrics"].get(f"{prefix}{h['slug']}")
             if m is None:
                 continue
             out[mode][h["slug"]] = m["v"]
             out["periods"][mode] = m.get("period")
+            notes = m.get("notes") or []
+            for i, k in (m.get("n") or {}).items():
+                if m["v"][int(i)] is None:
+                    out["reasons"][mode].setdefault(h["slug"], {})[i] = notes[k]
+                elif "no arrival by 08:30" in notes[k]:   # value from the first hour of possible arrivals
+                    out["notes"].setdefault(mode, {}).setdefault(h["slug"], {})[i] = notes[k].split("; ", 1)[-1]
+    tt = pd.read_parquet(interim_path("reach", "travel_times.parquet"))
+    ms = tt[(tt["method"] == "gtfs_rcsa_mainstation") & tt["main_station"].notna()].drop_duplicates("bfs_nr")
+    ms = ms.set_index(ms["bfs_nr"].astype(int).astype(str))
+    out["main_station"] = [[ms.loc[u, "main_station"], int(ms.loc[u, "main_didok"]), bool(ms.loc[u, "main_inside"])]
+                           if u in ms.index else None for u in src["units"]]
+    out["main_station_fields"] = ["name", "didok", "inside_municipality"]
     return out
 
 

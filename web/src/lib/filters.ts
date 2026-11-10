@@ -5,7 +5,7 @@ import type { ColView } from './columns.svelte';
 import { type LevelData, type MetricMeta, type UnitRow } from './data';
 import type { CatField, Filter } from './hash';
 import { fmtNumber, sortedValues, wantsLog } from './classify';
-import { ml, t, levelWord } from './i18n.svelte';
+import { ml, t, levelWord, unitName } from './i18n.svelte';
 
 /** Label of a categorical filter field in the UI language. */
 export const catLabel = (f: CatField): string => t(`cat.${f}`);
@@ -63,7 +63,7 @@ export function catValues(field: CatField, ld: LevelData, rows: UnitRow[] | null
 /** Options of a categorical field (from units.json), sorted for display. */
 export function catOptions(field: CatField, rows: UnitRow[] | null): CatOption[] {
   if (!rows) return [];
-  const out = rows.filter((r) => r.level === field).map((r) => ({ id: r.id, name: r.name }));
+  const out = rows.filter((r) => r.level === field).map((r) => ({ id: r.id, name: unitName(r) }));
   if (field === 'agglomeration') out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
   else out.sort((a, b) => (field === 'kanton' ? a.id.localeCompare(b.id) : Number(a.id) - Number(b.id)));
   return out;

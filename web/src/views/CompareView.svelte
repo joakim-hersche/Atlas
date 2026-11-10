@@ -9,7 +9,7 @@
   import { buildScale, divergeCentre, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import { fmtNumber } from '../lib/classify';
-  import { loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
+  import { loadReachIndex, loadUnits, namesOf, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
   import { catOptions, combine, describeFilter, evalFilter } from '../lib/filters';
   import { hrefFor } from '../lib/nav';
   import { bareAttribution } from '../lib/export';
@@ -45,6 +45,8 @@
     { slug: 'heatpumps-income', label: 'cv.p.heat', a: 'gws_share_heatpump', b: 'tax_np_mean_taxable_income' },
   ];
   const metas = $derived(base.metas);
+  /** unit names in the UI language */
+  const names = $derived(namesOf(ld));
   const presetsOf = (m: Map<string, MetricMeta>) =>
     PRESETS.flatMap((p) => {
       if (m.has(p.a) && m.has(p.b)) return [p];
@@ -233,7 +235,7 @@
   const tipRows = $derived.by(() => {
     if (hover === null || !hoverAt) return null;
     const h = hover;
-    const fmt = (v: (number | null)[] | undefined, m: MetricMeta | undefined) => (v && m && v[h] !== null && v[h] !== undefined ? fmtValue(v[h]!, m) : 'no data');
+    const fmt = (v: (number | null)[] | undefined, m: MetricMeta | undefined) => (v && m && v[h] !== null && v[h] !== undefined ? fmtValue(v[h]!, m) : t('lg.noData'));
     return [{ k: 'A', v: fmt(colA?.v, metaA) }, { k: 'B', v: fmt(colB?.v, metaB) }];
   });
 </script>
@@ -273,7 +275,7 @@
           {#if P.pane === 'a'}<div class="map" bind:this={mapElA}></div>{:else}<div class="map" bind:this={mapElB}></div>{/if}
           {#if hoverAt?.pane === P.pane && tipRows && hover !== null && desktop}
             <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
-              <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
+              <strong>{names[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !names[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
               {#each tipRows as r}<div class="num"><span class="k">{r.k}</span>{r.v}</div>{/each}
             </div>
           {/if}
@@ -296,7 +298,7 @@
   <section class="pane ps">
     {#if metaB && colA && colB && regions && !whyA && !whyB}
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
-        region={regions.idx} regionNames={regions.names} {pop} names={ld.name} cantons={ld.canton}
+        region={regions.idx} regionNames={regions.names} {pop} names={names} cantons={ld.canton}
         hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only}
         credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}: ${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
         note={[levelName(ld.level), filtered ? `${t('tab.filters')}: ${filterText} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})` : ''].filter(Boolean).join(' · ')} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />

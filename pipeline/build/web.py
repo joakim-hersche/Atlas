@@ -33,7 +33,7 @@ STATUS_CODES = {"ok": 0, "no_data": 1, "suppressed": 2, "not_published": 3, "not
 PRECISION_CODES = {"exact": 0, "survey": 1, "modelled": 2, "boundary_estimate": 3}
 SERIES_LEVELS = ("gemeinde", "bezirk", "kanton", "schweiz")
 FLAG_BITS = {"small_base": 1, "small_count": 2, "majority_election": 4, "published_value": 8, "provisional": 16}
-COVERAGE_MIN = 0.95          # default period: newest with >= 95 % of the metric's best coverage (F)
+COVERAGE_MIN = 0.95          # default period: step back over newer periods with < 95 % of the previous one (F)
 CANTON_COVERED = 0.5         # a canton counts as covered when >= 50 % of its municipalities have data (G)
 TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomeration": "AGGL2020",
                  "arbeitsmarktgebiet": "BAE2018", "stadt_land": "STALAN2020", "gemeindetyp": "GDETYP2020_9"}
@@ -187,6 +187,21 @@ STATUS_REASON = {"suppressed": "values suppressed (small numbers)", "not_publish
                  "not_covered": "not covered", "not_applicable": "not applicable", "no_data": "no data"}
 
 
+def default_period(counts: list[tuple[str, int]], per_vote: bool = False) -> str:
+    """Default ('latest') period (review round 1, defect 8): starting from the newest period, step back
+    while a period has fewer than COVERAGE_MIN (95 %) of the units of the period before it.
+    counts: (period, n_ok) with n_ok > 0. Per-vote metrics: the newest vote."""
+    c = sorted(counts, key=lambda x: _period_key(x[0]))
+    if per_vote:
+        return c[-1][0]
+    i = len(c) - 1
+    # step back while a period has clearly fewer units than the one before it (an incomplete newer
+    # round, e.g. Arealstatistik 2020/25: 1,007 vs 2,110); a steadily small partial metric stays put
+    while i > 0 and c[i][1] < COVERAGE_MIN * c[i - 1][1]:
+        i -= 1
+    return c[i][0]
+
+
 def membership_counts() -> dict:
     """Number of units per level (reference state)."""
     m = membership()
@@ -276,7 +291,7 @@ def load_vote_titles() -> dict:
     return out
 
 
-def _unavailable_reason(md, level: str, gap_status: str | None) -> str:
+def _unavailable_reason(md, level: str, gap_status: str | None, input_status: str | None = None) -> str:
     """Why a metric has no values at a level (D: the real reason, not 'no data for this year')."""
     if isinstance(md.get("unavailable_note"), str) and level not in ("gemeinde",):
         return md["unavailable_note"]
@@ -286,9 +301,11 @@ def _unavailable_reason(md, level: str, gap_status: str | None) -> str:
     if nat != "gemeinde" and level != nat:
         return f"published only at {word} level{survey}"
     if md["aggregation"] == "not_aggregatable":
-        return "cannot be aggregated (median, index or published rate) and the source publishes no value at this level"
+        return "cannot be aggregated; no published value at this level"
     if gap_status:
         return "incomplete at this level: " + STATUS_REASON.get(gap_status, gap_status) + " for some municipalities"
+    if input_status:
+        return "incomplete at this level: " + STATUS_REASON.get(input_status, input_status) + " for some municipalities"
     return "no data at this level"
 
 
@@ -434,7 +451,7 @@ def run() -> dict:
             continue
         shipped = include_all or (sid not in excluded if (SOURCES_DIR / sid / "ingest.py").exists() else cleared[sid][0])
         row = {k: public_text(v.get(k)) for k in ("source_id", "title", "publisher", "url", "license",
-                                                   "attribution", "vintage", "years")}
+                                                   "attribution", "vintage", "years", "status_note")}
         row.update({"shipped": shipped, "fetched": fetched_date(sid, v),
                     "status_text": "shipped" if shipped else ("held back: licence not yet confirmed"
                                                               if "verify" in str(cleared[sid][1]) or "not stated" in str(cleared[sid][1])
@@ -459,18 +476,14 @@ def run() -> dict:
         if ok.empty:
             gap_mode[(mid, lvl)] = g["gap_status"].mode().iloc[0] if g["gap_status"].notna().any() else "no_data"
             continue
-        best = ok["n_ok"].max()
-        if str(mid).startswith("vote_"):
-            dflt = ok["period"].iloc[-1]
-        else:
-            dflt = ok.loc[ok["n_ok"] >= COVERAGE_MIN * best, "period"].iloc[-1]
+        dflt = default_period(list(zip(ok["period"], ok["n_ok"])), str(mid).startswith("vote_"))
         lp_rows.append((mid, lvl, dflt))
         newer = ok[ok["key"] > _period_key(dflt)]
         if len(newer):
-            of = int(n_units_level.get(lvl, best))
+            of = int(n_units_level.get(lvl, ok["n_ok"].max()))
             incomplete[(mid, lvl)] = {p: {"n": int(n), "of": of, "level": lvl,
-                                          "label_en": f"in progress: {n:,} of {of:,} {UNIT_PLURAL_EN.get(lvl, 'units')}",
-                                          "label_de": f"in Bearbeitung: {n:,} von {of:,} {UNIT_PLURAL_DE.get(lvl, 'Einheiten')}".replace(",", "'")}
+                                          "label_en": f"incomplete: {n:,} of {of:,} {UNIT_PLURAL_EN.get(lvl, 'units')}",
+                                          "label_de": f"unvollständig: {n:,} von {of:,} {UNIT_PLURAL_DE.get(lvl, 'Einheiten')}".replace(",", "'")}
                                       for p, n in zip(newer["period"], newer["n_ok"])}
         avail[(mid, lvl)] = ok["period"].iloc[-1]
     lp = pd.DataFrame(lp_rows, columns=["metric_id", "level", "p"])
@@ -534,13 +547,17 @@ def run() -> dict:
         coverage = "national" if set(all_cantons) <= set(cv) else ("partial:" + ",".join(cv) if cv else str(md["coverage"]))
         cnt = cov[(cov["metric_id"] == r.metric_id) & (cov["level"] == prim) & (cov["period"] == dflt)] if prim else cov.iloc[:0]
         lab = i18n.get(r.metric_id, {})
-        unav = {l: _unavailable_reason(md, l, gap_mode.get((r.metric_id, l))) for l in all_levels
+        f_ = _formula(str(md["aggregation"])) if md["kind"] == "derived" else None
+        unav = {l: _unavailable_reason(md, l, gap_mode.get((r.metric_id, l)),
+                                       next((gap_mode[(t, l)] for t in (f_[0] if f_ else []) if (t, l) in gap_mode), None))
+                for l in all_levels
                 if l not in levels and (l != "gemeinde" or md["native_level"] == "gemeinde")}
         entry = {
             "id": r.metric_id, "theme": md["theme"], "label_en": md["label_en"], "label_de": md["label_de"],
             "label_fr": lab.get("label_fr"), "unit": md["unit"], "unit_de": lab.get("unit_de"), "unit_fr": lab.get("unit_fr"),
             "decimals": int(md["decimals"]), "direction": md["direction"],
             "aggregation": md["aggregation"], "precision": md["precision"], "coverage": coverage,
+            "native_level": md["native_level"],
             "coverage_meta": md["coverage"],
             "coverage_detail": {"level": cv_level, "period": dflt, "n": int(cnt["n_ok"].sum()) if len(cnt) else 0,
                                 "of": int(n_units_level.get(prim, 0)) if prim else 0, "n_cantons": len(cv)},

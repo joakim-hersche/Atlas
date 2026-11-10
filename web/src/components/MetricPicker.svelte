@@ -4,7 +4,7 @@
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
   import { levelName, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
   import { type MetricMeta } from '../lib/data';
-  import { fmtPeriod } from '../lib/classify';
+  import { fmtPeriod, unitOf } from '../lib/classify';
 
   interface Props {
     metrics: MetricMeta[];
@@ -99,7 +99,7 @@
           oninput={() => (active = 0)} onkeydown={key} />
         <button type="button" class="x" aria-label={t('common.close')} onclick={() => (open = false)}>×</button>
       </div>
-      <div class="list" role="listbox" aria-label="Metrics">
+      <div class="list" role="listbox" aria-label={t('mp.choose')}>
         {#if none && !q}
           <button type="button" role="option" class="opt" aria-selected={!value} onclick={() => pick('')}>
             <span class="ol">{none}</span><span class="om">–</span>
@@ -116,7 +116,7 @@
               <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
                 onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
                 <span class="ol">{ml(m)}</span>
-                <span class="om">{m.unit || '–'} · {fmtPeriod(m.latest)}{m.coverage.startsWith('partial:') ? ` · ${t('mp.partial')}` : ''}</span>
+                <span class="om">{unitOf(m) || '–'} · {fmtPeriod(m.latest)}{m.coverage.startsWith('partial:') ? ` · ${t('mp.partial')}` : ''}</span>
               </button>
             {:else}
               <div role="option" class="opt off" aria-disabled="true" aria-selected="false" title={t('mp.notFor', { level: levelWord(level) })}>

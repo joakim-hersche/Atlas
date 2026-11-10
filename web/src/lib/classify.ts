@@ -357,9 +357,17 @@ export function fmtNumber(x: number, decimals: number): string {
   return f.format(x).replace(/['\u2019\u00a0\u202f]/g, '\u2019').replace('-', '−');
 }
 
+/** The metric's unit in the UI language (unit_de / unit_fr when shipped; English otherwise). */
+export function unitOf(meta: Pick<MetricMeta, 'unit'> & { unit_de?: string | null; unit_fr?: string | null }): string {
+  if (app.lang === 'de' && meta.unit_de) return meta.unit_de;
+  if (app.lang === 'fr' && meta.unit_fr) return meta.unit_fr;
+  return meta.unit;
+}
+
 export function unitSuffix(meta: MetricMeta): string {
   if (!meta.unit) return '';
-  return meta.unit.startsWith('%') ? meta.unit : ` ${meta.unit}`;
+  const u = unitOf(meta);
+  return meta.unit.startsWith('%') ? u : ` ${u}`;
 }
 
 export function fmtValue(x: number, meta: MetricMeta): string {

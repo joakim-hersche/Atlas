@@ -50,8 +50,8 @@
   // table scrolls sideways with the metric column sticky. Selection in the hash: #v=places&ids=261,kanton:GE
   import PctBar from '../components/PctBar.svelte';
   import Search from '../components/Search.svelte';
-  import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
+  import { fmtNumber, fmtPeriod, fmtValue, unitOf } from '../lib/classify';
+  import { loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
   import { levelName, ml, t, themeName, tiedText } from '../lib/i18n.svelte';
   import { profileHref, sourceHref } from '../lib/nav';
   import { parseRef, type UnitRef } from '../lib/places';
@@ -109,7 +109,7 @@
   const nameOf = (u: UnitRef) => {
     const pl = pls[u.level];
     const i = idxOf(u);
-    return pl && i !== null ? pl.name[i] : u.id;
+    return pl && i !== null ? placeName(u.level, u.id, pl.name[i]) : u.id;
   };
 
   // themes: metrics available at any of the chosen levels
@@ -177,7 +177,7 @@
   <tr>
     <th scope="row" class="mcol">
       <span class="lbl">{ml(m)}</span>
-      <span class="tags">{m.unit ? m.unit + ' · ' : ''}{precisionText(m.precision)}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
+      <span class="tags">{m.unit ? unitOf(m) + ' · ' : ''}{precisionText(m.precision)}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
     </th>
     {#each es as e, k}
       {@const mark = mk ? (mk.hi === k ? markText(m, 'hi') : mk.lo === k ? markText(m, 'lo') : null) : null}

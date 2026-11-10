@@ -16,13 +16,13 @@
   import VoteResult from '../components/VoteResult.svelte';
   import { loadVoteFile, loadVoteIndex, voteIdOf, type VoteIndex } from '../lib/votes';
   import StatsBlock from '../components/StatsBlock.svelte';
-  import { buildScale, divergeCentre, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
+  import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    flagMarks, flagsOf, isUnstable, gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    flagMarks, flagsOf, isUnstable, gapReason, namesOf, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -71,6 +71,8 @@
   let overlay: ReachOverlay | null = null;
 
   const metas = $derived(base.metas);
+  /** unit names in the UI language (typology units carry official names per language) */
+  const names = $derived(namesOf(ld));
   const li = $derived(levelInfo(ld.level));
   const word = $derived(levelWord(ld.level));
   const one = $derived(levelName(ld.level, false));
@@ -570,7 +572,7 @@
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
         : null;
       const src = base.sources.get(metaA.source);
-      const sub = [metaA.unit, fmtPeriod(colA.period), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
+      const sub = [unitOf(metaA), fmtPeriod(colA.period), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
       const extra: string[] = [];
       if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
       if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
@@ -607,7 +609,7 @@
         const x = reachKind === 'ptst' ? st : dd;
         reach = {
           label, short: label, hub: hub.name, minutes: x, within: x !== null && x <= app.t, reason: null,
-          station: { minutes: st, from: mainStation(rt, uid, rtIndex), reason: st === null ? miss(stRef, 'ptst') : null, name: ld.name[selIdx] },
+          station: { minutes: st, from: mainStation(rt, uid, rtIndex), reason: st === null ? miss(stRef, 'ptst') : null, name: names[selIdx] },
           door: { minutes: dd, reason: dd === null ? miss(ddRef, 'pt') : null },
           active: reachKind,
           method: methodText(reachKind, hub.name, rt, true),
@@ -646,7 +648,7 @@
 
 {#snippet rankSnip()}
   {#if rankCols.length}
-    <RankTable columns={rankCols} rows={rankRows} names={ld.name} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
+    <RankTable columns={rankCols} rows={rankRows} names={names} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
       sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} ids={ld.units}
       sourceName={(id) => base.sources.get(id)?.publisher.split(' (')[0] ?? id}
       onzoom={filtered && match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
@@ -657,7 +659,7 @@
 {#snippet statsSnip()}
   {#if voteIx && voteEntry && !whyA}<VoteResult index={voteIx} entry={voteEntry} />{/if}
   {#if colA && !whyA}
-    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : chA} sel={null}
+    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={names} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : chA} sel={null}
       source={base.sources.get(metaA.source)} unitWord={word} mask={filtered ? match.m : null} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
@@ -709,7 +711,7 @@
             <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
               method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} />
           {:else if colA && !scaleA}
-            <p class="why">No values for {colA.period} at this level.</p>
+            <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
           {:else if refA === undefined}
             <p class="foot">{t('status.loading')}</p>
           {/if}
@@ -820,7 +822,7 @@
       </div>
       {#if !desktop && card && refA && colA}
         <div class="card-wrap">
-          <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
+          <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
             source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
             profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
         </div>
@@ -834,7 +836,7 @@
       {/if}
       {#if tip && hover !== null && hoverAt && desktop}
         <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
-          <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
+          <strong>{names[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !names[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
           {#each tip as r}<div class="num">{r}</div>{/each}
         </div>
       {/if}
@@ -845,7 +847,7 @@
     <aside class="side" aria-label={t('tab.stats')}>
       {#if card && refA && colA}
         <div class="caps lab">{t('mv.selected', { one })}</div>
-        <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
+        <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
           profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
       {:else}

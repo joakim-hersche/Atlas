@@ -1,9 +1,10 @@
 <script lang="ts">
   // Summary statistics of the shaded metric across municipalities, plus the selected unit.
   import { t, tiedText } from '../lib/i18n.svelte';
+  import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
-  import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues, unitOf } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -40,15 +41,15 @@
 
 <div class="stats">
   <div class="caps">{t(mask ? 'st.distF' : 'st.dist', { units: unitWord })}</div>
-  <div class="unit">{meta.unit || t('fp.value')} · {fmtPeriod(period)}</div>
+  <div class="unit">{unitOf(meta) || t('fp.value')} · {fmtPeriod(period)}</div>
   {#if mask}<p class="filt">{t('st.filtered', { n: fmtNumber(nIn, 0), total: fmtNumber(v.length, 0), units: unitWord })}</p>{/if}
   {#if s.length}
     <table>
       <tbody>
         <tr><th>{t('st.n')}</th><td class="num">{fmtNumber(s.length, 0)} <span class="muted">{t('st.of', { n: fmtNumber(nIn, 0) })}</span></td></tr>
         <tr><th>{t('st.mean')} <span class="muted">({t('st.unweighted')})</span></th><td class="num">{f(mean(s))}</td></tr>
-        <tr><th>{t('st.median')}</th><td class="num">{f(quantile(s, 0.5))}</td></tr>
-        <tr><th>P10 / P90</th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
+        <tr><th>{t('st.median')}<Term k="median" /></th><td class="num">{f(quantile(s, 0.5))}</td></tr>
+        <tr><th>P10 / P90<Term k="p10_p90" /></th><td class="num">{f(quantile(s, 0.1))} / {f(quantile(s, 0.9))}</td></tr>
         <tr><th>Min</th><td class="num">{f(s[0])}<span class="who">{names[ext.lo]}{names[ext.lo]?.includes('(') || !cantons[ext.lo] || cantons[ext.lo] === names[ext.lo] ? '' : ` ${cantons[ext.lo]}`}</span></td></tr>
         <tr><th>Max</th><td class="num">{f(s[s.length - 1])}<span class="who">{names[ext.hi]}{names[ext.hi]?.includes('(') || !cantons[ext.hi] || cantons[ext.hi] === names[ext.hi] ? '' : ` ${cantons[ext.hi]}`}</span></td></tr>
         <tr><th>{t('st.ch')}{#if mask}<span class="who">{t('st.chAll')}</span>{/if}</th><td class="num">{ch ? f(ch.value) : '–'}{#if ch && ch.period !== period}<span class="who">{fmtPeriod(ch.period)}</span>{/if}</td></tr>
@@ -70,7 +71,7 @@
           <tbody>
             <tr><th>{t('st.value')}</th><td class="num strong">{f(v[sel]!)}</td></tr>
             <tr><th>{t('st.rank')}</th><td class="num">{fmtNumber(rank.rank, 0)} <span class="muted">{t('st.of', { n: fmtNumber(rank.n, 0) })}{tiedText(rank, true)}, {meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')}</span></td></tr>
-            <tr><th>{t('st.pct')}</th><td class="num">P{fmtNumber(Math.round(rank.pct), 0)}</td></tr>
+            <tr><th>{t('st.pct')}<Term k="percentile" /></th><td class="num">P{fmtNumber(Math.round(rank.pct), 0)}</td></tr>
           </tbody>
         </table>
         <div class="pbar" aria-hidden="true">{#if rank.tied > 0}<i style="left:{rank.pctLo}%; width:{rank.pctHi - rank.pctLo}%"></i>{/if}<span style="left:{rank.pct}%"></span></div>

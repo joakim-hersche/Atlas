@@ -4,7 +4,7 @@
   import { ml, t } from '../lib/i18n.svelte';
   import MetricPicker from './MetricPicker.svelte';
   import RangeFilter from './RangeFilter.svelte';
-  import { fmtNumber, fmtPeriod } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
   import type { Hub, MetricMeta } from '../lib/data';
   import { catLabel, type CatOption, type FilterEval, type MatchResult } from '../lib/filters';
   import { CAT_FIELDS, T_MAX, type CatField, type Filter } from '../lib/hash';
@@ -86,7 +86,7 @@
           <RangeFilter label={ml(e.col.meta)} hideLabel min={e.domain.min} max={e.domain.max} lo={f.lo} hi={f.hi}
             log={e.domain.log} decimals={e.col.meta.decimals} onchange={(lo, hi) => update(k, { ...f, lo, hi })} />
           <p class="cf num">
-            {e.col.meta.unit || t('fp.value')} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noDataEx')}{/if}
+            {unitOf(e.col.meta) || t('fp.value')} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noDataEx')}{/if}
           </p>
         {/if}
       {:else if f.kind === 'cat'}
@@ -104,7 +104,7 @@
         {:else if opts.length}
           {#if f.values.length}
             <div class="chips">
-              {#each f.values as id}<button type="button" class="chip" aria-pressed="true" title="Remove" onclick={() => toggle(k, id)}>{nameOf(f.field, id)} ×</button>{/each}
+              {#each f.values as id}<button type="button" class="chip" aria-pressed="true" title={t('fp.remove')} onclick={() => toggle(k, id)}>{nameOf(f.field, id)} ×</button>{/each}
             </div>
           {/if}
           {#if opts.length > 12}
@@ -117,7 +117,7 @@
             {/each}
           </div>
         {/if}
-        {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} pass</p>{/if}
+        {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} {t('fp.pass')}</p>{/if}
       {:else}
         <div class="ch">
           <span class="caps grow">{t('fp.travel')}</span>

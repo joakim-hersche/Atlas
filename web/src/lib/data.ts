@@ -293,10 +293,25 @@ export interface UnitRow {
   names?: Record<string, string>;
 }
 let unitsP: Promise<UnitRow[]> | null = null;
+/** official names per language of typology units ('sprachgebiet:2' -> {de, fr, it, en}) */
+const unitNames = new Map<string, Record<string, string>>();
+/** A unit's name in the UI language where the source gives one (typology units), else `fallback`. */
+export function placeName(level: string, id: string, fallback: string): string {
+  const n = unitNames.get(`${level}:${id}`);
+  return (n && n[app.lang]) || fallback;
+}
+/** Names of a level's units in the UI language (reactive on the language when read in a $derived). */
+export function namesOf(ld: LevelData): string[] {
+  if (ld.level === 'gemeinde' || !unitNames.size) return ld.name;
+  return ld.units.map((u, i) => placeName(ld.level, u, ld.name[i]));
+}
 /** All units of all levels: names, label points, parent regions of each municipality. */
 export function loadUnits(): Promise<UnitRow[]> {
   if (!unitsP) {
-    unitsP = getJSON<UnitRow[]>('web/units.json');
+    unitsP = getJSON<UnitRow[]>('web/units.json').then((u) => {
+      for (const r of u) if (r.names) unitNames.set(`${r.level}:${r.id}`, r.names);
+      return u;
+    });
     unitsP.catch(() => (unitsP = null));
   }
   return unitsP;

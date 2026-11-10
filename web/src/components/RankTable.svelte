@@ -2,7 +2,7 @@
   // Ranking table: the matching units with the shade, size and filter metrics as columns.
   // Sortable by any column (missing values always last); tapping a row selects the unit.
   import { ml, t } from '../lib/i18n.svelte';
-  import { fmtNumber, fmtPeriod } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
   import type { MetricMeta } from '../lib/data';
   import { copyText, downloadCSV, slug, toTSV, type Cell } from '../lib/export';
 
@@ -94,7 +94,7 @@
     const head: Cell[] = ['id', t('rt.name'), t('cat.kanton')];
     for (const c of columns) {
       const lb = c.label ?? ml(c.meta);
-      head.push(c.meta.unit ? `${lb} [${c.meta.unit}]` : lb, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
+      head.push(c.meta.unit ? `${lb} [${unitOf(c.meta)}]` : lb, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
       if (c.marks) head.push(`${lb} – ${t('ex.flags')}`);
     }
     const out: Cell[][] = [head];
@@ -131,11 +131,11 @@
           <th class="n">#</th>
           <th class="nm" aria-sort={key === 'name' ? (desc ? 'descending' : 'ascending') : 'none'}><button type="button" onclick={() => sortBy('name')}>{t('rt.name')}{arrow('name')}</button></th>
           {#each columns as c (c.key)}
-            <th class="v" title="{ml(c.meta)} ({c.meta.unit || t('fp.value')}, {fmtPeriod(c.period)})" aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
+            <th class="v" title="{ml(c.meta)} ({unitOf(c.meta) || t('fp.value')}, {fmtPeriod(c.period)})" aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
               <button type="button" onclick={() => sortBy(c.key)}>
                 <span class="tg">{t(`rt.tag.${c.tag}`)}</span>
                 <span class="lb">{c.label ?? ml(c.meta)}{arrow(c.key)}</span>
-                <span class="un">{c.meta.unit || '–'}</span>
+                <span class="un">{unitOf(c.meta) || '–'}</span>
               </button>
             </th>
           {/each}

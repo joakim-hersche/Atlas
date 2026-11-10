@@ -316,6 +316,11 @@ const EN: Dict = {
   "st.unweighted": "unweighted",
   "st.value": "Value",
   "sz.area": "area ∝ value",
+  "sz.aria": "Circle sizes",
+  "sz.drawn": "{n} {units} drawn",
+  "sz.nodata": "{n} no data",
+  "sz.nonpos": "{n} ≤ 0, no circle",
+  "mv.noValues": "No values for {p} at this level.",
   "tab.filters": "Filters",
   "tab.map": "Map",
   "tab.rank": "Ranking",
@@ -327,6 +332,7 @@ const EN: Dict = {
   "yr.harm": "harmonized to the 2026 boundaries",
   "yr.latest": "Latest",
   "yr.year": "Year",
+  "gl.more": "Explain",
 };
 
 const DE: Dict = {
@@ -635,6 +641,11 @@ const DE: Dict = {
   "st.unweighted": "ungewichtet",
   "st.value": "Wert",
   "sz.area": "Fläche ∝ Wert",
+  "sz.aria": "Kreisgrössen",
+  "sz.drawn": "{n} {units} gezeichnet",
+  "sz.nodata": "{n} ohne Daten",
+  "sz.nonpos": "{n} ≤ 0, kein Kreis",
+  "mv.noValues": "Keine Werte für {p} auf dieser Ebene.",
   "tab.filters": "Filter",
   "tab.map": "Karte",
   "tab.rank": "Rangliste",
@@ -646,26 +657,37 @@ const DE: Dict = {
   "yr.harm": "auf den Gebietsstand 2026 harmonisiert",
   "yr.latest": "Neuestes",
   "yr.year": "Jahr",
+  "gl.more": "Erklärung",
 };
 
-/** Add strings from a page module (keeps each page's strings next to it). */
+/** Add strings from a page module (keeps each page's strings next to it). French lives in i18n-fr.ts. */
 export function addStrings(en: Dict, de: Dict): void {
   Object.assign(EN, en);
   Object.assign(DE, de);
 }
 
+// French (D32): loaded on first use; until it arrives (and for any missing key) English is shown
+let fr = $state.raw<typeof import('./i18n-fr') | null>(null);
+let frP: Promise<unknown> | null = null;
+export function loadFrench(): Promise<unknown> {
+  frP ??= import('./i18n-fr').then((m) => (fr = m));
+  return frP;
+}
+
 export function t(key: string, vars?: Record<string, string | number>): string {
-  const s = (app.lang === 'de' ? DE[key] : undefined) ?? EN[key] ?? key;
+  const s = (app.lang === 'de' ? DE[key] : app.lang === 'fr' ? fr?.FR[key] : undefined) ?? EN[key] ?? key;
   if (!vars) return s;
   return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
 }
 
 export const isDe = () => app.lang === 'de';
 
-/** Metric label in the UI language. */
+/** Metric label in the UI language (French falls back to English). */
 export function ml(m: MetricMeta | undefined | null): string {
   if (!m) return '';
-  return app.lang === 'de' && m.label_de ? m.label_de : m.label_en;
+  if (app.lang === 'de' && m.label_de) return m.label_de;
+  if (app.lang === 'fr' && m.label_fr) return m.label_fr;
+  return m.label_en;
 }
 
 const THEME_DE: Record<string, string> = {
@@ -689,7 +711,9 @@ const THEME_DE: Record<string, string> = {
   'Geography & identity': 'Geografie & Identität',
 };
 export function themeName(theme: string): string {
-  return app.lang === 'de' ? (THEME_DE[theme] ?? theme) : theme;
+  if (app.lang === 'de') return THEME_DE[theme] ?? theme;
+  if (app.lang === 'fr') return fr?.THEME_FR[theme] ?? theme;
+  return theme;
 }
 
 // spatial levels: [plural, singular] per language
@@ -705,18 +729,32 @@ const LEVEL_NAMES: Record<string, { en: [string, string]; de: [string, string] }
   gemeindetyp: { en: ['Municipality types', 'municipality type'], de: ['Gemeindetypen', 'Gemeindetyp'] },
   schweiz: { en: ['Switzerland', 'country'], de: ['Schweiz', 'Land'] },
 };
-/** Plural level name inside a sentence: lower case in English, capitalised nouns in German. */
+/** Plural level name inside a sentence: lower case in English and French, capitalised nouns in German. */
 export function levelWord(id: string): string {
   const s = levelName(id);
   return app.lang === 'de' ? s : s.toLowerCase();
 }
 
-/** Level name in the UI language: plural (capitalised) or singular (lower case in English). */
+/** Level name in the UI language: plural (capitalised) or singular (lower case in English and French). */
 export function levelName(id: string, plural = true): string {
   const e = LEVEL_NAMES[id];
   if (!e) return id;
+  if (app.lang === 'fr') {
+    const f = fr?.LEVEL_FR[id];
+    if (f) return f[plural ? 0 : 1];
+    return e.en[plural ? 0 : 1];
+  }
   return e[app.lang][plural ? 0 : 1];
 }
+
+/** Name of a unit in the UI language: typology units carry the official BFS names per language
+ *  (units.json `names`); places keep their official form. */
+export function unitName(r: { name: string; names?: Record<string, string> }): string {
+  return r.names?.[app.lang] ?? r.name;
+}
+
+/** Event type of the boundary history in French ('' when French is not loaded or unknown). */
+export const historyFr = (k: string): string | undefined => fr?.HISTORY_FR[k];
 
 /** ' (tied with 1’905)' after a rank, or '' when the value is not tied. `long` adds the rank span. */
 export function tiedText(r: RankInfo | null | undefined, long = false): string {

@@ -178,6 +178,8 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
         if lvl == "schweiz":
             # persons the source could not attribute to a municipality are in the national total
             un = obs[(obs["source_id"] == sid) & (obs["level"] == "unallocated") & (obs["metric_id"] == metric)]
+            if with_pseudo:   # the unallocated remainder is the pseudo-units, already in the aggregate
+                un = un.iloc[:0]
             j["explained"] = -j["period"].map(un.set_index("period")["value"]).fillna(0).values
             # NRW: pseudo-units (Swiss abroad, postal voting; D17) are in the national total too.
             # Other sources' pseudo rows are canton-level remainders already covered by 'unallocated'.

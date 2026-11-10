@@ -11,7 +11,7 @@
   import { fmtNumber } from './lib/classify';
   import { ColumnStore } from './lib/columns.svelte';
   import { LEVELS, loadBase, loadLevel, unitCounts, type Base, type LevelData } from './lib/data';
-  import { t, levelWord } from './lib/i18n.svelte';
+  import { loadFrench, t, levelWord } from './lib/i18n.svelte';
   import { hrefFor } from './lib/nav';
   import { app, syncHash } from './lib/state.svelte';
   import { sanitizeState } from './lib/sanitize';
@@ -82,6 +82,7 @@
 
   $effect(() => {
     document.documentElement.lang = app.lang;
+    if (app.lang === 'fr') loadFrench();
   });
 
   const NAV = ['map', 'compare', 'places'] as const;
@@ -118,6 +119,7 @@
   <div class="seg lang" role="radiogroup" aria-label={t('nav.lang')}>
     <button type="button" role="radio" aria-checked={app.lang === 'en'} lang="en" title="English" onclick={() => (app.lang = 'en')}>EN</button>
     <button type="button" role="radio" aria-checked={app.lang === 'de'} lang="de" title="Deutsch" onclick={() => (app.lang = 'de')}>DE</button>
+    <button type="button" role="radio" aria-checked={app.lang === 'fr'} lang="fr" title="Français" onclick={() => (app.lang = 'fr')}>FR</button>
   </div>
 {/snippet}
 

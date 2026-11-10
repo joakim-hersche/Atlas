@@ -106,8 +106,112 @@ def _pseudo(wide: pd.DataFrame) -> pd.DataFrame:
     return rows
 
 
-GAP_NOTE = ("no municipal results published by BFS for this canton and Vorlage (historical municipal "
-            "results not available)")
+GAP_NOTE = ("no municipal result published by BFS for this Vorlage (historical municipal results not "
+            "available)")
+POOLED = ("counted with another municipality in the BFS results (its votes are included there); "
+          "no separate result")
+
+
+def _pooled(obs: pd.DataFrame) -> pd.DataFrame:
+    """Municipalities without a result whose votes are inside a neighbour's figures.
+
+    BFS counts a few very small municipalities with a neighbour (e.g. Meienried, Hellsau, Deisswil
+    b. M., Oberhünigen, Niedermuhlern BE), so their votes are inside the neighbour's figures (same
+    cause as bfs_nrw._pooled). Test per district and Vorlage: the district result BFS publishes (on
+    the same municipality state as the cube) equals the sum of the district's municipal results
+    (valid ballots, within 0.5 %). Then the missing municipalities are pooled: status not_published
+    with that note, and metrics.yaml `zero_when: [not_published]` keeps district and canton sums
+    complete. Otherwise the results are really missing (e.g. Bern and its district on 1978-02-26):
+    no_data, and the canton's published result is used (pipeline.build.metrics, published fallback).
+    """
+    mem = membership()[["bfs_nr", "bezirk"]].assign(unit_id=lambda d: d["bfs_nr"].astype(str))
+    gem = obs["level"] == "gemeinde"
+    v = obs[gem & (obs["metric_id"] == "vote_valid")][["unit_id", "period", "value", "status"]]
+    v = v.merge(mem[["unit_id", "bezirk"]], on="unit_id", how="left")
+    s_ok = v[v["status"] == "ok"].groupby(["bezirk", "period"])["value"].sum()
+    pub = obs[(obs["level"] == "bezirk") & (obs["metric_id"] == "vote_valid") & (obs["status"] == "ok")]
+    pub = pub.set_index(["unit_id", "period"])["value"]
+    j = pd.concat([s_ok.rename("sum"), pub.rename("pub")], axis=1, join="inner")
+    complete = set(j.index[(j["sum"] - j["pub"]).abs() <= 0.005 * j["pub"].abs() + 0.5])
+    g = obs.loc[gem, ["unit_id", "period", "status"]].merge(mem[["unit_id", "bezirk"]], on="unit_id", how="left")
+    g.index = obs.index[gem]
+    gap = g["status"] != "ok"
+    pooled = gap & pd.Series([k in complete for k in zip(g["bezirk"], g["period"])], index=g.index)
+    obs.loc[pooled[pooled].index, ["status", "note"]] = ["not_published", POOLED]
+    rest = gap & ~pooled
+    obs.loc[rest[rest].index, ["status", "note"]] = ["no_data", GAP_NOTE]
+    return obs
+
+
+DAM_FIELDS = {"anzahlStimmberechtigte": "vote_eligible", "eingelegteStimmzettel": "vote_ballots",
+              "gueltigeStimmen": "vote_valid", "jaStimmenAbsolut": "vote_yes", "neinStimmenAbsolut": "vote_no"}
+
+
+def dam_newer(after: str) -> list[dict]:
+    """Votes newer than the PxWeb cube, from the BFS DAM JSON files (source bfs_votes, voteinfo schema,
+    variant re-aggregated to the latest municipality state). The cube (checked 2026-11-10) ends at
+    2026-06-14 while BFS has published the 2026-09-27 results (marked provisional) in the DAM.
+    Returns the parsed JSON documents, newest last."""
+    import glob
+    from pipeline.sources.bfs_votes.fetch import fetch_vote, list_vote_assets
+    docs = []
+    try:
+        assets = list_vote_assets()
+        paths = [fetch_vote(int(r.current), r.vote_date, "current") for r in assets.itertuples() if r.vote_date > after]
+    except Exception:  # offline rebuild: use the cached files
+        paths = [p for p in sorted(glob.glob(str(RAW / "bfs_votes" / "*" / "vote_*_current.json")))
+                 if Path(p).name[5:15] > after]
+        paths = list({Path(p).name: p for p in paths}.values())
+    for pth in paths:
+        d = json.loads(Path(pth).read_text(encoding="utf-8"))
+        voge = next(x["spatial_date"] for x in d["spatial_reference"] if x["spatial_unit"] == "voge")
+        if voge != REFERENCE_DATE.isoformat():
+            raise ValueError(f"DAM vote {d['abstimmtag']}: municipality state {voge} is not the reference state")
+        docs.append(d)
+    return docs
+
+
+def _dam_wide(docs: list[dict]) -> pd.DataFrame:
+    """Same layout as _wide(): municipality '0261', district '00' + 4 digits, canton code, 'CH', pseudo 9xxx."""
+    ct = pd.read_parquet(interim_path("backbone", "canton.parquet"))
+    code = dict(zip(ct["canton_id"].astype(int), ct["canton"]))
+    rows = []
+    for d in docs:
+        date = f"{d['abstimmtag'][:4]}-{d['abstimmtag'][4:6]}-{d['abstimmtag'][6:]}"
+        for v in d["schweiz"]["vorlagen"]:
+            per = f"{date}#{v['vorlagenId']}"
+            rows.append({GEO: "CH", "period": per, **{c: v["resultat"].get(k) for k, c in DAM_FIELDS.items()}})
+            for k in v["kantone"]:
+                rows.append({GEO: code[int(k["geoLevelnummer"])], "period": per,
+                             **{c: k["resultat"].get(f) for f, c in DAM_FIELDS.items()}})
+                for b in k.get("bezirke") or []:
+                    rows.append({GEO: f"00{int(b['geoLevelnummer']):04d}", "period": per,
+                                 **{c: b["resultat"].get(f) for f, c in DAM_FIELDS.items()}})
+                for g in k["gemeinden"]:
+                    n = int(g["geoLevelnummer"])
+                    rows.append({GEO: f"{n:04d}", "period": per,
+                                 **{c: g["resultat"].get(f) for f, c in DAM_FIELDS.items()}})
+    w = pd.DataFrame(rows)
+    # municipalities without a result (counted with a neighbour) get an empty row, as in the cube
+    allm = {f"{int(b):04d}" for b in membership()["bfs_nr"]}
+    extra = [{GEO: m, "period": per} for per, g in w.groupby("period") for m in sorted(allm - set(g[GEO]))]
+    w = pd.concat([w, pd.DataFrame(extra)], ignore_index=True) if extra else w
+    for c in DAM_FIELDS.values():
+        w[c] = pd.to_numeric(w[c], errors="coerce").astype(float)
+    return w
+
+
+def _pseudo(wide: pd.DataFrame) -> pd.DataFrame:
+    p = wide[wide[GEO].str.fullmatch(r"9\d{3}")].copy()
+    rows = emit(p, METRICS, "period", SOURCE, level="pseudo", unit_col=GEO, vintage=REFERENCE_DATE,
+                precision="exact", provenance="native")
+    rows = rows[rows["status"] == "ok"]  # pseudo-units that did not exist for a vote carry no row
+    rows["note"] = "pseudo-unit (Swiss abroad / postal voting / other), not a municipality"
+    return rows
+
+
+GAP_NOTE = ("no municipal result published by BFS for this Vorlage (historical municipal results not "
+            "available)")
 POOLED = ("counted with another municipality in the BFS results (its votes are included there); "
           "no separate result")
 
