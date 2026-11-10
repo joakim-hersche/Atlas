@@ -1026,8 +1026,11 @@ export function levelName(id: string, plural = true): string {
 /** Name of a unit in the UI language: typology units carry the official BFS names per language
  *  (units.json `names`); places keep their official form. */
 export function unitName(r: { name: string; names?: Record<string, string> }): string {
-  return r.names?.[app.lang] ?? r.name;
+  return fixLabel(r.names?.[app.lang] ?? r.name);
 }
+/** U15: a typo in the source's English label of a municipality type (BFS levels file: "agglomertation"),
+ *  corrected for display until the pipeline fixes it. */
+export const fixLabel = (s: string): string => s.replace(/agglomertation/g, 'agglomeration');
 
 /** Event type of the boundary history in French ('' when French is not loaded or unknown). */
 export const historyFr = (k: string): string | undefined => fr?.HISTORY_FR[k];

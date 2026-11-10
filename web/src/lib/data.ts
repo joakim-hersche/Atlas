@@ -1,7 +1,7 @@
 // Data loading and the column format written by pipeline/build/web.py.
 import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
-import { t, levelWord } from './i18n.svelte';
+import { fixLabel, t, levelWord } from './i18n.svelte';
 import { fmtNumber, periodTitles } from './classify';
 import { app } from './state.svelte';
 import type { Topology, GeometryCollection } from 'topojson-specification';
@@ -314,12 +314,24 @@ const unitNames = new Map<string, Record<string, string>>();
 /** A unit's name in the UI language where the source gives one (typology units), else `fallback`. */
 export function placeName(level: string, id: string, fallback: string): string {
   const n = unitNames.get(`${level}:${id}`);
-  return (n && n[app.lang]) || fallback;
+  return fixLabel((n && n[app.lang]) || fallback);
 }
-/** Names of a level's units in the UI language (reactive on the language when read in a $derived). */
+/** U15: a district's name without its administrative prefix ("Bezirk Zürich" -> "Zürich", "Canton de Neuchâtel"
+ *  -> "Neuchâtel", "Distretto di Lugano" -> "Lugano"), for lists, cards and the map; the profile header keeps
+ *  the official name. Other levels are returned unchanged. */
+const ADMIN_PREFIX =
+  /^(?:Bezirk|Wahlkreis|Verwaltungskreis|Verwaltungsregion|Region|Kanton|Amt|Arrondissement administratif|Arrondissement|District|Canton|Distretto|Circolo)\s+(?:(?:de la|de l'|du|des|de|d'|di|della|del|dei|dello|d’)\s*)?/;
+export function shortName(level: string, name: string): string {
+  if (level !== 'bezirk') return name;
+  const s = name.replace(ADMIN_PREFIX, '');
+  return s && s !== name ? s.charAt(0).toUpperCase() + s.slice(1) : name;
+}
+/** Names of a level's units in the UI language (reactive on the language when read in a $derived), districts
+ *  without their administrative prefix (U15). */
 export function namesOf(ld: LevelData): string[] {
-  if (ld.level === 'gemeinde' || !unitNames.size) return ld.name;
-  return ld.units.map((u, i) => placeName(ld.level, u, ld.name[i]));
+  if (ld.level === 'gemeinde') return ld.name;
+  if (!unitNames.size) return ld.level === 'bezirk' ? ld.name.map((n) => shortName('bezirk', n)) : ld.name;
+  return ld.units.map((u, i) => shortName(ld.level, placeName(ld.level, u, ld.name[i])));
 }
 /** All units of all levels: names, label points, parent regions of each municipality. */
 export function loadUnits(): Promise<UnitRow[]> {

@@ -51,7 +51,7 @@
   import PctBar from '../components/PctBar.svelte';
   import Search from '../components/Search.svelte';
   import { fmtNumber, fmtPeriod, fmtValue, unitOf } from '../lib/classify';
-  import { loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
+  import { loadTheme, placeName, precisionText, shortName, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
   import { levelName, ml, t, themeName, tiedText } from '../lib/i18n.svelte';
   import { profileHref, sourceHref } from '../lib/nav';
   import { parseRef, type UnitRef } from '../lib/places';
@@ -109,7 +109,7 @@
   const nameOf = (u: UnitRef) => {
     const pl = pls[u.level];
     const i = idxOf(u);
-    return pl && i !== null ? placeName(u.level, u.id, pl.name[i]) : u.id;
+    return pl && i !== null ? shortName(u.level, placeName(u.level, u.id, pl.name[i])) : u.id;
   };
 
   // themes: metrics available at any of the chosen levels

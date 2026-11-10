@@ -1,7 +1,7 @@
 // Places: unit references, search (names in all languages, postal codes, BFS numbers) and the
 // profile data files (identity, boundary history, neighbours, travel times). Everything here loads on
 // demand: nothing is fetched at start.
-import { getOptionalJSON, loadUnits, type UnitRow } from './data';
+import { getOptionalJSON, loadUnits, shortName, type UnitRow } from './data';
 
 // ---------------------------------------------------------------- unit references
 /** A unit at any level as one string: '261' (municipality) or 'kanton:ZH'. */
@@ -40,6 +40,8 @@ export interface SearchUnit {
   alts: string[];
   /** normalised name, then normalised alternative names */
   keys: string[];
+  /** further normalised forms that count as the name itself (parts of a bilingual name, a district without prefix) */
+  exact?: string[];
 }
 
 export interface SearchIndex {
@@ -62,15 +64,23 @@ export function norm(s: string): string {
     .trim();
 }
 
+/** One search entry. U14: each part of a bilingual name ("Biel/Bienne", "Bern / Berne") and a district's name
+ *  without its administrative prefix ("Bezirk Zürich" -> "Zürich") count as exact names too. */
+export function searchUnit(id: string, level: string, name: string, kanton: string | null, alts: string[]): SearchUnit {
+  const extra = new Set<string>();
+  if (name.includes('/')) for (const p of name.split('/')) if (p.trim()) extra.add(norm(p));
+  const sh = shortName(level, name);
+  if (sh !== name) extra.add(norm(sh));
+  const keys = [norm(name), ...alts.map(norm)];
+  return { ref: refOf(level, id), id, level, name, kanton, alts, keys, exact: [...extra].filter((k) => !keys.includes(k)) };
+}
+
 let searchP: Promise<SearchIndex> | null = null;
 export function loadSearch(): Promise<SearchIndex> {
   if (!searchP) {
     searchP = getOptionalJSON<SearchFile>('web/search.json').then((f) => {
       if (!f) throw new Error('search.json missing');
-      const units: SearchUnit[] = f.units.map(([id, level, name, kanton, alts]) => {
-        const a = hideAltNames(level, id) ? [] : alts;
-        return { ref: refOf(level, id), id, level, name, kanton, alts: a, keys: [norm(name), ...a.map(norm)] };
-      });
+      const units: SearchUnit[] = f.units.map(([id, level, name, kanton, alts]) => searchUnit(id, level, name, kanton, hideAltNames(level, id) ? [] : alts));
       return { units, byRef: new Map(units.map((u) => [u.ref, u])), plz: f.plz, plzKeys: Object.keys(f.plz).sort() };
     });
     searchP.catch(() => (searchP = null));
@@ -142,6 +152,13 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
         via = k === 0 ? undefined : u.alts[k - 1];
       }
     }
+    for (const key of u.exact ?? []) {
+      const s = key === q ? 104 : key.startsWith(q) ? 84 : 0;
+      if (s > best) {
+        best = s;
+        via = undefined;
+      }
+    }
     if (best) scored.push({ u, s: best + (LEVEL_BOOST[u.level] ?? 1), via });
   }
   scored.sort(
@@ -152,7 +169,7 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
       a.u.name.localeCompare(b.u.name, 'de'),
   );
   for (const x of scored.slice(0, limit))
-    out.push({ ref: x.u.ref, name: x.u.name, level: x.u.level, kanton: x.u.kanton, via: x.via });
+    out.push({ ref: x.u.ref, name: shortName(x.u.level, x.u.name), level: x.u.level, kanton: x.u.kanton, via: x.via });
   return out;
 }
 

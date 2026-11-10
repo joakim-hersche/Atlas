@@ -119,11 +119,10 @@
   function outside(e: PointerEvent) {
     if ((open || expanded) && !root.contains(e.target as Node)) close();
   }
-  const subOf = (h: SearchHit) => {
+  /** U14: the type as a legible chip, the canton next to it */
+  const typeOf = (h: SearchHit) => {
     const lv = levelName(h.level, false);
-    const parts = [lv.charAt(0).toUpperCase() + lv.slice(1)];
-    if (h.kanton && h.level !== 'kanton') parts.push(h.kanton);
-    return parts.join(' · ');
+    return lv.charAt(0).toUpperCase() + lv.slice(1);
   };
   const showField = $derived(variant === 'inline' || !collapsed || expanded);
 </script>
@@ -167,7 +166,8 @@
                 {#if h.plz && h.plz.locality !== h.name}<span class="via">{h.plz.locality}</span>{/if}
               </span>
               <span class="hs">
-                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: h.plz.share < 0.05 ? '< 0.1' : fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{' · '}{/if}{subOf(h)}
+                <span class="chip">{typeOf(h)}</span>{#if h.kanton && h.level !== 'kanton'}<span class="kt">{h.kanton}</span>{/if}
+                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: h.plz.share < 0.05 ? '< 0.1' : fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{/if}
               </span>
             </button>
           {/each}
@@ -207,7 +207,9 @@
   .hn strong { font-weight: 700; }
   .code { font-weight: 700; background: var(--ink); color: var(--ink-text); padding: 0 4px; font-size: 0.78rem; }
   .via { color: var(--muted); font-size: 0.78rem; }
-  .hs { color: var(--muted); font-size: 0.74rem; }
+  .hs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); color: var(--text-2); font-size: var(--fs-meta); line-height: var(--lh-meta); }
+  .chip { border: 1px solid var(--ink); padding: 0 var(--sp-1); color: var(--text); font-weight: 600; }
+  .kt { font-weight: 600; color: var(--text); }
   .msg { margin: 0; padding: 10px; color: var(--muted); font-size: 0.82rem; }
 
   /* phone header: icon, then a full-width field over the header */
