@@ -7,5 +7,6 @@ license: "GTFS: opentransportdata.swiss terms of use (cite opentransportdata.swi
 attribution: "Travel times computed by Gemeindebank from the Swiss GTFS timetable (opentransportdata.swiss) and the ARE national passenger transport model NPVM 2023; population STATPOP 2025 (BFS)"
 vintage: "reference state (populated hectares placed in reference-state polygons by pipeline/reach)"
 years: "2026 (timetable 2026; car model year 2023)"
-input: data/interim/reach/travel_times.parquet (methods gtfs_csa_popweighted, npvm2023_ttc_popweighted; gtfs_csa_station is not exported as a metric)
+input: data/interim/reach/travel_times.parquet (methods gtfs_rcsa_mainstation -> reach_ptst_*, gtfs_rcsa_popweighted -> reach_pt_*, npvm2023_ttc_popweighted -> reach_car_*; the hub-outward gtfs_csa_* methods are not exported as metrics)
+inputs: [otd_gtfs, are_npvm, bfs_statpop_geodata]
 catalog_ids: [otd_gtfs_timetable_2026, are_npvm_matrices_zenodo]
