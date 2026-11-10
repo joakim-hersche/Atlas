@@ -1,0 +1,37 @@
+# Licence review (brief rule 5). Explicit decisions override the automatic text check in
+# pipeline/build/web.py. status: cleared | blocked. Optional `metrics`: only these metric ids are
+# cleared (for sources mixing several publishers). Every 'cleared' needs evidence.
+# Reviewed 2026-11-10.
+
+bfs_census_1970_2000:
+  status: cleared
+  evidence: "BFS DAM asset 284986 (px-x-4001000000_101) termsOfUse = OPEN-BY, checked 2026-11-10"
+
+are_bauzonen:
+  status: cleared
+  evidence: "2022 workbook, sheet 'Inhalt': 'Open Data, free use, source must be cited'. The restricted 2012 municipal results and 2017 unbuilt reserves are not ingested."
+
+are_zweitwohnungen:
+  status: cleared
+  evidence: "STAC collection links opendata.swiss terms_by (open use, source must be provided)"
+
+are_gueteklassen:
+  status: cleared
+  evidence: "STAC collection links opendata.swiss terms_by (open use, source must be provided)"
+
+otd_stops:
+  status: cleared
+  evidence: "opentransportdata.swiss terms of use: commercial and non-commercial use allowed, cite opentransportdata.swiss (ToU 5.1); state feed version (5.2) — recorded on the sources page"
+
+bfe_energy:
+  status: cleared
+  metrics: [en_ecar_count, en_ecar_share, en_charging_spots, en_pv_installed_kwp, en_pv_kwp_per_capita,
+            en_solar_potential_used, en_heat_renewable_count, en_heat_nonrenewable_count,
+            en_heat_renewable_share, en_elec_consumption_mwh, en_elec_consumption_per_capita,
+            en_renelec_production_mwh, en_renelec_hydro_mwh, en_renelec_solar_mwh, en_renelec_per_capita]
+  evidence: "Energie Reporter: CC BY 4.0 (README in the downloaded zip). BFE solar potential and Energiestädte stay blocked until their terms are verified."
+
+bafu_protected_areas:
+  status: cleared
+  metrics: [pa_municipal_area_ha, pa_bln_ha, pa_bln_share]
+  evidence: "BLN: STAC links opendata.swiss terms_by. Parks and biotope inventories: no licence link (to verify)."
