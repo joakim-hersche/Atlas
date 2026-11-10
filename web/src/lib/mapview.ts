@@ -4,7 +4,7 @@
 // feature ids are the unit's index in the level's column files.
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { FeatureCollection, Point } from 'geojson';
+import type { FeatureCollection, Geometry, Point } from 'geojson';
 import type { Base, LevelData } from './data';
 import type { Display } from './hash';
 import { token } from './theme';
@@ -334,6 +334,17 @@ export class UnitMap {
     m.updateImage('hatch', hatchImage(token('--nodata-fill'), token('--nodata-line')));
     this.styleUnits();
     this.styleSymbols();
+  }
+
+  /** Fit the view to one geometry (a place opened with 'show on map'). */
+  fitGeometry(g: Geometry, padding: maplibregl.PaddingOptions) {
+    const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of polys) for (const r of p) for (const [x, y] of r) {
+      x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+    }
+    if (!Number.isFinite(x0)) return;
+    this.map.fitBounds([x0, y0, x1, y1], { padding, maxZoom: 10.5, animate: false });
   }
 
   /** Centre on a unit if it is outside the visible area. */

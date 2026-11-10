@@ -25,6 +25,8 @@
   import { app } from '../lib/state.svelte';
   import { t } from '../lib/i18n.svelte';
   import { currentLevelNote, switchLevel } from '../lib/levels';
+  import { profileHref, sourceHref } from '../lib/nav';
+  import { refOf } from '../lib/places';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -222,8 +224,12 @@
     };
   });
 
+  // 'show on map' from a profile: the first fits frame the selected place instead of all of Switzerland
+  let focus = app.focusSel;
+  app.focusSel = false;
   function fit(animate = false) {
     if (!view) return;
+    if (animate) focus = false;
     let padding: { top: number; bottom: number; left: number; right: number };
     if (desktop) padding = { top: 24, bottom: 24, left: 24, right: 48 };
     else {
@@ -231,6 +237,12 @@
       padding = { top: 46, bottom: Math.max(12, mapEl.clientHeight - top + 8), left: 10, right: 10 };
     }
     view.map.resize();
+    const f = focus && selIdx !== null ? ld.geo.features.find((x) => x.id === selIdx) : undefined;
+    if (f) {
+      view.map.resize();
+      view.fitGeometry(f.geometry, padding);
+      return;
+    }
     view.map.fitBounds(CH_BOUNDS, { padding, animate, duration: animate ? 500 : 0 });
   }
   $effect(() => {
@@ -572,7 +584,8 @@
       {#if card && refA && colA}
         <div class="caps lab">Selected {li.one}</div>
         <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)} />
+          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
+          profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
       {:else}
         <p class="foot hint">Tap or click {aOne} for its value, rank and percentile.</p>
       {/if}
@@ -589,7 +602,8 @@
   {#if !desktop && card && refA && colA}
     <div class="card-wrap">
       <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-        source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)} />
+        source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
+        profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
     </div>
   {/if}
 

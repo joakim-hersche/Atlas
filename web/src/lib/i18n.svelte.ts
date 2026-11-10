@@ -28,6 +28,7 @@ const EN: Dict = {
   'map.reset': 'Show all of Switzerland',
   'common.close': 'Close',
   'common.dismiss': 'Dismiss',
+  'card.profile': 'Profile',
 };
 
 const DE: Dict = {
@@ -50,6 +51,7 @@ const DE: Dict = {
   'map.reset': 'Ganze Schweiz zeigen',
   'common.close': 'Schliessen',
   'common.dismiss': 'Ausblenden',
+  'card.profile': 'Profil',
 };
 
 /** Add strings from a page module (keeps each page's strings next to it). */
