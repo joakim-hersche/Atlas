@@ -113,6 +113,28 @@ Both are partial (cities or regions only); catalog rows `bfs_ssv_tax_burden` and
 >
 > Freundliche Grüsse
 
+## Crime statistics: national PKS and cantonal police reports (2026-11-10)
+
+| Source | Verdict | Binding terms (URL, quote) | Attribution required |
+|---|---|---|---|
+| `bfs_pks` (PKS by district and canton, Map Explorer dataset ch_19_03; clearance from STAT-TAB) | **cleared** | https://dam-api.bfs.admin.ch/hub/api/dam/assets/36495988 termsOfUse "OPEN-BY – Freie Nutzung - Quellenangabe ist Pflicht / Open use - Must provide the source"; STAT-TAB px-x-1903020100_101 = DAM asset 36434636, "OPEN-BY" | "Source: BFS – Polizeiliche Kriminalstatistik (PKS)" + link |
+| `bfs_pks_staedte` (je-d-19.02.01.01.04, 27 cities) | **cleared** | https://dam-api.bfs.admin.ch/hub/api/dam/assets/36455965 termsOfUse "OPEN-BY – Freie Nutzung - Quellenangabe ist Pflicht"; file "© BFS 2026" | "Source: BFS – Polizeiliche Kriminalstatistik (PKS)" + link |
+
+Cantonal police PKS reports with tables by municipality (catalog rows `kt_*_crime`). The tables are produced on the BFS template ("Quelle: BFS – PKS, © BFS 2026"), but they are published by the cantons under the cantons' website terms. None of these allows reuse without asking, so none is parsed (brief rule 5: flag, don't use):
+
+| Canton | Verdict | Terms (URL, quote, read 2026-11-10) |
+|---|---|---|
+| BE | **needs permission** | https://www.police.be.ch/de/tools/rechtliches.html: "Für die Reproduktion von sämtlichen Dateien, ist die schriftliche Zustimmung des Urheberrechtsträgers im Voraus einzuholen." |
+| LU | **needs permission** | https://polizei.lu.ch/disclaimer: "Ohne schriftliche Zustimmung der Betreiberin dieser Websites sind Reproduktionen oder das Benützen von urheberrechtlich geschützten Inhalten der Websites (inkl. Quellcodes) für öffentliche oder kommerzielle Zwecke nicht erlaubt." |
+| SO | **unclear (owner)** | https://so.ch/rechtliches/: "Die Verwendung von urheberrechtlich geschütztem, veröffentlichtem Material ist nur mit vorheriger schriftlicher Zustimmung der Staatskanzlei gestattet." The same page excepts "Rechtserlasse, amtliche Erlasse, Entscheidungen sowie Protokolle und Berichte von Behörden" from protection; whether the police statistics report counts as such a report is a legal reading, not a stated licence |
+| FR | **needs permission** | https://www.fr.ch/de/impressum: "Jede Wiedergabe muss vorgängig von dem oder der Inhaber/in der Rechte schriftlich erlaubt werden." |
+| GR | **needs permission** | https://www.gr.ch/de/Seiten/Impressum.aspx: "Ohne vorherige schriftliche Zustimmung der Urheberrechtsträger sind Reproduktionen, Modifikationen und das Weiterverwenden von urheberrechtlich geschützten Inhalten der Website für öffentliche oder kommerzielle Zwecke untersagt." |
+| GE | **needs permission** | https://www.ge.ch/conditions-generales: "La reproduction, la transmission, la modification ou l'utilisation à des fins publiques ou commerciales du contenu protégé par les droits d'auteur [...] sont soumises à autorisation écrite préalable de l'Etat de Genève." |
+| VD | **needs permission** | https://www.vd.ch/cha/bic/mentions-legales: "Toute reproduction, utilisation ou modification à des fins publiques ou commerciales du contenu protégé par les droits d'auteur est interdite sans l'autorisation du détenteur des droits" |
+| SZ | **unreadable** | www.sz.ch refused by the session proxy (HTTP 403); the report PDF itself states no terms |
+
+Cleaner route for municipal crime data: the cantonal tables all come from the BFS PKS, so a data request to BFS (pks@bfs.admin.ch) for "Straftaten nach Gemeinde" for all cantons would replace eight permission requests.
+
 ## Open (licence stated by the publisher)
 
 | Source | Terms as recorded |
@@ -133,6 +155,8 @@ Both are partial (cities or regions only); catalog rows `bfs_ssv_tax_burden` and
 | `bfs_naturalisation` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_nrw` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_sdmx` | OPEN-BY – open use, the source must be provided (termsOfUse of the statistik.admin.ch asset linked from each dataflow's EXT_RESOURCE, checked for 12 flows) |
+| `bfs_pks` | OPEN-BY – open use, the source must be provided (BFS DAM assets 36495988, 36434636; checked 2026-11-10) |
+| `bfs_pks_staedte` | OPEN-BY – open use, the source must be provided (BFS DAM asset 36455965; checked 2026-11-10) |
 | `bfs_rents` | OPEN-BY – open use, the source must be provided (statistik.admin.ch assets 36398431, 36398447, 36503090; checked 2026-11-10) |
 | `bfs_se_language_bezirk` | OPEN-BY – open use, the source must be provided (BFS termsOfUse) |
 | `bfs_social_assistance` | OPEN-BY – open use, the source must be provided (BFS termsOfUse, DAM 36878678) |

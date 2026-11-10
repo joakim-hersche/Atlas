@@ -913,3 +913,55 @@ reach_car_nearest_hub: {label_fr: "Voiture vers le pôle le plus proche", unit_e
 
 # --- wikidata_identity ---
 wiki_sitelinks: {label_fr: "Éditions linguistiques de Wikipédia", unit_en: "editions", unit_de: "Sprachversionen", unit_fr: "éditions"}  # guess (unit: guess)
+
+# --- bfs_pks ---
+pks_stgb: {label_fr: "Infractions au Code pénal (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_violent: {label_fr: "Infractions de violence (CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_assault: {label_fr: "Voies de fait (art. 126 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_threat: {label_fr: "Menaces (art. 180 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_injury: {label_fr: "Lésions corporelles (art. 122, 123 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_officials: {label_fr: "Violence ou menace contre les autorités et les fonctionnaires (art. 285 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_robbery: {label_fr: "Brigandage (art. 140 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_theft: {label_fr: "Vol sans vol à l'étalage (art. 139 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_burglary: {label_fr: "Vol par effraction et par introduction clandestine (art. 139 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_bicycle_theft: {label_fr: "Vol de bicyclette (art. 139 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_vehicle_theft: {label_fr: "Vol de véhicule sans vol de bicyclette (art. 139 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_damage: {label_fr: "Dommages à la propriété sans vol (art. 144 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_fraud: {label_fr: "Escroquerie (art. 146 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_computer_fraud: {label_fr: "Utilisation frauduleuse d'un ordinateur (art. 147 CP) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_betmg: {label_fr: "Infractions à la loi sur les stupéfiants (LStup) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_aig: {label_fr: "Infractions à la loi sur les étrangers et l'intégration (LEI) (district)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_pop: {label_fr: "Habitants pour les fréquences (SPC, fin de l'année précédente)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pks_kt_stgb_cleared: {label_fr: "Infractions au Code pénal élucidées (canton)", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+pks_stgb_per_1000: {label_fr: "Infractions au Code pénal pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_violent_per_1000: {label_fr: "Infractions de violence (CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_assault_per_1000: {label_fr: "Voies de fait (art. 126 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_threat_per_1000: {label_fr: "Menaces (art. 180 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_injury_per_1000: {label_fr: "Lésions corporelles (art. 122, 123 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_officials_per_1000: {label_fr: "Violence ou menace contre les autorités et les fonctionnaires (art. 285 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_robbery_per_1000: {label_fr: "Brigandage (art. 140 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_theft_per_1000: {label_fr: "Vol sans vol à l'étalage (art. 139 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_burglary_per_1000: {label_fr: "Vol par effraction et par introduction clandestine (art. 139 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_bicycle_theft_per_1000: {label_fr: "Vol de bicyclette (art. 139 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_vehicle_theft_per_1000: {label_fr: "Vol de véhicule sans vol de bicyclette (art. 139 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_damage_per_1000: {label_fr: "Dommages à la propriété sans vol (art. 144 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_fraud_per_1000: {label_fr: "Escroquerie (art. 146 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_computer_fraud_per_1000: {label_fr: "Utilisation frauduleuse d'un ordinateur (art. 147 CP) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_betmg_per_1000: {label_fr: "Infractions à la loi sur les stupéfiants (LStup) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_aig_per_1000: {label_fr: "Infractions à la loi sur les étrangers et l'intégration (LEI) pour 1000 habitants (district)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_kt_clearance_rate: {label_fr: "Taux d'élucidation des infractions au Code pénal (canton)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_pks_staedte ---
+pks_city_theft_hz: {label_fr: "Vol sans vol à l'étalage (art. 139 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_burglary_hz: {label_fr: "Vol par effraction et par introduction clandestine (art. 139 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_bicycle_theft_hz: {label_fr: "Vol de bicyclette (art. 139 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_vehicle_theft_hz: {label_fr: "Vol de véhicule sans vol de bicyclette (art. 139 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_damage_hz: {label_fr: "Dommages à la propriété sans vol (art. 144 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_fraud_hz: {label_fr: "Escroquerie (art. 146 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_computer_fraud_hz: {label_fr: "Utilisation frauduleuse d'un ordinateur (art. 147 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_violent_hz: {label_fr: "Infractions de violence (CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_assault_hz: {label_fr: "Voies de fait (art. 126 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_threat_hz: {label_fr: "Menaces (art. 180 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_injury_hz: {label_fr: "Lésions corporelles (art. 122, 123 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_officials_hz: {label_fr: "Violence ou menace contre les autorités et les fonctionnaires (art. 285 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+pks_city_robbery_hz: {label_fr: "Brigandage (art. 140 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}

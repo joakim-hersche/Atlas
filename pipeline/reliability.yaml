@@ -38,6 +38,23 @@ metrics:
   sh_rate: {count: sh_recipients, base: pop_total}
   sh_rate_3y: {}
   crime_stgb_per_1000: {}
+  # BFS PKS district rates (bfs_pks): small districts and rare offences (robbery, Art. 285)
+  pks_stgb_per_1000: {}
+  pks_violent_per_1000: {}
+  pks_assault_per_1000: {}
+  pks_threat_per_1000: {}
+  pks_injury_per_1000: {}
+  pks_officials_per_1000: {}
+  pks_robbery_per_1000: {}
+  pks_theft_per_1000: {}
+  pks_burglary_per_1000: {}
+  pks_bicycle_theft_per_1000: {}
+  pks_vehicle_theft_per_1000: {}
+  pks_damage_per_1000: {}
+  pks_fraud_per_1000: {}
+  pks_computer_fraud_per_1000: {}
+  pks_betmg_per_1000: {}
+  pks_aig_per_1000: {}
   crime_property_per_1000: {}
   crime_violent_per_1000: {}
   crime_burglaries_per_1000: {}

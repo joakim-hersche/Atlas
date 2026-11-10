@@ -48,7 +48,7 @@ BLOCKS = {"Diebstahl (ohne Ladendiebstahl)": "pks_city_theft_hz",
           "davon Körperverletzungen": "pks_city_injury_hz",
           "davon Gewalt und Drohung gegen Behörden und Beamte": "pks_city_officials_hz",
           "davon Raub": "pks_city_robbery_hz"}
-NE_NOTE = ("BFS footnote 4: Neuchâtel has recorded fewer threats since 2017 (no threat recorded when "
+NE_NOTE = ("BFS footnote 4: the canton of Neuchâtel has recorded fewer threats since 2017 (no threat recorded when "
            "other offences are recorded in the same case); value given to 1 decimal")
 SUPPRESSED = "withheld by BFS for data protection: 1 to 9 offences ('x')"
 

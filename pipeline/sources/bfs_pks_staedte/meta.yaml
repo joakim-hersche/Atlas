@@ -1,0 +1,12 @@
+source_id: bfs_pks_staedte
+title: "Police crime statistics (PKS): selected Criminal Code offences per 1,000 residents in the 27 cities with at least 30,000 residents"
+publisher: "BFS (Federal Statistical Office) – Polizeiliche Kriminalstatistik (PKS)"
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets/36455965/master
+table: je-d-19.02.01.01.04
+license: "OPEN-BY – Freie Nutzung, Quellenangabe ist Pflicht (BFS DAM asset 36455965 termsOfUse, checked 2026-11-10; re-checked on every ingest)"
+attribution: "Source: BFS – Polizeiliche Kriminalstatistik (PKS), STATPOP/ESPOP"
+vintage: "Municipality state 6 Apr 2025 (Gemeindestand 06.04.2025, back-cast by BFS), mapped 1:1 to the reference state"
+years: "2009–2025"
+precision: exact
+caveats: "Rates only (no counts), not aggregatable; 'x' = 1–9 offences withheld; no Criminal Code total. 27 cities: partial municipal coverage."
+catalog_ids: [bfs_pks_staedte]

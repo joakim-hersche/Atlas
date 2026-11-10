@@ -1,0 +1,16 @@
+source_id: bfs_pks
+title: "Police crime statistics (PKS): offences by district, canton and Switzerland, 2009–2025"
+publisher: "BFS (Federal Statistical Office) – Polizeiliche Kriminalstatistik (PKS)"
+url: https://mapexplorer.bfs.admin.ch/?lang=de#c=indicator&i=ch_19_03.stgbgprotausend&view=map33
+urls:
+  districts_cantons: "https://mapexplorer.bfs.admin.ch/GC_coldata.php?view=map33&dataset=ch_19_03&indic=stgbprotausend&vars=stgb (Swiss Stats Map Explorer, dataset ch_19_03; views map33 districts, map164 cantons)"
+  licence_asset: "https://dam-api.bfs.admin.ch/hub/api/dam/assets/36495988 (Statatlas map 'Strafgesetzbuch (StGB): Häufigkeitszahl Gewaltstraftaten', mx-d-1-19.02.04.001)"
+  canton_clearance: "https://www.pxweb.bfs.admin.ch/api/v1/de/px-x-1903020100_101/px-x-1903020100_101.px (STAT-TAB)"
+access: "Undocumented internal JSON of the Swiss Stats Map Explorer (GC_coldata / GC_refdata / GC_indic), raw responses cached; STAT-TAB PxWeb API"
+license: "OPEN-BY – Freie Nutzung, Quellenangabe ist Pflicht (BFS DAM asset 36495988 termsOfUse, checked 2026-11-10; re-checked on every ingest)"
+attribution: "Source: BFS – Polizeiliche Kriminalstatistik (PKS)"
+vintage: "Districts on the state of 1 Jan 2023 (nivgeo bezk2023_01_01, all years back-cast by BFS); cantons kant2022_01_01. Only change to the reference state: Moutier (241 Jura bernois -> new district 2604, canton JU, 1 Jan 2026): 241 keeps Moutier, 2604 not published"
+years: "2009–2025 (PKS statistical year; data as of 23.03.2026)"
+precision: exact
+caveats: "Offences counted where committed (city centres, stations, shopping and nightlife areas have high rates). District sums are below the canton values (offences without a known district). Rates use the resident population at the end of the previous year. BFS: better suited to trends than to geographic comparisons."
+catalog_ids: [bfs_pks_bezirk_statatlas, bfs_pks_kanton]

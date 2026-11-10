@@ -114,3 +114,11 @@ bfs_rents:
 bfs_tax_burden:
   status: cleared
   evidence: "BFS republication of ESTV tax burden. https://statistik.admin.ch/de/asset/36503269 (Statistik der Schweizer Städte 2026, Steuerbelastung): 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht', 'Quelle(n) Eidgenössische Steuerverwaltung'. https://statistik.admin.ch/de/asset/36681060 (DF_RDISP_2, Regionale Disparitäten nach Arbeitsmarktregionen 2018): 'OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Checked 2026-11-10. Attribution must name BFS/SSV and ESTV as data source."
+
+bfs_pks:
+  status: cleared
+  evidence: "BFS DAM https://dam-api.bfs.admin.ch/hub/api/dam/assets/36495988 (Statatlas map 'Strafgesetzbuch (StGB): Häufigkeitszahl Gewaltstraftaten', mx-d-1-19.02.04.001, dataset ch_19_03 of the Map Explorer, publication 2026-0089 'Polizeiliche Kriminalstatistik 2025'): termsOfUse code 'OPEN-BY', abbrev 'Freie Nutzung - Quellenangabe ist Pflicht', name 'Open use - Must provide the source'; copyrights 'Bundesamt für Statistik'. STAT-TAB cube px-x-1903020100_101 = DAM asset 36434636, termsOfUse 'OPEN-BY'. Checked 2026-11-10; the ingest re-reads asset 36495988 and stops if the terms change. Attribution: 'Source: BFS – Polizeiliche Kriminalstatistik (PKS)'."
+
+bfs_pks_staedte:
+  status: cleared
+  evidence: "BFS DAM https://dam-api.bfs.admin.ch/hub/api/dam/assets/36455965 (je-d-19.02.01.01.04 'Strafgesetzbuch: Auswahl von Straftaten, nach Städten ab 30'000 Einwohner', 2009-2025): termsOfUse code 'OPEN-BY', abbrev 'Freie Nutzung - Quellenangabe ist Pflicht'. File footer: 'Quellen: Bundesamt für Statistik - Polizeiliche Kriminalstatistik (PKS), Statistik des jährlichen Bevölkerungsstandes (ESPOP), Statistik der Bevölkerung und der Haushalte (STATPOP), Gemeindestand 06.04.2025', '© BFS 2026'. Checked 2026-11-10; the ingest re-reads the asset terms."

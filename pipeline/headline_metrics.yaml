@@ -21,7 +21,7 @@ headline:
   Environment & hazards: [air_no2_pop, haz_share_high_medium, pa_bln_share]
   Health & social: [sh_rate, kvg_mean_premium_adult]
   Education: [edu_share_tertiary, edu_labb_matura_rate]
-  Safety: [acc_injury_per_1000, crime_stgb_per_1000]
+  Safety: [pks_stgb_per_1000, pks_violent_per_1000, pks_burglary_per_1000, acc_injury_per_1000]   # PKS district rates (national, regional value) replace the ZH/BS-only crime_stgb_per_1000
   Politics: [nrw_share_left_bloc, nrw_share_right_bloc, vote_turnout, vote_yes_share, nrw_turnout, nrw_share_svp, nrw_share_sp, nrw_share_fdp, nrw_share_mitte, nrw_share_gruene]
 
 hidden:
@@ -33,3 +33,4 @@ hidden:
   - haz_hectare_residents    # technical denominator
   - gk_population            # technical denominator
   - edu_imputation_share     # data-quality indicator, shown in the profile notes instead
+  - pks_pop                  # technical denominator of the PKS district rates
