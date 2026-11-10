@@ -80,6 +80,50 @@ def bs() -> tuple[pd.DataFrame, pd.DataFrame]:
     return w.rename(columns={"jahr": "period"}).drop(columns="gemeinde"), kt.drop(columns="gemeinde")
 
 
+def zh_burglaries() -> pd.DataFrame:
+    z = pd.read_csv(fetch_retry(ZH_BURGLARY_URL, SOURCE, "KTZH_00001202_00006848.csv"))
+    z = z[z["Tatbestand"] == "Einbrüche insgesamt"]
+    w = z.groupby(["Gemeinde_BFS_Nr", "Ausgangsjahr"])["Straftaten_total"].sum().rename("n").reset_index()
+    return w.rename(columns={"Gemeinde_BFS_Nr": "bfs_nr", "Ausgangsjahr": "period"})
+
+
+def _pks_pdf(kt: str):
+    if kt != "AI":
+        return fetch_retry(PKS_PDF[kt], SOURCE, f"pks_{kt.lower()}_{PKS_YEAR}.pdf")
+    # Appenzell Innerrhoden serves its files through a download proxy with a changing token
+    html = fetch_retry(AI_LIST, SOURCE, "ai_kriminalstatistiken.html").read_text(encoding="utf-8")
+    m = re.search(rf'href="(/api/download\?url=[^"]*kriminalstatistik-{PKS_YEAR}-kapo-ai\.pdf[^"]*)"', html)
+    if not m:
+        raise ValueError(f"AI: no link to the {PKS_YEAR} police statistics report on {AI_LIST}")
+    return fetch_retry("https://www.ai.ch" + m.group(1).replace("&amp;", "&"), SOURCE, f"pks_ai_{PKS_YEAR}.pdf")
+
+
+def pks(kt: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Municipality rows (bfs_nr, period, stgb) and canton/pseudo rows (unit, period, stgb)."""
+    d = stgb_by_gemeinde(_pks_pdf(kt))
+    d["period"] = d["period"].astype(int)
+    special = d["label"].eq("Total Kanton") | d["label"].str.startswith(("Unbekannt", "Übrige Gemeinden"))
+    g = d[~special]
+    m = match_names(g["label"].unique(), kt)
+    miss = set(g["label"]) - set(m)
+    if miss:
+        raise ValueError(f"{kt} PKS municipality names not matched: {sorted(miss)}")
+    w = g.assign(bfs_nr=g["label"].map(m)).rename(columns={"n": "stgb"})[["bfs_nr", "period", "stgb"]]
+    k = d[special].copy()
+    k["unit"] = k["label"].map(lambda x: kt if x == "Total Kanton" else
+                               f"{kt}:unbekannt" if x.startswith("Unbekannt") else f"{kt}:uebrige")
+    tot = k[k["unit"] == kt].set_index("period")["n"]
+    rest = pd.concat([w.groupby("period")["stgb"].sum(), k[k["unit"] != kt].groupby("period")["n"].sum()],
+                     axis=1).fillna(0).sum(axis=1)
+    if not (tot - rest.reindex(tot.index)).abs().max() < 0.5:
+        raise ValueError(f"{kt} PKS: municipalities + pseudo rows do not add up to the canton total")
+    return w, k.rename(columns={"n": "stgb"})[["unit", "period", "stgb"]]
+
+
+PSEUDO_NOTE = {"unbekannt": "police statistics 'Unbekannt': offences without a known municipality (in the canton total only)",
+               "uebrige": "police statistics 'Übrige Gemeinden': municipalities not listed individually (in the canton total only)"}
+
+
 def observations() -> pd.DataFrame:
     parts, cov = [], {}
     zw = zh()
@@ -89,18 +133,43 @@ def observations() -> pd.DataFrame:
         parts.append(to_ref(w, MAP, SOURCE, kt, min_jaccard=0.0 if kt == "ZH" else 0.97))
         for m in MAP.values():
             cov[(m, kt)] = set(w["period"])
+    zb = zh_burglaries()
+    zb["period"] = zb["period"].astype(int).astype(str)
+    parts.append(to_ref(zb, {"n": BURG}, SOURCE, "ZH"))
+    cov[(BURG, "ZH")] = set(zb["period"])
+    pks_kt, pks_listed = [], {}
+    for kt in ("AR", "AI", "BL"):
+        w, k = pks(kt)
+        w["period"] = w["period"].astype(str)
+        k["period"] = k["period"].astype(str)
+        parts.append(to_ref(w, {"stgb": MAP["stgb"]}, SOURCE, kt, vintage=REFERENCE_DATE))
+        cov[(MAP["stgb"], kt)] = set(w["period"])
+        pks_kt.append(k)
+        pks_listed[kt] = set(w["bfs_nr"].astype(str))
     obs = pd.concat(parts, ignore_index=True)
+    have = set(zip(obs["unit_id"], obs["metric_id"], obs["period"]))
     # ZH: municipalities up to 10,000 inhabitants are not published
     zh_units = set(ref_units().query("canton == 'ZH'")["bfs_nr"].astype(str))
-    have = set(zip(obs["unit_id"], obs["metric_id"], obs["period"]))
     rows = [(u, m, p) for m in MAP.values() for p in sorted(cov[(m, "ZH")]) for u in zh_units
             if (u, m, p) not in have]
     add = pd.DataFrame(rows, columns=["unit_id", "metric_id", "period"]).assign(
-        level="gemeinde", vintage=obs["vintage"].iloc[0], value=float("nan"), status="not_published",
-        precision="exact", provenance="native", source_id=SOURCE,
         note="ZH publishes offences only for municipalities with more than 10,000 inhabitants")
+    # PKS reports: at most 40 municipalities listed (BL), the others are 'Übrige Gemeinden'
+    rows = []
+    for kt in pks_listed:
+        units = set(ref_units().query("canton == @kt")["bfs_nr"].astype(str))
+        rows += [(u, MAP["stgb"], p) for p in sorted(cov[(MAP["stgb"], kt)]) for u in units - pks_listed[kt]
+                 if (u, MAP["stgb"], p) not in have]
+    add2 = pd.DataFrame(rows, columns=["unit_id", "metric_id", "period"]).assign(
+        note="the cantonal police statistics report lists only the 40 municipalities with most offences; "
+             "this municipality is in 'Übrige Gemeinden'")
+    add = pd.concat([add, add2], ignore_index=True).assign(
+        level="gemeinde", vintage=REFERENCE_DATE.isoformat(), value=float("nan"), status="not_published",
+        precision="exact", provenance="native", source_id=SOURCE)
     obs = pd.concat([obs, add[obs.columns]], ignore_index=True)
     covered = {m: {"ZH", "BS"} for m in MAP.values()}
+    covered[MAP["stgb"]] |= {"AR", "AI", "BL"}
+    covered[BURG] = {"ZH"}
     obs = complete(obs, SOURCE, covered, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
     bkt["period"] = bkt["period"].astype(int).astype(str)
     nat = emit(bkt[bkt["unit"] == "BS"], MAP, "period", SOURCE, level="kanton", unit_col="unit", provenance="native")
@@ -108,4 +177,11 @@ def observations() -> pd.DataFrame:
     # Checked 2009–2025: canton = Basel + Riehen + Bettingen + unbekannt exactly.
     ps = emit(bkt[bkt["unit"] != "BS"], MAP, "period", SOURCE, level="pseudo", unit_col="unit", provenance="native")
     ps["note"] = "BS police statistics 'Gemeinde unbekannt': offences without a known municipality"
-    return pd.concat([obs, nat[nat["status"] == "ok"], ps[ps["status"] == "ok"]], ignore_index=True)
+    pk = pd.concat(pks_kt, ignore_index=True)
+    pnat = emit(pk[~pk["unit"].str.contains(":")], {"stgb": MAP["stgb"]}, "period", SOURCE, level="kanton",
+                unit_col="unit", provenance="native")
+    pps = emit(pk[pk["unit"].str.contains(":")], {"stgb": MAP["stgb"]}, "period", SOURCE, level="pseudo",
+               unit_col="unit", provenance="native")
+    pps["note"] = pps["unit_id"].str.split(":").str[1].map(PSEUDO_NOTE)
+    out = [obs] + [x[x["status"] == "ok"] for x in (nat, ps, pnat, pps)]
+    return pd.concat(out, ignore_index=True)
