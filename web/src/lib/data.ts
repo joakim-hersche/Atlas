@@ -41,6 +41,10 @@ export interface MetricMeta {
   incomplete_periods?: Record<string, { n: number; of: number; level: string; label_en?: string; label_de?: string; label_fr?: string }> | null;
   coverage_meta?: string;
   coverage_detail?: { level: string; period: string; n: number; of: number; n_cantons: number } | null;
+  /** D38: all levels with values (profiles); `levels` holds only the levels offered as maps */
+  profile_levels?: string[];
+  /** D38: curation verdict per level ('show' | 'note' | 'hide') and its reason */
+  curation?: Record<string, { v: string; why: string }> | null;
   /** level -> reason (English) why the metric has no values there */
   unavailable_levels?: Record<string, string> | null;
   /** small-number rule (flag bits 1/2) */

@@ -77,7 +77,8 @@
   const value = $derived(col.v[index]);
   /** D37: a single-seat canton's value, kept apart from classes and ranks (shown here, labelled) */
   const majVal = $derived(value === null ? majorityValue(col, index) : null);
-  const rank = $derived(rankOf(col.v, index, meta.direction));
+  // a regional value (e.g. a district rate on the municipality map) is not ranked among municipalities
+  const rank = $derived(regional ? null : rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);

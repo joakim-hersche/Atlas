@@ -76,7 +76,8 @@ export interface ThemeBlock {
   files: string[];
 }
 export function themeBlocks(base: Base, level: string): ThemeBlock[] {
-  const at = base.metrics.filter((m) => !m.hidden && m.levels.includes(level));
+  // D38: profiles keep values whose map is curated away at this level (profile_levels)
+  const at = base.metrics.filter((m) => !m.hidden && (m.profile_levels ?? m.levels).includes(level));
   return themeOrder(base)
     .map((theme) => {
       const ms = at.filter((m) => m.theme === theme);
@@ -118,7 +119,8 @@ export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: n
   const n = col.v.length;
   let rank: Rank | null = null;
   let rankKt: Rank | null = null;
-  if (value !== null && maj === null && n > 1) {
+  // a regional value attached to municipalities is not ranked among them
+  if (value !== null && maj === null && n > 1 && !regionalAt(meta, pl.level)) {
     rank = rankOf(col.v, i, meta.direction);
     const grp = pl.byCanton.get(pl.canton[i]);
     if (grp && grp.length > 1) {

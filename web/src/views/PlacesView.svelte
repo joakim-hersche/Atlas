@@ -138,7 +138,7 @@
   /** entry per unit: undefined = loading, null = not at this level */
   function cells(m: MetricMeta): (Entry | null | undefined)[] {
     return units.map((u) => {
-      if (!m.levels.includes(u.level)) return null;
+      if (!(m.profile_levels ?? m.levels).includes(u.level)) return null;
       const pl = pls[u.level];
       const f = files[u.level]?.[m.file];
       const i = idxOf(u);
