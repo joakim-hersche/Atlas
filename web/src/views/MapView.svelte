@@ -674,8 +674,10 @@
     const notes: string[] = [];
     // D39: a nearest-hub figure names its hub and says which hubs count
     if (/^reach_(ptst|pt|car)_nearest_hub$/.test(metaA.id) && ld.level === 'gemeinde') {
+      // the hub's name already comes with the value's own note ("nearest hub: Luzern"); add it only when missing
       const h = nearestHubOf(rt, metaA.id, ld.units[i], rtIndex);
-      if (h) extra.push({ label: t('pt.nearestHub'), value: h });
+      const named = refA?.col.n?.[String(i)] !== undefined;
+      if (h && !named) extra.push({ label: t('pt.nearestHub'), value: h });
       notes.push(t('pt.nearestSet'));
     }
     // D37 / D16: canton Jura on today's boundaries includes Moutier (voted in canton Bern until 2025)
