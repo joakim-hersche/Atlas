@@ -133,8 +133,9 @@
   const unitsText = $derived(
     ld && isMap ? `${fmtNumber(ld.units.length, 0)} ${levelWord(ld.level)}` : gemCount !== null ? `${fmtNumber(gemCount, 0)} ${levelWord('gemeinde')}` : '',
   );
-  // a profile belongs to the place pages (Compare places); an older-boundaries map is the map page
-  const current = $derived(route === 'profile' ? 'places' : route === 'vintage' ? 'map' : route);
+  // an older-boundaries map is the map page; a profile highlights no page (B6, E9: "Compare places" lit up on a
+  // profile read as if the profile were a comparison)
+  const current = $derived(route === 'vintage' ? 'map' : route);
   /** first render time, for the performance check (window.__firstRender) */
   function rendered() {
     (window as unknown as { __firstRender: number }).__firstRender ??= performance.now() - t0;

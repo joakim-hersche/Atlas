@@ -39,6 +39,13 @@ const EN: Record<string, string> = {
   "r3.formerly": "formerly",
   "r3.until": "until {y}",
   "r3.vinUnit": "Municipality {y}",
+  "r3.vtKt": "Canton {kt}: {v}",
+  "r3.vtCh": "Switzerland: {v}",
+  "r3.formerParties": "Former parties ({n}, no longer standing)",
+  "r3.mainHubs": "one of the {n} main hubs (core cities of agglomerations with 100,000+ residents): only these count as “nearest hub”.",
+  "r3.mainHubT": "One of the main hubs counted for “nearest hub”",
+  "r3.langSE": "Structural Survey {y}",
+  "r3.langVZ": "census {y}",
 };
 
 const DE: Record<string, string> = {
@@ -73,6 +80,13 @@ const DE: Record<string, string> = {
   "r3.formerly": "früher",
   "r3.until": "bis {y}",
   "r3.vinUnit": "Gemeinde {y}",
+  "r3.vtKt": "Kanton {kt}: {v}",
+  "r3.vtCh": "Schweiz: {v}",
+  "r3.formerParties": "Frühere Parteien ({n}, treten nicht mehr an)",
+  "r3.mainHubs": "eines der {n} Hauptzentren (Kernstädte von Agglomerationen ab 100 000 Einwohnern): nur diese zählen als «nächstes Zentrum».",
+  "r3.mainHubT": "Eines der Hauptzentren, die für «nächstes Zentrum» zählen",
+  "r3.langSE": "Strukturerhebung {y}",
+  "r3.langVZ": "Volkszählung {y}",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -107,6 +121,13 @@ export const FR_R3: Record<string, string> = {
   "r3.formerly": "anciennement",
   "r3.until": "jusqu’en {y}",
   "r3.vinUnit": "Commune {y}",
+  "r3.vtKt": "Canton {kt} : {v}",
+  "r3.vtCh": "Suisse : {v}",
+  "r3.formerParties": "Anciens partis ({n}, ne se présentent plus)",
+  "r3.mainHubs": "l’un des {n} pôles principaux (villes-centres des agglomérations de 100 000 habitants et plus) : seuls ceux-ci comptent comme « pôle le plus proche ».",
+  "r3.mainHubT": "L’un des pôles principaux comptés pour « pôle le plus proche »",
+  "r3.langSE": "relevé structurel {y}",
+  "r3.langVZ": "recensement {y}",
 };
 
 addStrings(EN, DE);

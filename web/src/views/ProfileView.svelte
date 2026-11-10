@@ -182,7 +182,7 @@
   import PctBar from '../components/PctBar.svelte';
   import ElectionBar from '../components/ElectionBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
-  import { fmtDate, fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
+  import { fmtDate, fmtNumber, fmtPeriod, fmtValue, unitOf } from '../lib/classify';
   import { coverageLabel, loadTheme, placeName, precisionText, shortName, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
   import { historyFr, isDe, levelName, ml, t, themeName, tiedText, unitName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
@@ -194,6 +194,8 @@
   import { entryOf, loadPlaceLevel, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
   import { inShort } from '../lib/summary';
   import { app } from '../lib/state.svelte';
+  import { loadVoteIndex, type VoteIndex } from '../lib/votes';
+  import '../lib/i18n-r3';
 
   interface Props {
     base: Base;
@@ -245,6 +247,28 @@
   loadNeighbours().then((x) => (neighbours = x)).catch(() => {});
   $effect(() => {
     if (unit.level === 'gemeinde' && !reach) loadReachTimes().then((x) => (reach = x)).catch(() => {});
+  });
+  // B6 (R3, D6): the vote rows name the vote, say "provisional" and give the canton's and Switzerland's result
+  let voteIx = $state.raw<VoteIndex | null>(null);
+  $effect(() => {
+    if (!voteIx && base.metrics.some((m) => m.per_vote && m.vote_index)) loadVoteIndex().then((x) => (voteIx = x)).catch(() => {});
+  });
+  function voteCtx(m: MetricMeta, period: string) {
+    const v = voteIx?.votes.find((x) => x.period === period);
+    if (!v) return null;
+    const lang = app.lang;
+    const title = v.title?.[lang] ?? v.title?.de ?? v.title?.en ?? Object.values(v.title ?? {})[0] ?? '';
+    const kt = unit.level === 'kanton' ? null : pl && idx !== null ? pl.canton[idx] : null;
+    const k = kt && voteIx ? voteIx.cantons.indexOf(kt) : -1;
+    const ktV = m.id === 'vote_yes_share' && k >= 0 ? (v.canton_yes_pct[k] ?? null) : null;
+    const ch = m.id === 'vote_yes_share' ? v.yes_pct : m.id === 'vote_turnout' ? v.turnout_pct : null;
+    return { title, provisional: !!v.provisional, kt, ktV, ch, date: v.date };
+  }
+  // head metrics outside the core file (the median income next to the mean, B6) and the city language shares
+  $effect(() => {
+    if (!pl) return;
+    for (const b of blocks) for (const m of b.head) if (!pl.core.metrics[m.id]) need(m.file);
+    if (unit.level === 'gemeinde' && base.metas.has('lang_sec_de_share')) need(base.metas.get('lang_sec_de_share')!.file);
   });
 
   function need(file: string) {
@@ -372,7 +396,7 @@
     return ids.map((id) => ({ ref: refOf(unit.level, id), name: placeName(unit.level, id, rows!.get(refOf(unit.level, id))?.name ?? id), kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
   });
-  const short = $derived(pl && idx !== null ? inShort({ pl, idx, base, reach, placeName: name }) : []);
+  const short = $derived(pl && idx !== null ? inShort({ pl, idx, base, reach, placeName: name, files }) : []);
   // D31: station time towards the hub first (when the build has it), then door to door, then car
   const hasSt = $derived(!!reach?.pt_station);
   const reachK = $derived(reach && unit.level === 'gemeinde' ? reach.units.indexOf(unit.id) : -1);
@@ -393,6 +417,8 @@
     spreadOpen = undefined;
   });
   const spreadHub = $derived(spreadOpen === undefined ? (reachRows?.[0]?.slug ?? null) : spreadOpen);
+  /** D39: the 15 main hubs that count for "nearest hub" (marked in the table, B6) */
+  const mainHubs = $derived(new Set((reach?.nearest_hubs ?? []).map(([slug]) => slug)));
   const stationInfo = $derived(reach && reachK >= 0 ? mainStation(reach, unit.id) : null);
   // reasons are per hub (reasons[measure][hub][unit]); the same reason for several hubs is listed once
   const reachWhy = $derived.by(() => {
@@ -422,6 +448,12 @@
     if (open[b.theme]) for (const f of b.files) need(f);
   }
   const slug = (s: string) => 'th-' + s.toLowerCase().replace(/[^a-z]+/g, '-');
+  /** a former party (D37: "until YYYY"), or a value of a party that no longer stands */
+  const isFormer = (m: MetricMeta) => m.until !== null && m.until !== undefined;
+  const hasValue = (m: MetricMeta) => {
+    const e = entry(m);
+    return e === undefined || (!!e && e.value !== null);
+  };
 </script>
 
 {#snippet metricRow(m: MetricMeta)}
@@ -447,7 +479,11 @@
     {:else}
       <div class="mv"><span class="v">{fmtNumber(e.value, m.decimals)}{#if m.unit.startsWith('%')}{unitOf(m)}{/if}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span>
         {#if m.unit && !m.unit.startsWith('%')}<span class="un">{unitOf(m)}</span>{/if}<span class="yr">{fmtPeriod(e.period)}</span>
-        {#each e.flags as f}<span class="fx">{f}</span>{/each}{#if e.note}<span class="fx">{e.note}</span>{/if}</div>
+        {#each e.flags as f}<span class="fx">{f}</span>{/each}{#if e.note}<span class="fx">{e.note}</span>{/if}
+        {#if m.per_vote}{@const vc = voteCtx(m, e.period)}{#if vc}
+          <span class="fx vt"><strong>{vc.title}</strong>{' · '}{fmtDate(vc.date)}{#if vc.provisional}{' · '}<span class="prov">{t('vt.prov')}</span>{/if}</span>
+          {#if vc.ktV !== null || vc.ch !== null}<span class="fx vt">{#if vc.ktV !== null}{t('r3.vtKt', { kt: vc.kt ?? '', v: fmtValue(vc.ktV, m) })}{/if}{#if vc.ktV !== null && vc.ch !== null}{' · '}{/if}{#if vc.ch !== null}{t('r3.vtCh', { v: fmtValue(vc.ch, m) })}{/if}</span>{/if}
+        {/if}{/if}</div>
       <div class="mr">
         {#if e.regional}
           <span class="rk">{t('ux.regionValue', { level: levelName(e.regional, false) })}</span>
@@ -540,7 +576,15 @@
               {#each b.head as m (m.id)}{@render metricRow(m)}{/each}
               {#if b.rest.length}
                 {#if open[b.theme]}
-                  {#each b.rest as m (m.id)}{@render metricRow(m)}{/each}
+                  {@const cur = b.rest.filter((m) => !isFormer(m))}
+                  {@const old = b.rest.filter((m) => isFormer(m) && hasValue(m))}
+                  {#each cur as m (m.id)}{@render metricRow(m)}{/each}
+                  {#if old.length}
+                    <!-- B6 (R6): parties that no longer stand, collapsed; those without any value are left out -->
+                    <details class="former"><summary>{t('r3.formerParties', { n: old.length })}</summary>
+                      {#each old as m (m.id)}{@render metricRow(m)}{/each}
+                    </details>
+                  {/if}
                 {/if}
                 <button type="button" class="more" aria-expanded={!!open[b.theme]} onclick={() => toggle(b)}>
                   {open[b.theme] ? t('p.showLess') : b.head.length ? t('p.moreN', { n: b.rest.length }) : t('p.showAll', { n: b.rest.length })}
@@ -566,7 +610,7 @@
                   {#each reachRows as r (r.slug)}
                     <tr class:open={spreadHub === r.slug}>
                       <td><button type="button" class="hubbtn" aria-expanded={spreadHub === r.slug} title={t('sp2.open', { hub: r.hub })}
-                        onclick={() => (spreadOpen = spreadHub === r.slug ? null : r.slug)}><span class="chev" aria-hidden="true"></span>{r.hub}</button></td>
+                        onclick={() => (spreadOpen = spreadHub === r.slug ? null : r.slug)}><span class="chev" aria-hidden="true"></span>{r.hub}{#if mainHubs.has(r.slug)}<span class="mh" title={t('r3.mainHubT')}>●</span>{/if}</button></td>
                       {#if hasSt}<td class="n num strong" title={r.note ?? undefined}>{r.st ?? t('p.reachNone')}{#if r.note}<sup>*</sup>{/if}</td>{/if}
                       <td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
                     {#if spreadHub === r.slug}
@@ -576,6 +620,7 @@
                 </tbody>
               </table>
               <ul class="methods foot">
+                {#if mainHubs.size}<li>● {t('r3.mainHubs', { n: mainHubs.size })}</li>{/if}
                 {#if hasSt}<li><strong>{t('p.reachSt')}:</strong> {methodText('ptst', t('p.theHub'), reach, true)}</li>{/if}
                 <li><strong>{hasSt ? t('p.reachDoor') : t('p.reachPT')}:</strong> {methodText('pt', t('p.theHub'), reach, hasSt)}</li>
                 <li><strong>{t('p.reachCar')}:</strong> {methodText('car', t('p.theHub'), reach, hasSt)}</li>
@@ -611,7 +656,7 @@
               <ol class="hist">
                 {#each events as ev}
                   <li>
-                    <span class="hd num">{ev.d}</span>
+                    <span class="hd num">{fmtDate(ev.d)}</span>
                     <span class="ht">{evType(ev.t)}</span>
                     {#if ev.t === 'canton_change' && ev.canton}<span class="hx">{ev.canton[0]} → {ev.canton[1]}</span>{/if}
                     {#if ev.district}<span class="hx">{ev.district[0]} → {ev.district[1]}</span>{/if}
@@ -638,6 +683,11 @@
 
 <style>
   .pg:focus { outline: none; }
+  .fx.vt { color: var(--text); }
+  .prov { font-weight: 600; text-transform: uppercase; font-size: var(--fs-cap); letter-spacing: 0.04em; }
+  .former { margin: var(--sp-2) 0; }
+  .former summary { cursor: pointer; font-size: var(--fs-small); font-weight: 600; padding: var(--sp-1) 0; }
+  .mh { margin-left: 4px; font-size: 0.6em; vertical-align: 2px; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 12px 24px 40px; }
   .crumbs { font-size: var(--fs-small); margin-bottom: 10px; }
