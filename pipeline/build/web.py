@@ -50,7 +50,7 @@ LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canto
 # notes of ok values worth showing (fallback provenance, provisional results, reach details)
 OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published|proportional-representation|"
                      r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|today's boundaries|"
-                     r"demographic balance|series break", re.I)
+                     r"demographic balance|series break|lake share", re.I)
 PUBLIC_TEXT = [(re.compile(r"\bPARTLY_UNVERIFIED\b"), "partly not yet confirmed"),
                (re.compile(r"\bUNVERIFIED\b"), "not yet confirmed"),
                (re.compile(r"\s*\(?brief rule 5\)?", re.I), "")]
