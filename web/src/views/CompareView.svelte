@@ -2,7 +2,7 @@
   // Compare mode: two synced maps (metric A and B) and a scatter plot with r, ρ and weighted r.
   import { onMount, tick } from 'svelte';
   import Legend from '../components/Legend.svelte';
-  import LevelSelect from '../components/LevelSelect.svelte';
+  import LevelSwitch from '../components/LevelSwitch.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import Scatter from '../components/Scatter.svelte';
   import { buildScale, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
@@ -10,6 +10,8 @@
   import { levelInfo, loadUnits, unavailableReason, type Base, type LevelData, type MetricMeta } from '../lib/data';
   import { CH_BOUNDS, UnitMap, syncCameras } from '../lib/mapview';
   import { app } from '../lib/state.svelte';
+  import { t } from '../lib/i18n.svelte';
+  import { currentLevelNote, switchLevel } from '../lib/levels';
   import { divRamp, seqRamp } from '../lib/theme';
 
   interface Props {
@@ -108,8 +110,10 @@
   }
 
   onMount(() => {
-    viewA = new UnitMap(mapElA!, base, { onSelect: select, onHover: (i, p) => onMapHover('a', i, p) });
-    viewB = new UnitMap(mapElB!, base, { onSelect: select, onHover: (i, p) => onMapHover('b', i, p) }, { nav: false });
+    // the reset button on either map fits Switzerland; the camera sync carries it to the other map
+    const reset = { onReset: () => fit(true), resetLabel: () => t('map.reset') };
+    viewA = new UnitMap(mapElA!, base, { onSelect: select, onHover: (i, p) => onMapHover('a', i, p), ...reset });
+    viewB = new UnitMap(mapElB!, base, { onSelect: select, onHover: (i, p) => onMapHover('b', i, p), ...reset }, { nav: false });
     let unsync: (() => void) | null = null;
     Promise.all([viewA.ready, viewB.ready]).then(() => {
       unsync = syncCameras(viewA!.map, viewB!.map);
@@ -132,12 +136,17 @@
     };
   });
 
-  function fit() {
+  function fit(animate = false) {
     if (!viewA) return;
     viewA.map.resize();
     viewB?.map.resize();
-    viewA.map.fitBounds(CH_BOUNDS, { padding: { top: 8, bottom: 8, left: 8, right: 8 }, animate: false });
+    viewA.map.fitBounds(CH_BOUNDS, { padding: { top: 8, bottom: 8, left: 8, right: 8 }, animate, duration: animate ? 500 : 0 });
   }
+  $effect(() => {
+    void app.lang;
+    if (mapReadyA) { viewA!.relabel(); viewB!.relabel(); }
+  });
+  const levelNote = $derived(currentLevelNote());
   $effect(() => {
     void desktop;
     if (mapReadyA) tick().then(() => requestAnimationFrame(() => fit()));
@@ -206,12 +215,17 @@
 </script>
 
 <nav class="presets" aria-label="Example comparisons">
-  <LevelSelect value={ld.level} onchange={(l) => app.setLevel(l)} />
+  <LevelSwitch value={ld.level} onchange={(l) => switchLevel(base, l)} />
   <span class="caps">Examples</span>
   {#each presets as p}
     <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{p.label}</button>
   {/each}
 </nav>
+
+{#if levelNote}
+  <p class="lnote" role="status">{levelNote}
+    <button type="button" class="lx" aria-label={t('common.dismiss')} onclick={() => (app.levelNote = null)}>×</button></p>
+{/if}
 
 <main class="stage">
   {#each [{ pane: 'a' as const, tag: 'A', meta: metaA, col: colA, scale: scaleA, why: whyA, ref: refA },
@@ -273,6 +287,11 @@
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
 
   .stage { flex: 1; min-height: 0; position: relative; }
+  .lnote {
+    flex: none; margin: 0; padding: 5px 8px 5px 16px; font-size: 0.78rem; border-bottom: 1px solid var(--rule); background: var(--panel);
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .lx { border: 0; background: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; color: var(--text); }
   .pane { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--panel); }
   .phead { flex: none; padding: 8px; border-bottom: 1px solid var(--rule); }
   .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -307,6 +326,6 @@
     .mapbox { flex: none; height: 250px; }
     .plegend { padding: 6px 10px 8px; }
     .ps { padding: 10px 10px calc(16px + env(safe-area-inset-bottom)); }
-    :global(.compare .maplibregl-ctrl-top-right) { display: none; }
+    :global(.compare .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-reset)) { display: none; }
   }
 </style>

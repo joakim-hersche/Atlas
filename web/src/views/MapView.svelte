@@ -6,7 +6,7 @@
   import Legend from '../components/Legend.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import FilterPanel from '../components/FilterPanel.svelte';
-  import LevelSelect from '../components/LevelSelect.svelte';
+  import LevelSwitch from '../components/LevelSwitch.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
@@ -23,6 +23,8 @@
   import { CH_BOUNDS, UnitMap, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
+  import { t } from '../lib/i18n.svelte';
+  import { currentLevelNote, switchLevel } from '../lib/levels';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -198,7 +200,10 @@
 
   // ------------------------------------------------------------------ map
   onMount(() => {
-    view = new UnitMap(mapEl, base, { onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; } });
+    view = new UnitMap(mapEl, base, {
+      onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
+      onReset: () => fit(true), resetLabel: () => t('map.reset'),
+    });
     overlay = new ReachOverlay(view.map, mapEl);
     view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
     if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = view.map;
@@ -217,17 +222,22 @@
     };
   });
 
-  function fit() {
+  function fit(animate = false) {
     if (!view) return;
     let padding: { top: number; bottom: number; left: number; right: number };
     if (desktop) padding = { top: 24, bottom: 24, left: 24, right: 48 };
     else {
       const top = panelEl ? panelEl.getBoundingClientRect().top - mapEl.getBoundingClientRect().top : mapEl.clientHeight;
-      padding = { top: 12, bottom: Math.max(12, mapEl.clientHeight - top + 8), left: 10, right: 10 };
+      padding = { top: 46, bottom: Math.max(12, mapEl.clientHeight - top + 8), left: 10, right: 10 };
     }
     view.map.resize();
-    view.map.fitBounds(CH_BOUNDS, { padding, animate: false });
+    view.map.fitBounds(CH_BOUNDS, { padding, animate, duration: animate ? 500 : 0 });
   }
+  $effect(() => {
+    void app.lang;
+    if (mapReady) view!.relabel();
+  });
+  const levelNote = $derived(currentLevelNote());
   $effect(() => {
     void desktop;
     if (mapReady) tick().then(() => requestAnimationFrame(() => fit()));
@@ -446,7 +456,6 @@
       <section>
         <div class="row2 lab">
           <span class="caps">Shade by</span>
-          <LevelSelect value={ld.level} onchange={(l) => { stop(); app.setLevel(l); }} />
         </div>
         <MetricPicker metrics={base.metrics} level={ld.level} value={metaA.id} onpick={(id) => (app.metric = id)} />
         <div class="legend-wrap">
@@ -542,6 +551,13 @@
   <section class="pane">
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
+      <div class="lvlbar">
+        <LevelSwitch value={ld.level} onchange={(l) => { stop(); switchLevel(base, l); }} />
+        {#if levelNote}
+          <p class="lnote" role="status">{levelNote}
+            <button type="button" class="lx" aria-label={t('common.dismiss')} onclick={() => (app.levelNote = null)}>×</button></p>
+        {/if}
+      </div>
       {#if tip && hover !== null && hoverAt && desktop}
         <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
           <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
@@ -627,6 +643,13 @@
   .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
+  .lvlbar { position: absolute; z-index: 3; top: 10px; left: 10px; right: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
+  .lvlbar > :global(*) { pointer-events: auto; }
+  .lnote {
+    margin: 0; max-width: 420px; background: var(--panel); border: 1px solid var(--ink); padding: 4px 4px 4px 8px; font-size: 0.76rem;
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .lx { border: 0; background: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; color: var(--text); }
 
   @media (min-width: 900px) {
     .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; }
@@ -655,6 +678,9 @@
     .extra { display: none; }
     .controls.open .extra { display: block; }
     .controls:not(.open) .detail { display: none; }
-    :global(.single .maplibregl-ctrl-top-right) { display: none; }
+    /* zoom buttons hidden on phones (pinch); the reset button stays */
+    :global(.single .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-reset)) { display: none; }
+    .lvlbar { top: 8px; left: 8px; }
+    .card-wrap { top: 48px; }
   }
 </style>
