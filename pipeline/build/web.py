@@ -44,10 +44,13 @@ COVERAGE_MIN = 0.95          # default period: step back over newer periods with
 CANTON_COVERED = 0.5         # a canton counts as covered when >= 50 % of its municipalities have data (G)
 TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomeration": "AGGL2020",
                  "arbeitsmarktgebiet": "BAE2018", "stadt_land": "STALAN2020", "gemeindetyp": "GDETYP2020_9"}
-LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canton", "schweiz": "national"}
+LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canton", "schweiz": "national",
+              "arbeitsmarktgebiet": "labour-market area", "agglomeration": "agglomeration", "grossregion": "major region",
+              "sprachgebiet": "language region", "stadt_land": "urban/rural", "gemeindetyp": "municipality type"}
 # notes of ok values worth showing (fallback provenance, provisional results, reach details)
 OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published|proportional-representation|"
-                     r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|demographic balance|series break", re.I)
+                     r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|today's boundaries|"
+                     r"demographic balance|series break", re.I)
 PUBLIC_TEXT = [(re.compile(r"\bPARTLY_UNVERIFIED\b"), "partly not yet confirmed"),
                (re.compile(r"\bUNVERIFIED\b"), "not yet confirmed"),
                (re.compile(r"\s*\(?brief rule 5\)?", re.I), "")]
@@ -208,6 +211,7 @@ def license_cleared(m: dict) -> tuple[bool, str]:
 
 UNIT_PLURAL_EN = {"gemeinde": "municipalities", "bezirk": "districts", "kanton": "cantons"}
 UNIT_PLURAL_DE = {"gemeinde": "Gemeinden", "bezirk": "Bezirken", "kanton": "Kantonen"}
+UNIT_PLURAL_FR = {"gemeinde": "communes", "bezirk": "districts", "kanton": "cantons"}
 STATUS_REASON = {"suppressed": "values suppressed (small numbers)", "not_published": "not published at this level",
                  "not_covered": "not covered", "not_applicable": "not applicable", "no_data": "no data"}
 
@@ -455,8 +459,10 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
     for mid, u, pv, nt, st in zip(g["metric_id"], g["unit_id"], g["provenance"], g["note"], g["status"]):
         if st != "ok":
             continue
+        # (a published total preferred over a complete sum, D7, is no fallback: its note says what it is)
         if lvl != "gemeinde" and ((pv == "native" and str(meta.loc[mid, "aggregation"]) != "not_aggregatable"
-                                   and str(meta.loc[mid, "native_level"]) == "gemeinde")
+                                   and str(meta.loc[mid, "native_level"]) == "gemeinde"
+                                   and not (isinstance(nt, str) and nt.startswith("published total")))
                                   or (isinstance(nt, str) and nt.startswith("computed from published"))):
             add(mid, idx[u], FLAG_BITS["published_value"])
         if isinstance(nt, str) and "provisional" in nt:
@@ -650,7 +656,8 @@ def run() -> dict:
             of = int(n_units_level.get(prim, ok["n_ok"].max()))
             incomplete[(mid, prim)] = {p: {"n": int(n), "of": of, "level": prim,
                                            "label_en": f"incomplete: {n:,} of {of:,} {UNIT_PLURAL_EN.get(prim, 'units')}",
-                                           "label_de": f"unvollständig: {n:,} von {of:,} {UNIT_PLURAL_DE.get(prim, 'Einheiten')}".replace(",", "'")}
+                                           "label_de": f"unvollständig: {n:,} von {of:,} {UNIT_PLURAL_DE.get(prim, 'Einheiten')}".replace(",", "'"),
+                                           "label_fr": f"incomplet : {n:,} sur {of:,} {UNIT_PLURAL_FR.get(prim, 'unités')}".replace(",", "\u202f")}
                                        for p, n in zip(newer["period"], newer["n_ok"])}
         for lvl in lvls:
             lp_rows.append((mid, lvl, dflt))
