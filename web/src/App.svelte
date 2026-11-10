@@ -480,7 +480,7 @@
     {#if !compare}
       <aside class="controls" class:open={sheetOpen} bind:this={panelEl} bind:offsetHeight={panelH} aria-label="Map controls">
         <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
-          <span class="grip" aria-hidden="true"></span>
+          <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="20" height="12" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
           <span class="summary">
             {(filtered ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'Statistics, filters')}
           </span>
@@ -762,7 +762,9 @@
     .handle {
       display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 2px; border: 0; background: none; cursor: pointer; flex: none;
     }
-    .grip { width: 36px; height: 3px; background: var(--ink); }
+    .chev { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: square; transition: transform 0.15s; }
+    .chev.up { transform: rotate(180deg); }
+    @media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
     .summary { color: var(--text); font-weight: 500; font-size: 0.76rem; font-variant-numeric: tabular-nums; }
     .body section { padding: 9px 0; }
     .legend-wrap { margin-top: 6px; }
