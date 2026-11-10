@@ -83,12 +83,12 @@
 
 <style>
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .label { font-weight: 600; }
-  .count { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .label { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+  .count { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .count strong { color: var(--text); }
   .slider { position: relative; height: 36px; }
   .track {
-    position: absolute; left: 11px; right: 11px; top: 16px; height: 4px; border-radius: 2px;
+    position: absolute; left: 11px; right: 11px; top: 16px; height: 3px; border-radius: 0;
     background: linear-gradient(to right, var(--border) var(--a), var(--accent) var(--a), var(--accent) var(--b), var(--border) var(--b));
   }
   .slider input {
@@ -98,8 +98,8 @@
   .slider input::-webkit-slider-runnable-track { background: none; height: 36px; }
   .slider input::-moz-range-track { background: none; }
   .slider input::-webkit-slider-thumb {
-    -webkit-appearance: none; pointer-events: auto; width: 22px; height: 22px; margin-top: 7px; border-radius: 50%;
-    background: var(--panel); border: 2px solid var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); cursor: grab;
+    -webkit-appearance: none; pointer-events: auto; width: 18px; height: 18px; margin-top: 9px; border-radius: 50%;
+    background: var(--panel); border: 2px solid var(--accent); cursor: grab;
   }
   .slider input::-moz-range-thumb {
     pointer-events: auto; width: 18px; height: 18px; border-radius: 50%;
@@ -108,11 +108,11 @@
   .inputs { display: flex; gap: 8px; align-items: end; }
   .inputs label { display: flex; flex-direction: column; font-size: 0.8rem; color: var(--muted); flex: 1; min-width: 0; }
   .inputs input {
-    width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2);
-    font-size: 16px; font-variant-numeric: tabular-nums;
+    width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2);
+    font-size: 16px; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   }
   .reset {
-    padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); cursor: pointer;
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2); cursor: pointer;
   }
   .reset:disabled { opacity: 0.45; cursor: default; }
 </style>
