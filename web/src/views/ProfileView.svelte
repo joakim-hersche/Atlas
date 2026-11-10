@@ -52,6 +52,7 @@
       'p.reachSt': 'Station',
       'p.reachDoor': 'Door',
       'p.fromStation': 'Public transport from {st} station towards each hub, in minutes.',
+      'p.fromStationOut': 'No station in this municipality: public transport from {st}, the nearest station, towards each hub, in minutes.',
       'p.noStation': 'No stop in this municipality: station times are not available.',
       'p.theHub': 'the hub',
       'p.reachDate': 'Timetable of {d}.',
@@ -127,6 +128,7 @@
       'p.reachSt': 'Bahnhof',
       'p.reachDoor': 'Tür',
       'p.fromStation': 'ÖV ab Bahnhof {st} zu jedem Zentrum, in Minuten.',
+      'p.fromStationOut': 'Kein Bahnhof in dieser Gemeinde: ÖV ab {st}, dem nächsten Bahnhof, zu jedem Zentrum, in Minuten.',
       'p.noStation': 'Keine Haltestelle in dieser Gemeinde: keine Bahnhofzeiten.',
       'p.theHub': 'das Zentrum',
       'p.reachDate': 'Fahrplan vom {d}.',
@@ -371,10 +373,13 @@
     if (!reach || reachK < 0) return null;
     const k = reachK;
     return reach.hubs
-      .map(([slug, hub]) => ({ hub, st: reach!.pt_station?.[slug]?.[k] ?? null, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null }))
+      .map(([slug, hub]) => ({
+        hub, st: reach!.pt_station?.[slug]?.[k] ?? null, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null,
+        note: reach!.notes?.pt_station?.[slug]?.[String(k)] ?? null,
+      }))
       .sort((a, b) => (hasSt ? (a.st ?? 1e9) - (b.st ?? 1e9) : 0) || (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
   });
-  const station = $derived(reach && reachK >= 0 ? (reach.main_station?.[reachK]?.[0] ?? null) : null);
+  const station = $derived(reach && reachK >= 0 ? (reach.main_station?.[reachK] ?? null) : null);
   const reachWhy = $derived.by(() => {
     if (!reach?.reasons || reachK < 0) return [];
     const out: { what: string; why: string }[] = [];
@@ -513,7 +518,7 @@
             {#if unit.level !== 'gemeinde'}
               <p class="foot">{t('p.reachHigher', { one: levelName(unit.level, false) })}</p>
             {:else if reachRows}
-              {#if hasSt}<p class="st">{station ? t('p.fromStation', { st: station }) : t('p.noStation')}</p>{/if}
+              {#if hasSt}<p class="st">{station ? t(station[2] === false ? 'p.fromStationOut' : 'p.fromStation', { st: station[0] }) : t('p.noStation')}</p>{/if}
               <table class="reach">
                 <thead><tr><th>{t('p.reachHub')}</th>
                   {#if hasSt}<th class="n" title={t('pt.st')}>{t('p.reachSt')}</th><th class="n" title={t('pt.dd')}>{t('p.reachDoor')}</th>
@@ -522,7 +527,7 @@
                 <tbody>
                   {#each reachRows as r}
                     <tr><td>{r.hub}</td>
-                      {#if hasSt}<td class="n num strong">{r.st ?? t('p.reachNone')}</td>{/if}
+                      {#if hasSt}<td class="n num strong" title={r.note ?? undefined}>{r.st ?? t('p.reachNone')}{#if r.note}<sup>*</sup>{/if}</td>{/if}
                       <td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
                   {/each}
                 </tbody>
@@ -532,6 +537,7 @@
                 <li><strong>{hasSt ? t('p.reachDoor') : t('p.reachPT')}:</strong> {methodText('pt', t('p.theHub'), reach, hasSt)}</li>
                 <li><strong>{t('p.reachCar')}:</strong> {methodText('car', t('p.theHub'), reach, hasSt)}</li>
                 {#each reachWhy as w}<li>– {w.what}: {w.why}</li>{/each}
+                {#each reachRows.filter((r) => r.note) as r}<li>* {r.hub}: {r.note}</li>{/each}
                 {#if !reachWhy.length && reachRows.some((r) => r.pt === null || r.car === null || (hasSt && r.st === null))}<li>{t('p.reachNoneNote')}</li>{/if}
               </ul>
               <p class="foot">{t('p.reachDate', { d: reach?.service_date ?? '' })} <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
@@ -650,7 +656,9 @@
   .tag.warn { color: var(--text); }
   a.tag { color: var(--faint); }
   .mv { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-  .v { font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* long units (French) wrap inside the value column instead of running into the label */
+  .v { font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: normal; text-align: right; min-width: 0; overflow-wrap: break-word; }
+  .mv { min-width: 0; }
   .yr { font-size: 0.7rem; color: var(--muted); }
   .fl { font-size: 0.62rem; color: var(--accent); margin-left: 2px; }
   .fx { font-size: 0.68rem; color: var(--text); text-align: right; line-height: 1.25; max-width: 16em; }

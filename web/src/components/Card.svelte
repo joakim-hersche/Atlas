@@ -13,7 +13,7 @@
     reason: string | null;
     within: boolean;
     /** D31 headline: station time towards the hub ("Winterthur → Zürich HB 22 min, from Winterthur") */
-    station?: { minutes: number | null; from: string | null; reason: string | null; name: string };
+    station?: { minutes: number | null; from: { name: string; outside: boolean } | null; reason: string | null; name: string; note?: string | null };
     /** D31 second line: door to door towards the hub */
     door?: { minutes: number | null; reason: string | null };
     /** measure used on the map ('ptst' | 'pt') */
@@ -110,11 +110,12 @@
           <span class="rl">{st.name} → {reach.hub}</span>
           {#if st.minutes !== null}
             <span class="rv" class:within={reach.within && reach.active === 'ptst'}>{fmtNumber(st.minutes, 0)} min</span>
-            <span class="rl">{t('pt.byPt')}{st.from ? `, ${t('pt.from', { st: st.from })}` : ''}</span>
+            <span class="rl">{t('pt.byPt')}{st.from ? `, ${t(st.from.outside ? 'pt.fromOut' : 'pt.from', { st: st.from.name })}` : ''}</span>
           {:else}
             <span class="rv muted">{st.reason ?? t('lg.noData')}</span>
           {/if}
         </div>
+        {#if st.note}<p class="pm nt">{st.note}</p>{/if}
         {#if reach.door}
           <div class="ptl sub2">
             <span class="rl">{t('pt.door')}</span>
@@ -186,6 +187,7 @@
   .ptl .rv { font-size: 1rem; }
   .sub2 .rv { font-size: 0.86rem; }
   .pm { margin: 2px 0 0; font-size: 0.7rem; color: var(--faint); line-height: 1.3; }
+  .pm.nt { color: var(--text); }
   @media (min-width: 900px) {
     .reach { flex-basis: 100%; justify-content: space-between; }
   }
@@ -209,6 +211,6 @@
     .tags { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
     .reach { flex: none; font-size: 0.8rem; }
     .pt { font-size: 0.78rem; }
-    .pm { display: none; }
+    .pm:not(.nt) { display: none; }
   }
 </style>

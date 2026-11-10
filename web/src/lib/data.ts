@@ -452,7 +452,7 @@ const lvlLabel = (id: string) => levelWord(id);
 
 /** Why a metric cannot be shown at a level (one line), or null when it can. */
 export function unavailableReason(meta: MetricMeta, level: string): string | null {
-  if (meta.levels.includes(level)) return null;
+  if (availableAt(meta, level)) return null;
   const real = meta.unavailable_levels?.[level];
   const where = meta.levels.filter((l) => l !== 'schweiz' && l !== 'gemeindetyp').map(lvlLabel);
   const list = where.length ? where.join(', ') : t('why.chOnly');
@@ -462,11 +462,24 @@ export function unavailableReason(meta: MetricMeta, level: string): string | nul
   return t('why.notPub', { level: lvlLabel(level), list });
 }
 
+/** Levels whose units each municipality belongs to (units.json codes; the canton from the geometry). */
+const PARENT_LEVELS = ['kanton', 'bezirk', 'arbeitsmarktgebiet', 'agglomeration', 'grossregion', 'sprachgebiet'];
+
+/** A metric published only for a coarser area (native_level, e.g. the tax burden per labour market area)
+ *  that is shown on the municipality map with each municipality taking its area's value (D21). */
+export function attachedFrom(meta: MetricMeta, level: string): string | null {
+  if (level !== 'gemeinde' || meta.levels.includes('gemeinde')) return null;
+  const nat = meta.native_level;
+  return nat && PARENT_LEVELS.includes(nat) && meta.levels.includes(nat) ? nat : null;
+}
+/** The metric can be shown at this level (published there, or attached as a regional value). */
+export const availableAt = (meta: MetricMeta, level: string) => meta.levels.includes(level) || !!attachedFrom(meta, level);
+
 /** The coarser level whose value a unit carries (D21: a regional value attached to municipalities), or null. */
 export function regionalAt(meta: MetricMeta, level: string): string | null {
   const nat = meta.native_level;
   if (!nat || nat === level || level !== 'gemeinde') return null;
-  return LEVELS.some((l) => l.id === nat) ? nat : null;
+  return PARENT_LEVELS.includes(nat) ? nat : null;
 }
 
 /** Periods of a metric that the year slider can show at a level (series files exist for some levels only). */

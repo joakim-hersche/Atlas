@@ -203,8 +203,10 @@ export interface ReachTimes {
   periods: Record<string, string>;
   /** D31 headline: timetable time from the municipality's main station to the hub station */
   pt_station?: Record<string, (number | null)[]>;
-  /** per unit: [station name, UIC number] or null (no stop in the municipality) */
-  main_station?: ([string, number] | null)[];
+  /** per unit: [station name, DIDOK number, inside the municipality] or null */
+  main_station?: ([string, number, boolean?] | null)[];
+  /** per measure, hub and unit index: how a value was obtained (e.g. no arrival by 08:30) */
+  notes?: Record<string, Record<string, Record<string, string>>>;
   /** one-line method texts per measure and language */
   methods?: Record<string, Record<string, string>>;
   /** per measure: unit index -> why there is no time */

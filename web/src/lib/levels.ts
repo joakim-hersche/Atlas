@@ -1,7 +1,7 @@
 // Switching the spatial level (brief 4.3). When the shaded metric (or the size / second metric) does
 // not exist at the new level, the map falls back to the nearest available headline metric of the same
 // theme (else population) and says so in a one-line note, instead of showing an empty map.
-import type { Base, MetricMeta } from './data';
+import { availableAt, type Base, type MetricMeta } from './data';
 import { levelName, ml, t, levelWord } from './i18n.svelte';
 import { app } from './state.svelte';
 
@@ -29,7 +29,7 @@ export function switchLevel(base: Base, level: string): void {
   const prev = { level: app.level, metric: app.metric, metricB: app.metricB, size: app.size };
   const swap = (id: string | null, key: 'level.note' | 'level.noteSize'): string | null => {
     const m = id ? base.metas.get(id) : undefined;
-    if (!m || m.levels.includes(level)) return id;
+    if (!m || availableAt(m, level)) return id;
     const f = fallbackMetric(base, m, level);
     if (!f) return id;
     notes.push(t(key, { metric: ml(m), level: word, fallback: ml(f) }));

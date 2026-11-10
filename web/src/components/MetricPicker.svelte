@@ -3,7 +3,7 @@
   // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
   import { levelName, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
-  import { type MetricMeta } from '../lib/data';
+  import { availableAt, type MetricMeta } from '../lib/data';
   import { fmtPeriod, unitOf } from '../lib/classify';
 
   interface Props {
@@ -17,7 +17,7 @@
   }
   let { metrics, value, level = 'gemeinde', tag, none, onpick }: Props = $props();
   const MAP_LEVELS = ['gemeinde', 'bezirk', 'kanton', 'grossregion', 'sprachgebiet', 'agglomeration', 'arbeitsmarktgebiet', 'stadt_land'];
-  const ok = (m: MetricMeta) => m.levels.includes(level);
+  const ok = (m: MetricMeta) => availableAt(m, level);
   function why(m: MetricMeta) {
     if (m.aggregation === 'not_aggregatable') return t('mp.notAgg');
     const at = m.levels.filter((l) => MAP_LEVELS.includes(l));

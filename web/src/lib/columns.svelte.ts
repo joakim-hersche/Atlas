@@ -2,7 +2,7 @@
 // yet returns undefined and starts the download (theme file, or series file for a past year);
 // the value appears once loaded and every $derived that asked for it re-runs.
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { loadSeries, loadTheme, seriesPeriods, type Base, type ColRef, type LevelData } from './data';
+import { attachedFrom, loadSeries, loadTheme, loadUnits, seriesPeriods, type Base, type ColRef, type LevelData } from './data';
 import { app } from './state.svelte';
 import { loadVoteFile, loadVoteIndex, voteIdOf } from './votes';
 
@@ -28,7 +28,10 @@ export class ColumnStore {
   get(ld: LevelData | null, id: string | null | undefined, year: string | null = null): ColView | null | undefined {
     if (!ld || !id) return null;
     const meta = this.base.metas.get(id);
-    if (!meta || !meta.levels.includes(ld.level)) return null;
+    if (!meta) return null;
+    const parent = attachedFrom(meta, ld.level);
+    if (parent) return this.attached(ld, id, parent);
+    if (!meta.levels.includes(ld.level)) return null;
     // per-vote metrics (yes share, turnout ...): the vote chosen in the vote picker, from its own file
     const voteId = meta.per_vote && meta.vote_index && app.vote && voteIdOf(meta.latest) !== app.vote ? app.vote : null;
     if (voteId) return this.vote(ld, id, voteId);
@@ -74,6 +77,40 @@ export class ColumnStore {
           })
           .catch(fail);
       }
+    }
+    return undefined;
+  }
+
+  /** A regional value on the municipality map: each municipality takes the value of its area (D21).
+   *  No series and no year: the latest values of the native level. */
+  private attached(ld: LevelData, id: string, parent: string): ColView | null | undefined {
+    const meta = this.base.metas.get(id)!;
+    const key = `${ld.level}|${id}|from:${parent}`;
+    const hit = this.#cache.get(key);
+    if (hit !== undefined) return hit && { ...hit, yearMissing: null, noSeries: false };
+    if (!this.#pending.has(key)) {
+      this.#pending.add(key);
+      Promise.all([loadTheme(parent, meta.file), parent === 'kanton' ? Promise.resolve(null) : loadUnits()])
+        .then(([f, rows]) => {
+          const col = f.metrics[id];
+          let v: (number | null)[] | null = null;
+          if (col) {
+            const at = new Map(f.units.map((u, k) => [u, col.v[k] ?? null]));
+            let code: (string | undefined)[];
+            if (parent === 'kanton') code = ld.canton.slice();
+            else {
+              const byId = new Map((rows ?? []).filter((r) => r.level === 'gemeinde').map((r) => [r.id, r]));
+              code = ld.units.map((u) => (byId.get(u) as Record<string, unknown> | undefined)?.[parent] as string | undefined);
+            }
+            v = code.map((c) => (c ? (at.get(c) ?? null) : null));
+          }
+          this.#pending.delete(key);
+          this.#cache.set(key, v ? { meta, level: ld.level, col: { period: col!.period, v }, file: null } : null);
+        })
+        .catch((e) => {
+          this.#pending.delete(key);
+          this.error = String(e);
+        });
     }
     return undefined;
   }

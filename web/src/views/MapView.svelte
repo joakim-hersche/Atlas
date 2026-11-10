@@ -22,7 +22,7 @@
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -34,7 +34,7 @@
   import { switchLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
-  import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachReason, type ReachKind } from '../lib/pt';
+  import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
   import { divRamp, lighten, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -165,7 +165,9 @@
   $effect(() => {
     const m = metaRaw;
     const ref = refRaw;
-    const past = ref && ref.file === null ? ref.col.period : null;
+    // a column without its latest-values file is a past year, another vote, or a regional value attached
+    // to municipalities (attachedFrom): only the first two have a series or vote file to read from
+    const past = ref && ref.file === null && !attachedFrom(m, ld.level) ? ref.col.period : null;
     let live = true;
     chA = null;
     if (past && m.per_vote) {
@@ -190,7 +192,7 @@
         const x = k >= 0 ? s!.levels.schweiz?.CH?.[k] : null;
         if (live) chA = x !== null && x !== undefined ? { value: x, period: past } : null;
       }).catch(() => {});
-    } else {
+    } else if (m.levels.includes('schweiz')) {
       loadCH(m.file).then((f) => {
         if (!live) return;
         const c = f?.metrics[m.id];
@@ -628,7 +630,10 @@
         const x = reachKind === 'ptst' ? st : dd;
         reach = {
           label, short: label, hub: hub.name, minutes: x, within: x !== null && x <= app.t, reason: null,
-          station: { minutes: st, from: mainStation(rt, uid, rtIndex), reason: st === null ? miss(stRef, 'ptst') : null, name: names[selIdx] },
+          station: {
+            minutes: st, from: mainStation(rt, uid, rtIndex), reason: st === null ? miss(stRef, 'ptst') : null, name: names[selIdx],
+            note: st !== null ? reachNote(rt, 'ptst', hub.slug, uid, rtIndex) : null,
+          },
           door: { minutes: dd, reason: dd === null ? miss(ddRef, 'pt') : null },
           active: reachKind,
           method: methodText(reachKind, hub.name, rt, true),
