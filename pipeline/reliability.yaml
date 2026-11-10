@@ -54,6 +54,15 @@ metrics:
       rule_en: "More cars than residents: company, leasing or rental fleets registered here."
       rule_de: "Mehr Autos als Einwohner: Firmen-, Leasing- oder Mietwagenflotten sind hier eingelöst."
       rule_fr: "Plus de voitures que d'habitants : flottes d'entreprises, de leasing ou de location immatriculées ici."
+  # Median taxable income (estv_median_income): modelled from the ESTV income-class counts; with few taxpayers
+  # the classes are thin (and often suppressed), so the median is unstable. Same base as the mean taxable income.
+  tax_np_median_taxable_income:
+    count: null
+    base: tax_np_taxpayers
+    min_base: 500
+    rule_en: "Small base: an estimate from income classes over fewer than 500 taxpayers, unstable."
+    rule_de: "Kleine Basis: eine Schätzung aus Einkommensklassen über weniger als 500 Steuerpflichtige, instabil."
+    rule_fr: "Petite base : une estimation à partir de classes de revenu sur moins de 500 contribuables, instable."
   bevnat_birth_rate: {}
   bevnat_birth_rate_3y: {}
   bevnat_marriage_rate: {}

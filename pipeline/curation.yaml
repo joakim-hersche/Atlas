@@ -120,6 +120,17 @@ metrics:
     maps: false
     reason: "technical denominator of the commuting shares"
 
+  # ---- new sources after round 2 (technical denominators) ----
+  "lang_sec_pop":
+    maps: false
+    reason: "technical denominator of the Structural Survey language shares of the statistical cities"
+  "gwr_resident_base":
+    maps: false
+    reason: "technical denominator of the school buildings per 1,000 residents"
+  "noise_residents":
+    maps: false
+    reason: "technical denominator of the noise exposure shares"
+
   # ---- empty or near-constant maps (expert, round 2) ----
   energiestadt_label:
     maps: false

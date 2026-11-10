@@ -135,6 +135,17 @@ Cantonal police PKS reports with tables by municipality (catalog rows `kt_*_crim
 
 Cleaner route for municipal crime data: the cantonal tables all come from the BFS PKS, so a data request to BFS (pks@bfs.admin.ch) for "Straftaten nach Gemeinde" for all cantons would replace eight permission requests.
 
+## New sources after audit round 2 (2026-11-10)
+
+Evidence quoted in `pipeline/licence_review.yaml` (status cleared, checked 2026-11-10).
+
+| Source | Verdict | Binding terms (URL, quote) | Attribution required |
+|---|---|---|---|
+| `estv_median_income` (median taxable income, estimated from the ESTV income classes) | **cleared** | Same ESTV workbooks as `estv_dbst`; sheet 'Erläuterungen' of statistik-dbst-np-gemeinden-2023-500.xlsx: "Wiedergabe unter Angabe der Quelle für Nutzung gestattet." (© ESTV, Oktober 2026). The median is an own estimate and says so in its label | "Source: ESTV – Statistik der direkten Bundessteuer, natürliche Personen (income classes); median estimated by ATLAS" |
+| `bafu_noise` (road and rail noise exposure of residents, sonBASE 2021) | **cleared** | STAC ch.bafu.laerm-strassenlaerm_tag/nacht and ch.bafu.laerm-bahnlaerm_tag/nacht link https://opendata.swiss/en/terms-of-use/#terms_by (open use, source must be provided); Disclaimer_sonBASE21: "sonBASE geodata may only be reproduced if the corresponding source is indicated: FOEN 2025, sonBASE - Noise Database of Switzerland 2021" | "FOEN 2025, sonBASE - Noise Database of Switzerland 2021 (BAFU); buildings: BFS GWR; residents: BFS STATPOP; exposure computed by ATLAS" |
+| `bfs_gwr` (school buildings, public GWR extract) | **cleared** | https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/license.txt: "Freie Nutzung. Quellenangabe ist Pflicht. Sie dürfen diesen Datensatz für nicht kommerzielle Zwecke nutzen / für kommerzielle Zwecke nutzen." Level A data only (VGWR Art. 16) | "Source: BFS – Eidgenössisches Gebäude- und Wohnungsregister (GWR), public data" (author, title and link) |
+| `bfs_se_language_cities` (Structural Survey main languages, statistical cities, pooled) | **cleared** | BFS DAM asset 36491975 (su-d-40.02.01.08.31-2024) termsOfUse OPEN-BY "Open use - Must provide the source" (dam-api.bfs.admin.ch/hub/api/dam/assets/36491975); the other editions are the same table series | "Source: BFS – Strukturerhebung (SE), kumuliert" |
+
 ## Open (licence stated by the publisher)
 
 | Source | Terms as recorded |
