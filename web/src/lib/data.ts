@@ -170,13 +170,15 @@ export function loadBase(): Promise<Base> {
 }
 
 const levelFiles = new Map<string, Promise<LevelData>>();
+/** The level's data if it is loaded or loading, without starting a download. */
+export const peekLevel = (level: string): Promise<LevelData> | undefined => levelFiles.get(level);
 /** Geometry and headline values of one level (gemeinde at start; the others on first use). */
 export function loadLevel(level: string): Promise<LevelData> {
   return cached(levelFiles, level, async () => {
     const needNames = level !== 'gemeinde';
     const [t, core, units] = await Promise.all([
       loadTopo(level),
-      getJSON<ColumnFile>(`web/latest/${level}/core.json`),
+      loadTheme(level, 'core'),
       needNames ? loadUnits() : Promise.resolve(null),
     ]);
     const fc = topo<{ id: string | number; name?: string; canton?: string }>(t, level);
