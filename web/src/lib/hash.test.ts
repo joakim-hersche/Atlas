@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, emptyFilter, historyKey, parseHash, serializeHash, T_MAX, type ViewState } from './hash';
+import { DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, emptyFilter, historyKey, parseHash, serializeHash, T_MAX, type ViewState, browserLang } from './hash';
 
 type Shared = Omit<ViewState, 'preset'>;
 const withoutPreset = (s: ViewState): Shared => {
@@ -174,5 +174,21 @@ describe('review fixes (U1-U4)', () => {
     const s = parseHash('#m=vac_rate&f=c:kanton:VD&hub=lausanne&reach=pt&t=30&tab=rank&mj=1&vd=1');
     expect(s).toMatchObject({ metric: 'vac_rate', hub: 'lausanne', reach: 'pt', t: 30, tab: 'rank', maj: true, vdiff: true });
     expect(s.params).toEqual({});
+  });
+});
+
+describe('first-visit language (B7)', () => {
+  it('follows the browser: German, Swiss German and Romansh read German, French, else English', () => {
+    expect(browserLang(['de-CH', 'en'])).toBe('de');
+    expect(browserLang(['gsw'])).toBe('de');
+    expect(browserLang(['rm-CH'])).toBe('de');
+    expect(browserLang(['fr-CH', 'de'])).toBe('fr');
+    expect(browserLang(['en-GB'])).toBe('en');
+  });
+  it('skips Italian (no Italian UI) for the next listed language, else English', () => {
+    expect(browserLang(['it-CH', 'de-CH'])).toBe('de');
+    expect(browserLang(['it-CH', 'fr'])).toBe('fr');
+    expect(browserLang(['it-CH'])).toBe('en');
+    expect(browserLang([])).toBe('en');
   });
 });

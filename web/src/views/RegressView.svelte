@@ -192,6 +192,7 @@
         feRef: string | null;
         feK: number;
         flaggedSmall: number;
+        within: number | null;
         flaggedMaj: number;
         xsd: number[];
         collinear: string[];
@@ -306,8 +307,29 @@
       return { status: 'error', msg: code === 'clusters' ? t('rg.err.clusters') : code === 'dof' ? t('rg.err.few', { n: fmtNumber(n, 0), k: X.length }) : String(e) };
     }
     const collinear = terms.filter((tm, j) => res.collinear[j] && tm.kind !== 'kt').map((tm) => tm.label);
+    // B7 (X1): with fixed effects, the within R²: the share of the differences inside cantons (or language regions)
+    // that the variables explain, 1 − SSR / Σ w (y − mean of its group)²
+    let within: number | null = null;
+    if (ctrl === 'kt' || ctrl === 'lang') {
+      const g = rows.map((i) => (ctrl === 'kt' ? ld.canton[i] : String(regions![i])));
+      const wt = (r: number) => (weights ? weights.v[rows[r]]! : 1);
+      const sum = new Map<string, [number, number]>();
+      g.forEach((c, r) => {
+        const a = sum.get(c) ?? [0, 0];
+        a[0] += wt(r) * y[r];
+        a[1] += wt(r);
+        sum.set(c, a);
+      });
+      let sstW = 0, ssr = 0;
+      g.forEach((c, r) => {
+        const [sy, sw] = sum.get(c)!;
+        sstW += wt(r) * (y[r] - sy / sw) ** 2;
+        ssr += wt(r) * res.resid[r] ** 2;
+      });
+      within = sstW > 0 ? 1 - ssr / sstW : null;
+    }
     return {
-      status: 'ok', res, terms, rows, y, n, dropped: [...reasons.entries()].sort((a, b) => b[1] - a[1]), clusters: res.clusters, feRef, feK, flaggedSmall, flaggedMaj, xsd, collinear,
+      status: 'ok', res, terms, rows, y, n, within, dropped: [...reasons.entries()].sort((a, b) => b[1] - a[1]), clusters: res.clusters, feRef, feK, flaggedSmall, flaggedMaj, xsd, collinear,
     };
   });
   const ok = $derived(model.status === 'ok' ? model : null);
@@ -632,11 +654,14 @@
         <p class="formula">{formula}</p>
         <div class="fit num">
           <span><b>n</b> {fmtNumber(ok.n, 0)}</span>
-          <span><b>R²</b><Term k="r_squared" /> {fmtNumber(ok.res.r2, 3)}</span>
+          <span><b>{weights ? t('r3.r2w') : 'R²'}</b><Term k="r_squared" /> {fmtNumber(ok.res.r2, 3)}</span>
           <span><b>{t('rg.r2adj')}</b> {fmtNumber(ok.res.r2adj, 3)}</span>
+          {#if ok.within !== null}<span title={t('r3.r2withinT')}><b>{t('r3.r2within')}</b> {fmtNumber(ok.within, 3)}</span>{/if}
           <span class="sel">{seText}</span>
         </div>
-        <p class="plain">{t('ux.r2Plain', { p: fmtNumber(Math.max(0, ok.res.r2) * 100, 0), y: ml(yInfo.meta), units: word })}</p>
+        <!-- B7 (X1, X9): what R² measures here (weighted or not, one variable or several) and what the SE choice changes -->
+        <p class="plain">{t(spec.xs.length === 1 && ctrl === 'none' ? 'r3.r2Plain1' : 'ux.r2Plain', { p: fmtNumber(Math.max(0, ok.res.r2) * 100, 0), y: ml(yInfo.meta), units: word, x: ok.terms.find((tm) => tm.kind === 'x')?.label ?? '' })}{weights ? ` ${t('r3.r2wNote')}` : ''}{ok.within !== null ? ` ${t('r3.withinNote', { p: fmtNumber(Math.max(0, ok.within) * 100, 0), g: ctrl === 'kt' ? t('r3.inCantons') : t('r3.inRegions') })}` : ''}</p>
+        <p class="plain se">{t('r3.seNote')}</p>
         <div class="tw">
           <table class="coef">
             <thead>
@@ -684,7 +709,8 @@
         {#if ok.clusters !== null && ok.clusters < 10}<p class="warnl">{t('rg.fewClusters', { g: ok.clusters })}</p>{/if}
         {#if ok.collinear.length}<p class="warnl">{t('rg.collinear', { v: ok.collinear.join(', ') })}</p>{/if}
 
-        <div class="caps sp">{t('rg.words')}</div>
+        <!-- X9: "other variables held constant" only when there are others (variables or fixed effects) -->
+        <div class="caps sp">{t(spec.xs.length === 1 && ctrl === 'none' ? 'r3.words1' : 'rg.words')}</div>
         <ul class="words">
           {#each words as w}
             {#if w}<li><span class="wx">{w.x}</span> → <strong class="num">{w.y}</strong> <span class="muted">({w.ci})</span></li>{/if}
@@ -744,7 +770,7 @@
           {#each legendLabels as x}<span class="cell" title={x.v}><i style="background:{x.c}"></i><span class="cl">{x.l}</span><span class="num cn">{fmtNumber(x.n, 0)}</span></span>{/each}
         </div>
         <p class="foot">
-          {t('rg.sigma', { s: residText(perUnit.sd).replace(/^\+/, '') })}
+          {t('rg.sigma', { s: residText(perUnit.sd).replace(/^\+/, '') })}{weights ? ` ${t('r3.sigmaUnw')}` : ''}
           {#if ok.n < N}<span class="nd"><span class="hatch"></span> {t('rg.notIn')} ({fmtNumber(N - ok.n, 0)})</span>{/if}
         </p>
       </div>
@@ -770,6 +796,7 @@
 
 <style>
   .plain { margin: var(--sp-2) 0 0; font-size: var(--fs-small); line-height: var(--lh-small); }
+  .plain.se { color: var(--text-2); font-size: var(--fs-meta); line-height: var(--lh-meta); }
   .presets {
     flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--rule);
     overflow-x: auto; scrollbar-width: none;

@@ -91,7 +91,7 @@ export const FR: Dict = {
   'ex.notMatching': 'ne correspond pas aux filtres',
   // public transport (D31)
   'pt.st': 'TP, de la gare au centre',
-  'pt.stS': 'Gare',
+  'pt.stS': 'De gare à gare',
   'pt.dd': 'TP, porte à porte',
   'pt.ddS': 'Porte à porte',
   'pt.measure': 'Mesure des transports publics',

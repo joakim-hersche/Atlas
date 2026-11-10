@@ -602,7 +602,9 @@
             {:else if reachRows}
               {#if hasSt}<p class="st">{stationInfo ? t(stationInfo.mode ? 'p.fromStop' : stationInfo.outside ? 'p.fromStationOut' : 'p.fromStation', { st: stationInfo.name }) : t('p.noStation')}</p>{/if}
               <table class="reach">
-                <thead><tr><th>{t('p.reachHub')}</th>
+                <!-- B7 (F6): public transport and car under their own headings -->
+                <thead><tr class="grp"><th></th><th colspan={hasSt ? 2 : 1} class="n">{t('rc.pt')}</th><th class="n">{t('common.car')}</th></tr>
+                  <tr><th>{t('p.reachHub')}</th>
                   {#if hasSt}<th class="n" title={t('pt.st')}>{t('p.reachSt')}</th><th class="n" title={t('pt.dd')}>{t('p.reachDoor')}</th>
                   {:else}<th class="n">{t('p.reachPT')}</th>{/if}
                   <th class="n">{t('p.reachCar')}</th></tr></thead>
@@ -687,6 +689,7 @@
   .prov { font-weight: 600; text-transform: uppercase; font-size: var(--fs-cap); letter-spacing: 0.04em; }
   .former { margin: var(--sp-2) 0; }
   .former summary { cursor: pointer; font-size: var(--fs-small); font-weight: 600; padding: var(--sp-1) 0; }
+  .reach tr.grp th { font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--ink); }
   .mh { margin-left: 4px; font-size: 0.6em; vertical-align: 2px; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 12px 24px 40px; }

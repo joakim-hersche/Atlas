@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // "Spatial patterns" section of the map controls: global Moran's I of the shaded metric, and the map modes
   // Values / Clusters (LISA) / Two metrics (bivariate). The statistics come from the SpatialController
   // (Web Worker); this component only shows them and sets app.spatial, app.fdr and app.metricB.
@@ -55,7 +56,8 @@
     {#if !usable}
       <p class="foot">{t('sp.noVals')}</p>
     {:else}
-      <p class="foot intro">{t('sp.intro', { units: unitWord, metric: ml(metaA) })} <Term k="contiguity" /></p>
+      <!-- B7 (X11): the bivariate map is based on both metrics -->
+      <p class="foot intro">{app.spatial === 'bi' && metaB && metaB.id !== metaA.id ? t('r3.introBi', { units: unitWord, a: ml(metaA), b: ml(metaB) }) : t('sp.intro', { units: unitWord, metric: ml(metaA) })} <Term k="contiguity" /></p>
 
       <div class="moran" aria-live="polite">
         <div class="mh"><span class="mt">{t('sp.moran')}</span><Term k="morans_i" /></div>
@@ -95,7 +97,7 @@
         {#if sp.busy && !cls}
           <p class="foot">{t('sp.computing')}</p>
         {:else if cls}
-          <p class="foot">{t('sp.lisa.rule', { k: fmtNumber(sp.perms, 0) })}</p>
+          <p class="foot">{t('sp.lisa.rule', { k: fmtNumber(sp.perms, 0) })} {t('r3.lisaMethod')}</p>
           <p class="foot warn">{app.fdr ? t('sp.lisa.fdr') : t('sp.lisa.raw', { n: fmtNumber(nUnits - cls.counts.none, 0), f: fmtNumber(falseAlarms, 0) })}</p>
         {/if}
       {:else if app.spatial === 'bi'}

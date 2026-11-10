@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // Stacked filters: numeric ranges on any metric, categorical conditions and travel time to a hub,
   // combined with AND. Each condition shows how many units pass it and how many have no value.
   import { ml, t } from '../lib/i18n.svelte';
@@ -150,6 +151,7 @@
             <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
+        {#if station && f.mode !== 'car'}<p class="foot pth">{t('r3.ptHint')}</p>{/if}
         <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} style="--pct:{(100 * f.max) / T_MAX}%" aria-label={t('fp.maxTime')}
           oninput={(ev) => update(k, { ...f, max: +ev.currentTarget.value })} />
         {#if e.status === 'active'}
@@ -177,6 +179,7 @@
 </div>
 
 <style>
+  .pth { margin: 2px 0 4px; }
   .filters { font-size: var(--fs-small); }
   .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; }
   .miss { color: var(--text); }
