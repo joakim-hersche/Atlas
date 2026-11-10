@@ -74,12 +74,17 @@ function classIndex(x: number, breaks: number[]): number {
   return c;
 }
 
-export function buildScale(v: (number | null)[], method: Method, diverging: boolean, seq: string[], div: string[], centre = 0): Scale {
+/** `ref`: an ascending array that defines the classes instead of `v` itself (breaks, domain, ties), e.g. the
+ *  values of all years pooled, so that the classes stay the same while the year changes. Counts, n and the
+ *  colours of the units always come from `v`. */
+export function buildScale(v: (number | null)[], method: Method, diverging: boolean, seq: string[], div: string[], centre = 0, ref?: number[]): Scale {
   const c0 = centre;
-  const s = sortedValues(v);
-  const n = s.length;
+  const sv = sortedValues(v);
+  const n = sv.length;
+  const s = ref && ref.length ? ref : sv;
+  const nr = s.length;
   const min = s[0];
-  const max = s[n - 1];
+  const max = s[nr - 1];
   let breaks: number[] = [];
   let classColours: string[] = [];
   let lo = min;
@@ -123,20 +128,20 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       // of its own; the other units are split into quantiles. Without this the ties swallow the breaks
       // and the map collapses to one or two classes.
       let lo0 = 0;
-      let hi0 = n;
+      let hi0 = nr;
       const raw: number[] = [];
       let nq = N_CLASSES;
-      const block = n / N_CLASSES;
+      const block = nr / N_CLASSES;
       let k0 = 0;
-      while (k0 < n && s[k0] === min) k0++;
-      if (k0 >= block && k0 < n) {
+      while (k0 < nr && s[k0] === min) k0++;
+      if (k0 >= block && k0 < nr) {
         raw.push(s[k0]); // first value above the tied minimum
         lo0 = k0;
         nq--;
       }
-      let k1 = n;
+      let k1 = nr;
       while (k1 > lo0 && s[k1 - 1] === max) k1--;
-      if (n - k1 >= block && k1 > lo0) {
+      if (nr - k1 >= block && k1 > lo0) {
         raw.push(max);
         hi0 = k1;
         nq--;

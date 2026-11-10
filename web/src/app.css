@@ -37,6 +37,7 @@
   --map-bg: #ffffff;
   --water: #f1f6f9;       /* lakes: paler than the lightest class (#d3e0ec), with an outline */
   --water-line: #6f8fa6;
+  --lake-label: #3d6079;  /* lake names (6.1:1 on the lake fill) */
   --gem-line: #ffffff;
   --kt-line: #000000;
   --sel-line: #d52b1e;
@@ -94,9 +95,10 @@ button, select, input { font: inherit; color: inherit; }
 .gb-btn-b { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
 .gb-btn-b:hover { background: var(--panel-2) !important; }
 .gb-ch { font: 700 10px/1 var(--font-sans); letter-spacing: 0.02em; }
+.gb-btn-b[aria-pressed='true'] { background: var(--ink) !important; color: var(--ink-text); }
 .maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 10px; color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
 .maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }
 
-.reach-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.reach-canvas, .ref-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 ::placeholder { color: var(--muted); opacity: 1; }

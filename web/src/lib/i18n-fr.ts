@@ -606,3 +606,7 @@ export const HISTORY_FR: Record<string, string> = {
   canton_change: 'changement de canton',
   renumbering: 'nouveau numéro OFS',
 };
+
+// year comparisons, reliability notes, small multiples and the reference layer (map and legend)
+import { FR_MAPX } from './i18n-mapx-fr';
+Object.assign(FR, FR_MAPX);

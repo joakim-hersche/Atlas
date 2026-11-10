@@ -1,6 +1,9 @@
 // Shareable view state in the URL hash. Full form (works within the page and in most links):
 //   #v=compare&l=bezirk&m=geo_pop_density&b=share_foreign&s=pop_total&d=sym&cls=q&y=2015
 //    &f=n:pop_total:1000:50000&f=c:kanton:ZH,BE&f=r:bern:pt:30&hub=bern&reach=pt&t=45&sel=261&tab=rank
+// Year comparisons: yc=<earlier year> (change since that year, up to the slider year y), ym=p (percent instead of
+// absolute), fx=1 (class limits fixed across all years), sm=2010,2015,2020 (small multiples of those periods);
+// lb=0 hides the city and lake names on the map.
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
 // Routes: 'map' (default) and 'compare'; later pages (profile, places, search, sources) add their own
@@ -49,6 +52,16 @@ export interface ViewState {
   vdiff: boolean;
   /** values resting on small numbers: shown, drawn lighter, or hidden (treated as gaps) */
   unstable: 'show' | 'light' | 'hide';
+  /** change between two years: the earlier year ('yc'; the later one is the slider year); null = plain values */
+  cmpFrom: string | null;
+  /** change as an absolute difference ('a') or in percent of the earlier value ('p') */
+  cmpMode: 'abs' | 'pct';
+  /** class breaks fixed across all years of the metric (the slider does not re-classify) */
+  fixed: boolean;
+  /** small multiples: periods shown side by side (null = closed) */
+  multi: string[] | null;
+  /** reference layer with lake and city labels */
+  labels: boolean;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -62,7 +75,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur', 'yc', 'ym', 'fx', 'sm', 'lb']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -138,6 +151,11 @@ export function parseHash(hash: string): ViewState {
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
     vdiff: get('vd') === '1',
     unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
+    cmpFrom: get('yc') || null,
+    cmpMode: get('ym') === 'p' ? 'pct' : 'abs',
+    fixed: get('fx') === '1',
+    multi: q.has('sm') ? (get('sm') ?? '').split(',').filter(Boolean) : null,
+    labels: get('lb') !== '0',
     preset,
     params,
   };
@@ -186,6 +204,13 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.vote) add('vote', s.vote);
   if (s.vdiff) add('vd', '1');
   if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
+  if (s.cmpFrom) {
+    add('yc', s.cmpFrom);
+    if (s.cmpMode === 'pct') add('ym', 'p');
+  }
+  if (s.fixed) add('fx', '1');
+  if (s.multi) add('sm', s.multi.join(','));
+  if (!s.labels) add('lb', '0');
   for (const f of s.filters) add('f', filterKey(f));
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);
   if (s.reach !== 'off') {

@@ -34,7 +34,7 @@ function hatchImage(bg: string, line: string): ImageData {
  *  read as fullscreen) and for the fullscreen-map toggle. */
 class ButtonControl implements maplibregl.IControl {
   private el: HTMLDivElement | null = null;
-  constructor(private cls: string, private onClick: () => void, private label: () => string, private html: () => string) {}
+  constructor(private cls: string, private onClick: () => void, private label: () => string, private html: () => string, private pressed?: () => boolean) {}
   onAdd() {
     const el = document.createElement('div');
     el.className = `maplibregl-ctrl maplibregl-ctrl-group gb-btn ${this.cls}`;
@@ -54,6 +54,7 @@ class ButtonControl implements maplibregl.IControl {
     b.setAttribute('aria-label', this.label());
     b.title = this.label();
     b.innerHTML = this.html();
+    if (this.pressed) b.setAttribute('aria-pressed', String(this.pressed()));
   }
   onRemove() {
     this.el?.remove();
@@ -89,6 +90,10 @@ export interface MapEvents {
   onReset?: () => void;
   /** label of the reset button, in the UI language */
   resetLabel?: () => string;
+  /** city and lake names toggle (the button is shown when this is set) */
+  onLabels?: () => void;
+  labelsLabel?: () => string;
+  labelsOn?: () => boolean;
   /** fullscreen toggle pressed (the button is shown when this is set) */
   onFull?: () => void;
   /** label of the fullscreen toggle and whether the map is full screen now */
@@ -152,6 +157,12 @@ export class UnitMap {
     if (ev.onFull) {
       const isFull = ev.isFull ?? (() => false);
       const c = new ButtonControl('gb-full', ev.onFull, ev.fullLabel ?? (() => 'Full-screen map'), () => (isFull() ? ICON_EXIT : ICON_FULL));
+      this.ctls.push(c);
+      this.map.addControl(c, 'top-right');
+    }
+    if (ev.onLabels) {
+      const on = ev.labelsOn ?? (() => true);
+      const c = new ButtonControl('gb-labels', ev.onLabels, ev.labelsLabel ?? (() => 'City and lake names'), () => '<span class="gb-ch" aria-hidden="true">Aa</span>', on);
       this.ctls.push(c);
       this.map.addControl(c, 'top-right');
     }

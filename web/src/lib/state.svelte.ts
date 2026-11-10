@@ -31,6 +31,11 @@ export class AppState {
   vote = $state<string | null>(null);
   vdiff = $state(false);
   unstable = $state<'show' | 'light' | 'hide'>('show');
+  cmpFrom = $state<string | null>(null);
+  cmpMode = $state<'abs' | 'pct'>('abs');
+  fixed = $state(false);
+  multi = $state<string[] | null>(null);
+  labels = $state(true);
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
   /** level the user picked although the shaded metric does not exist there: asked before swapping */
@@ -71,6 +76,11 @@ export class AppState {
     this.vote = v.vote;
     this.vdiff = v.vdiff;
     this.unstable = v.unstable;
+    this.cmpFrom = v.cmpFrom;
+    this.cmpMode = v.cmpMode;
+    this.fixed = v.fixed;
+    this.multi = v.multi;
+    this.labels = v.labels;
     this.preset = v.preset;
     this.loads++;
   }
@@ -79,7 +89,8 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, unstable: this.unstable, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, unstable: this.unstable,
+      cmpFrom: this.cmpFrom, cmpMode: this.cmpMode, fixed: this.fixed, multi: this.multi ? this.multi.slice() : null, labels: this.labels, params: { ...this.params },
     };
   }
 

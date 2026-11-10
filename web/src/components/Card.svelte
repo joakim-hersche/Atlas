@@ -3,7 +3,9 @@
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
   import { coverageLabel, flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
-  import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, fmtSig, fmtValue, rankOf } from '../lib/classify';
+  import '../lib/i18n-mapx';
+  import type { RankRange } from '../lib/reliability';
 
   interface Reach {
     label: string; // 'Public transport' | 'Car'
@@ -26,6 +28,15 @@
   interface Extra {
     label: string;
     value: string;
+  }
+  /** 95 % confidence interval of the value (where the data ships one) with the range of possible ranks */
+  interface Ci {
+    lo: number;
+    hi: number;
+    half: number;
+    rank: RankRange | null;
+    /** the interval reaches into another class of the map scale */
+    crosses: boolean;
   }
   interface Props {
     name: string;
@@ -51,9 +62,13 @@
     regional?: string | null;
     /** phone: a two-line strip (name, value, rank, travel time) that expands on tap, so the map stays visible */
     compact?: boolean;
+    /** confidence interval of this unit's value */
+    ci?: Ci | null;
+    /** survey or modelled value without an interval: the badge sentence */
+    relText?: string | null;
     onclose: () => void;
   }
-  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, compact = false, onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, compact = false, ci = null, relText = null, onclose }: Props = $props();
   /** compact strip opened to the full card (kept while other places are selected) */
   let expanded = $state(false);
 
@@ -85,6 +100,7 @@
         {#if value !== null}
           <span class="sval">{fmtValue(value, meta)}</span>
           <span class="yr">{fmtPeriod(col.period)}</span>
+          {#if ci}<span class="sci">± {fmtSig(ci.half, 2)}</span>{/if}
           {#if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
           {#if flags.length}<span class="smark">{flags.map((f) => f.split(' ')[0]).join('')}</span>{/if}
         {:else}
@@ -115,6 +131,7 @@
   {#if value !== null}
     <div class="valrow">
       <span class="val">{fmtValue(value, meta)}</span>
+      {#if ci}<span class="hw num" title={t('rl.cardCi', { lo: fmtValue(ci.lo, meta), hi: fmtValue(ci.hi, meta) })}>± {fmtSig(ci.half, 2)}</span>{/if}
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
@@ -129,6 +146,13 @@
       <span class="yr">{fmtPeriod(col.period)}</span>
       <span class="rank reason">{gapReason(file, col, index, meta, canton)}</span>
     </div>
+  {/if}
+  {#if value !== null && ci}
+    <p class="ci"><span class="rb">± 95 %</span> {t('rl.cardCi', { lo: fmtValue(ci.lo, meta), hi: fmtValue(ci.hi, meta) })}
+      {#if ci.rank && ci.rank.to > ci.rank.from}<span class="cr">{t('rl.rank', { from: fmtNumber(ci.rank.from, 0), to: fmtNumber(ci.rank.to, 0), n: fmtNumber(ci.rank.n, 0) })}</span>{/if}
+      {#if ci.crosses}<span class="cr">{t('rl.crossOne')}</span>{/if}</p>
+  {:else if value !== null && relText}
+    <p class="ci"><span class="rb rbw">≈</span> {relText}</p>
   {/if}
   {#each flags as f}<p class="flag">{f}{#if f.startsWith('M ')}<Term k="majority_election" />{/if}</p>{/each}
   {#if note}<p class="flag">{note}</p>{/if}
@@ -208,6 +232,12 @@
   .yr { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
   .rank { flex-basis: 100%; font-size: 0.8rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .reason { color: var(--text); }
+  .hw { font-size: 0.9rem; font-weight: 600; color: var(--muted); }
+  .sci { color: var(--muted); }
+  .ci { margin: 3px 0 0; font-size: 0.76rem; line-height: 1.35; }
+  .cr { display: block; color: var(--muted); }
+  .rb { display: inline-block; padding: 0 5px; background: var(--ink); color: var(--ink-text); font-size: 0.68rem; font-weight: 600; white-space: nowrap; vertical-align: 1px; }
+  .rbw { background: none; color: var(--text); border: 1px solid var(--ink); }
   .flag { margin: 3px 0 0; font-size: 0.76rem; color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; line-height: 1.3; }
   .nodata { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
   .muted { color: var(--muted); }
