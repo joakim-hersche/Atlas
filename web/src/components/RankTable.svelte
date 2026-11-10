@@ -71,10 +71,10 @@
       <thead>
         <tr>
           <th class="n">#</th>
-          <th class="nm"><button type="button" onclick={() => sortBy('name')} aria-sort={key === 'name' ? (desc ? 'descending' : 'ascending') : 'none'}>Name{arrow('name')}</button></th>
+          <th class="nm" aria-sort={key === 'name' ? (desc ? 'descending' : 'ascending') : 'none'}><button type="button" onclick={() => sortBy('name')}>Name{arrow('name')}</button></th>
           {#each columns as c (c.key)}
-            <th class="v" title="{c.meta.label_en} ({c.meta.unit || 'value'}, {fmtPeriod(c.period)})">
-              <button type="button" onclick={() => sortBy(c.key)} aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
+            <th class="v" title="{c.meta.label_en} ({c.meta.unit || 'value'}, {fmtPeriod(c.period)})" aria-sort={key === c.key ? (desc ? 'descending' : 'ascending') : 'none'}>
+              <button type="button" onclick={() => sortBy(c.key)}>
                 <span class="tg">{c.tag}</span>
                 <span class="lb">{c.label ?? c.meta.label_en}{arrow(c.key)}</span>
                 <span class="un">{c.meta.unit || '–'}</span>
@@ -105,11 +105,11 @@
   .cap { margin: 0 0 6px; color: var(--muted); }
   .wrap { overflow-x: auto; max-width: 100%; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  thead th { position: sticky; top: 0; background: var(--panel); border-bottom: 2px solid var(--ink); vertical-align: bottom; padding: 0; z-index: 1; }
+  thead th { text-align: left; position: sticky; top: 0; background: var(--panel); border-bottom: 2px solid var(--ink); vertical-align: bottom; padding: 0; z-index: 1; }
   th button { display: flex; flex-direction: column; width: 100%; border: 0; background: none; padding: 4px 4px 4px 0; cursor: pointer; text-align: inherit; font-weight: 700; font-size: 0.72rem; }
   th.v button { align-items: flex-end; text-align: right; padding: 4px 0 4px 6px; }
   .tg { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
-  .lb { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 9em; line-height: 1.2; }
+  .lb { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 9em; line-height: 1.2; }
   .un { font-weight: 400; color: var(--muted); font-size: 0.68rem; }
   td { padding: 3px 0; border-bottom: 1px solid var(--border); }
   td.v { text-align: right; padding-left: 6px; white-space: nowrap; }

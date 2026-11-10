@@ -7,6 +7,7 @@
   import MetricPicker from '../components/MetricPicker.svelte';
   import FilterPanel from '../components/FilterPanel.svelte';
   import ReachControls from '../components/ReachControls.svelte';
+  import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
   import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues } from '../lib/classify';
@@ -86,7 +87,7 @@
   const whyS = $derived(sizeMeta ? unavailableReason(sizeMeta, ld.level) : null);
   const sizeRef = $derived(sizeMeta && !whyS ? cols.get(ld, sizeMeta.id, app.year) : null);
   // units.json (names, label points, regions) is loaded once symbols or categorical filters are used
-  const needRows = $derived(!!sizeMeta || app.filters.some((f) => f.kind === 'cat'));
+  const needRows = $derived(!!sizeMeta || app.filters.some((f) => f.kind === 'cat') || app.tab === 'rank');
   $effect(() => {
     if (needRows && !unitRows) loadUnits().then((u) => (unitRows = u));
   });
@@ -313,6 +314,48 @@
     app.reach = m;
   }
 
+  // ------------------------------------------------------------------ tabs and ranking
+  const PHONE_TABS = [
+    { id: 'map', label: 'Map' },
+    { id: 'filters', label: 'Filters' },
+    { id: 'rank', label: 'Ranking' },
+    { id: 'stats', label: 'Statistics' },
+  ];
+  const phoneTab = $derived(PHONE_TABS.some((t) => t.id === app.tab) ? app.tab! : 'map');
+  const deskTab = $derived(app.tab === 'rank' ? 'rank' : 'stats');
+  function openTab(id: string) {
+    app.tab = id === 'map' ? null : id;
+    sheetOpen = true;
+  }
+  const rankCols = $derived.by(() => {
+    const out: RankColumn[] = [];
+    const seen = new Set<string>();
+    const push = (key: string, tag: string, ref: { meta: MetricMeta; col: { v: (number | null)[]; period: string } } | null | undefined, label?: string) => {
+      if (!ref || seen.has(key)) return;
+      seen.add(key);
+      out.push({ key, tag, meta: ref.meta, v: ref.col.v, period: ref.col.period, label });
+    };
+    if (!whyA) push(metaA.id, 'Shade', refA);
+    if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
+    for (const e of evals) {
+      if (e.status !== 'active' || !e.col) continue;
+      if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, `${e.filter.mode === 'pt' ? 'PT' : 'Car'} to ${e.hubName}`);
+      else push(e.col.meta.id, 'Filter', e.col);
+    }
+    if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, `${reachMode === 'pt' ? 'PT' : 'Car'} to ${hub.name}`);
+    return out;
+  });
+  const rankRows = $derived.by(() => {
+    const out: number[] = [];
+    for (let i = 0; i < nUnits; i++) if (match.m[i]) out.push(i);
+    return out;
+  });
+  function selectFromList(i: number) {
+    select(i);
+    const p = labels?.[i];
+    if (p && view) view.reveal(p);
+  }
+
   // ------------------------------------------------------------------ card and tooltip
   const card = $derived.by(() => {
     if (selIdx === null || !refA || whyA) return null;
@@ -349,15 +392,42 @@
   });
 </script>
 
+{#snippet rankSnip()}
+  {#if rankCols.length}
+    <RankTable columns={rankCols} rows={rankRows} names={ld.name} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
+      sel={selIdx} unitWord={filtered ? `matching ${word}` : word} onselect={selectFromList} />
+  {:else}
+    <p class="foot">{whyA ?? 'Loading…'}</p>
+  {/if}
+{/snippet}
+{#snippet statsSnip()}
+  {#if colA && !whyA}
+    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
+      source={base.sources.get(metaA.source)} unitWord={word} />
+  {:else}
+    <p class="foot">{whyA ?? 'Loading…'}</p>
+  {/if}
+{/snippet}
+
 <main class="stage">
   <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label="Map controls">
     <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
       <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="20" height="12" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
       <span class="summary">
-        {(filtered ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'Statistics, filters')}
+        {(filtered ? `${fmtNumber(match.n, 0)} of ${fmtNumber(nUnits, 0)} match · ` : '') + (sheetOpen ? 'Less' : 'More')}
       </span>
     </button>
+    {#if !desktop}
+      <div class="tabs sheet-tabs" role="tablist" aria-label="Panel">
+        {#each PHONE_TABS as tb}
+          <button type="button" role="tab" aria-selected={phoneTab === tb.id} onclick={() => openTab(tb.id)}>
+            {tb.label}{#if tb.id === 'filters' && app.filters.length}&nbsp;<span class="badge num">{app.filters.length}</span>{/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
     <div class="body">
+      {#if desktop || phoneTab === 'map'}
       <section>
         <div class="caps lab">Shade by</div>
         <MetricPicker metrics={base.metrics} level={ld.level} value={metaA.id} onpick={(id) => (app.metric = id)} />
@@ -418,18 +488,21 @@
         </ReachControls>
       </section>
 
-      <section class="extra">
+      {/if}
+      {#if desktop || phoneTab === 'filters'}
+      <section>
         <div class="caps lab">Filters</div>
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
           options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
           defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} />
       </section>
 
-      {#if !desktop && colA && !whyA}
-        <section class="extra">
-          <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
-            source={base.sources.get(metaA.source)} unitWord={word} />
-        </section>
+      {/if}
+      {#if !desktop && phoneTab === 'rank'}
+        <section>{@render rankSnip()}</section>
+      {/if}
+      {#if !desktop && phoneTab === 'stats'}
+        <section>{@render statsSnip()}</section>
       {/if}
     </div>
   </aside>
@@ -455,12 +528,13 @@
       {:else}
         <p class="foot hint">Tap or click a {li.one} for its value, rank and percentile.</p>
       {/if}
-      {#if colA && !whyA}
-        <div class="sblock">
-          <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
-            source={base.sources.get(metaA.source)} unitWord={word} />
-        </div>
-      {/if}
+      <div class="tabs side-tabs" role="tablist" aria-label="Side panel">
+        <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>Ranking</button>
+        <button type="button" role="tab" aria-selected={deskTab === 'stats'} onclick={() => (app.tab = null)}>Statistics</button>
+      </div>
+      <div class="sblock">
+        {#if deskTab === 'rank'}{@render rankSnip()}{:else}{@render statsSnip()}{/if}
+      </div>
     </aside>
   {/if}
 
@@ -506,12 +580,20 @@
   .legend-wrap { margin-top: 10px; }
   .reach .detail { display: block; margin-top: 3px; }
   .side { background: var(--panel); border-left: 1px solid var(--rule); padding: 14px 16px; overflow-y: auto; }
-  .sblock { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .sblock { margin-top: 10px; }
+  .tabs { display: flex; border-bottom: 1px solid var(--ink); }
+  .tabs button {
+    flex: 1; padding: 6px 4px; border: 0; background: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+  }
+  .tabs button[aria-selected='true'] { color: var(--text); border-bottom-color: var(--ink); }
+  .side-tabs { margin-top: 18px; border-top: 1px solid var(--rule); }
+  .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
 
   @media (min-width: 900px) {
-    .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 290px; }
+    .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; }
     .controls { border-right: 1px solid var(--rule); min-height: 0; }
     .body { padding-top: 4px; }
   }
@@ -523,6 +605,8 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
     .controls.open { max-height: 86%; }
+    .sheet-tabs { flex: none; padding: 0 12px; }
+    .sheet-tabs button { padding: 5px 2px 6px; }
     .handle {
       display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 2px; border: 0; background: none; cursor: pointer; flex: none;
     }
