@@ -21,7 +21,39 @@ defaults:
   min_base: 1000
   rule_en: "Few events or residents: fewer than 20 events or under 1,000 residents (relative standard error above ~22 %). Prefer the pooled 3-year rate."
   rule_de: "Kleine Zahlen: weniger als 20 Ereignisse oder unter 1'000 Einwohner (relativer Standardfehler über ~22 %). Besser die gepoolte 3-Jahres-Rate verwenden."
+# Generic rule for every other ratio (audit round 2, M9: "small-number flag on every ratio"), on the
+# first denominator term; areas, money and energy denominators are exact and get none:
+#   share: a share of fewer than 100 people/things moves by >= 1 percentage point per unit
+#     (binomial standard error up to 5 pp at n = 100).
+#   rate:  a per-resident rate or amount on fewer than 1,000 residents (as `defaults`).
+#   mean:  a mean over fewer than 500 taxpayers, households, dwellings, jobs ...: one very large value
+#     can move it (e.g. mean taxable income of Vaux-sur-Morges, 185 residents, national #1).
+auto:
+  share:
+    min_base: 100
+    rule_en: "Small base: fewer than 100 in the denominator, one more or less moves the share by 1 percentage point or more."
+    rule_de: "Kleine Basis: weniger als 100 in der Bezugsgrösse, eine Einheit mehr oder weniger verschiebt den Anteil um 1 Prozentpunkt oder mehr."
+    rule_fr: "Petite base : moins de 100 dans le dénominateur, une unité de plus ou de moins déplace la part d'au moins 1 point de pourcentage."
+  rate:
+    min_base: 1000
+    rule_en: "Few residents: under 1,000 residents, single cases move the rate strongly."
+    rule_de: "Wenige Einwohner: unter 1'000 Einwohnern verschieben Einzelfälle die Rate stark."
+    rule_fr: "Peu d'habitants : moins de 1 000 habitants, des cas isolés font fortement varier le taux."
+  mean:
+    min_base: 500
+    rule_en: "Small base: a mean over fewer than 500 units, a single very large value can move it."
+    rule_de: "Kleine Basis: ein Mittelwert über weniger als 500 Einheiten, ein einzelner sehr grosser Wert kann ihn verschieben."
+    rule_fr: "Petite base : une moyenne sur moins de 500 unités, une seule très grande valeur peut la déplacer."
 metrics:
+  # More cars than residents: company, leasing and rental fleets registered at one address (e.g.
+  # Appenzell 2,793 per 1,000, Montagny 1,454). Flagged 'special' and left out of classes by default.
+  mfz_cars_per_1000:
+    count: null
+    special:
+      max: 1000
+      rule_en: "More cars than residents: company, leasing or rental fleets registered here."
+      rule_de: "Mehr Autos als Einwohner: Firmen-, Leasing- oder Mietwagenflotten sind hier eingelöst."
+      rule_fr: "Plus de voitures que d'habitants : flottes d'entreprises, de leasing ou de location immatriculées ici."
   bevnat_birth_rate: {}
   bevnat_birth_rate_3y: {}
   bevnat_marriage_rate: {}

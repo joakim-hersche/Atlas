@@ -104,3 +104,133 @@ def test_car_towards_hub():
     car = t[t["mode"] == "car"].set_index(["hub", "bfs_nr"])["minutes"]
     assert car[("zuerich", 261)] < 25
     assert 60 <= car[("zuerich", 351)] <= 130     # model incl. congestion; free flow is about 75 min
+
+
+# ---------------------------------------------------------------- spread over the morning (P10 / median / P90)
+from pipeline.reach import pt  # noqa: E402
+
+SPREAD_METHODS = ("gtfs_rcsa_mainstation", "gtfs_rcsa_popweighted", "gtfs_fcsa_mainstation", "gtfs_fcsa_popweighted")
+
+
+def test_pct_inf_and_forward_summary():
+    x = np.array([[60.0, 60.0], [120.0, 60.0], [180.0, np.inf], [240.0, np.inf]])
+    assert pt._pct_inf(x, 10)[0] == pytest.approx(np.percentile(x[:, 0], 10))
+    p = pt._pct_inf(x, 90)
+    assert p[0] == pytest.approx(np.percentile(x[:, 0], 90)) and np.isinf(p[1])     # depends on unreached rows
+    j = np.array([[60.0], [120.0], [180.0]])
+    med, medw, p10, p90, late, w10, w90 = pt.forward_summary(j, j + 30)
+    assert (med[0], medw[0]) == (120.0, 150.0) and p10[0] < med[0] < p90[0] and w10[0] < medw[0] < w90[0]
+    assert np.isnan(late[0])
+
+
+def test_journey_times_cap():
+    # one station, arrival constant over every scan: the vehicle leaves after the last scan, journey unknown
+    ea = np.full((pt.N_SCAN, 1), 12 * 3600, np.int64)
+    j_old, w = pt.journey_times(ea)
+    j_cap, w2 = pt.journey_times(ea, cap_unreached=True)
+    assert np.isfinite(j_old).all() and np.isinf(j_cap).all()
+    assert np.array_equal(w, w2)                               # waiting incl. is unaffected
+    ea2 = ea.copy()
+    ea2[:, 0] = pt.T_FIRST + 60 * np.minimum(np.arange(pt.N_SCAN) // 10 * 10 + 10, pt.N_SCAN - 1) + 600   # changes every 10 minutes
+    assert np.isfinite(pt.journey_times(ea2, cap_unreached=True)[0][:10]).all()
+
+
+def test_combine_days_keeps_all_summary_fields():
+    mk = lambda v: tuple(np.array([v + k]) for k in range(7))   # noqa: E731
+    out = pt.combine_days([mk(300.0), mk(100.0), mk(200.0)])
+    assert len(out) == 7 and out[0][0] == 200.0 and out[6][0] == 206.0      # the middle day, every field from it
+
+
+def test_access_index_matches_popweighted_rows():
+    # two municipalities; hectares with one or two stops in reach, one hectare without a stop
+    acc = pd.DataFrame({
+        "RELI": [1, 1, 2, 3, 4, 5, 5], "bfs_nr": [10, 10, 10, 10, 20, 20, 20], "BBTOT": [5, 5, 3, 2, 4, 6, 6],
+        "idx": [0, 1, 1, 2, np.nan, 0, 2], "walk_s": [100, 400, 60, 30, np.nan, 500, 50]})
+    st = np.array([600.0, 1200.0, np.inf])
+    ai = pt.AccessIndex(acc)
+    new = ai.municipality(st, np.array([10, 20, 30])).set_index("bfs_nr")
+    old = {r[2]: r for r in pt.popweighted_rows("h", st, st, acc, np.array([10, 20, 30]))}
+    for b in (10, 20, 30):
+        assert (new.loc[b, "minutes"] == old[b][3]) or (np.isnan(new.loc[b, "minutes"]) and np.isnan(old[b][3]))
+    assert new.loc[20, "status"] == "ok" and new.loc[30, "status"] == "no populated hectare"
+    # P10 <= median <= P90 carries over to the door-to-door values
+    s10, s90 = st * 0.9, st * 1.3
+    lo, hi = ai.municipality(s10, np.array([10]))["minutes"][0], ai.municipality(s90, np.array([10]))["minutes"][0]
+    assert lo <= new.loc[10, "minutes"] <= hi
+
+
+@pytest.mark.skipif(not TT.exists(), reason="reach not built")
+def test_spread_columns_ordered():
+    t = pd.read_parquet(TT)
+    if "minutes_wait_p10" not in t:
+        pytest.skip("travel_times.parquet built before the spread")
+    assert t.hub.nunique() == 21
+    for m in SPREAD_METHODS:
+        d = t[(t.method == m) & (t.status == "ok")].dropna(subset=["minutes_p10", "minutes_p90"])
+        assert len(d) > 1500, m
+        assert (d.minutes_p10 <= d.minutes + 1e-6).all() and (d.minutes <= d.minutes_p90 + 1e-6).all(), m
+        w = t[(t.method == m) & (t.status == "ok")].dropna(subset=["minutes_wait_p10", "minutes_wait_p90", "minutes_incl_wait"])
+        assert (w.minutes_wait_p10 <= w.minutes_incl_wait + 1e-6).all() and (w.minutes_incl_wait <= w.minutes_wait_p90 + 1e-6).all(), m
+        # waiting is added to the journey, never subtracted
+        assert (w.minutes_incl_wait >= w.minutes - 1e-6).all() if "minutes" in w else True
+    # existing columns of the old methods are still there
+    assert {"gtfs_csa_station", "gtfs_csa_popweighted", "gtfs_rcsa_mainstation"} <= set(t.method)
+
+
+@pytest.mark.skipif(not TT.exists(), reason="reach not built")
+def test_spread_sanity_pairs():
+    t = pd.read_parquet(TT)
+    if "minutes_wait_p10" not in t:
+        pytest.skip("travel_times.parquet built before the spread")
+    st = t[t.method == "gtfs_rcsa_mainstation"].set_index(["hub", "bfs_nr"])
+    wint, ober = st.loc[("zuerich", 230)], st.loc[("zuerich", 93)]
+    # Winterthur -> Zürich: frequent service, narrow range; both the journey and with waiting
+    assert wint.minutes_p90 - wint.minutes_p10 <= 12
+    assert wint.minutes_wait_p90 - wint.minutes_wait_p10 <= 12
+    # a rural stop with an hourly bus: same journey time, but the waiting makes the range much wider
+    assert ober.minutes_wait_p90 - ober.minutes_wait_p10 >= 2 * (wint.minutes_wait_p90 - wint.minutes_wait_p10)
+    fo = t[t.method == "gtfs_fcsa_mainstation"].set_index(["hub", "bfs_nr"])
+    assert 15 <= fo.loc[("zuerich", 230)].minutes <= 30 and fo.loc[("zuerich", 230)].minutes_p90 - fo.loc[("zuerich", 230)].minutes_p10 <= 12
+    assert fo.loc[("zuerich", 261)].minutes == 0           # the hub itself
+
+
+SPREAD_DIR = interim_path("reach").parent.parent / "out" / "reach"
+
+
+@pytest.mark.skipif(not (SPREAD_DIR / "spread.json").exists() or not TT.exists(), reason="spread files not built")
+def test_spread_files():
+    import json
+    idx = json.loads((SPREAD_DIR / "spread.json").read_text())
+    units = idx["units"]
+    assert len(units) == 2110 and units == sorted(units, key=int)
+    rt = SPREAD_DIR.parent / "web" / "reach_times.json"
+    if rt.exists():
+        assert json.loads(rt.read_text())["units"] == units      # same order as reach_times.json
+    f = json.loads((SPREAD_DIR / "zuerich_spread.json").read_text())
+    blk = f["to"]["pt_station"]["journey"]
+    assert set(blk) == {"p10", "p50", "p90"} and all(len(v) == len(units) for v in blk.values())
+    i = units.index("230")
+    assert blk["p10"][i] <= blk["p50"][i] <= blk["p90"][i]
+    assert set(f["from"]) == {"pt_station", "pt"} and f["from"]["pt_station"]["with_wait"]["p50"][units.index("261")] == 0
+    assert len(list(SPREAD_DIR.glob("*_spread.json"))) == 21
+
+
+@pytest.mark.skipif(not OBS.exists(), reason="reach metrics not built")
+def test_spread_metrics():
+    o = pd.read_parquet(OBS)
+    ids = sorted(m for m in o.metric_id.unique() if m.startswith("reach_spread_"))
+    if not ids:
+        pytest.skip("observations built before the spread metrics")
+    assert len(ids) == 10 and all(m.endswith("_nearest_hub") for m in ids)
+    for m in ids:
+        d = o[o.metric_id == m]
+        assert len(d) == 2110
+        assert d[d.status == "ok"].note.str.startswith("nearest hub: ").all()
+    # P10 <= median <= P90 per unit where all exist (towards the hub: median = reach_ptst_nearest_hub)
+    v = lambda m: o[(o.metric_id == m) & (o.status == "ok")].set_index("unit_id").value   # noqa: E731
+    lo, md, hi = (v("reach_spread_to_ptst_p10_nearest_hub"), v("reach_ptst_nearest_hub"),
+                  v("reach_spread_to_ptst_p90_nearest_hub"))
+    j = lo.index.intersection(md.index).intersection(hi.index)
+    assert len(j) > 1500 and (lo[j] <= md[j] + 1e-6).all() and (md[j] <= hi[j] + 1e-6).all()
+    # existing metric ids are unchanged
+    assert {"reach_ptst_zuerich", "reach_pt_zuerich", "reach_car_zuerich", "reach_pt_nearest_hub"} <= set(o.metric_id)

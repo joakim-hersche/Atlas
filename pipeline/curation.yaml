@@ -1,0 +1,162 @@
+# Map curation (decision D38): only maps that tell a story. Read by pipeline/build/curation.py and
+# enforced by pipeline/build/web.py in metrics.json (see the module docstring for the fields).
+#
+# Owner (D38): "only display maps that make sense and actually tell a story, not just because we have
+# partial data." Rule proposed by the round-2 audit (docs/audit_round2.md), run on the shipped default
+# period after the aggregation fixes M1–M3 (decision D40), so no map is hidden for a gap the build closes.
+# Every hidden or noted metric × level is listed with its reason in data/interim/curation_verdicts.csv
+# and counted in docs/quality_report.md (section H).
+
+rule:
+  show: {min_unit_share: 0.80, min_pop_share: 0.80}             # SHOW
+  note: {min_unit_share: 0.25, min_pop_share: 0.50, min_units: 20}   # SHOW WITH NOTE (partial coverage)
+  small_level_units: 20      # levels with fewer units (major regions, language regions, municipality types):
+                             # shown only when every unit has a value
+
+# Whole levels
+levels:
+  stadt_land:
+    hide: true
+    except: ['^vote_.*', '^nrw_.*']
+    reason: "three units only (urban, intermediate, rural): the map repeats the typology instead of showing
+      the metric; the three values are compared in the profiles. Kept for votes and elections, where the
+      urban–rural split is the story."
+
+# Explicit decisions per metric (exact id, or 're:<regex>'). Keys:
+#   hide: true          never offered (duplicates of another metric; technical fields)
+#   maps: false         never a map, still on profiles (confidence intervals, denominators, flags)
+#   only_levels: [...]  offered only at these levels
+#   levels: {level: {v: show|note|hide, reason}}
+#   note: text          shown levels carry this note
+metrics:
+  # ---- M7: duplicates that disagree or repeat another metric; keep one on maps (BFS) ----
+  en_ecar_share:
+    maps: false
+    reason: "duplicate of 'Battery-electric share of cars' (BFS vehicle register, mfz_bev_share), which is
+      the one on maps; Energie Reporter's modelled monthly share (5.5 % vs BFS 5.16 %) stays on profiles"
+  en_ecar_count:
+    maps: false
+    reason: "duplicate of the BFS count of battery-electric cars (mfz_cars_bev)"
+  vac_rate_bfs:
+    maps: false
+    reason: "duplicate of 'Vacancy rate' (vac_rate, recomputed from counts at every level); BFS's published
+      rate (rounded, municipalities only) stays on profiles"
+  bil_naturalisations:
+    hide: true
+    reason: "identical to 'Naturalisations' (nat_total)"
+  bil_naturalisation_rate:
+    hide: true
+    reason: "identical to 'Naturalisations per 100 foreign residents' (nat_rate, 1 January denominator)"
+  bil_pop_dec:
+    hide: true
+    reason: "identical to 'Population' (pop_total, 31 December)"
+  bil_pop_jan:
+    maps: false
+    reason: "technical denominator (mean population of the demographic rates)"
+  bil_pop_foreign_jan:
+    maps: false
+    reason: "technical denominator of the naturalisation rate"
+  com_leave_unit:
+    levels:
+      gemeinde: {v: hide, reason: "at municipality level identical to 'Out-commuters' (com_out_commuters)"}
+  com_leave_unit_share:
+    levels:
+      gemeinde: {v: hide, reason: "at municipality level identical to 'Out-commuter share' (com_out_share)"}
+
+  # ---- M8: natural hazards cover 19 of 26 cantons, mapped differently per canton ----
+  re:haz_.*:
+    only_levels: [gemeinde]
+    reason: "cantonal hazard maps cover 19 of 26 cantons (missing GR, SG, VD, UR, NW, OW, BS) and are drawn
+      differently per canton: municipality map only, ranked among covered municipalities"
+  haz_share_assessed:
+    maps: false
+    reason: "technical: share of residents inside an assessed perimeter (close to 100 % wherever covered)"
+  haz_residents_assessed:
+    maps: false
+    reason: "technical denominator"
+
+  # ---- never a map: confidence intervals, technical denominators, quality fields ----
+  re:.*_ci:
+    maps: false
+    reason: "confidence interval of a survey estimate: shown next to the value in profiles, not as a map"
+  "lang_se_pop":
+    maps: false
+    reason: "technical denominator of the Structural Survey language shares"
+  "lang_se_unknown":
+    maps: false
+    reason: "non-response count of the Structural Survey: a quality field"
+  "vz_lang_total":
+    maps: false
+    reason: "technical denominator (census 2000 languages)"
+  "vz_rel_total":
+    maps: false
+    reason: "technical denominator (census 2000 religions)"
+  "vz_hh_total":
+    maps: false
+    reason: "technical denominator (census 2000 households)"
+  "vz_hh_private":
+    maps: false
+    reason: "technical denominator (census 2000 households)"
+  edu_pop_25_64:
+    maps: false
+    reason: "technical denominator of the education shares"
+  edu_known_25_64:
+    maps: false
+    reason: "technical denominator of the education shares"
+  vac_dwelling_stock:
+    maps: false
+    reason: "technical denominator of the vacancy rate"
+  zw_dwellings_total:
+    maps: false
+    reason: "technical denominator of the second-home share"
+  pa_municipal_area_ha:
+    maps: false
+    reason: "technical denominator of the protected-area shares"
+  hh_persons:
+    maps: false
+    reason: "technical denominator (persons in private households)"
+  com_employed_residents:
+    maps: false
+    reason: "technical denominator of the commuting shares"
+
+  # ---- empty or near-constant maps (expert, round 2) ----
+  energiestadt_label:
+    maps: false
+    reason: "a yes/no label: a list, not a map"
+  energiestadt_gold:
+    maps: false
+    reason: "a yes/no label: a list, not a map"
+  pt_stops_boat:
+    maps: false
+    reason: "almost every municipality has none (199 of 2,110 have any)"
+  pt_stops_cableway:
+    maps: false
+    reason: "almost every municipality has none"
+  pt_stops_tram_metro:
+    maps: false
+    reason: "only the few tram and metro cities have any"
+  rail_boardings_daily:
+    only_levels: [gemeinde]
+    reason: "station counts (SBB, boardings and alightings) are not complete above the municipality"
+  rail_boardings_weekday:
+    only_levels: [gemeinde]
+    reason: "station counts (SBB, boardings and alightings) are not complete above the municipality"
+
+# Featured story maps (journalist, round 2). Each must be shown or noted at its level; the build checks
+# this and writes data/out/web/featured.json for the app.
+featured:
+  - {rank: 1, metric: geo_pop_density, level: gemeinde, view: "log / quantile", story: "Where Switzerland lives: the Mittelland belt, the lake cities and the empty Alps"}
+  - {rank: 2, metric: pop_change_10y, level: gemeinde, view: "diverging around 0", story: "Growth in the agglomeration belts of Fribourg, Vaud and Zurich; shrinking mountain valleys"}
+  - {rank: 3, metric: share_age_65plus, level: gemeinde, view: quantile, story: "Ageing Ticino valleys and Jura arc against young commuter suburbs"}
+  - {rank: 4, metric: share_foreign, level: gemeinde, view: quantile, story: "Border and tourism municipalities (Täsch, Paradiso, Kreuzlingen) and the big cities"}
+  - {rank: 5, metric: xb_per_100_jobs, level: gemeinde, view: quantile, story: "Cross-border commuters: Ticino, Geneva, Jura and Basel; zero in central Switzerland"}
+  - {rank: 6, metric: tax_np_mean_taxable_income, level: gemeinde, view: "quantile + small-base marker", story: "Gold coasts (Lake Zurich, Lake Geneva, Schwyz) against the mountain valleys"}
+  - {rank: 7, metric: taxb_amr_single_80k, level: arbeitsmarktgebiet, view: quantile, story: "Where the same salary is taxed least: Zug and Schwyz versus Neuchâtel and Jura"}
+  - {rank: 8, metric: edu_share_tertiary, level: gemeinde, view: quantile, story: "The education gradient from university cities to rural cantons"}
+  - {rank: 9, metric: vac_rate, level: bezirk, view: quantile, story: "Housing shortage: near-zero vacancies around Zurich, Zug and Geneva, surplus in the Jura arc"}
+  - {rank: 10, metric: zw_second_home_share, level: gemeinde, view: "threshold at 20 %", story: "Second-home law: which municipalities are above the 20 % limit"}
+  - {rank: 11, metric: reach_pt_nearest_hub, level: gemeinde, view: quantile, story: "Distance to the nearest city by public transport; Graubünden's and Valais' remote valleys"}
+  - {rank: 12, metric: gws_share_heatpump, level: gemeinde, view: quantile, story: "The heating transition: Fribourg's Sense district and Valais ahead, cities still on gas"}
+  - {rank: 13, metric: vote_yes_share, level: gemeinde, view: "difference from national result", story: "Latest federal vote: the language border and the urban–rural split"}
+  - {rank: 14, metric: nrw_share_svp, level: gemeinde, view: "quantile, single-seat cantons marked", story: "SVP strength 2023 across the Röstigraben and the urban–rural divide"}
+  - {rank: 15, metric: lang_se_fr_share, level: bezirk, view: quantile, story: "The language border with recent Structural Survey data, not the 2000 census"}

@@ -14,7 +14,8 @@ Build everything with one command: `uv run python -m pipeline.reach.run`. A sing
   - `pt_station_times/<hub>.parquet` (hub-outward), `pt_station_times_to_hub/<hub>.parquet` (towards the hub, median day plus each day's median)
   - NPVM hub rows
   - hectare links
-- Code is in `pipeline/reach/`: `gtfs_prep`, `csa`, `pt`, `npvm`, `draw`, `hubs`, `run`.
+- Code is in `pipeline/reach/`: `gtfs_prep`, `csa`, `pt`, `npvm`, `draw`, `hubs`, `spread`, `run`.
+- Spread over the morning (P10/P90, both directions): `data/out/reach/spread.json`, `data/out/reach/<hub>_spread.json`, see the section below.
 - Connectors with `fetch.py` and `meta.yaml`: `pipeline/sources/otd_gtfs`, `are_npvm` and `bav_rail`. The swissTLMRegio download is in `pipeline/reach/fetch.py` (source id `swisstopo_tlmregio`).
 
 ## Hubs (D9, D39)
@@ -181,6 +182,54 @@ median day differs from 17 Nov. **Genève → Zürich 190 min is therefore not a
 07:30–08:30 needs one of the first trains of the day (05:33 → 08:28 direct, 175 min; or 04:46 with a
 change, 190 min, which serves most arrival minutes). Runtime: about 11 s of reverse scans per hub for
 the three days (4 s per day), about 4 minutes for all 21 hubs.
+
+## Spread over the morning: P10 / median / P90, both directions
+
+Backlog item "Travel-time detail" (2026-11-11). The headline figures keep their definitions (D31); next to each there is
+now the spread over the morning window, for public transport only.
+
+**What is computed** (per hub, per station, then per municipality):
+
+| | towards the hub (`to`) | from the hub outwards (`from`) |
+|---|---|---|
+| scans | reverse scans, arrival deadline every minute (as for D31, `gtfs_rcsa_*`) | forward scans, departure every minute 07:30-08:30, scanned to 09:30 for the latest departure (`gtfs_fcsa_*`) |
+| window | 61 arrival minutes 07:30-08:30 (later hour where the hub is out of reach by 08:30, `window_start_min`) | 61 departure minutes 07:30-08:30 |
+| journey | arrival - departure of the train actually taken (no initial wait, no wait at the hub) | EA(t) - LD(t): earliest arrival minus the latest departure that gives the same arrival (as in the old hub-outward method) |
+| journey incl. wait | deadline T - departure | arrival - departure minute t |
+| days | median day of the three weekdays per station (`combine_days`; the P10/P90 come from the same day as the median) | same |
+| station time | the municipality's main station (same stop as towards the hub) | same |
+| door to door | hectare time = min over stops within 1.5 km of (walk + stop value); population-weighted median over hectares | same |
+
+Per station: median, P10, P90 of the 61 journey times, and the same three for the journey including waiting. The
+rows are minute by minute, so a train that serves five consecutive minutes counts five times: the percentiles are those
+of "a random minute of the morning", not of "a random train".
+
+- **Door-to-door P10/P90** use the stop's P10 resp. P90 in the same formula as the median (min over stops of walk +
+  stop percentile, then the population-weighted median over hectares). This is an approximation of the percentile of
+  the per-minute minimum: where two stops alternate it is slightly too high at P10 and too low at P90. It keeps
+  P10 <= median <= P90 per hectare and so per municipality (checked in `test_spread_columns_ordered`).
+- **Why two ranges (journey and with waiting).** The journey time follows D31 and has no waiting in it, so an hourly bus that always
+  takes 36 minutes has a zero-width journey range. The range of the journey *including waiting* is what shows infrequent
+  service (Oberweningen -> Zürich HB: journey 36 / 36 / 36 min, with waiting 39 / 51 / 62 min; Winterthur -> Zürich HB:
+  journey 19 / 20 / 28, with waiting 20 / 24 / 29).
+- **Hub outwards and rare service.** EA - LD is only defined if the vehicle leaves before the last scan (09:30). Where
+  the arrival does not change up to 09:30 the vehicle leaves later and the journey is unknown; in the spread
+  (`journey_times(ea, cap_unreached=True)`) these departures count as unreached (the journey including waiting stays
+  valid). A municipality whose median journey is unknown gets status "no departure from the hub 07:30-09:30 reaches it by
+  18:00" (not applicable in the metrics), a P10 or P90 needing such a departure is empty. The older `gtfs_csa_*` methods
+  are unchanged and still use the cap as an upper bound (which gave Oberweningen 415 min).
+- **Runtime.** The forward scans now run on the three weekdays (two extra days per hub, about 5 s each on a free core) and the per-municipality
+  door-to-door medians use `AccessIndex` (one pass over 4.7 million hectare-stop links per vector). Full run: see the figures
+  at the end of this section.
+
+**Outputs.** `travel_times.parquet`: new columns `minutes_wait_p10`, `minutes_wait_p90`, `minutes_p10/p90` also for
+`gtfs_rcsa_popweighted`; new methods `gtfs_fcsa_mainstation`, `gtfs_fcsa_popweighted` (existing methods and values unchanged).
+Station tables `data/interim/reach/pt_station_times_to_hub/<hub>.parquet` gain `wait_p10_s`, `wait_p90_s`;
+`pt_station_times_from_hub/<hub>.parquet` is new. For the app: `data/out/reach/spread.json` and `<hub>_spread.json`
+(layout in web_data_contract.md section 8) and ten metrics `reach_spread_<to|from>_<ptst|pt>_<p10|p50|p90>_nearest_hub`
+in `reach_metrics` (nearest hub among the 15, by the measure's own median). The 210 per-hub metric ids were not created: the
+per-hub values are in the JSON files, so the map's metric list stays short (the generator would only need the pattern
+`reach_spread_<dir>_<kind>_<stat>_<hub>`).
 
 ## Public transport, hub-outward (D10) — growing lines and comparison
 **Feed and day.**

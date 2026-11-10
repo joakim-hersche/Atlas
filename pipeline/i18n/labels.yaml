@@ -973,3 +973,15 @@ pks_city_threat_hz: {label_fr: "Menaces (art. 180 CP) pour 1000 habitants (ville
 pks_city_injury_hz: {label_fr: "Lésions corporelles (art. 122, 123 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
 pks_city_officials_hz: {label_fr: "Violence ou menace contre les autorités et les fonctionnaires (art. 285 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
 pks_city_robbery_hz: {label_fr: "Brigandage (art. 140 CP) pour 1000 habitants (villes)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+
+# --- reach_metrics: spread over the morning (nearest hub) ---
+reach_spread_to_ptst_p10_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare vers le pôle le plus proche, côté rapide (P10)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_to_ptst_p90_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare vers le pôle le plus proche, côté lent (P90)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_to_pt_p10_nearest_hub: {label_fr: "Transports publics porte-à-porte vers le pôle le plus proche, côté rapide (P10)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_to_pt_p90_nearest_hub: {label_fr: "Transports publics porte-à-porte vers le pôle le plus proche, côté lent (P90)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_ptst_p10_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare depuis le pôle le plus proche, côté rapide (P10)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_ptst_p50_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare depuis le pôle le plus proche, médiane", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_ptst_p90_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare depuis le pôle le plus proche, côté lent (P90)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_pt_p10_nearest_hub: {label_fr: "Transports publics porte-à-porte depuis le pôle le plus proche, côté rapide (P10)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_pt_p50_nearest_hub: {label_fr: "Transports publics porte-à-porte depuis le pôle le plus proche, médiane", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_spread_from_pt_p90_nearest_hub: {label_fr: "Transports publics porte-à-porte depuis le pôle le plus proche, côté lent (P90)", unit_en: "min", unit_de: "Min.", unit_fr: "min"}

@@ -11,9 +11,10 @@ Method (documented in metrics.yaml and meta.yaml)
 - Level at a building: the maximum of the grid over the 3 x 3 cells (30 m) around the building coordinate, which
   approximates the most exposed facade. A building without a mapped value is counted as not exposed (the grids
   carry no value outside the modelled noise corridor).
-- Exposure indicator: residents in buildings at or above 60 dB(A) by day or 50 dB(A) by night, the immission limit
-  values (IGW) of the Noise Abatement Ordinance (LSV, SR 814.41) for sensitivity level II (residential zones). The
-  zone-specific limits of the cantons are not applied, so this is not the official count of people above the IGW.
+- Exposure indicators: residents in buildings at or above 60 dB(A) by day or 50 dB(A) by night (the immission limit
+  values, IGW, of the Noise Abatement Ordinance LSV, SR 814.41, for sensitivity level II, residential zones), and
+  at or above 65 / 55 dB(A) (IGW of sensitivity level III, mixed zones). The cantonal zoning (which limit applies
+  where) is not used, so these are indicators, not the official count of people above the IGW.
 Everything is a model: precision "modelled". sonBASE is for statistics at national and regional level
 (BAFU disclaimer); values for a single municipality are indicative.
 """
@@ -32,7 +33,8 @@ from pipeline.sources.meteoswiss_climate import zonal
 SOURCE = "bafu_noise"
 POP_YEAR = 2021
 NEIGHBOURHOOD = 1  # 3 x 3 cells = +-10 m around the building coordinate
-LIMITS = {"road_day": 60.0, "road_night": 50.0, "rail_day": 60.0, "rail_night": 50.0}
+LIMITS = {"road_day": 60.0, "road_night": 50.0, "rail_day": 60.0, "rail_night": 50.0}  # IGW, sensitivity level II
+HIGH = {"road_day": 65.0, "road_night": 55.0, "rail_day": 65.0, "rail_night": 55.0}  # IGW, sensitivity level III
 RES_CATEGORIES = (1020, 1030, 1040)
 
 
@@ -94,20 +96,22 @@ def residents_table() -> pd.DataFrame:
 
 
 def exposure(t: pd.DataFrame) -> pd.DataFrame:
-    """Per municipality: residents, residents at or above each limit, and above any limit."""
+    """Per municipality: residents and residents at or above the limits (see METRICS)."""
     t = t[t["bfs_nr"] > 0]
-    flags = {k: (t[k] >= LIMITS[k]).to_numpy() for k in KINDS}
-    anyf = np.logical_or.reduce(list(flags.values()))
     d = pd.DataFrame({"bfs_nr": t["bfs_nr"].to_numpy(), "residents": t["residents"].to_numpy()})
-    for k, f in flags.items():
-        d[f"{k}"] = d["residents"] * f
-    d["any"] = d["residents"] * anyf
+    for k, lim in LIMITS.items():
+        d[k] = d["residents"] * (t[k] >= lim).to_numpy()
+    hi = np.logical_or.reduce([(t[k] >= lim).to_numpy() for k, lim in HIGH.items()])
+    lo = np.logical_or.reduce([(t[k] >= lim).to_numpy() for k, lim in LIMITS.items()])
+    d["any_60_50"] = d["residents"] * lo
+    d["any_65_55"] = d["residents"] * hi
     return d.groupby("bfs_nr", as_index=False).sum()
 
 
-METRICS = {"residents": "noise_residents", "road_day": "noise_road_day_residents",
-           "road_night": "noise_road_night_residents", "rail_day": "noise_rail_day_residents",
-           "rail_night": "noise_rail_night_residents", "any": "noise_any_residents"}
+METRICS = {"residents": "noise_residents", "road_day": "noise_road_day_60_residents",
+           "road_night": "noise_road_night_50_residents", "rail_day": "noise_rail_day_60_residents",
+           "rail_night": "noise_rail_night_50_residents", "any_60_50": "noise_any_60_50_residents",
+           "any_65_55": "noise_any_65_55_residents"}
 
 
 def observations() -> pd.DataFrame:
@@ -115,4 +119,6 @@ def observations() -> pd.DataFrame:
     e["period"] = "2021"
     o = emit(e, METRICS, "period", SOURCE, precision="modelled", provenance="source_current_state")
     o["note"] = "sonBASE 2021 grids, GWR buildings, STATPOP 2021 hectares; modelled (see description)"
+    o.loc[o["metric_id"] == "noise_residents", "precision"] = "exact"
+    o.loc[o["metric_id"] == "noise_residents", "note"] = "STATPOP 2021 hectare residents assigned to the municipality"
     return o

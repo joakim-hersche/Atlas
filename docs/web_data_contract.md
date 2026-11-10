@@ -227,3 +227,80 @@ row of those canton-years.
   with 2 children at CHF 100k and single at 80k (cities), and the two area series.
 - `search.json`: postal-code rows with less than 0.5 % of a locality's addresses are left out (Riehen in 4058).
 
+
+## 8. Travel-time spread over the morning (P10 / median / P90, both directions) — NEW, additive
+
+Added 2026-11-11 (backlog "Travel-time detail"). Nothing existing changes: `reach_times.json` and every
+existing metric id keep their values. `reach_times.json` is built by `pipeline/build/profile.py` and is not
+touched; the new values are in their own files, written by `pipeline/reach` (`python -m pipeline.reach.run`,
+`pipeline/reach/spread.py`) into `data/out/reach/`, so the web copy step (`copy-data.mjs`, every `*.json` of
+`reach/`) already ships them. Public transport only (no car spread: the NPVM car time is one modelled average).
+
+### 8.1 Files
+
+- `reach/spread.json` (about 10 kB): `units` (2110 BFS numbers as strings, the same order as `reach_times.json`
+  `units`; index the arrays below with it), `hubs` `[[slug, name], ...]` (21), `file` = `"<hub>_spread.json"`,
+  `stats` `["p10","p50","p90"]`, `series` `["journey","with_wait"]`, `directions` `["to","from"]`,
+  `kinds` `["pt_station","pt"]`, `window`, `service_date`, `reverse_days`, and `definitions`
+  `{key: {en,de,fr}}` for the keys `to`, `from`, `journey`, `with_wait`, `pt_station`, `pt` (show these as the
+  tooltip / "how is this measured" text; no new strings needed in the app).
+- `reach/<hub>_spread.json` (about 100 kB, load on demand when a hub is shown):
+  ```jsonc
+  {"hub": "zuerich",
+   "to":   {"pt_station": {"journey":   {"p10": [..2110..], "p50": [..], "p90": [..]},
+                           "with_wait": {"p10": [..], "p50": [..], "p90": [..]}},
+            "pt":         {"journey": {...}, "with_wait": {...}}},          // door-to-door
+   "from": {"pt_station": {...}, "pt": {...}},                              // same shape, hub outwards
+   "late_from": {"pt_station": {"<unit idx>": "08:55"}, "pt": {...}},       // only "to": value uses the hour from that arrival
+   "reasons": {"to": {"pt_station": {"<unit idx>": "no arrival at the hub by 10:30"}, "pt": {...}},
+               "from": {"pt_station": {"<unit idx>": "no departure from the hub 07:30-09:30 reaches it by 18:00"}, "pt": {...}}}}
+  ```
+  Arrays have one entry per unit (same index as `units`), minutes with one decimal, `null` = no value.
+  `reasons` lists only units whose median is missing; a `null` P10/P90 with a present median means the percentile is
+  undefined (see below) and has no reason entry.
+- Medians: `to.pt_station.journey.p50` equals `reach_times.json` `pt_station[hub]`, `to.pt.journey.p50` equals
+  `pt[hub]` (same numbers, same rounding). `to.*.with_wait.p50` and `from.*` are new.
+
+### 8.2 What each number is
+
+- `to` = towards the hub (D31): arrival minutes 07:30-08:30 at the hub. `from` = from the hub outwards:
+  departure minutes 07:30-08:30 at the hub. 61 minutes each, per station the median day of three weekdays
+  (`reverse_days`).
+- `journey` = as a journey planner shows it: no initial wait, no wait at the hub (D31). A narrow range means the same
+  journey time whichever train is taken. `with_wait` = journey including waiting (towards: from the arrival minute back
+  to the departure; from the hub: from the departure minute to the arrival). It is wide where service is infrequent:
+  Oberweningen -> Zürich HB has `journey` 36 / 36 / 36 min but `with_wait` 39 / 51 / 62 min. **Show both: the journey
+  range says how much the connections differ, the with-wait range says how long one may have to wait.**
+- `pt_station` = main station <-> hub station (the municipality's main station, same stop in both directions; a
+  bus/boat stop is named in `reach_times.json` `main_station` as before). `pt` = door to door (hectares walk to the
+  best stop within 1.5 km, population-weighted median); its P10/P90 are approximations (see reach_method.md).
+- Order always holds: P10 <= P50 <= P90 (journey and with_wait).
+- `from` has no late window. A municipality whose median has no usable departure (the vehicle leaves after
+  09:30) has no `from` value (reason above). P10 or P90 alone are `null` if more than 10 % (P90) / 90 % (P10) of
+  the departures have no connection in the scan window.
+- Suggested display (profile, hub rows): "36 min (35-41)" for station time and door-to-door, with a toggle or second
+  line "with waiting 39-62 min", for both directions; tooltip from `definitions`.
+
+### 8.3 Metric ids (in `latest/gemeinde/mobility_accessibility.json`, theme Mobility & accessibility)
+
+Only for the nearest-hub aggregate (10 ids; per-hub values are in the files above, so the map's metric list does not
+grow by 210 entries). The hub is the one with the lowest median among the 15 nearest-hub stations for that
+measure and direction, named in the note (`nearest hub: <name>`), like `reach_*_nearest_hub`:
+
+| id | meaning |
+|---|---|
+| `reach_spread_to_ptst_p10_nearest_hub`, `..._p90_...` | station time towards the nearest hub, fast / slow end. Median: `reach_ptst_nearest_hub` |
+| `reach_spread_to_pt_p10_nearest_hub`, `..._p90_...` | door-to-door towards the nearest hub. Median: `reach_pt_nearest_hub` |
+| `reach_spread_from_ptst_p10|p50|p90_nearest_hub` | station time from the nearest hub outwards, P10 / median / P90 |
+| `reach_spread_from_pt_p10|p50|p90_nearest_hub` | door-to-door from the nearest hub outwards |
+
+Unit min, direction lower_better, not aggregatable, precision modelled; labels EN/DE/FR in `labels.yaml`. Statuses:
+`not_applicable` where the hub has no usable morning connection or the percentile is undefined, `no_data` otherwise.
+These ids start with `reach_spread_`, not `reach_pt_` / `reach_ptst_`, so code that parses the hub from those prefixes
+does not pick them up.
+
+### 8.4 New columns in `data/interim/reach/travel_times.parquet` (pipeline-internal)
+
+`minutes_p10`, `minutes_p90` (now also for `gtfs_rcsa_popweighted`), new `minutes_wait_p10`, `minutes_wait_p90`
+(`minutes_incl_wait` is the with-wait median); new methods `gtfs_fcsa_mainstation` and `gtfs_fcsa_popweighted`
+(hub outwards, same definitions as the `rcsa` ones). The older `gtfs_csa_*` rows are unchanged.

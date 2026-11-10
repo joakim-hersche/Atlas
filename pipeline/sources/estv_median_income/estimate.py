@@ -7,9 +7,8 @@ reaches half of all taxpayers. Inside the class that contains this point the cum
 interpolated linearly in the logarithm of income (a log-uniform density inside the class, as incomes are
 roughly log-normal in the middle of the distribution); inside the first class (lower bound 0) linearly.
 
-Tax secrecy suppresses small cells. The cumulative count at an upper class bound is taken from below (sum of the
-classes up to it) or from above (total minus the classes above it), whichever has no suppressed cell. The
-median is only returned when the two bounds of its class are known; otherwise NaN.
+Tax secrecy suppresses cells with fewer than 4 taxpayers; the remainder to the published total is spread over the
+suppressed cells (see median_from_classes).
 """
 from __future__ import annotations
 
@@ -36,13 +35,54 @@ def cumulative(counts: list[float], total: float) -> list[float]:
     return out
 
 
+MAX_SPREAD = 0.05  # with a hidden larger cell: accept only if the two bounding medians differ by at most 5 %
+SUPPRESSED_MAX = 3  # a suppressed cell holds 0-3 taxpayers: the smallest published class count is 4 (2021, 2023)
+
+
 def median_from_classes(counts: list[float], total: float | None = None) -> float:
-    """Estimated median (CHF) from 10 class counts; total defaults to their sum (all must then be known)."""
+    """Estimated median (CHF) from 10 class counts; total defaults to their sum (all must then be known).
+
+    Suppressed cells (NaN): ESTV hides class cells with fewer than 4 taxpayers (checked: the smallest published
+    class count is 4 in the 2021 and 2023 workbooks, over about 21,000 cells each). The taxpayers not accounted
+    for by the known classes (total minus their sum) are therefore spread over the suppressed cells with at most
+    3 each, once filling from the lowest and once from the highest suppressed class. The mean of the two medians
+    is returned. If the remainder does not fit (a larger cell was hidden as well, to protect the small one) the whole
+    remainder is put into the lowest / highest suppressed class and the result is accepted only if the two medians
+    differ by at most 5 %, otherwise NaN."""
     c = np.asarray(counts, dtype=float)
-    if total is None:
-        total = float(c.sum()) if not np.isnan(c).any() else math.nan
-    if not total or math.isnan(total) or total <= 0:
+    if not np.isnan(c).any():
+        total = float(c.sum())  # all classes known: their own sum (the published total can differ by hidden cells)
+    if total is None or not total or math.isnan(total) or total <= 0:
         return math.nan
+    miss = np.flatnonzero(np.isnan(c))
+    if len(miss):
+        rest = total - float(np.nansum(c))
+        if rest < -0.5:
+            return math.nan
+        rest = max(rest, 0.0)
+        # remainder beyond 3 per cell: a larger cell was hidden as well (complementary suppression); then the whole
+        # remainder is put once into the lowest and once into the highest suppressed class (widest possible range)
+        wide = rest > SUPPRESSED_MAX * len(miss) + 0.5
+        bounds = []
+        for order in (miss, miss[::-1]):
+            d = c.copy()
+            d[miss] = 0.0
+            left = rest
+            for i in order:
+                d[i] = left if wide and i == order[0] else min(float(SUPPRESSED_MAX), left)
+                left -= d[i]
+            bounds.append(_median_complete(d, total))
+        if any(math.isnan(b) for b in bounds):
+            return math.nan
+        lo, hi = min(bounds), max(bounds)
+        mid = (lo + hi) / 2
+        if wide and hi - lo > MAX_SPREAD * mid:
+            return math.nan
+        return float(mid)
+    return _median_complete(c, total)
+
+
+def _median_complete(c: np.ndarray, total: float) -> float:
     half = total / 2.0
     F = cumulative(list(c), total)
     for k, (b, f) in enumerate(zip(UPPER, F)):

@@ -35,7 +35,10 @@ STATUS_CODES = {"ok": 0, "no_data": 1, "suppressed": 2, "not_published": 3, "not
 COVERED = ("ok", "not_applicable", "majority_election", "suppressed")
 PRECISION_CODES = {"exact": 0, "survey": 1, "modelled": 2, "boundary_estimate": 3}
 SERIES_LEVELS = ("gemeinde", "bezirk", "kanton", "schweiz")
-FLAG_BITS = {"small_base": 1, "small_count": 2, "majority_election": 4, "published_value": 8, "provisional": 16}
+FLAG_BITS = {"small_base": 1, "small_count": 2, "majority_election": 4, "published_value": 8, "provisional": 16,
+             "estimate": 32, "special": 64}
+# estimate (M1): a sum leaving out a few suppressed municipalities (<= 1 % of residents);
+# special (M9): a value distorted by how the source counts (e.g. company fleets registered in one place)
 COVERAGE_MIN = 0.95          # default period: step back over newer periods with < 95 % of the previous one (F)
 CANTON_COVERED = 0.5         # a canton counts as covered when >= 50 % of its municipalities have data (G)
 TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomeration": "AGGL2020",
@@ -43,7 +46,7 @@ TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomer
 LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canton", "schweiz": "national"}
 # notes of ok values worth showing (fallback provenance, provisional results, reach details)
 OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published|proportional-representation|"
-                     r"single-seat|counted under FDP", re.I)
+                     r"single-seat|counted under FDP|estimate|not allocatable|boundaries of|demographic balance", re.I)
 PUBLIC_TEXT = [(re.compile(r"\bPARTLY_UNVERIFIED\b"), "partly not yet confirmed"),
                (re.compile(r"\bUNVERIFIED\b"), "not yet confirmed"),
                (re.compile(r"\s*\(?brief rule 5\)?", re.I), "")]
@@ -245,10 +248,50 @@ def _formula(agg: str):
     return None
 
 
+NOT_COUNTS = re.compile(r"\bha\b|m²|m2|km|chf|wh\b|kw|tonne|\bt\b|%|minutes|min\b|metres|\bm\b|°|mm|index", re.I)
+
+
+def _auto_rule(mid: str, meta: pd.DataFrame, cfg: dict) -> dict | None:
+    """Generic small-number rule (audit round 2, M9) for a ratio not listed in reliability.yaml `metrics`:
+    shares get a minimum base of `auto.share_min_base`, other ratios `auto.rate_min_base` (per-resident
+    rates) or `auto.mean_min_base` (means per taxpayer, household, dwelling ...). Denominators that are
+    not counts of people or things (areas, money, energy) get no rule: those ratios are exact."""
+    a = cfg.get("auto") or {}
+    if not a or mid not in meta.index or meta.loc[mid, "kind"] != "derived":
+        return None
+    f = _formula(str(meta.loc[mid, "aggregation"]))
+    if not f or f[2] != 1 or str(meta.loc[mid, "native_level"]) != "gemeinde":
+        return None
+    den = f[1][0]
+    if den not in meta.index or NOT_COUNTS.search(str(meta.loc[den, "unit"])):
+        return None
+    unit = str(meta.loc[mid, "unit"])
+    if unit.strip().startswith("%") or "share" in unit.lower():
+        kind = "share"
+    elif re.search(r"per (1[,' ]?000|100|10[,' ]?000)\b|per resident|per capita|per inhabitant", unit, re.I) or den == "pop_total":
+        kind = "rate"
+    else:
+        kind = "mean"
+    k = a.get(kind) or {}
+    if not k:
+        return None
+    return {"count": None, "base": den, "min_count": None, "min_base": k["min_base"], "years": 1, "auto": kind,
+            **{x: k.get(x) for x in ("rule_en", "rule_de", "rule_fr")}}
+
+
+def _special(mid: str, cfg: dict) -> dict | None:
+    """Plausibility cap (M9): values above `max` are flagged 'special' with the metric's explanation."""
+    o = (cfg.get("metrics") or {}).get(mid) or {}
+    s = o.get("special")
+    return dict(s) if isinstance(s, dict) and "max" in s else None
+
+
 def _reliability(mid: str, meta: pd.DataFrame, cfg: dict) -> dict | None:
     """Small-number rule of one metric (pipeline/reliability.yaml, D32)."""
     d = cfg.get("defaults") or {}
     o = (cfg.get("metrics") or {}).get(mid) or {}
+    if o.get("count", 1) is None and o.get("base", 1) is None:
+        return None
     f = _formula(str(meta.loc[mid, "aggregation"]))
     count = o["count"] if "count" in o else ("+".join(f[0]) if f else None)
     base = o.get("base") or (f[1][0] if f else None)
@@ -365,9 +408,14 @@ def majority_rows(g: pd.DataFrame, lvl: str, majority: dict, meta: pd.DataFrame)
 
 
 def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, majority: dict,
-               meta: pd.DataFrame) -> dict:
+               meta: pd.DataFrame, special: dict | None = None) -> dict:
     """Per metric: {unit index: bitmask} (FLAG_BITS) for one level's default-period columns."""
     out: dict[str, dict] = {}
+    for mid, sp in (special or {}).items():
+        gm = g[(g["metric_id"] == mid) & (g["status"] == "ok") & (g["value"] > float(sp["max"]))]
+        for u in gm["unit_id"]:
+            out.setdefault(mid, {})
+            out[mid][idx[u]] = out[mid].get(idx[u], 0) | FLAG_BITS["special"]
 
     def add(mid, i, bit):
         out.setdefault(mid, {})
@@ -382,6 +430,8 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
             add(mid, idx[u], FLAG_BITS["published_value"])
         if isinstance(nt, str) and "provisional" in nt:
             add(mid, idx[u], FLAG_BITS["provisional"])
+        if isinstance(nt, str) and nt.startswith("estimate"):
+            add(mid, idx[u], FLAG_BITS["estimate"])
     # majority-election cantons (D37): every row of a party share / bloc / leaning metric in a single-seat
     # canton-year, whatever its status (also "party did not stand"); turnout is not affected
     for mid, u, per in majority_rows(g, lvl, majority, meta):
@@ -410,6 +460,34 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
             for u in v.loc[v["v"] < lim, "unit_id"]:
                 if u in idx and u in shown:
                     add(mid, idx[u], FLAG_BITS[bit])
+    return out
+
+
+def curation_coverage(con, mem: pd.DataFrame) -> dict:
+    """(metric, level) -> (units covered, units of the level, share of residents covered) at the metric's
+    default period (table lp); residents = STATPOP pop_total of its newest period, summed per unit."""
+    pop = con.execute("""SELECT unit_id, value FROM m WHERE metric_id = 'pop_total' AND level = 'gemeinde'
+                         AND status = 'ok' AND period = (SELECT max(period) FROM m WHERE metric_id = 'pop_total'
+                                                         AND level = 'gemeinde' AND status = 'ok')""").df()
+    pmap = dict(zip(pop["unit_id"].astype(str), pop["value"]))
+    mm = mem.assign(gemeinde=mem["bfs_nr"].astype(str), pop=mem["bfs_nr"].astype(str).map(pmap).fillna(0))
+    rows = []
+    for lvl in ["gemeinde", "bezirk", "kanton", *TYPOLOGY_COLS]:
+        if lvl not in mm.columns:
+            continue
+        g = mm.dropna(subset=[lvl]).groupby(mm[lvl].astype(str))["pop"].sum()
+        rows += [(lvl, u, float(v)) for u, v in g.items()]
+    con.register("upop_df", pd.DataFrame(rows, columns=["level", "unit_id", "pop"]))
+    tot = pd.DataFrame(rows, columns=["level", "unit_id", "pop"]).groupby("level").agg(n=("unit_id", "size"), p=("pop", "sum"))
+    c = con.execute("""SELECT m.metric_id, m.level, COUNT(DISTINCT m.unit_id) AS n, SUM(u.pop) AS p
+                       FROM m JOIN lp ON m.metric_id = lp.metric_id AND m.level = lp.level AND m.period = lp.p
+                       JOIN upop_df u ON u.level = m.level AND u.unit_id = m.unit_id
+                       WHERE m.status IN ('ok', 'majority_election', 'not_applicable')
+                       GROUP BY 1, 2""").df()
+    out = {}
+    for mid, lvl, n, p_ in zip(c["metric_id"], c["level"], c["n"], c["p"]):
+        if lvl in tot.index:
+            out[(mid, lvl)] = (int(n), int(tot.loc[lvl, "n"]), float(p_ or 0) / float(tot.loc[lvl, "p"] or 1))
     return out
 
 
@@ -584,6 +662,14 @@ def run() -> dict:
     rel_cfg = yaml.safe_load((SOURCES_DIR.parent / "reliability.yaml").read_text(encoding="utf-8")) or {}
     reliability = {mid: _reliability(mid, meta, rel_cfg) for mid in (rel_cfg.get("metrics") or {}) if mid in meta.index}
     reliability = {k: v for k, v in reliability.items() if v}
+    n_listed = len(reliability)
+    for mid in meta.index:   # M9: every other ratio gets the generic denominator rule
+        if mid not in reliability and mid not in (rel_cfg.get("metrics") or {}):
+            r_ = _auto_rule(mid, meta, rel_cfg)
+            if r_:
+                reliability[mid] = r_
+    special = {mid: sp for mid in meta.index if (sp := _special(mid, rel_cfg))}
+    print(f"small-number rules: {n_listed} listed, {len(reliability) - n_listed} generic; special caps: {len(special)}")
     i18n = load_i18n()
     majority = majority_by_year()
     maj_ids = majority_metric_ids(meta)
@@ -599,6 +685,12 @@ def run() -> dict:
     for mid in meta.index:
         file_of[mid] = "core" if mid in headline_rank else re.sub(r"[^a-z]+", "_", meta.loc[mid, "theme"].lower()).strip("_")
     lp_by = {(r.metric_id, r.level): r.p for r in lp.itertuples()}
+    # D38 curation: coverage of each metric × level at its default period (units with a value, a
+    # single-seat canton value or a defined 'does not apply'; and their share of residents)
+    from pipeline.build import curation as cur_mod
+    cur_cfg = cur_mod.load()
+    cur_cov = curation_coverage(con, mem_all)
+    cur_rows = []
     catalog = []
     all_levels = ["gemeinde", "bezirk", "kanton", *TYPOLOGY_COLS, "schweiz"]
     for r in per.itertuples():
@@ -636,6 +728,7 @@ def run() -> dict:
             "incomplete_periods": incomplete.get((r.metric_id, prim)) if prim else None,
             "unavailable_levels": unav or None,
             "reliability": reliability.get(r.metric_id),
+            "special": special.get(r.metric_id),
             "pooled": _pooled_meta(md),
             "majority_cantons": majority if r.metric_id in maj_ids else None,
             "keywords": md.get("keywords") if isinstance(md.get("keywords"), str) else None,
@@ -646,7 +739,21 @@ def run() -> dict:
             "headline": headline_rank.get(r.metric_id), "hidden": r.metric_id in hidden,
             "file": file_of[r.metric_id],
         }
+        verdicts = {}
+        for lvl in levels:
+            if lvl in cur_mod.NEVER_CURATED:
+                continue
+            n_cov, n_all, pshare = cur_cov.get((r.metric_id, lvl), (0, int(n_units_level.get(lvl, 0)), 0.0))
+            verdicts[lvl] = cur_mod.decide(r.metric_id, lvl, n_cov, n_all, pshare, cur_cfg)
+            cur_rows.append((r.metric_id, md["theme"], lvl, n_cov, n_all, round(pshare, 4), *verdicts[lvl]))
+        cur_mod.apply(entry, verdicts, levels)
         catalog.append(entry)
+    cur_df = pd.DataFrame(cur_rows, columns=["metric_id", "theme", "level", "n", "n_units", "pop_share",
+                                             "verdict", "reason", "basis"])
+    cur_df.to_csv(interim_path("curation_verdicts.csv"), index=False)
+    print("D38 curation:", cur_df.groupby("verdict").size().to_dict())
+    written["featured"] = _dump({"note": "featured story maps (D38, pipeline/curation.yaml)",
+                                 "maps": cur_mod.featured(cur_cfg, catalog)}, "featured.json")
     written["metrics"] = _dump(catalog, "metrics.json")
     written["glossary"] = build_glossary()
 
@@ -658,7 +765,7 @@ def run() -> dict:
                             WHERE m.level = '{lvl}'""").df()
         ids = sorted(g["unit_id"].unique(), key=lambda x: (len(x), x))
         idx = {u: i for i, u in enumerate(ids)}
-        flags = unit_flags(con, lvl, g, idx, reliability, majority, meta)
+        flags = unit_flags(con, lvl, g, idx, reliability, majority, meta, special)
         cols = {}
         for mid, gm in g.groupby("metric_id"):
             d = int(meta.loc[mid, "decimals"]) + (1 if str(meta.loc[mid, "unit"]).strip() == "%" else 0)
