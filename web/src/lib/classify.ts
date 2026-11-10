@@ -12,6 +12,8 @@ export const METHOD_LABEL: Record<Method, string> = { quantile: 'Quantiles', equ
 export interface Scale {
   method: Method;
   diverging: boolean;
+  /** fixed classes around a meaningful midpoint (yes share: <35, 35–45, 45–50 | 50–55, 55–65, >65) */
+  fixed?: boolean;
   /** midpoint of a diverging scale (0 for changes, 50 for yes shares) */
   centre: number;
   /** ascending inner class breaks (empty for continuous) */
@@ -83,8 +85,17 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
   let lo = min;
   let hi = max;
   let colourOf: (x: number) => string;
+  let fixed = false;
 
-  if (method === 'continuous') {
+  if (method !== 'continuous' && diverging && c0 !== 0) {
+    // A share with a meaningful midpoint (vote yes share: 50 %): fixed classes, the same for every vote,
+    // so the colour always says which side won and by how much: three shades of orange below the
+    // midpoint, three of blue above (no neutral class: 50 % is a yes/no boundary, not a category).
+    fixed = true;
+    breaks = [c0 - 15, c0 - 5, c0, c0 + 5, c0 + 15];
+    classColours = [div[0], div[1], div[2], div[4], div[5], div[6]];
+    colourOf = (x) => classColours[classIndex(x, breaks)];
+  } else if (method === 'continuous') {
     if (diverging) {
       const M = Math.max(Math.abs(quantile(s, 0.02) - c0), Math.abs(quantile(s, 0.98) - c0)) || Math.max(Math.abs(min - c0), Math.abs(max - c0)) || 1;
       lo = c0 - M;
@@ -185,7 +196,7 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
     if (x < classMin[c]) classMin[c] = x;
     if (x > classMax[c]) classMax[c] = x;
   }
-  return { method, diverging, centre: c0, breaks, classColours, counts, classMin, classMax, lo, hi, min, max, n, colourOf, unitColour };
+  return { method, diverging, fixed, centre: c0, breaks, classColours, counts, classMin, classMax, lo, hi, min, max, n, colourOf, unitColour };
 }
 
 // ---------------------------------------------------------------- distribution axis
@@ -440,6 +451,7 @@ export function slopeParts(b: number, logX: boolean, logY: boolean, maxStep = In
 /** Class swatches and range labels of a classed scale (as in the legend), for exports. */
 export function legendItems(scale: Scale, meta: MetricMeta | { decimals: number }): { colour: string; label: string }[] {
   if (scale.method === 'continuous') return [];
+  if (scale.fixed) return fixedLabels(scale, meta);
   const out = scale.classColours.map((c, k) => {
     const lo = k === 0 ? scale.min : scale.breaks[k - 1];
     const hi = k === scale.breaks.length ? scale.max : scale.breaks[k];
@@ -450,4 +462,13 @@ export function legendItems(scale: Scale, meta: MetricMeta | { decimals: number 
     const after = k > 0 && out[k - 1].single !== null && fmtTick(c.lo, meta) === fmtTick(out[k - 1].single!, meta);
     return { colour: c.colour, label: c.single !== null ? fmtTick(c.single, meta) : `${after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}` };
   });
+}
+
+/** Labels of fixed classes: "< 35", "35–45", …, "> 65" (independent of the data range). */
+export function fixedLabels(scale: Scale, meta: MetricMeta | { decimals: number }): { colour: string; label: string }[] {
+  const b = scale.breaks;
+  return scale.classColours.map((colour, k) => ({
+    colour,
+    label: k === 0 ? `< ${fmtTick(b[0], meta)}` : k === b.length ? `> ${fmtTick(b[b.length - 1], meta)}` : `${fmtTick(b[k - 1], meta)}–${fmtTick(b[k], meta)}`,
+  }));
 }

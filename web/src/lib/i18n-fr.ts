@@ -187,6 +187,8 @@ export const FR: Dict = {
   'gap.suppressed': 'masqué (petits nombres)',
   'lg.centred': 'centré sur 0',
   'lg.centredOn': 'centré sur {c}',
+  'lg.no': 'majorité non',
+  'lg.yes': 'majorité oui',
   'lg.clamped': 'échelle limitée à P2/P98',
   'lg.class': 'Classification',
   'lg.clipped': 'axe coupé à P1/P99',

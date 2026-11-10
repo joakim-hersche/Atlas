@@ -7,8 +7,7 @@
   import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import {
     axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
-    type Method, type Scale,
-  } from '../lib/classify';
+    type Method, type Scale, fixedLabels } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -82,6 +81,7 @@
           single: scale.counts[k] > 0 && scale.classMin[k] === scale.classMax[k] ? scale.classMin[k] : null,
           n: scale.counts[k],
         })));
+  const fixedL = $derived(scale.fixed ? fixedLabels(scale, meta) : null);
   const nGap = $derived(nUnits - scale.n);
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
@@ -126,12 +126,15 @@
     </svg>
   </div>
 
+  {#if scale.fixed && meta.id === 'vote_yes_share'}
+    <div class="sides"><span>← {tr('lg.no')}</span><span>{tr('lg.yes')} →</span></div>
+  {/if}
   {#if classes.length && !compact}
     <div class="classes" class:vertical style="grid-template-columns: repeat({vertical ? 1 : classes.length}, 1fr)">
-      {#each classes as c}
+      {#each classes as c, k}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
-          <span class="rng num">{c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
+          <span class="rng num">{fixedL ? fixedL[k].label : c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
           <span class="cn num">{fmtNumber(c.n, 0)}</span>
         </div>
       {/each}
@@ -169,6 +172,9 @@
   .tk { stroke: var(--plot-axis); }
   .tl { font: 10px var(--font-mono); fill: var(--text); }
   .classes { display: grid; gap: 0 3px; margin-top: 2px; }
+  .sides { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.72rem; font-weight: 600; }
+  .sides span:first-child { color: #a4541f; }
+  .sides span:last-child { color: #244f7c; }
   .cls { display: flex; flex-direction: column; min-width: 0; }
   .sw { height: 4px; margin-bottom: 2px; }
   .rng { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
