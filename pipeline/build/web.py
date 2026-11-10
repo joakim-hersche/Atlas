@@ -157,6 +157,12 @@ def run() -> dict:
     per = con.execute("""SELECT metric_id, list(DISTINCT period) AS periods,
                                 list(DISTINCT level) FILTER (WHERE status = 'ok') AS levels
                          FROM m GROUP BY 1""").df()
+    hl = yaml.safe_load((SOURCES_DIR.parent / "headline_metrics.yaml").read_text(encoding="utf-8")) or {}
+    headline_rank = {m: i for i, m in enumerate(x for v in (hl.get("headline") or {}).values() for x in v)}
+    hidden = set(hl.get("hidden") or [])
+    file_of = {}
+    for mid in meta.index:
+        file_of[mid] = "core" if mid in headline_rank else re.sub(r"[^a-z]+", "_", meta.loc[mid, "theme"].lower()).strip("_")
     catalog = []
     for r in per.itertuples():
         md = meta.loc[r.metric_id]
@@ -170,6 +176,8 @@ def run() -> dict:
             "levels": sorted(r.levels) if r.levels is not None else [],
             "n_periods": len(periods), "periods": periods if len(periods) <= 60 else periods[-60:],
             "latest": periods[-1], "per_vote": str(r.metric_id).startswith("vote_"),
+            "headline": headline_rank.get(r.metric_id), "hidden": r.metric_id in hidden,
+            "file": file_of[r.metric_id],
         })
     written["metrics"] = _dump(catalog, "metrics.json")
 
@@ -196,9 +204,14 @@ def run() -> dict:
                     prec[i] = PRECISION_CODES.get(pr, 0)
             cols[mid] = {"period": gm["period"].iloc[0], "v": vals,
                          **({"s": status} if status else {}), **({"p": prec} if prec else {})}
-        written[f"latest_{lvl}"] = _dump({"level": lvl, "units": ids, "metrics": cols,
-                                          "status_codes": STATUS_CODES, "precision_codes": PRECISION_CODES},
-                                         "latest", f"{lvl}.json")
+        # D23: one core file (headline metrics) loaded at start, one file per theme on demand
+        groups: dict[str, dict] = {}
+        for mid, col in cols.items():
+            groups.setdefault(file_of[mid], {})[mid] = col
+        for fname, gcols in groups.items():
+            written[f"latest_{lvl}_{fname}"] = _dump(
+                {"level": lvl, "units": ids, "metrics": gcols, "status_codes": STATUS_CODES,
+                 "precision_codes": PRECISION_CODES}, "latest", lvl, f"{fname}.json")
 
     # time series per metric (municipality, district, canton, Switzerland); votes get one file per vote
     lv = ", ".join(f"'{x}'" for x in SERIES_LEVELS)
