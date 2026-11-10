@@ -76,6 +76,8 @@ LEVEL_WORD = {"bezirk": "district", "kanton": "canton", "schweiz": "national", "
 UNIT_WORD = {"gemeinde": "municipalities"}
 SUPPRESSED_MAX = 0.01        # M1: suppressed municipalities may hold at most 1 % of a unit's residents
 POP_METRIC = "pop_total"     # reference population for the tolerance (STATPOP, 31 Dec)
+EST_DERIVED = ("estimate: computed from sums that leave out a few municipalities suppressed for small numbers "
+               "(at most 1 % of residents)")
 
 
 def _terms(expr: str) -> list[str]:
@@ -199,22 +201,54 @@ def run() -> str:
         WHERE o.level = 'gemeinde'""")
     # published values at higher levels (fallback for incomplete sums; pass-through for not_aggregatable)
     con.execute(f"""
-        CREATE TABLE nat AS
-        SELECT o.unit_id, o.level, o.metric_id, o.period, o.value, o.precision, o.note
+        CREATE TABLE nat_all AS
+        SELECT o.unit_id, o.level, o.metric_id, o.period, o.value, o.precision, o.note,
+               CAST(o.vintage AS VARCHAR) AS vintage
         FROM read_parquet('{obs}') o JOIN meta m ON o.metric_id = m.id AND m.kind = 'base'
         WHERE o.provenance = 'native' AND o.status = 'ok' AND o.level IN ({_q(AGG_LEVELS)})""")
-    # base metrics published natively above municipality level (passed through)
+    # M2: published canton / district rows on a state whose territory differs from the reference state
+    sd = con.execute(f"""SELECT DISTINCT level, CAST(vintage AS VARCHAR) AS vintage, period
+                         FROM read_parquet('{obs}') WHERE provenance = 'native'
+                           AND level IN ('kanton', 'bezirk')""").df()
+    sd["date"] = [native_state_date(v, p) for v, p in zip(sd["vintage"], sd["period"])]
+    chg = changed_units(sd["date"].unique())
+    vbad = sd.merge(chg, on=["level", "date"])
+    word_of = {"kanton": "canton", "bezirk": "district"}
+    vbad["why"] = [f"published {word_of[l]} value is on the boundaries of {d.isoformat()}; the territory has changed since"
+                   for l, d in zip(vbad["level"], vbad["date"])]
+    con.register("vbad_df", vbad[["level", "unit_id", "vintage", "period", "why"]] if len(vbad) else
+                 pd.DataFrame(columns=["level", "unit_id", "vintage", "period", "why"]).astype(str))
+    con.execute("CREATE TABLE vbad AS SELECT * FROM vbad_df")
+    print("M2 published canton/district rows on other boundaries:", len(vbad), "unit-periods")
+    con.execute("""CREATE TABLE nat AS SELECT n.* FROM nat_all n
+                   ANTI JOIN vbad b ON b.level = n.level AND b.unit_id = n.unit_id AND b.vintage = n.vintage AND b.period = n.period""")
+    con.execute("""CREATE TABLE nat_bad AS SELECT n.unit_id, n.level, n.metric_id, n.period, b.why FROM nat_all n
+                   JOIN vbad b ON b.level = n.level AND b.unit_id = n.unit_id AND b.vintage = n.vintage AND b.period = n.period""")
+    # base metrics published natively above municipality level (passed through; boundary state noted)
     con.execute(f"""
         CREATE TABLE native_only AS
         SELECT o.unit_id, o.level, o.metric_id, o.period, o.value, o.status, o.precision, o.provenance,
-               1 AS n_units, CASE WHEN o.status = 'ok' THEN 0 ELSE 1 END AS n_missing, o.note
+               1 AS n_units, CASE WHEN o.status = 'ok' THEN 0 ELSE 1 END AS n_missing,
+               CASE WHEN b.why IS NOT NULL AND o.status = 'ok' THEN concat_ws('; ', o.note, b.why) ELSE o.note END AS note
         FROM read_parquet('{obs}') o JOIN meta m ON o.metric_id = m.id
+        LEFT JOIN vbad b ON b.level = o.level AND b.unit_id = o.unit_id AND b.vintage = CAST(o.vintage AS VARCHAR)
+                        AND b.period = o.period AND o.provenance = 'native'
         WHERE m.kind = 'base' AND m.native_level <> 'gemeinde' AND o.level NOT IN ('gemeinde', 'unallocated', 'pseudo')""")
 
     # pseudo-units added to canton / major-region / Swiss sums (include_pseudo)
     inc = meta.loc[meta["include_pseudo"].fillna(False).astype(bool), "id"].tolist()
     ps = con.execute(f"""SELECT unit_id, metric_id, period, value FROM read_parquet('{obs}')
                          WHERE level = 'pseudo' AND status = 'ok' AND metric_id IN ({_q(inc)})""").df()
+    # M3: the national 'unallocated' sum minus the pseudo rows = amounts in no canton (Swiss sum only)
+    un = con.execute(f"""SELECT metric_id, period, SUM(value) AS value FROM read_parquet('{obs}')
+                         WHERE level = 'unallocated' AND status = 'ok' AND metric_id IN ({_q(inc)}) GROUP BY 1, 2""").df()
+    if len(un):
+        pss = ps.groupby(["metric_id", "period"])["value"].sum()
+        un["rem"] = un["value"] - [pss.get((m_, p_), 0.0) for m_, p_ in zip(un["metric_id"], un["period"])]
+        rem = un[un["rem"].abs() > 1e-6 * un["value"].abs().clip(lower=1)]
+        ps = pd.concat([ps, pd.DataFrame({"unit_id": "CH:unallocated", "metric_id": rem["metric_id"],
+                                          "period": rem["period"], "value": rem["rem"]})], ignore_index=True)
+        print("M3 unallocated remainder added to Swiss sums:", len(rem), "metric-periods")
     kt = pd.read_parquet(interim_path("backbone", "canton.parquet"))
     canton_by_nr = dict(zip(kt["canton_id"].astype(int), kt["canton"]))
     ps["kanton"] = ps["unit_id"].map(lambda u: pseudo_owner(u, canton_by_nr))
@@ -228,14 +262,28 @@ def run() -> str:
     con.register("ps_df", pd.concat(ps_rows, ignore_index=True) if len(ps) else
                  pd.DataFrame(columns=["lvl", "u", "metric_id", "period", "value"]).astype({"value": float}))
     con.execute("CREATE TABLE ps AS SELECT lvl, CAST(u AS VARCHAR) AS u, metric_id, period, value FROM ps_df")
+    # metric-periods with amounts outside municipalities (construction, vehicles, migration; not votes):
+    # their district and typology sums say so
+    con.execute(f"""CREATE TABLE psx AS SELECT DISTINCT metric_id, period FROM read_parquet('{obs}')
+                    WHERE level = 'unallocated' AND status = 'ok' AND value <> 0 AND metric_id IN ({_q(inc)})""")
+
+    # M1 / M5: reference population per municipality and period (STATPOP of the nearest year)
+    pop_periods = [r[0] for r in con.execute(f"SELECT DISTINCT period FROM gem WHERE metric_id = '{POP_METRIC}' AND status = 'ok'").fetchall()]
+    all_periods = [r[0] for r in con.execute("SELECT DISTINCT period FROM gem").fetchall()]
+    pmap = nearest_periods(all_periods, pop_periods)
+    con.register("pmap_df", pd.DataFrame(list(pmap.items()) or [("", "")], columns=["period", "pop_period"]))
+    con.execute(f"""CREATE TABLE popb AS SELECT unit_id, period AS pop_period, value AS pop FROM gem
+                    WHERE metric_id = '{POP_METRIC}' AND status = 'ok'""")
 
     # aggregation input: zero_when statuses count as 0 (flag zw), real = a published value
     con.execute("""
         CREATE TABLE gem_sum AS
         SELECT g.unit_id, g.metric_id, g.period,
                CASE WHEN g.value IS NULL AND z.metric_id IS NOT NULL THEN 0 ELSE g.value END AS value,
-               g.status, g.status = 'ok' AS real, z.metric_id IS NOT NULL AS zw, g.note, g.precision
-        FROM gem g LEFT JOIN zw z ON g.metric_id = z.metric_id AND g.status = z.status""")
+               g.status, g.status = 'ok' AS real, z.metric_id IS NOT NULL AS zw, g.note, g.precision, pb.pop
+        FROM gem g LEFT JOIN zw z ON g.metric_id = z.metric_id AND g.status = z.status
+        LEFT JOIN pmap_df pm ON pm.period = g.period
+        LEFT JOIN popb pb ON pb.unit_id = g.unit_id AND pb.pop_period = pm.pop_period""")
 
     def counts(alias: str) -> str:
         a = alias
@@ -245,7 +293,10 @@ def run() -> str:
                    COUNT(*) FILTER (WHERE {a}.value IS NULL AND {a}.status = 'not_covered') AS n_nc,
                    COUNT(*) FILTER (WHERE {a}.value IS NULL AND {a}.status = 'not_applicable') AS n_na,
                    COUNT(*) FILTER (WHERE {a}.value IS NULL AND {a}.status NOT IN
-                                    ('suppressed', 'not_published', 'not_covered', 'not_applicable')) AS n_nd"""
+                                    ('suppressed', 'not_published', 'not_covered', 'not_applicable')) AS n_nd,
+                   SUM({a}.pop) FILTER (WHERE {a}.value IS NULL AND {a}.status = 'suppressed') AS supp_pop,
+                   COUNT({a}.pop) FILTER (WHERE {a}.value IS NULL AND {a}.status = 'suppressed') AS n_supp_pop,
+                   SUM({a}.pop) AS all_pop"""
 
     def gap_status(prefix: str = "g.") -> str:
         p = prefix
@@ -255,6 +306,16 @@ def run() -> str:
                         WHEN {p}n_np > 0 AND {p}n_np >= greatest({p}n_na, {p}n_nd, n.n - {p}n_rows) THEN 'not_published'
                         ELSE 'no_data' END"""
 
+    def estimate(p: str = "g.") -> str:
+        """M1: only suppressed municipalities missing, holding at most SUPPRESSED_MAX of the residents."""
+        return (f"({p}n_with < n.n AND {p}n_rows = n.n AND {p}n_with + {p}n_supp = n.n AND {p}n_real > 0 "
+                f"AND {p}n_supp_pop = {p}n_supp AND {p}all_pop > 0 AND {p}supp_pop <= {SUPPRESSED_MAX} * {p}all_pop)")
+
+    def estimate_note(p: str = "g.") -> str:
+        return (f"'estimate: ' || CAST({p}n_supp AS VARCHAR) || ' of ' || CAST(n.n AS VARCHAR) || "
+                f"' municipalities suppressed for small numbers (' || printf('%.2f', 100 * {p}supp_pop / {p}all_pop) || "
+                f"' % of residents) are not included'")
+
     parts = ["""SELECT unit_id, 'gemeinde' AS level, metric_id, period, value, status, precision, provenance,
                        1 AS n_units, CASE WHEN status = 'ok' THEN 0 ELSE 1 END AS n_missing, note FROM gem"""]
     sums = meta.loc[(meta["kind"] == "base") & (meta["aggregation"] == "sum"), "id"].tolist()
@@ -262,29 +323,43 @@ def run() -> str:
               if r["kind"] == "base" and str(r["aggregation"]).startswith("weighted_mean:")}
     notagg = meta.loc[(meta["kind"] == "base") & (meta["aggregation"] == "not_aggregatable")
                       & (meta["native_level"] == "gemeinde"), "id"].tolist()
+    # M5: weight of the same period, else of the weight metric's nearest period
+    wrows = []
+    for mid, w in wmeans.items():
+        vp = [r[0] for r in con.execute("SELECT DISTINCT period FROM gem WHERE metric_id = ?", [mid]).fetchall()]
+        wp = [r[0] for r in con.execute("SELECT DISTINCT period FROM gem WHERE metric_id = ? AND status = 'ok'", [w]).fetchall()]
+        wrows += [(mid, p_, q_) for p_, q_ in nearest_periods(vp, wp).items()]
+    con.register("wmap_df", pd.DataFrame(wrows or [("", "", "")], columns=["metric_id", "period", "w_period"]))
+    con.execute("CREATE TABLE wmap AS SELECT * FROM wmap_df")
     for lvl in AGG_LEVELS:
         con.execute(f"""CREATE TABLE n_{lvl} AS SELECT {lvl} AS u, COUNT(*) AS n FROM mem
                         WHERE {lvl} IS NOT NULL AND {lvl} NOT IN ('nan', '<NA>', 'None') GROUP BY 1""")
         word = LEVEL_WORD.get(lvl, lvl)
-        fallback = f"""CASE WHEN x.status <> 'ok' AND x.complete = 0 AND nt.value IS NOT NULL"""
+        use_nat = "x.complete = 0 AND nt.value IS NOT NULL"
+        sub_note = ("'excludes amounts not allocatable to a municipality (in canton and Swiss totals only)'"
+                    if lvl not in PSEUDO_LEVELS else "NULL")
         parts.append(f"""
             SELECT x.unit_id, '{lvl}' AS level, x.metric_id, x.period,
-                   CASE WHEN x.status = 'ok' THEN x.value WHEN nt.value IS NOT NULL AND x.complete = 0 THEN nt.value END AS value,
-                   {fallback} THEN 'ok' ELSE x.status END AS status,
-                   {fallback} THEN nt.precision ELSE x.precision END AS precision,
-                   {fallback} THEN 'native' ELSE 'aggregated' END AS provenance,
+                   CASE WHEN {use_nat} THEN nt.value ELSE x.value END AS value,
+                   CASE WHEN {use_nat} THEN 'ok' ELSE x.status END AS status,
+                   CASE WHEN {use_nat} THEN nt.precision ELSE x.precision END AS precision,
+                   CASE WHEN {use_nat} THEN 'native' ELSE 'aggregated' END AS provenance,
                    x.n_units, x.n_missing,
-                   {fallback} THEN 'published {word} value; municipal values incomplete (' || x.note || ')'
+                   CASE WHEN {use_nat} THEN 'published {word} value; municipal values incomplete (' || x.mnote || ')'
+                        WHEN x.status <> 'ok' AND nb.why IS NOT NULL THEN x.note || '; ' || nb.why || ', so it is not used'
                         ELSE x.note END AS note
             FROM (SELECT g.u AS unit_id, g.metric_id, g.period,
-                         CASE WHEN g.n_with = n.n AND g.n_real > 0 THEN g.s + COALESCE(p.value, 0) END AS value,
-                         CASE WHEN g.n_with = n.n AND g.n_real > 0 THEN 'ok' ELSE {gap_status()} END AS status,
+                         CASE WHEN (g.n_with = n.n AND g.n_real > 0) OR {estimate()} THEN g.s + COALESCE(p.value, 0) END AS value,
+                         CASE WHEN (g.n_with = n.n AND g.n_real > 0) OR {estimate()} THEN 'ok' ELSE {gap_status()} END AS status,
                          CASE WHEN g.n_with = n.n THEN 1 ELSE 0 END AS complete,
                          g.precision, n.n AS n_units, n.n - g.n_with AS n_missing,
                          CASE WHEN g.n_with = n.n AND g.n_real > 0 THEN
-                                   CASE WHEN p.value IS NOT NULL THEN 'includes units outside municipalities (pseudo-units)' END
+                                   CASE WHEN p.value IS NOT NULL THEN 'includes units outside municipalities (pseudo-units)'
+                                        WHEN px.metric_id IS NOT NULL THEN {sub_note} END
                               WHEN g.n_with = n.n THEN g.zw_note
-                              ELSE {_missing_note('g.')} END AS note
+                              WHEN {estimate()} THEN {estimate_note()}
+                              ELSE {_missing_note('g.')} END AS note,
+                         {_missing_note('g.')} AS mnote
                   FROM (SELECT m.{lvl} AS u, gem.metric_id, gem.period, SUM(gem.value) AS s, {counts('gem')},
                                mode(gem.status) FILTER (WHERE gem.zw) AS zw_status,
                                ANY_VALUE(gem.note) FILTER (WHERE gem.zw) AS zw_note,
@@ -293,36 +368,49 @@ def run() -> str:
                         WHERE gem.metric_id IN ({_q(sums)}) AND m.{lvl} NOT IN ('nan', '<NA>', 'None')
                         GROUP BY 1, 2, 3) g
                   JOIN n_{lvl} n ON g.u = n.u
-                  LEFT JOIN ps p ON p.lvl = '{lvl}' AND p.u = g.u AND p.metric_id = g.metric_id AND p.period = g.period) x
+                  LEFT JOIN ps p ON p.lvl = '{lvl}' AND p.u = g.u AND p.metric_id = g.metric_id AND p.period = g.period
+                  LEFT JOIN psx px ON px.metric_id = g.metric_id AND px.period = g.period) x
             LEFT JOIN nat nt ON nt.level = '{lvl}' AND nt.unit_id = x.unit_id AND nt.metric_id = x.metric_id
-                            AND nt.period = x.period""")
+                            AND nt.period = x.period
+            LEFT JOIN nat_bad nb ON nb.level = '{lvl}' AND nb.unit_id = x.unit_id AND nb.metric_id = x.metric_id
+                            AND nb.period = x.period""")
         for mid, w in wmeans.items():
+            full = "(g.n_with = n.n AND g.w > 0)"
+            est = f"({estimate()} AND g.w > 0)"
             parts.append(f"""
                 SELECT g.u AS unit_id, '{lvl}' AS level, '{mid}' AS metric_id, g.period,
-                       CASE WHEN g.n_with = n.n AND g.w > 0 THEN g.vw / g.w ELSE nt.value END AS value,
-                       CASE WHEN (g.n_with = n.n AND g.w > 0) OR nt.value IS NOT NULL THEN 'ok' ELSE {gap_status()} END AS status,
-                       CASE WHEN g.n_with = n.n AND g.w > 0 THEN g.precision ELSE COALESCE(nt.precision, g.precision) END AS precision,
-                       CASE WHEN NOT (g.n_with = n.n AND g.w > 0) AND nt.value IS NOT NULL THEN 'native' ELSE 'aggregated' END AS provenance,
+                       CASE WHEN {full} THEN g.vw / g.w WHEN nt.value IS NOT NULL THEN nt.value WHEN {est} THEN g.vw / g.w END AS value,
+                       CASE WHEN {full} OR nt.value IS NOT NULL OR {est} THEN 'ok' ELSE {gap_status()} END AS status,
+                       CASE WHEN {full} OR (nt.value IS NULL AND {est}) THEN g.precision ELSE COALESCE(nt.precision, g.precision) END AS precision,
+                       CASE WHEN NOT {full} AND nt.value IS NOT NULL THEN 'native' ELSE 'aggregated' END AS provenance,
                        n.n AS n_units, n.n - g.n_with AS n_missing,
-                       CASE WHEN g.n_with = n.n AND g.w > 0 THEN NULL
+                       CASE WHEN {full} THEN NULL
                             WHEN nt.value IS NOT NULL THEN 'published {word} value; municipal values incomplete'
+                            WHEN {est} THEN {estimate_note()}
+                            WHEN nb.why IS NOT NULL THEN {_missing_note('g.')} || '; ' || nb.why || ', so it is not used'
                             ELSE {_missing_note('g.')} END AS note
                 FROM (SELECT m.{lvl} AS u, v.period, SUM(v.value * w.value) AS vw,
                              SUM(CASE WHEN v.value IS NOT NULL THEN w.value END) AS w,
-                             {counts('v').replace('v.real', "v.status = 'ok'")},
+                             {counts('v')},
                              NULL AS zw_status, NULL AS zw_note,
                              {PREC_NAME.format(r='CASE v.precision WHEN \'exact\' THEN 0 WHEN \'survey\' THEN 1 WHEN \'modelled\' THEN 2 ELSE 3 END')} AS precision
-                      FROM gem v JOIN gem w ON v.unit_id = w.unit_id AND v.period = w.period
-                           AND w.metric_id = '{w}'
+                      FROM gem_sum v JOIN wmap wm ON wm.metric_id = v.metric_id AND wm.period = v.period
+                      JOIN gem w ON v.unit_id = w.unit_id AND w.period = wm.w_period AND w.metric_id = '{w}'
                       JOIN mem m ON v.unit_id = m.unit_id
                       WHERE v.metric_id = '{mid}' AND m.{lvl} NOT IN ('nan', '<NA>', 'None')
                       GROUP BY 1, 2) g JOIN n_{lvl} n ON g.u = n.u
                 LEFT JOIN nat nt ON nt.level = '{lvl}' AND nt.unit_id = g.u AND nt.metric_id = '{mid}'
-                                AND nt.period = g.period""")
-    # not aggregatable (medians, published rates): the source's own higher-level values
-    parts.append(f"""SELECT unit_id, level, metric_id, period, value, 'ok' AS status, precision, 'native' AS provenance,
-                            1 AS n_units, 0 AS n_missing, 'published value' AS note
-                     FROM nat WHERE metric_id IN ({_q(notagg)})""")
+                                AND nt.period = g.period
+                LEFT JOIN nat_bad nb ON nb.level = '{lvl}' AND nb.unit_id = g.u AND nb.metric_id = '{mid}'
+                                AND nb.period = g.period""")
+    # not aggregatable (medians, published rates): the source's own higher-level values; a value on other
+    # boundaries is kept (it is the only one) with a note naming the boundary state (M2)
+    parts.append(f"""SELECT n.unit_id, n.level, n.metric_id, n.period, n.value, 'ok' AS status, n.precision,
+                            'native' AS provenance, 1 AS n_units, 0 AS n_missing,
+                            CASE WHEN b.why IS NOT NULL THEN 'published value; ' || b.why ELSE 'published value' END AS note
+                     FROM nat_all n LEFT JOIN nat_bad b ON b.level = n.level AND b.unit_id = n.unit_id
+                          AND b.metric_id = n.metric_id AND b.period = n.period
+                     WHERE n.metric_id IN ({_q(notagg)})""")
     parts.append("SELECT * FROM native_only")
     con.execute("CREATE TABLE base_all AS " + " UNION ALL ".join(parts))
     # National Council (D37): LPS under FDP above canton level from 2011 (pipeline/build/elections.py)
@@ -335,13 +423,14 @@ def run() -> str:
         CREATE TABLE base_terms AS
         SELECT b.unit_id, b.level, b.metric_id, b.period, COALESCE(b.value, 0) AS value, b.precision, b.n_units,
                CASE WHEN b.status = 'ok' THEN 1 ELSE 0 END AS real,
-               CASE WHEN b.provenance = 'native' AND b.level <> 'gemeinde' THEN 1 ELSE 0 END AS nat
+               CASE WHEN b.provenance = 'native' AND b.level <> 'gemeinde' THEN 1 ELSE 0 END AS nat,
+               CASE WHEN b.note LIKE 'estimate:%' THEN 1 ELSE 0 END AS est
         FROM base_all b LEFT JOIN zw z ON b.metric_id = z.metric_id AND b.status = z.status
         WHERE b.status = 'ok' OR z.metric_id IS NOT NULL""")
 
     def side(ids: list[str]) -> str:
         return f"""SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units,
-                          SUM(real) AS n_real, MAX(nat) AS nat
+                          SUM(real) AS n_real, MAX(nat) AS nat, MAX(est) AS est
                    FROM base_terms WHERE metric_id IN ({_q(ids)})
                    GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(ids))}"""
 
@@ -368,7 +457,8 @@ def run() -> str:
                        a.s / NULLIF(b.s, 0) * {f} AS value, 'ok' AS status,
                        {PREC_OF.format(x='GREATEST(a.p, b.p)')} AS precision,
                        'derived' AS provenance, a.n_units, 0 AS n_missing,
-                       CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)' END AS note
+                       CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)'
+                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}' END AS note
                 FROM ({side(num)}) a JOIN ({side(den)}) b USING (unit_id, level, period)
                 WHERE b.s IS NOT NULL AND b.s <> 0 AND a.n_real > 0 AND b.n_real > 0"""
             derived.append(ok_sql)
@@ -380,7 +470,7 @@ def run() -> str:
 
             def win(ids):
                 return f"""SELECT unit_id, level, y, SUM(s) OVER w AS s, MAX(p) OVER w AS p, SUM(n_real) OVER w AS n_real,
-                                  MAX(nat) OVER w AS nat, COUNT(*) OVER w AS n, MIN(y) OVER w AS y0, n_units
+                                  MAX(nat) OVER w AS nat, MAX(est) OVER w AS est, COUNT(*) OVER w AS n, MIN(y) OVER w AS y0, n_units
                            FROM (SELECT *, CAST(period AS INTEGER) AS y FROM ({side(ids)})
                                  WHERE regexp_full_match(period, '\\d{{4}}'))
                            WINDOW w AS (PARTITION BY unit_id, level ORDER BY y ROWS BETWEEN {k - 1} PRECEDING AND CURRENT ROW)"""
@@ -390,7 +480,8 @@ def run() -> str:
                        a.s / NULLIF(b.s, 0) * {f} AS value, 'ok' AS status,
                        {PREC_OF.format(x='GREATEST(a.p, b.p)')} AS precision, 'derived' AS provenance,
                        a.n_units, 0 AS n_missing,
-                       CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)' END AS note
+                       CASE WHEN GREATEST(a.nat, b.nat) = 1 THEN 'computed from published values (municipal values incomplete)'
+                            WHEN GREATEST(a.est, b.est) = 1 THEN '{EST_DERIVED}' END AS note
                 FROM ({win(num)}) a JOIN ({win(den)}) b
                   ON a.unit_id = b.unit_id AND a.level = b.level AND b.y = a.y - {lag}
                 WHERE a.n = {k} AND b.n = {k} AND a.y - a.y0 = {k - 1} AND b.y - b.y0 = {k - 1}
@@ -400,7 +491,8 @@ def run() -> str:
             derived.append(f"""
                 SELECT a.unit_id, a.level, '{m["id"]}' AS metric_id, a.period,
                        (a.value / NULLIF(b.value, 0) - 1) * 100 AS value, 'ok' AS status,
-                       a.precision, 'derived' AS provenance, a.n_units, 0 AS n_missing, NULL AS note
+                       a.precision, 'derived' AS provenance, a.n_units, 0 AS n_missing,
+                       CASE WHEN a.note LIKE 'estimate:%' OR b.note LIKE 'estimate:%' THEN '{EST_DERIVED}' END AS note
                 FROM base_all a JOIN base_all b
                   ON a.unit_id = b.unit_id AND a.level = b.level AND b.metric_id = '{base}'
                  AND regexp_full_match(a.period, '\\d{{4}}') AND regexp_full_match(b.period, '\\d{{4}}')

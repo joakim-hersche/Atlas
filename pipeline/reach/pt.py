@@ -233,8 +233,9 @@ def main_stations(net: Network, gem_ids: np.ndarray, access: pd.DataFrame | None
         else:
             key = "n_dep"
         top = c[c["cov"] >= MAIN_SIMILAR * c["cov"].max()]
-        r = top.sort_values([key, "n_dep", "cov"], ascending=False, kind="stable").iloc[0]
-        return int(r.idx), float(r["cov"])
+        top = top.sort_values([key, "n_dep", "cov"], ascending=False, kind="stable")
+        r = top.iloc[0]
+        return int(r.idx), float(r["cov"]), [int(i) for i in top.idx], [float(v) for v in top["cov"]]
 
     rows = []
     hub_idx = {}
@@ -247,9 +248,10 @@ def main_stations(net: Network, gem_ids: np.ndarray, access: pd.DataFrame | None
         if b in hub_idx:
             i = hub_idx[b]
             cv = float(cov_by.get(b, pd.Series(dtype=float)).get(i, 0.0))
+            cands, covs = [i], [cv]
         else:
-            i, cv = pick(b, c)
-        rows.append({"bfs_nr": b, "idx": i, "inside": True, "cov": cv})
+            i, cv, cands, covs = pick(b, c)
+        rows.append({"bfs_nr": b, "idx": i, "inside": True, "cov": cv, "cands": cands, "cands_cov": covs})
     out = pd.DataFrame(rows)
     miss = sorted(set(int(b) for b in gem_ids) - set(out.bfs_nr))
     if miss:
@@ -261,14 +263,46 @@ def main_stations(net: Network, gem_ids: np.ndarray, access: pd.DataFrame | None
             cx, cy = r.wx / r.BBTOT, r.wy / r.BBTOT
             near = cand[np.hypot(cand.x - cx, cand.y - cy) <= MAIN_FALLBACK_RADIUS]
             if len(near):
-                i, cv = pick(int(b), near)
-                extra.append({"bfs_nr": int(b), "idx": i, "inside": False, "cov": cv})
+                i, cv, cands, covs = pick(int(b), near)
+                extra.append({"bfs_nr": int(b), "idx": i, "inside": False, "cov": cv, "cands": cands, "cands_cov": covs})
         if extra:
             out = pd.concat([out, pd.DataFrame(extra)], ignore_index=True)
     out["pop_share"] = (out["cov"] / out.bfs_nr.map(pop)).round(3)
+    out["pop"] = out.bfs_nr.map(pop)
     out = out.drop(columns="cov").merge(sta[["idx", "name", "didok"]], on="idx", how="left")
     out["mode"] = out.idx.map(modes)
     return out.astype({"idx": int})
+
+
+REFINE_MIN_GAIN_S = 60    # a competing stop replaces the default only if it is at least a minute faster
+
+
+def refine_main_stations(mains: pd.DataFrame, net: Network, station_s: dict[str, np.ndarray],
+                         hub_slugs: list[str]) -> pd.DataFrame:
+    """Among the stops that compete for main station (main_stations(): same class, serving at least half of the
+    best stop's residents), take the one with the shortest journey to the nearest hub (min over hub_slugs of the
+    stop's median station time towards the hub, station_s[slug] in seconds per station index). Stays one main
+    station per municipality for every hub, chosen independently of any single hub. The default (most departures)
+    is kept unless a competitor is at least REFINE_MIN_GAIN_S faster; a hub municipality keeps its hub station.
+    Adds column `refined` (the default was replaced)."""
+    best = np.min(np.vstack([station_s[h] for h in hub_slugs if h in station_s]), axis=0)
+    modes = station_modes(net)
+    sta = net.stations.set_index("idx")
+    out = mains.copy()
+    out["refined"] = False
+    for k, r in out.iterrows():
+        cands = list(r["cands"])
+        if len(cands) < 2:
+            continue
+        t = best[cands]
+        j = int(np.argmin(t))
+        if t[j] + REFINE_MIN_GAIN_S > best[int(r.idx)]:
+            continue
+        i = int(cands[j])
+        out.loc[k, ["idx", "name", "didok", "mode", "refined"]] = [i, sta.loc[i, "name"], sta.loc[i, "didok"], modes.get(i), True]
+        out.loc[k, "pop_share"] = round(r["cands_cov"][j] / r["pop"], 3) if r["pop"] else np.nan
+    out["idx"] = out["idx"].astype(int)
+    return out
 
 
 def main_stations_by_departures(net: Network, gem_ids: np.ndarray) -> pd.DataFrame:
@@ -644,13 +678,17 @@ def hub_forward(days: dict, didok: int, primary: tuple | None = None) -> tuple[t
 
 
 def run(hubs=HUBS, save_station_times: bool = True):
+    """Two phases: (1) per hub the station-level summaries towards and from the hub (and the older hub-outward
+    municipality results); (2) the main station per municipality is refined with the towards medians of the
+    nearest-hub set (refine_main_stations), then the municipality results of both directions are built."""
     import time
+    from pipeline.reach.hubs import NEAREST_HUBS_EXPECTED
     net = Network.load(outdir())
     access = access_links(net.stations)
     gem = gpd.read_file(interim_path("geo", f"units_{REFERENCE_DATE.isoformat()}.gpkg"), layer="gemeinde",
                         ignore_geometry=True)
     gem_ids = gem["id"].astype(int).to_numpy()
-    res, rep, timing = [], {}, {}
+    res, rep, timing, store = [], {}, {}, {}
     mains = main_stations(net, gem_ids, access, [h[2] for h in HUBS])
     ai = AccessIndex(access)
     days = day_networks(net)
@@ -667,11 +705,6 @@ def run(hubs=HUBS, save_station_times: bool = True):
                           "wait_p10_s": w10_, "wait_p90_s": w90_,
                           **{f"median_journey_s_{k}": v for k, v in by_day.items()}}
                          ).to_parquet(interim_path("reach", "pt_station_times_to_hub", f"{slug}.parquet"))
-        tw = towards_hub_results(net, slug, summ, access, gem_ids, mains, by_day, ai)
-        res.append(tw)
-        okt = tw[(tw.method == "gtfs_rcsa_mainstation") & (tw.status == "ok")]
-        print(f"{slug}: towards hub ({len(days)} days, {t1 - t0:.0f} s), {len(okt)} main stations reach it, "
-              f"median {okt.minutes.median():.0f} min")
         ea = ea_matrix(net, src)
         journey, wait = journey_times(ea)
         k = representative_departure(journey, net)
@@ -686,18 +719,35 @@ def run(hubs=HUBS, save_station_times: bool = True):
         t2 = time.time()
         # hub-outward station time and door-to-door with the same definitions and spread (median day of three)
         fsumm, fby_day = hub_forward(days, didok, (journey_times(ea, cap_unreached=True)[0], wait))
+        del ea
         if save_station_times:
             m_, mw_, p10_, p90_, _late, w10_, w90_ = fsumm
             pd.DataFrame({"idx": net.stations.idx, "median_journey_s": m_, "median_incl_wait_s": mw_,
                           "p10_s": p10_, "p90_s": p90_, "wait_p10_s": w10_, "wait_p90_s": w90_,
                           **{f"median_journey_s_{k}": v for k, v in fby_day.items()}}
                          ).to_parquet(interim_path("reach", "pt_station_times_from_hub", f"{slug}.parquet"))
-        res.append(from_hub_results(slug, fsumm, gem_ids, mains, ai, fby_day))
+        store[slug] = (summ, by_day, fsumm, fby_day)
         timing[slug] = {"reverse_s": round(t1 - t0, 1), "forward_s": round(t2 - t1, 1),
                         "forward_spread_s": round(time.time() - t2, 1)}
         ok = r[(r.method == "gtfs_csa_station") & (r.status == "ok")]
         print(f"{slug}: sources {src}, representative departure 07:30+{k} min, "
               f"{len(ok)} municipalities reached, median {ok.minutes.median():.0f} min")
+    # phase 2: main station refinement with the nearest-hub set (stored medians of hubs outside this run)
+    med = {h: v[0][0] for h, v in store.items()}
+    for h in NEAREST_HUBS_EXPECTED:
+        f = interim_path("reach", "pt_station_times_to_hub", f"{h}.parquet")
+        if h not in med and f.exists():
+            x = pd.read_parquet(f).set_index("idx").median_journey_s.reindex(net.stations.idx)
+            med[h] = x.to_numpy(float)
+    mains = refine_main_stations(mains, net, med, [h for h in NEAREST_HUBS_EXPECTED if h in med])
+    print(f"main station refined to a faster competing stop in {int(mains.refined.sum())} municipalities")
+    for slug, name, didok in hubs:
+        summ, by_day, fsumm, fby_day = store[slug]
+        tw = towards_hub_results(net, slug, summ, access, gem_ids, mains, by_day, ai)
+        res.append(tw)
+        res.append(from_hub_results(slug, fsumm, gem_ids, mains, ai, fby_day))
+        okt = tw[(tw.method == "gtfs_rcsa_mainstation") & (tw.status == "ok")]
+        print(f"{slug}: towards hub, {len(okt)} main stations reach it, median {okt.minutes.median():.0f} min")
     out = pd.concat(res, ignore_index=True)
     out.attrs["timing"] = timing
     return out, rep

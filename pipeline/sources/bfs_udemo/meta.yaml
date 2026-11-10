@@ -6,6 +6,6 @@ license: "OPEN-BY – open use, the source must be provided (BFS termsOfUse)"
 attribution: "Source: BFS – Unternehmensdemografie (UDEMO)"
 vintage: one municipality state (2023-12-31, 2136 municipalities), mapped to the reference state (mergers only)
 years: 2013–2023
-cubes: [px-x-0602030000_205]
+cubes: [px-x-0602030000_205, px-x-0602030000_204, px-x-0602030000_202]
 catalog_ids: [bfs_udemo_gemeinde]
 caveats: secondary and tertiary sector only; closures (and jobs of closed enterprises) only to 2021 ('...' afterwards -> no_data); small cells suppressed ('X' -> status suppressed); a merged municipality is suppressed if any predecessor is

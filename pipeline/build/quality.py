@@ -150,6 +150,8 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
         agg = metrics_all.rows(lvl, metric)
         # true aggregates only: published fallbacks (provenance native) would compare with themselves
         agg = agg[agg["provenance"] == "aggregated"]
+        # estimates (M1: a few suppressed municipalities left out) are lower bounds, not sums to compare
+        agg = agg[~agg["note"].fillna("").str.startswith("estimate:")]
         md0 = meta.set_index("id").loc[metric] if metric in set(meta["id"]) else {}
         # include_pseudo: the build already added the pseudo-units to canton/Swiss sums (E1 built in)
         with_pseudo = bool(md0.get("include_pseudo") is True) and lvl in ("kanton", "schweiz")

@@ -43,6 +43,7 @@ CLASSES = ["0", "1-30k", "30-40k", "40-50k", "50-75k", "75-100k", "100-200k", "2
 CLASS_IDS = ["0", "1_30k", "30_40k", "40_50k", "50_75k", "75_100k", "100_200k", "200_500k", "500k_1m", "1m_plus"]
 VINTAGE_LOG: dict = {}
 NATIONAL: dict = {}
+CANTONAL: dict = {}   # 2020+: published canton totals (rows 'Total / Totale', Gemeinde ID 10000)
 
 
 def _num(s: pd.Series) -> tuple[pd.Series, pd.Series]:
@@ -90,8 +91,8 @@ def _class_id(label: str) -> str:
     return m[lab]
 
 
-def _new_table(path, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
-    """(values, suppressed flags, national row) by class id (+ 'total') for one sheet."""
+def _new_table(path, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.DataFrame]:
+    """(values, suppressed flags, national row, canton rows) by class id (+ 'total') for one sheet."""
     x = pd.ExcelFile(path)
     sheet = [s for s in x.sheet_names if s.strip().endswith(suffix) and s.strip()[:1].isdigit()][0]
     d = pd.read_excel(x, sheet, header=None, dtype=str)
@@ -107,7 +108,19 @@ def _new_table(path, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series
         vals[cid], sups[cid] = v.values, s_.values.astype(bool)
     nat = body[body[1].astype(str).str.startswith("Schweiz")]
     natrow = pd.Series({cid: pd.to_numeric(nat[c], errors="coerce").iloc[0] for c, cid in cols.items()})
-    return pd.DataFrame(vals, index=idx), pd.DataFrame(sups, index=idx), natrow
+    # canton total rows: Gemeinde ID 10000; the canton by its ID, or (2020 files: ID column empty) by name
+    kt = body[(gde == 10000) & ~body[1].astype(str).str.startswith("Schweiz")]
+    kid = pd.to_numeric(kt[0], errors="coerce").fillna(kt[1].map(_canton_nr))
+    ktab = pd.DataFrame({cid: _num(kt[c])[0].values for c, cid in cols.items()}, index=kid.astype(int).values)
+    return pd.DataFrame(vals, index=idx), pd.DataFrame(sups, index=idx), natrow, ktab
+
+
+def _canton_nr(name) -> float:
+    """BFS canton number of an ESTV canton label ('Bern / Berne', 'Graubünden / Grigioni / Grischun')."""
+    from pipeline.common import interim_path
+    reg = pd.read_parquet(interim_path("backbone", "canton.parquet"))
+    key = lambda t: str(t).split("/")[0].strip().lower()
+    return float(dict(zip(reg["name"].map(key), reg["canton_id"].astype(int))).get(key(name), np.nan))
 
 
 def _case(year: int, case: str, suffix: str):
@@ -124,7 +137,8 @@ def _case(year: int, case: str, suffix: str):
         s_ = pd.DataFrame(s_, index=idx, columns=cols)
         v = v.mask(s_)
         nat = sum(t[2].reindex(cols).fillna(0) for t in tabs)
-        return v, s_, nat
+        kt = sum(t[3].reindex(columns=cols).fillna(0) for t in tabs)
+        return v, s_, nat, kt
     p = _new_file(year, case)
     prefix = str(FILE_NO[case])[0]
     return _new_table(p, prefix + suffix)
@@ -174,7 +188,21 @@ def _new_year(year: int) -> tuple[pd.DataFrame, dict]:
          "taxable": nat[("all_normal", "taxable")] + nat[("all_special", "taxable")],
          "tax": nat[("all_normal", "tax")] + nat[("all_special", "tax")],
          "taxpayers_normal": nat[("all_normal", "n")],
-         "tp_100k": float(src[2].reindex(up).sum())}
+         "tp_100k": float(src[2].reindex(up).sum()),
+         **{f"cls_{c}": float(tabs[("all_normal", "n")][2].get(c, np.nan)) for c in CLASS_IDS}}
+    # published canton totals (audit round 2, M1: income classes are suppressed in small municipalities)
+    kt = {k: tabs[k][3] for k in tabs}
+    kk = pd.DataFrame({
+        "taxpayers": kt[("all_normal", "n")]["total"] + kt[("all_special", "n")]["total"],
+        "no_tax": kt[("none_normal", "n")]["total"] + kt[("none_special", "n")]["total"],
+        "net": kt[("all_normal", "net")]["total"] + kt[("all_special", "net")]["total"],
+        "taxable": kt[("all_normal", "taxable")]["total"] + kt[("all_special", "taxable")]["total"],
+        "tax": kt[("all_normal", "tax")]["total"] + kt[("all_special", "tax")]["total"],
+        "taxpayers_normal": kt[("all_normal", "n")]["total"],
+        "tp_100k": src[3].reindex(columns=up).sum(axis=1, min_count=len(up)).fillna(
+            src[3]["total"] - src[3].reindex(columns=low).sum(axis=1, min_count=len(low))),
+        **{f"cls_{c}": kt[("all_normal", "n")].get(c) for c in CLASS_IDS}})
+    CANTONAL[str(year)] = kk
     return w.rename_axis("bfs_nr").reset_index(), n
 
 
@@ -280,4 +308,15 @@ def observations() -> pd.DataFrame:
     native = emit(nat, {c: METRICS[c] for c in METRICS if c in nat}, "period", SOURCE, level="schweiz",
                   unit_col="unit_id", vintage=REFERENCE_DATE, provenance="native")
     native = native[native["value"].notna()]
-    return pd.concat([obs, native], ignore_index=True)[OBS_COLUMNS]
+    parts = [obs, native]
+    if CANTONAL:
+        from pipeline.common import interim_path
+        ab = pd.read_parquet(interim_path("backbone", "canton.parquet"))
+        abbr = dict(zip(ab["canton_id"].astype(int), ab["canton"]))
+        kt = pd.concat([d.assign(period=p, unit_id=[abbr[i] for i in d.index]) for p, d in CANTONAL.items()], ignore_index=True)
+        kn = emit(kt, {c: METRICS[c] for c in METRICS if c in kt}, "period", SOURCE, level="kanton",
+                  unit_col="unit_id", vintage=REFERENCE_DATE, provenance="native")
+        kn = kn[kn["value"].notna()]
+        kn["note"] = "published canton total (ESTV, row 'Total')"
+        parts.append(kn)
+    return pd.concat(parts, ignore_index=True)[OBS_COLUMNS]
