@@ -1,6 +1,6 @@
 # Data quality report
 
-Generated 2026-11-10T22:54 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-10T23:13 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
 Metrics: 929 defined (682 base, 247 derived) · rows: 33,316,706
 
@@ -694,9 +694,9 @@ Worst unexplained differences:
 
 ## B. Ranges
 
-- **pks_theft**: 180.0 negative counts — e.g. bezirk 1901 2009: -9999.0
-- **vote_turnout**: 9.0 values outside 0–100 — e.g. agglomeration 6621 1977-12-04#2770: 308.523
 - **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
+- **pks_theft**: 180.0 negative counts — e.g. bezirk 1901 2009: -9999.0
+- **vote_turnout**: 9.0 values outside 0–100 — e.g. agglomeration 6621 1977-12-04#2780: 308.518
 - **pks_bicycle_theft**: 192.0 negative counts — e.g. bezirk 1901 2009: -9999.0
 
 ## C. Year-on-year jumps (> 50% and > 200 units)
@@ -749,7 +749,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | mfz_cars_diesel | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 1710.0, 'value': 7961.0, 'precision': 'exact'}, {'unit_id': '1702', 'year': 2018, 'prev': 7378.0, 'value': 3508.0, 'precision': 'exact'}] |
 | mfz_cars_hev | 6 | 3 | [{'unit_id': '3101', 'year': 2023, 'prev': 954.0, 'value': 4039.0, 'precision': 'exact'}, {'unit_id': '3101', 'year': 2021, 'prev': 675.0, 'value': 2255.0, 'precision': 'exact'}] |
 | mfz_cars | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 5390.0, 'value': 18360.0, 'precision': 'exact'}, {'unit_id': '6253', 'year': 2011, 'prev': 3662.0, 'value': 7808.0, 'precision': 'exact'}] |
-| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 638.0, 'precision': 'exact'}] |
+| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4506', 'year': 1998, 'prev': 1011.0, 'value': 373.0, 'precision': 'exact'}] |
 | ent_jobs_retail | 5 | 5 | [{'unit_id': '540', 'year': 2017, 'prev': 121.0, 'value': 586.0, 'precision': 'exact'}, {'unit_id': '412', 'year': 2013, 'prev': 331.0, 'value': 740.0, 'precision': 'exact'}] |
 | vac_new | 5 | 3 | [{'unit_id': '3203', 'year': 2022, 'prev': 365.0, 'value': 103.0, 'precision': 'exact'}, {'unit_id': '3203', 'year': 2017, 'prev': 44.0, 'value': 283.0, 'precision': 'exact'}] |
 | ent_jobs_care_social | 5 | 5 | [{'unit_id': '6633', 'year': 2022, 'prev': 418.0, 'value': 994.0, 'precision': 'exact'}, {'unit_id': '5568', 'year': 2018, 'prev': 81.0, 'value': 331.0, 'precision': 'exact'}] |
@@ -1009,10 +1009,10 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | con_share_new_dw_mfh | 30 | 1995 | 2024 | 1528 / 2110 | – |
 | crime_burglaries | 17 | 2009 | 2025 | 160 / 2110 | {'not_covered': 1950} |
 | crime_burglaries_per_1000 | 17 | 2009 | 2025 | 160 / 2110 | {'not_covered': 1950} |
-| crime_property_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
+| crime_property_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
 | crime_stgb_offences | 17 | 2009 | 2025 | 102 / 2110 | {'not_published': 172, 'not_covered': 1836} |
 | crime_stgb_per_1000 | 17 | 2009 | 2025 | 102 / 2110 | {'not_published': 172, 'not_covered': 1836} |
-| crime_stgb_property | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
+| crime_stgb_property | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
 | crime_stgb_violent | 17 | 2009 | 2025 | 37 / 2110 | {'not_covered': 1947, 'not_published': 126} |
 | crime_violent_per_1000 | 17 | 2009 | 2025 | 37 / 2110 | {'not_published': 126, 'not_covered': 1947} |
 | edu_compulsory_25_64 | 9 | 1990 | 2023 | 2035 / 2110 | {'suppressed': 75} |
@@ -1078,10 +1078,10 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | ent_workplaces_s1 | 14 | 2011 | 2024 | 1840 / 2110 | {'suppressed': 270} |
 | ent_workplaces_s2 | 14 | 2011 | 2024 | 1824 / 2110 | {'suppressed': 286} |
 | ent_workplaces_s3 | 14 | 2011 | 2024 | 2067 / 2110 | {'suppressed': 43} |
-| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'no_data': 605, 'not_applicable': 2, 'not_covered': 955} |
-| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'no_data': 560, 'not_applicable': 72, 'not_covered': 700} |
-| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'no_data': 260, 'not_covered': 1610} |
-| fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'no_data': 260, 'not_covered': 1610} |
+| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'not_covered': 955, 'no_data': 605, 'not_applicable': 2} |
+| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'not_applicable': 72, 'no_data': 560} |
+| fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
+| fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | geo_area_lake_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | geo_area_land_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | geo_area_total_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
@@ -1152,10 +1152,10 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | gws_share_sfh | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | gws_share_wood | 5 | 2021 | 2025 | 2110 / 2110 | – |
 | haz_hectare_residents | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
+| haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
 | haz_residents_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_residents_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
+| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
 | haz_share_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_high_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
@@ -1176,9 +1176,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | kvg_std300_mean_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_median_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_min_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
-| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'not_covered': 1864, 'suppressed': 24, 'no_data': 192} |
+| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'no_data': 192, 'not_covered': 1864, 'suppressed': 24} |
 | land_price_model_m2 | 51 | 1974 | 2024 | 160 / 2110 | {'not_covered': 1950} |
-| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'not_covered': 1864, 'suppressed': 24, 'no_data': 160} |
+| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'no_data': 160, 'not_covered': 1864, 'suppressed': 24} |
 | lang_sec_de_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
 | lang_sec_de_share_ci | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
 | lang_sec_en_share | 11 | 2010-2014 | 2020-2024 | 170 / 2110 | – |
@@ -1290,7 +1290,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | nrw_share_cvp | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_edu | 14 | 1971 | 2023 | 1499 / 2110 | {'not_applicable': 606, 'not_published': 5} |
 | nrw_share_evp | 14 | 1971 | 2023 | 1818 / 2110 | {'not_applicable': 287, 'not_published': 5} |
-| nrw_share_fdp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 27, 'majority_election': 38, 'not_published': 5} |
+| nrw_share_fdp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_applicable': 27, 'not_published': 5, 'majority_election': 38} |
 | nrw_share_fga | 14 | 1971 | 2023 | 160 / 2110 | {'not_applicable': 1950} |
 | nrw_share_fps | 14 | 1971 | 2023 | 0 / 2110 | {'not_applicable': 2110} |
 | nrw_share_glp | 14 | 1971 | 2023 | 2040 / 2110 | {'not_published': 5, 'not_applicable': 65} |
@@ -1361,8 +1361,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | pt_stops_rail | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_total | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | pt_stops_tram_metro | 1 | 2026 | 2026 | 2110 / 2110 | – |
-| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'not_covered': 1734, 'no_data': 160} |
-| pup_compulsory_per_1000 | 28 | 1997 | 2024 | 216 / 2110 | {'not_covered': 1734, 'no_data': 160} |
+| pup_compulsory | 28 | 1997 | 2024 | 216 / 2110 | {'no_data': 160, 'not_covered': 1734} |
+| pup_compulsory_per_1000 | 28 | 1997 | 2024 | 216 / 2110 | {'no_data': 160, 'not_covered': 1734} |
 | rail_boardings_daily | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | rail_boardings_weekday | 5 | 2018 | 2025 | 1923 / 2110 | {'not_covered': 187} |
 | reach_car_aarau | 1 | 2026 | 2026 | 2110 / 2110 | – |
@@ -1389,10 +1389,10 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | reach_car_zug | 1 | 2026 | 2026 | 2110 / 2110 | – |
 | reach_pt_aarau | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 3, 'not_applicable': 7} |
 | reach_pt_baden | 1 | 2026 | 2026 | 2095 / 2110 | {'no_data': 3, 'not_applicable': 12} |
-| reach_pt_basel | 1 | 2026 | 2026 | 2097 / 2110 | {'no_data': 3, 'not_applicable': 10} |
+| reach_pt_basel | 1 | 2026 | 2026 | 2097 / 2110 | {'not_applicable': 10, 'no_data': 3} |
 | reach_pt_bellinzona | 1 | 2026 | 2026 | 1782 / 2110 | {'not_applicable': 325, 'no_data': 3} |
 | reach_pt_bern | 1 | 2026 | 2026 | 2097 / 2110 | {'not_applicable': 10, 'no_data': 3} |
-| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'no_data': 3, 'not_applicable': 20} |
+| reach_pt_biel | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
 | reach_pt_chur | 1 | 2026 | 2026 | 2053 / 2110 | {'not_applicable': 54, 'no_data': 3} |
 | reach_pt_fribourg | 1 | 2026 | 2026 | 2087 / 2110 | {'not_applicable': 20, 'no_data': 3} |
 | reach_pt_geneve | 1 | 2026 | 2026 | 1954 / 2110 | {'no_data': 3, 'not_applicable': 153} |
@@ -1425,7 +1425,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | reach_ptst_neuchatel | 1 | 2026 | 2026 | 2049 / 2110 | {'no_data': 7, 'not_applicable': 54} |
 | reach_ptst_olten | 1 | 2026 | 2026 | 2094 / 2110 | {'no_data': 7, 'not_applicable': 9} |
 | reach_ptst_schaffhausen | 1 | 2026 | 2026 | 2070 / 2110 | {'no_data': 7, 'not_applicable': 33} |
-| reach_ptst_sion | 1 | 2026 | 2026 | 1950 / 2110 | {'not_applicable': 153, 'no_data': 7} |
+| reach_ptst_sion | 1 | 2026 | 2026 | 1950 / 2110 | {'no_data': 7, 'not_applicable': 153} |
 | reach_ptst_stgallen | 1 | 2026 | 2026 | 2017 / 2110 | {'not_applicable': 86, 'no_data': 7} |
 | reach_ptst_thun | 1 | 2026 | 2026 | 2081 / 2110 | {'no_data': 7, 'not_applicable': 22} |
 | reach_ptst_winterthur | 1 | 2026 | 2026 | 2088 / 2110 | {'not_applicable': 15, 'no_data': 7} |
@@ -1437,9 +1437,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | reach_spread_from_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'no_data': 7, 'not_applicable': 3} |
 | reach_spread_from_ptst_p50_nearest_hub | 1 | 2026 | 2026 | 2100 / 2110 | {'not_applicable': 3, 'no_data': 7} |
 | reach_spread_from_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2065 / 2110 | {'not_applicable': 38, 'no_data': 7} |
-| reach_spread_to_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
+| reach_spread_to_pt_p10_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'not_applicable': 1, 'no_data': 3} |
 | reach_spread_to_pt_p90_nearest_hub | 1 | 2026 | 2026 | 2106 / 2110 | {'no_data': 3, 'not_applicable': 1} |
-| reach_spread_to_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'not_applicable': 1, 'no_data': 7} |
+| reach_spread_to_ptst_p10_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
 | reach_spread_to_ptst_p90_nearest_hub | 1 | 2026 | 2026 | 2102 / 2110 | {'no_data': 7, 'not_applicable': 1} |
 | rent_city_r3 | 2 | 2022 | 2023 | 180 / 2110 | – |
 | rent_city_r3_ci | 2 | 2022 | 2023 | 180 / 2110 | – |
@@ -1482,7 +1482,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | tax_burden_single_80k_municipal | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_cantonal_income | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_cantonal_wealth | 17 | 2010 | 2026 | 2110 / 2110 | – |
-| tax_mult_muni_nat | 15 | 2012 | 2026 | 158 / 2110 | {'not_covered': 1950, 'no_data': 2} |
+| tax_mult_muni_nat | 15 | 2012 | 2026 | 158 / 2110 | {'no_data': 2, 'not_covered': 1950} |
 | tax_mult_municipal_income | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_mult_municipal_wealth | 17 | 2010 | 2026 | 2110 / 2110 | – |
 | tax_np_federal_tax_chf | 21 | 2003 | 2023 | 2110 / 2110 | – |
@@ -1557,8 +1557,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | udemo_jobs_births | 11 | 2013 | 2023 | 1032 / 2110 | {'suppressed': 1078} |
 | udemo_jobs_closures | 11 | 2013 | 2023 | 0 / 2110 | {'no_data': 2110} |
 | udemo_jobs_per_enterprise | 11 | 2013 | 2023 | 1944 / 2110 | {'suppressed': 166} |
-| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'no_data': 280, 'suppressed': 213, 'not_covered': 1530} |
-| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'no_data': 280, 'suppressed': 213, 'not_covered': 1530} |
+| unemp_per_100_20_64 | 39 | 1990 | 2026-10 | 0 / 2110 | {'suppressed': 213, 'not_covered': 1530, 'no_data': 280} |
+| unemp_registered | 39 | 1990 | 2026-10 | 87 / 2110 | {'suppressed': 213, 'not_covered': 1530, 'no_data': 280} |
 | vac_dwelling_stock | 16 | 2011 | 2026 | 2110 / 2110 | – |
 | vac_dwellings | 32 | 1995 | 2026 | 2110 / 2110 | – |
 | vac_for_rent | 32 | 1995 | 2026 | 2110 / 2110 | – |
@@ -1650,18 +1650,18 @@ Verdicts from the last web build: shown, shown with a partial-coverage note, hid
 
 | Level | show | note | hide | hidden |
 |---|---|---|---|---|
-| gemeinde | 619 | 26 | 94 | 11 |
-| bezirk | 570 | 13 | 37 | 18 |
-| kanton | 605 | 3 | 60 | 17 |
-| grossregion | 517 | 0 | 40 | 3 |
-| sprachgebiet | 517 | 0 | 36 | 3 |
-| agglomeration | 524 | 9 | 39 | 3 |
-| arbeitsmarktgebiet | 527 | 10 | 41 | 3 |
-| stadt_land | 73 | 0 | 480 | 3 |
-| gemeindetyp | 507 | 0 | 53 | 3 |
-| **all** | 4459 | 61 | 880 | 64 |
+| gemeinde | 627 | 26 | 102 | 11 |
+| bezirk | 578 | 13 | 44 | 18 |
+| kanton | 613 | 3 | 67 | 17 |
+| grossregion | 525 | 0 | 47 | 3 |
+| sprachgebiet | 525 | 0 | 43 | 3 |
+| agglomeration | 532 | 9 | 46 | 3 |
+| arbeitsmarktgebiet | 536 | 10 | 48 | 4 |
+| stadt_land | 73 | 0 | 488 | 3 |
+| gemeindetyp | 515 | 0 | 53 | 3 |
+| **all** | 4524 | 61 | 938 | 65 |
 
-Metrics with no map at any level: 133 (by theme: Language & religion 32, Income & tax 26, Safety 21, Real estate prices 20, Education 5, Energy & climate 4, Public finances 4, Mobility & accessibility 4, Environment & hazards 4, Households & family 3, Migration & nationality 3, Housing & buildings 3, Economy & jobs 2, Population & demography 2).
+Metrics with no map at any level: 142 (by theme: Language & religion 32, Income & tax 27, Safety 21, Real estate prices 21, Environment & hazards 11, Education 5, Public finances 4, Mobility & accessibility 4, Energy & climate 4, Households & family 3, Migration & nationality 3, Housing & buildings 3, Economy & jobs 2, Population & demography 2).
 
 ## I. Translations of pipeline texts (`data/out/web/texts.json`)
 
@@ -1669,5 +1669,5 @@ Shipped notes, gap reasons, curation reasons, reach footnotes and Sources texts 
 
 | Language | Distinct texts | Fully translated | Untranslated parts |
 |---|---|---|---|
-| de | 19,653 | 19,652 | 2 |
-| fr | 19,653 | 19,652 | 2 |
+| de | 19,830 | 19,828 | 2 |
+| fr | 19,830 | 19,828 | 2 |
