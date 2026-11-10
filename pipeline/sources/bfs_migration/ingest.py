@@ -4,13 +4,14 @@
 Totals per migration type (also for 1981–2010) come from bfs_bevnat_bilanz; this connector adds
 the split by nationality. 'Non-Swiss' = total minus Swiss (includes stateless and unknown).
 Geo value codes are running indices; BFS numbers come from the labels (pxgeo.geo_codes).
-Published by BFS on the latest municipality state.
+Published by BFS on the latest municipality state. The 'Ohne Angabe' geo unit (in the Swiss total,
+in no canton) is kept as level 'unallocated'.
 """
 from __future__ import annotations
 
 import pandas as pd
 
-from pipeline.sources.bfs_bevnat_bilanz.pxgeo import geo_codes, to_obs
+from pipeline.sources.bfs_bevnat_bilanz.pxgeo import geo_codes, to_obs, unallocated_rows
 from pipeline.sources.bfs_pxweb.fetch import query_codes
 
 SOURCE = "bfs_migration"
@@ -35,4 +36,6 @@ def observations(report: dict | None = None) -> pd.DataFrame:
     out = out.reset_index()
     out["geo"] = out[G].map(codes)
     cols = [c for c in out.columns if c.startswith("mig_")]
-    return to_obs(out, "geo", "Jahr", {c: c for c in cols}, SOURCE, report=report)
+    obs = to_obs(out, "geo", "Jahr", {c: c for c in cols}, SOURCE, report=report)
+    # 'Ohne Angabe' unit: in the Swiss total, in no canton -> level 'unallocated'
+    return pd.concat([obs, unallocated_rows(out, G, "Jahr", cols, SOURCE, DB)], ignore_index=True)
