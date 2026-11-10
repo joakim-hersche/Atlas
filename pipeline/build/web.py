@@ -177,8 +177,11 @@ def run() -> dict:
     written = {"units": _dump(build_units(), "units.json"),
                "sources": _dump([{**{k: v.get(k) for k in ("source_id", "title", "publisher", "url", "license",
                                                               "attribution", "vintage", "years")},
-                                  "shipped": sid not in excluded or include_all}
-                                 for sid, v in srcs.items() if (SOURCES_DIR / sid / "ingest.py").exists()], "sources.json"),
+                                  "shipped": include_all or (sid not in excluded if (SOURCES_DIR / sid / "ingest.py").exists()
+                                                             else cleared[sid][0])}
+                                 # lookups (kind: lookup) feed search/profile files (pipeline.build.profile)
+                                 for sid, v in srcs.items() if (SOURCES_DIR / sid / "ingest.py").exists()
+                                 or v.get("kind") == "lookup"], "sources.json"),
                "excluded": _dump({"note": "left out until their licence is cleared (brief rule 5)",
                                   "sources": excluded if not include_all else {}}, "excluded_sources.json")}
 
