@@ -1,6 +1,6 @@
 // Shared logic of the profile and Compare places pages: the level data of a place, metric entries
 // (value, rank in Switzerland and in the canton, percentile, gap reason, precision), the theme layout,
-// "similar places" and a small SVG locator.
+// and a small SVG locator ("similar places" live in similar.ts).
 import type { Feature, FeatureCollection, Geometry, Position } from 'geojson';
 import { rankOf, type RankInfo } from './classify';
 import {
@@ -134,63 +134,6 @@ export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: n
     flags: value !== null ? flagTexts(file, flagsOf(file, col, i), meta) : [],
     note: value !== null ? noteOf(col, i) : null,
   };
-}
-
-// ---------------------------------------------------------------- similar places
-/** Headline metrics of the "similar places" vector (all in the core file, national coverage).
- *  Skewed ones are compared on a log scale. */
-export const SIMILAR_METRICS: { id: string; log?: boolean }[] = [
-  { id: 'geo_pop_density', log: true },
-  { id: 'pop_change_10y' },
-  { id: 'share_age_65plus' },
-  { id: 'share_foreign' },
-  { id: 'hh_avg_size' },
-  { id: 'ent_jobs_per_1000', log: true },
-  { id: 'tax_np_mean_taxable_income', log: true },
-  { id: 'edu_share_tertiary' },
-  { id: 'nrw_share_left_bloc' },
-  { id: 'area_share_settlement' },
-  { id: 'geo_elev_mean' },
-];
-
-export interface Similar {
-  i: number;
-  /** root mean squared difference of z-scores over the metrics both have */
-  d: number;
-  n: number;
-}
-/** Nearest units by z-scores of SIMILAR_METRICS (missing values skipped; at least 70% of the metrics shared). */
-export function similarPlaces(pl: PlaceLevel, i: number, k = 6): { used: string[]; list: Similar[] } {
-  const cols: number[][] = [];
-  const used: string[] = [];
-  for (const m of SIMILAR_METRICS) {
-    const c = pl.core.metrics[m.id];
-    if (!c || c.v[i] === null || c.v[i] === undefined) continue;
-    const x = c.v.map((v) => (v === null ? NaN : m.log ? (v > 0 ? Math.log10(v) : NaN) : v));
-    const ok = x.filter((v) => Number.isFinite(v));
-    if (ok.length < 3) continue;
-    const mu = ok.reduce((a, b) => a + b, 0) / ok.length;
-    const sd = Math.sqrt(ok.reduce((a, b) => a + (b - mu) ** 2, 0) / ok.length);
-    if (!(sd > 0)) continue;
-    cols.push(x.map((v) => (v - mu) / sd));
-    used.push(m.id);
-  }
-  const need = Math.ceil(0.7 * cols.length);
-  const list: Similar[] = [];
-  if (cols.length < 2) return { used, list };
-  for (let j = 0; j < pl.units.length; j++) {
-    if (j === i) continue;
-    let s = 0, n = 0;
-    for (const c of cols) {
-      const a = c[i], b = c[j];
-      if (!Number.isFinite(b)) continue;
-      s += (a - b) ** 2;
-      n++;
-    }
-    if (n >= need && n > 0) list.push({ i: j, d: Math.sqrt(s / n), n });
-  }
-  list.sort((a, b) => a.d - b.d);
-  return { used, list: list.slice(0, k) };
 }
 
 // ---------------------------------------------------------------- locator (SVG)

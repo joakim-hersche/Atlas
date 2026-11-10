@@ -9,7 +9,7 @@ import { app } from './state.svelte';
 const ROUTES = ['map', 'compare', 'regress', 'profile', 'places', 'sources'];
 const TABS = ['filters', 'rank', 'stats'];
 /** page keys each route reads from params */
-const ROUTE_PARAMS: Record<string, string[]> = { map: [], compare: [], regress: REG_KEYS, profile: ['id'], places: ['ids'], sources: ['src'] };
+const ROUTE_PARAMS: Record<string, string[]> = { map: [], compare: [], regress: REG_KEYS, profile: ['id', 'sm', 'nr'], places: ['ids'], sources: ['src'] };
 
 export function sanitizeState(base: Base): void {
   const M = base.metas;
