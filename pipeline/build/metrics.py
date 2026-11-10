@@ -34,8 +34,6 @@ from pipeline.harmonize.schema import load_metrics
 AGG_LEVELS = ["bezirk", "kanton", *LEVEL_COLUMNS, "schweiz"]
 RATIO = re.compile(r"^ratio:(?P<num>[^/]+)/(?P<den>[^*]+)(?:\*(?P<f>[\d.]+))?$")
 CHANGE = re.compile(r"^change:(?P<m>[a-z0-9_]+):(?P<n>\d+)$")
-# a ratio term is usable when ok, or when its status is listed in the metric's zero_when (counts as 0)
-OK_OR_ZERO = "(status = 'ok' OR (metric_id, status) IN (SELECT (metric_id, status) FROM zw))"
 PREC_RANK = "CASE precision WHEN 'exact' THEN 0 WHEN 'survey' THEN 1 WHEN 'modelled' THEN 2 ELSE 3 END"
 PREC_NAME = "CASE MAX({r}) WHEN 0 THEN 'exact' WHEN 1 THEN 'survey' WHEN 2 THEN 'modelled' ELSE 'boundary_estimate' END"
 
@@ -127,6 +125,12 @@ def run() -> str:
                       GROUP BY 1, 2) g JOIN n_{lvl} n ON g.u = n.u""")
     parts.append("SELECT * FROM native_only")
     con.execute("CREATE TABLE base_all AS " + " UNION ALL ".join(parts))
+    # ratio inputs: usable base rows (ok, or a zero_when status counted as 0), materialized once
+    con.execute(f"""
+        CREATE TABLE base_terms AS
+        SELECT b.unit_id, b.level, b.metric_id, b.period, COALESCE(b.value, 0) AS value, b.precision, b.n_units
+        FROM base_all b LEFT JOIN zw z ON b.metric_id = z.metric_id AND b.status = z.status
+        WHERE b.status = 'ok' OR z.metric_id IS NOT NULL""")
 
     # derived metrics, computed at every level from that level's base values
     derived = []
@@ -141,11 +145,11 @@ def run() -> str:
                        CASE WHEN GREATEST(a.p, b.p) = 0 THEN 'exact' WHEN GREATEST(a.p, b.p) = 1 THEN 'survey'
                             WHEN GREATEST(a.p, b.p) = 2 THEN 'modelled' ELSE 'boundary_estimate' END AS precision,
                        'derived' AS provenance, a.n_units, 0 AS n_missing, NULL AS note
-                FROM (SELECT unit_id, level, period, SUM(COALESCE(value, 0)) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units
-                      FROM base_all WHERE metric_id IN ({_q(num)}) AND {OK_OR_ZERO}
+                FROM (SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units
+                      FROM base_terms WHERE metric_id IN ({_q(num)})
                       GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(num))}) a
-                JOIN (SELECT unit_id, level, period, SUM(COALESCE(value, 0)) AS s, MAX({PREC_RANK}) AS p
-                      FROM base_all WHERE metric_id IN ({_q(den)}) AND {OK_OR_ZERO}
+                JOIN (SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p
+                      FROM base_terms WHERE metric_id IN ({_q(den)})
                       GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(den))}) b
                 USING (unit_id, level, period)
                 WHERE b.s IS NOT NULL AND b.s <> 0""")
