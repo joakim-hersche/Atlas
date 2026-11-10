@@ -353,9 +353,13 @@
     td { padding: 2px 6px 8px; min-width: 0; overflow-wrap: anywhere; }
     td:nth-child(2) { border-left: 0; padding-left: 0; }
     .lbl { font-size: var(--fs-small); }
-    .uname { flex-direction: column; font-size: var(--fs-small); gap: 4px; hyphens: auto; }
+    /* names break only at spaces or hyphens; the remove button is a small corner mark with a 40 px tap area */
+    thead th.uh { position: relative; padding-right: 22px; }
+    .uname { display: block; font-size: var(--fs-small); hyphens: manual; overflow-wrap: normal; word-break: normal; }
     .uname a { min-width: 0; max-width: 100%; }
-    .x { width: 28px; height: 28px; order: 2; }
+    .x { position: absolute; top: -8px; right: -10px; width: 40px !important; height: 40px !important; min-height: 40px; border: 0 !important;
+      background: none; display: grid; place-items: center; font-size: var(--fs-body); color: var(--muted); }
+    .x:hover, .x:focus-visible { color: var(--ink); }
     .usub { font-size: var(--fs-cap); }
     td .v { font-size: var(--fs-small); }
     td :global(.pb) { max-width: none; }
