@@ -22,6 +22,8 @@ export interface MetricMeta {
   coverage: string; // 'national' | 'partial:AG,BE,...'
   source: string;
   description: string | null;
+  description_de?: string | null;
+  description_fr?: string | null;
   levels: string[];
   periods: string[];
   n_periods: number;

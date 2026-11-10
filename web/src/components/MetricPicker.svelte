@@ -2,7 +2,7 @@
   // Metric picker: headline metrics grouped by theme; typing searches every metric (accent- and
   // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
-  import { levelName, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
+  import { levelName, mdesc, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
   import { availableAt, type MetricMeta } from '../lib/data';
   import { fmtPeriod, unitOf } from '../lib/classify';
 
@@ -126,7 +126,7 @@
             {@const k = flat.indexOf(m)}
             {#if ok(m)}
               <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
-                title={m.description ?? undefined} onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
+                title={mdesc(m) ?? undefined} onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
                 <span class="ol">{ml(m)}</span>
                 <span class="om">{unitOf(m) || '–'} · {fmtPeriod(m.latest)}{m.coverage.startsWith('partial:') ? ` · ${t('mp.partial')}` : ''}</span>
               </button>

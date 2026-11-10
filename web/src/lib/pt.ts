@@ -33,13 +33,28 @@ export function methodText(kind: ReachKind, hub: string, rt: ReachTimes | null, 
 
 /** Main station of a municipality (reach_times.json): its name, and whether it lies outside the
  *  municipality (no stop inside: the nearest one is used). null when unknown. */
-export function mainStation(rt: ReachTimes | null, unitId: string, index?: Map<string, number>): { name: string; outside: boolean } | null {
+export function mainStation(rt: ReachTimes | null, unitId: string, index?: Map<string, number>): { name: string; outside: boolean; mode: string | null } | null {
   if (!rt?.main_station) return null;
   const k = index ? index.get(unitId) : rt.units.indexOf(unitId);
   if (k === undefined || k < 0) return null;
   const s = rt.main_station[k];
-  return s ? { name: s[0], outside: s[2] === false } : null;
+  if (!s) return null;
+  // a stop that is not a rail station is named with its mode: "Weggis, Dorfplatz (bus)"
+  const mode = s[3] && s[3] !== 'rail' ? (rt.mode_text?.[s[3]]?.[app.lang] ?? s[3]) : null;
+  return { name: mode ? `${s[0]} (${mode})` : s[0], outside: s[2] === false, mode };
 }
+
+/** Name of the nearest hub (D39 set) for a nearest-hub metric id, or null. */
+export function nearestHubOf(rt: ReachTimes | null, metricId: string, unitId: string, index?: Map<string, number>): string | null {
+  const m = /^reach_(ptst|pt|car)_nearest_hub$/.exec(metricId);
+  if (!m || !rt?.nearest) return null;
+  const key = m[1] === 'ptst' ? 'pt_station' : m[1];
+  const k = index ? index.get(unitId) : rt.units.indexOf(unitId);
+  return k === undefined || k < 0 ? null : (rt.nearest[key]?.[k] ?? null);
+}
+
+/** The rule for which hubs count as "nearest hub", in the UI language. */
+export const nearestRule = (rt: ReachTimes | null): string | null => rt?.nearest_rule?.[app.lang] ?? rt?.nearest_rule?.en ?? null;
 
 /** How a municipality's time to a hub was obtained, when it is special (reach_times.json notes), or null. */
 export function reachNote(rt: ReachTimes | null, kind: ReachKind, hub: string, unitId: string, index?: Map<string, number>): string | null {
@@ -51,12 +66,20 @@ export function reachNote(rt: ReachTimes | null, kind: ReachKind, hub: string, u
 }
 
 /** Why a municipality has no time for a measure (reach_times.json reasons), or null. */
-export function reachReason(rt: ReachTimes | null, kind: ReachKind, unitId: string, index?: Map<string, number>): string | null {
-  const key = kind === 'ptst' ? 'pt_station' : kind;
-  const r = rt?.reasons?.[key];
+export function reachReason(rt: ReachTimes | null, kind: ReachKind, hub: string, unitId: string, index?: Map<string, number>): string | null {
+  const k = index ? index.get(unitId) : rt?.units.indexOf(unitId);
+  if (!rt || k === undefined || k < 0) return null;
+  return reasonAt(rt, kind === 'ptst' ? 'pt_station' : kind, hub, k);
+}
+
+/** reasons[key][hub][idx] (per hub); older builds wrote reasons[key][idx]. */
+export function reasonAt(rt: ReachTimes, key: string, hub: string, k: number): string | null {
+  const r = rt.reasons?.[key];
   if (!r) return null;
-  const k = index ? index.get(unitId) : rt!.units.indexOf(unitId);
-  return k === undefined || k < 0 ? null : (r[String(k)] ?? null);
+  const h = r[hub];
+  if (h && typeof h === 'object') return h[String(k)] ?? null;
+  const flat = r[String(k)];
+  return typeof flat === 'string' ? flat : null;
 }
 
 /** Label of a reach measure ('long' for headings, else short for buttons). Without station times in the

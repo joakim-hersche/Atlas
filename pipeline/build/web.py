@@ -279,7 +279,7 @@ def load_i18n() -> dict:
         y = y["metrics"]
     if isinstance(y, list):
         y = {r["id"]: r for r in y if isinstance(r, dict) and "id" in r}
-    return {k: {f: v.get(f) for f in ("label_fr", "unit_de", "unit_fr") if isinstance(v, dict)}
+    return {k: {f: v.get(f) for f in ("label_fr", "unit_de", "unit_fr", "description_de", "description_fr") if isinstance(v, dict)}
             for k, v in (y or {}).items() if isinstance(v, dict)}
 
 
@@ -621,6 +621,7 @@ def run() -> dict:
         entry = {
             "id": r.metric_id, "theme": md["theme"], "label_en": md["label_en"], "label_de": md["label_de"],
             "label_fr": lab.get("label_fr"), "unit": md["unit"], "unit_de": lab.get("unit_de"), "unit_fr": lab.get("unit_fr"),
+            "description_de": lab.get("description_de"), "description_fr": lab.get("description_fr"),
             "decimals": int(md["decimals"]), "direction": md["direction"],
             "aggregation": md["aggregation"], "precision": md["precision"], "coverage": coverage,
             "native_level": md["native_level"],

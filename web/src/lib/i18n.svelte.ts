@@ -104,6 +104,8 @@ const EN: Dict = {
   "pt.from": "from {st}",
   "pt.fromOut": "from {st} (nearest station, outside the municipality)",
   "pt.byPt": "by public transport",
+  "pt.nearestHub": "Nearest hub",
+  "pt.nearestSet": "Hubs counted: the main stations of the core cities of the 15 agglomerations with at least 100,000 residents (see Definition).",
   "pt.door": "Door to door",
   "pt.reached": "{n} municipalities within {t} min ({what}); others shown desaturated.",
   "pt.reachedF": "{n} municipalities within {t} min ({what}, among the filtered); others shown desaturated.",
@@ -564,6 +566,8 @@ const DE: Dict = {
   "pt.from": "ab {st}",
   "pt.fromOut": "ab {st} (nächster Bahnhof, ausserhalb der Gemeinde)",
   "pt.byPt": "mit dem ÖV",
+  "pt.nearestHub": "Nächstes Zentrum",
+  "pt.nearestSet": "Gezählte Zentren: die Hauptbahnhöfe der Kernstädte der 15 Agglomerationen mit mindestens 100 000 Einwohnerinnen und Einwohnern (siehe Definition).",
   "pt.door": "Tür zu Tür",
   "pt.reached": "{n} Gemeinden innert {t} Min. ({what}); übrige entsättigt.",
   "pt.reachedF": "{n} Gemeinden innert {t} Min. ({what}, unter den gefilterten); übrige entsättigt.",
@@ -952,6 +956,14 @@ export function ml(m: MetricMeta | undefined | null): string {
   if (app.lang === 'de' && m.label_de) return m.label_de;
   if (app.lang === 'fr' && m.label_fr) return m.label_fr;
   return m.label_en;
+}
+
+/** Metric description in the UI language (falls back to the English text). */
+export function mdesc(m: MetricMeta | undefined | null): string | null {
+  if (!m) return null;
+  if (app.lang === 'de' && m.description_de) return m.description_de;
+  if (app.lang === 'fr' && m.description_fr) return m.description_fr;
+  return m.description;
 }
 
 const THEME_DE: Record<string, string> = {

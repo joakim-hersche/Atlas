@@ -203,14 +203,21 @@ export interface ReachTimes {
   periods: Record<string, string>;
   /** D31 headline: timetable time from the municipality's main station to the hub station */
   pt_station?: Record<string, (number | null)[]>;
-  /** per unit: [station name, DIDOK number, inside the municipality] or null */
-  main_station?: ([string, number, boolean?] | null)[];
+  /** per unit: [stop name, DIDOK number, inside the municipality, mode ('rail', 'bus', …)] or null */
+  main_station?: ([string, number, boolean?, string?] | null)[];
+  /** mode -> {en, de, fr} names of the stop's mode */
+  mode_text?: Record<string, Record<string, string>>;
+  /** the hubs counted for "nearest hub" (D39) and the rule, per language */
+  nearest_hubs?: [string, string][];
+  nearest_rule?: Record<string, string>;
+  /** per measure: name of the nearest hub per unit index */
+  nearest?: Record<string, (string | null)[]>;
   /** per measure, hub and unit index: how a value was obtained (e.g. no arrival by 08:30) */
   notes?: Record<string, Record<string, Record<string, string>>>;
   /** one-line method texts per measure and language */
   methods?: Record<string, Record<string, string>>;
-  /** per measure: unit index -> why there is no time */
-  reasons?: Record<string, Record<string, string>>;
+  /** per measure and hub: unit index -> why there is no time (older builds: per measure only) */
+  reasons?: Record<string, Record<string, Record<string, string> | string>>;
 }
 
 function once<T>(path: string) {

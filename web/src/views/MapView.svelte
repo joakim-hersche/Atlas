@@ -627,7 +627,7 @@
       const uid = ld.units[selIdx];
       const miss = (ref: typeof reachRef, kind: ReachKind) => {
         if (!ref) return ref === undefined ? t('status.loading') : t('mv.heldBack');
-        return reachReason(rt, kind, uid, rtIndex) ?? gapReason(ref.file, ref.col, selIdx, ref.meta, ld.canton[selIdx]);
+        return reachReason(rt, kind, hub.slug, uid, rtIndex) ?? gapReason(ref.file, ref.col, selIdx, ref.meta, ld.canton[selIdx]);
       };
       if (reachMode === 'pt' && station && ld.level === 'gemeinde') {
         // D31: station time towards the hub as the headline, door to door as the second line

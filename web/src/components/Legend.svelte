@@ -1,7 +1,7 @@
 <script lang="ts">
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
-  import { ml, t as tr } from '../lib/i18n.svelte';
+  import { ml, mdesc, t as tr } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { coverageLabel, majorityCount, partialCantons, precisionText, type Column, type MetricMeta, type Source } from '../lib/data';
@@ -171,8 +171,8 @@
   </p>
   {#if older}<p class="older">{tr('lg.older', { p: fmtPeriod(period), n: fmtPeriod(older) })}{olderWhy ? ` (${olderWhy})` : ''}</p>{/if}
   {#if meta.id === 'nrw_leaning'}<p class="dnote">{tr('lg.leanNote')}</p>{/if}
-  {#if !compact && meta.description}
-    <details class="def"><summary>ⓘ {tr('lg.definition')}</summary><p>{meta.description}</p></details>
+  {#if !compact && mdesc(meta)}
+    <details class="def"><summary>ⓘ {tr('lg.definition')}</summary><p>{mdesc(meta)}</p></details>
   {/if}
   {#if nrw && !compact}<p class="dnote">{tr('lg.ncOnly')}</p>{/if}
   <p class="foot">
