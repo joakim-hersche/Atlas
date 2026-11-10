@@ -22,6 +22,7 @@ web/dist/
 # Generated web data (rebuilt by make; deployment builds them in CI)
 data/out/web/
 data/out/reach/
+data/out/release/
 web/public/data/
 .tmp/
 

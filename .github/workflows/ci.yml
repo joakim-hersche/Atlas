@@ -1,0 +1,56 @@
+# Continuous integration: checks only. This workflow never deploys, never pushes and uses no secrets.
+# Deployment is manual (`make deploy`, scripts/deploy_pages.sh).
+#
+# CI has no downloaded source data (data/raw, data/interim are not in the repository), so:
+#  - pipeline tests that need built data skip themselves; the rest run;
+#  - the web build falls back to the committed sample data (web/sample-data).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    name: Pipeline tests (pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install Python and dependencies
+        run: uv sync --frozen
+      - name: pytest
+        run: uv run pytest -q pipeline/tests
+
+  web:
+    name: Web (svelte-check, unit tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: svelte-check
+        run: npx svelte-check --threshold error
+      - name: Unit tests (vitest)
+        run: npm test
+      - name: Build (sample data when data/out/web is missing)
+        run: npm run build

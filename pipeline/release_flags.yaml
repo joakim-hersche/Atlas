@@ -1,0 +1,13 @@
+# Extra rules for the public data release (pipeline/release.py), on top of pipeline/licence_review.yaml.
+# The release is a redistribution of the data, so it follows the strictest stated terms.
+#
+# noncommercial: sources that may be redistributed with attribution for non-commercial use only. They
+#   stay in the release, flagged `noncommercial` in metrics.csv and sources.csv and named in the README.
+# drop_cantons: cantons whose rows are left out of the release although the site shows them.
+noncommercial:
+  bfs_accessibility: "BFS STAC terms are 'terms_by_ask' (commercial use needs BFS permission); the binding asset terms are OPEN-BY."
+  bfs_education: "BFS OPEN-BY on the asset, but the STAC collection links opendata.swiss 'terms_by_ask' (commercial use needs permission)."
+
+drop_cantons:
+  kt_hazards:
+    NE: "Free use with attribution, but commercial reuse needs permission from the data supplier (SITN)."
