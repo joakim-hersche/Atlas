@@ -1,7 +1,8 @@
 // Data loading and the column format written by pipeline/build/web.py.
 import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
-import { levelName, t, levelWord } from './i18n.svelte';
+import { t, levelWord } from './i18n.svelte';
+import { periodTitles } from './classify';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
 
@@ -189,13 +190,17 @@ export function loadBase(): Promise<Base> {
       getJSON<Source[]>('web/sources.json'),
       loadTopo('kanton'),
       loadTopo('lakes'),
-    ]).then(([metrics, sources, k, l]) => ({
+    ]).then(([metrics, sources, k, l]) => {
+      // titles of the latest federal vote (per-vote metrics), for period labels
+      for (const m of metrics) if (m.per_vote && m.latest_title) periodTitles.set(m.latest, m.latest_title);
+      return {
       metrics,
       metas: new Map(metrics.map((m) => [m.id, m])),
       sources: new Map(sources.map((s) => [s.source_id, s])),
       kanton: topo(k, 'kanton'),
       lakes: topo(l, 'lakes'),
-    }));
+    };
+    });
     baseP.catch(() => (baseP = null));
   }
   return baseP;

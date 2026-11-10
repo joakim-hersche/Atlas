@@ -22,6 +22,9 @@ export function sanitizeState(base: Base): void {
     const ok = ids.some((id) => seriesPeriods(M.get(id)!, app.level).includes(app.year!));
     if (!ok) app.year = null;
   }
+  const perVote = [app.metric, app.metricB, app.size].some((id) => !!id && !!M.get(id)?.per_vote);
+  if (app.vote && !perVote) app.vote = null;
+  if (app.vdiff && app.metric !== 'vote_yes_share') app.vdiff = false;
   const fs = app.filters.filter((f) => f.kind !== 'num' || M.has(f.metric));
   if (fs.length !== app.filters.length) app.filters = fs;
   if (app.tab !== null && !TABS.includes(app.tab)) app.tab = null;

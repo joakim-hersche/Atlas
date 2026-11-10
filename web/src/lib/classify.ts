@@ -1,6 +1,8 @@
 // Classification (quantiles / equal interval / continuous, sequential or diverging), summary
 // statistics, correlation and number formatting.
 import type { MetricMeta } from './data';
+import { SvelteMap } from 'svelte/reactivity';
+import { app } from './state.svelte';
 import { interpolate } from './theme';
 
 export const N_CLASSES = 5;
@@ -10,6 +12,8 @@ export const METHOD_LABEL: Record<Method, string> = { quantile: 'Quantiles', equ
 export interface Scale {
   method: Method;
   diverging: boolean;
+  /** midpoint of a diverging scale (0 for changes, 50 for yes shares) */
+  centre: number;
   /** ascending inner class breaks (empty for continuous) */
   breaks: number[];
   /** colour per class (breaks.length + 1 entries; empty for continuous) */
@@ -43,9 +47,15 @@ export function quantile(s: number[], p: number): number {
   return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (pos - lo);
 }
 
-/** Change metrics and neutral metrics with negative values get a diverging scale centred on 0. */
+/** Midpoint of a diverging scale: 50 % for vote yes shares (D32), else 0. */
+export function divergeCentre(meta: { id: string }): number {
+  return meta.id === 'vote_yes_share' ? 50 : 0;
+}
+
+/** Change metrics, neutral metrics with negative values and vote yes shares get a diverging scale. */
 export function isDiverging(meta: MetricMeta & { aggregation?: string }, s: number[]): boolean {
   if ((meta.aggregation ?? '').startsWith('change:')) return true;
+  if (meta.id === 'vote_yes_share') return true;
   if (/(^|_)change(_\d+y)?$/.test(meta.id) && meta.unit.startsWith('%')) return true;
   return meta.direction === 'neutral' && s.length > 0 && s[0] < 0 && s[s.length - 1] > 0;
 }
@@ -62,7 +72,8 @@ function classIndex(x: number, breaks: number[]): number {
   return c;
 }
 
-export function buildScale(v: (number | null)[], method: Method, diverging: boolean, seq: string[], div: string[]): Scale {
+export function buildScale(v: (number | null)[], method: Method, diverging: boolean, seq: string[], div: string[], centre = 0): Scale {
+  const c0 = centre;
   const s = sortedValues(v);
   const n = s.length;
   const min = s[0];
@@ -75,10 +86,10 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
 
   if (method === 'continuous') {
     if (diverging) {
-      const M = Math.max(Math.abs(quantile(s, 0.02)), Math.abs(quantile(s, 0.98))) || Math.max(Math.abs(min), Math.abs(max)) || 1;
-      lo = -M;
-      hi = M;
-      colourOf = (x) => interpolate(div, 0.5 + x / (2 * M));
+      const M = Math.max(Math.abs(quantile(s, 0.02) - c0), Math.abs(quantile(s, 0.98) - c0)) || Math.max(Math.abs(min - c0), Math.abs(max - c0)) || 1;
+      lo = c0 - M;
+      hi = c0 + M;
+      colourOf = (x) => interpolate(div, 0.5 + (x - c0) / (2 * M));
     } else {
       lo = quantile(s, 0.02);
       hi = quantile(s, 0.98);
@@ -89,7 +100,14 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       colourOf = (x) => interpolate(seq, (x - lo) / (hi - lo));
     }
   } else {
-    if (method === 'quantile') {
+    if (method === 'quantile' && diverging && c0 !== 0 && min < c0 && max > c0) {
+      // a scale centred on a meaningful midpoint (yes share: 50 %): three classes on each side, with
+      // breaks at the terciles of the distance from the midpoint, so yes and no majorities are never mixed
+      const dist = s.map((x) => Math.abs(x - c0)).sort((a, b) => a - b);
+      const d1 = +quantile(dist, 1 / 3).toPrecision(3);
+      const d2 = +quantile(dist, 2 / 3).toPrecision(3);
+      breaks = [...new Set([c0 - d2, c0 - d1, c0, c0 + d1, c0 + d2])].filter((b) => b > min && b <= max).sort((a, b) => a - b);
+    } else if (method === 'quantile') {
       // A value shared by a large block of units at either end (0 % lake share, 0 births) gets a class
       // of its own; the other units are split into quantiles. Without this the ties swallow the breaks
       // and the map collapses to one or two classes.
@@ -114,13 +132,13 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       }
       const rest = s.slice(lo0, hi0);
       for (let k = 1; k < nq; k++) raw.push(quantile(rest, k / nq));
-      if (diverging && min < 0 && max > 0) raw.push(0);
+      if (diverging && min < c0 && max > c0) raw.push(c0);
       breaks = [...new Set(raw)].filter((b) => b > min && b <= max).sort((a, b) => a - b);
     } else if (diverging) {
-      const M = Math.max(Math.abs(min), Math.abs(max)) || 1;
-      lo = -M;
-      hi = M;
-      breaks = [-0.6 * M, -0.2 * M, 0.2 * M, 0.6 * M].filter((b) => b > min && b <= max);
+      const M = Math.max(Math.abs(min - c0), Math.abs(max - c0)) || 1;
+      lo = c0 - M;
+      hi = c0 + M;
+      breaks = [-0.6 * M, -0.2 * M, 0.2 * M, 0.6 * M].map((b) => c0 + b).filter((b) => b > min && b <= max);
     } else {
       const w = (max - min) / N_CLASSES;
       breaks = w > 0 ? Array.from({ length: N_CLASSES - 1 }, (_, k) => min + w * (k + 1)) : [];
@@ -131,8 +149,8 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
     } else if (method === 'equal') {
       // fixed symmetric classes: strong –, moderate –, around 0, moderate +, strong +
       const idx = [0, 1, 3, 5, 6];
-      const M = hi;
-      const edges = [-Infinity, -0.6 * M, -0.2 * M, 0.2 * M, 0.6 * M, Infinity];
+      const M = hi - c0;
+      const edges = [-Infinity, c0 - 0.6 * M, c0 - 0.2 * M, c0 + 0.2 * M, c0 + 0.6 * M, Infinity];
       classColours = Array.from({ length: nCls }, (_, c) => {
         const a = c === 0 ? min : breaks[c - 1];
         return div[idx[Math.min(4, classIndex(a, edges.slice(1, 5)))]];
@@ -143,12 +161,12 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       const upperOf = (c: number) => (c === nCls - 1 ? max : breaks[c]);
       const neg: number[] = [];
       const pos: number[] = [];
-      for (let c = 0; c < nCls; c++) (upperOf(c) <= 0 && lowerOf(c) < 0 ? neg : pos).push(c);
+      for (let c = 0; c < nCls; c++) (upperOf(c) <= c0 && lowerOf(c) < c0 ? neg : pos).push(c);
       classColours = new Array(nCls);
       const grade = (k: number, len: number) => (len === 1 ? 2 : 1 + Math.round((k * 2) / (len - 1)));
       // neg is ascending (most negative first): the class next to 0 is the last one
       neg.forEach((c, j) => (classColours[c] = div[3 - grade(neg.length - 1 - j, neg.length)]));
-      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === 0 && upperOf(c) === 0 ? div[3] : div[3 + grade(j, pos.length)]));
+      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === c0 && upperOf(c) === c0 ? div[3] : div[3 + grade(j, pos.length)]));
     }
     colourOf = (x) => classColours[classIndex(x, breaks)];
   }
@@ -167,7 +185,7 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
     if (x < classMin[c]) classMin[c] = x;
     if (x > classMax[c]) classMax[c] = x;
   }
-  return { method, diverging, breaks, classColours, counts, classMin, classMax, lo, hi, min, max, n, colourOf, unitColour };
+  return { method, diverging, centre: c0, breaks, classColours, counts, classMin, classMax, lo, hi, min, max, n, colourOf, unitColour };
 }
 
 // ---------------------------------------------------------------- distribution axis
@@ -359,10 +377,21 @@ export function fmtTick(x: number, meta: MetricMeta | { decimals: number }): str
   return fmtNumber(r, Number.isInteger(r) ? 0 : d);
 }
 
-/** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14, vote no. 6870' */
-export function fmtPeriod(p: string): string {
+/** Titles of federal votes by period ('2026-06-14#6870'), per language; filled from metrics.json
+ *  (latest_title) and the vote index. Reactive: labels update when the index arrives. */
+export const periodTitles = new SvelteMap<string, Record<string, string>>();
+export function voteTitle(p: string): string | null {
+  const t = periodTitles.get(p);
+  if (!t) return null;
+  return t[app.lang] ?? t.en ?? t.de ?? t.fr ?? Object.values(t)[0] ?? null;
+}
+/** '2026-06-14#6870' (vote date and vote number) -> '2026-06-14 · <title>' when the title is known,
+ *  else the date alone (no internal vote number in the UI). `short` omits the title. */
+export function fmtPeriod(p: string, short = false): string {
   const [a, b] = p.split('#');
-  return b ? `${a}, vote no. ${b}` : a;
+  if (!b) return a;
+  const title = short ? null : voteTitle(p);
+  return title ? `${a} · ${title}` : a;
 }
 
 export function fmtR(r: number): string {

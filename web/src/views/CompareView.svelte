@@ -6,7 +6,7 @@
   import LevelNote from '../components/LevelNote.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import Scatter from '../components/Scatter.svelte';
-  import { buildScale, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
+  import { buildScale, divergeCentre, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import { fmtNumber } from '../lib/classify';
   import { loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
@@ -98,7 +98,7 @@
   const scaleOf = (v: (number | null)[] | undefined, m: MetricMeta | undefined, method: Method) => {
     if (!v || !m) return null;
     const s = sortedValues(v);
-    return s.length ? buildScale(v, method, isDiverging(m, s), seq, div) : null;
+    return s.length ? buildScale(v, method, isDiverging(m, s), seq, div, divergeCentre(m)) : null;
   };
   const scaleA = $derived(scaleOf(colA?.v, metaA, app.cls));
   const scaleB = $derived(scaleOf(colB?.v, metaB, app.cls));

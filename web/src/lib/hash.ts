@@ -40,6 +40,10 @@ export interface ViewState {
   only: boolean;
   /** public transport on the map: 'st' station time towards the hub (default), 'dd' door to door */
   ptm: 'st' | 'dd';
+  /** federal vote shown by the per-vote metrics (vote id; null = the latest vote) */
+  vote: string | null;
+  /** yes share shown as the difference from the national result */
+  vdiff: boolean;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -53,7 +57,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -126,6 +130,8 @@ export function parseHash(hash: string): ViewState {
     lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
     only: get('only') === '1',
     ptm: get('ptm') === 'dd' ? 'dd' : 'st',
+    vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
+    vdiff: get('vd') === '1',
     preset,
     params,
   };
@@ -170,6 +176,8 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.display === 'symbols') add('d', 'sym');
   if (s.cls !== 'quantile') add('cls', CLS_KEY[s.cls]);
   if (s.year) add('y', s.year);
+  if (s.vote) add('vote', s.vote);
+  if (s.vdiff) add('vd', '1');
   for (const f of s.filters) add('f', filterKey(f));
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);
   if (s.reach !== 'off') {

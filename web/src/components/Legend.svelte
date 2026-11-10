@@ -111,7 +111,7 @@
           {#if b > dom.lo && b < dom.hi}<line x1={px(b)} x2={px(b)} y1="4" y2={H + 7} class="brk" />{/if}
         {/each}
       {/if}
-      {#if scale.diverging && dom.lo < 0 && dom.hi > 0}<line x1={px(0)} x2={px(0)} y1="0" y2={H + 7} class="zero" />{/if}
+      {#if scale.diverging && dom.lo < scale.centre && dom.hi > scale.centre}<line x1={px(scale.centre)} x2={px(scale.centre)} y1="0" y2={H + 7} class="zero" />{/if}
       {#if Number.isFinite(median)}
         <path d="M{px(median) - 3.5},0 h7 l-3.5,4.5 z" class="md" />
         <text x={Math.min(PAD + W - 2, Math.max(PAD + 2, px(median) + 6))} y="7" class="mdl" text-anchor={px(median) > PAD + W - 70 ? 'end' : 'start'}
@@ -141,7 +141,7 @@
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if scale.method === 'continuous'}<span> · {tr('lg.clamped')}</span>{/if}
     {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}</span>{/if}
-    {#if scale.diverging}<span> · {tr('lg.centred')}</span>{/if}
+    {#if scale.diverging}<span> · {tr('lg.centredOn', { c: fmtTick(scale.centre, meta) + (meta.unit.startsWith('%') ? '%' : '') })}</span>{/if}
   </p>
   <p class="foot">
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}

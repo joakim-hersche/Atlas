@@ -12,8 +12,11 @@
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
   import YearSlider from '../components/YearSlider.svelte';
+  import VotePicker from '../components/VotePicker.svelte';
+  import VoteResult from '../components/VoteResult.svelte';
+  import { loadVoteFile, loadVoteIndex, voteIdOf, type VoteIndex } from '../lib/votes';
   import StatsBlock from '../components/StatsBlock.svelte';
-  import { buildScale, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
+  import { buildScale, divergeCentre, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
   import { precisionText } from '../lib/data';
@@ -74,16 +77,37 @@
     const nUnits = $derived(ld.units.length);
 
   // ------------------------------------------------------------------ shade metric
-  const metaA = $derived<MetricMeta>(metas.get(app.metric) ?? metas.get('pop_total')!);
-  const whyA = $derived(unavailableReason(metaA, ld.level));
-  const refA = $derived(cols.get(ld, metaA.id, app.year));
+  const metaRaw = $derived<MetricMeta>(metas.get(app.metric) ?? metas.get('pop_total')!);
+  const whyA = $derived(unavailableReason(metaRaw, ld.level));
+  const refRaw = $derived(cols.get(ld, metaRaw.id, app.year));
+
+  // federal votes (D32): any vote from the index; yes share optionally as the difference from Switzerland
+  let voteIx = $state.raw<VoteIndex | null>(null);
+  $effect(() => {
+    // only builds whose metrics.json announces the vote index have one (no request otherwise)
+    if (metaRaw.per_vote && metaRaw.vote_index && !voteIx) loadVoteIndex().then((ix) => (voteIx = ix));
+  });
+  const voteShown = $derived(refRaw && metaRaw.per_vote ? voteIdOf(refRaw.col.period) : null);
+  const voteEntry = $derived(voteIx && voteShown ? (voteIx.votes.find((v) => v.id === voteShown) ?? null) : null);
+  const vdiff = $derived(app.vdiff && metaRaw.id === 'vote_yes_share' && !!chA && !!refRaw);
+  const metaA = $derived<MetricMeta>(
+    vdiff
+      ? { ...metaRaw, id: 'vote_yes_share_diff', label_en: t('vt.diffLabelEn'), label_de: t('vt.diffLabelDe'), label_fr: t('vt.diffLabelFr'),
+          unit: 'pp', unit_de: 'Pp.', unit_fr: 'pp', aggregation: 'change:vote_yes_share', direction: 'neutral', decimals: 1, headline: null }
+      : metaRaw,
+  );
+  const refA = $derived(
+    vdiff && refRaw && chA
+      ? { ...refRaw, meta: metaA, col: { ...refRaw.col, v: refRaw.col.v.map((x) => (x === null ? null : Math.round((x - chA!.value) * 100) / 100)) } }
+      : refRaw,
+  );
   const colA = $derived(refA?.col);
   const scaleA = $derived.by(() => {
     if (!colA) return null;
     const s = sortedValues(colA.v);
-    return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp()) : null;
+    return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA)) : null;
   });
-  const yearPeriods = $derived(seriesPeriods(metaA, ld.level));
+  const yearPeriods = $derived(seriesPeriods(metaRaw, ld.level));
   /** a count (sum) as a choropleth favours large units: suggest circles */
   const countHint = $derived(metaA.aggregation === 'sum' && app.display === 'choropleth' && app.size !== metaA.id && !whyA);
   function countAsSymbols() {
@@ -91,13 +115,30 @@
     app.display = 'symbols';
   }
   const yearEmpty = $derived(!!colA && refA?.file === null && !colA.v.some((x) => x !== null));
-  // national value: latest file, or the series row of Switzerland for a past year
+  // national value: latest file, the series row of Switzerland for a past year, or the chosen vote
   $effect(() => {
-    const m = metaA;
-    const past = refA && refA.file === null ? refA.col.period : null;
+    const m = metaRaw;
+    const ref = refRaw;
+    const past = ref && ref.file === null ? ref.col.period : null;
     let live = true;
     chA = null;
-    if (past) {
+    if (past && m.per_vote) {
+      const id = voteIdOf(past);
+      loadVoteIndex().then((ix) => {
+        const e = ix?.votes.find((v) => v.id === id);
+        if (!e || !live) return;
+        const known = m.id === 'vote_yes_share' ? e.yes_pct : m.id === 'vote_turnout' ? e.turnout_pct : null;
+        if (known !== null && known !== undefined) {
+          chA = { value: known, period: past };
+          return;
+        }
+        loadVoteFile(e.file).then((f) => {
+          const row = f?.levels.schweiz?.[m.id];
+          const x = row ? (row.CH ?? Object.values(row)[0]) : null;
+          if (live) chA = x !== null && x !== undefined ? { value: x, period: past } : null;
+        });
+      });
+    } else if (past) {
       loadSeries(m.id).then((s) => {
         const k = s ? s.periods.indexOf(past) : -1;
         const x = k >= 0 ? s!.levels.schweiz?.CH?.[k] : null;
@@ -583,8 +624,9 @@
   {/if}
 {/snippet}
 {#snippet statsSnip()}
+  {#if voteIx && voteEntry && !whyA}<VoteResult index={voteIx} entry={voteEntry} />{/if}
   {#if colA && !whyA}
-    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
+    <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={vdiff && chA ? { value: 0, period: chA.period } : chA} sel={null}
       source={base.sources.get(metaA.source)} unitWord={word} mask={filtered ? match.m : null} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
@@ -615,7 +657,17 @@
         <div class="row2 lab">
           <span class="caps">{t('mv.shade')}</span>
         </div>
-        <MetricPicker metrics={base.metrics} level={ld.level} value={metaA.id} onpick={(id) => (app.metric = id)} />
+        <MetricPicker metrics={base.metrics} level={ld.level} value={metaRaw.id} onpick={(id) => (app.metric = id)} />
+        {#if metaRaw.per_vote && voteIx && voteShown}
+          <VotePicker index={voteIx} value={voteShown} onpick={(id) => (app.vote = voteIdOf(metaRaw.latest) === id ? null : id)} />
+        {/if}
+        {#if metaRaw.id === 'vote_yes_share' && !whyA}
+          <div class="seg vd" role="radiogroup" aria-label={t('vt.view')}>
+            <button type="button" role="radio" aria-checked={!app.vdiff} onclick={() => (app.vdiff = false)}>{t('vt.share')}</button>
+            <button type="button" role="radio" aria-checked={app.vdiff} disabled={!chA} title={chA ? '' : t('st.noCH')} onclick={() => (app.vdiff = true)}>{t('vt.diff')}</button>
+          </div>
+        {/if}
+        {#if refRaw?.voteMissing}<p class="foot">{t('vt.missing')}</p>{/if}
         <div class="legend-wrap">
           {#if whyA}
             <p class="why">{whyA}</p>
@@ -701,7 +753,7 @@
         <div class="caps lab">{t('tab.filters')}</div>
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
           {station} method={(mode, h) => methodText(mode, h, rt, station)}
-          options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
+          options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaRaw.id) ? 'pop_total' : metaRaw.id}
           defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} onzoom={match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
       </section>
 
@@ -817,6 +869,8 @@
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
   .exrow { margin: 6px 0 0; }
+  .vd { margin-top: 6px; }
+  .vd button { padding: 3px 8px; font-size: 0.74rem; }
   .exb { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
   .exb:disabled { opacity: 0.5; cursor: progress; }
   .hintc { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--accent); padding-left: 6px; }

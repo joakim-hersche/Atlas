@@ -28,6 +28,8 @@ export class AppState {
   lang = $state<Lang>('en');
   only = $state(false);
   ptm = $state<'st' | 'dd'>('st');
+  vote = $state<string | null>(null);
+  vdiff = $state(false);
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
   levelNote = $state<{ text: string; level: string; metric: string; prev: { level: string; metric: string; metricB: string | null; size: string | null } } | null>(null);
@@ -63,6 +65,8 @@ export class AppState {
     this.lang = v.lang;
     this.only = v.only;
     this.ptm = v.ptm;
+    this.vote = v.vote;
+    this.vdiff = v.vdiff;
     this.preset = v.preset;
     this.loads++;
   }
@@ -71,7 +75,7 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, params: { ...this.params },
     };
   }
 

@@ -3,12 +3,16 @@
 // the value appears once loaded and every $derived that asked for it re-runs.
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { loadSeries, loadTheme, seriesPeriods, type Base, type ColRef, type LevelData } from './data';
+import { app } from './state.svelte';
+import { loadVoteFile, loadVoteIndex, voteIdOf } from './votes';
 
 export interface ColView extends ColRef {
   /** a year was asked for but this metric has no value for it: the latest period is shown */
   yearMissing: string | null;
   /** a year was asked for but the metric's series file is not in this build: the latest period is shown */
   noSeries: boolean;
+  /** a federal vote was asked for that this build does not have: the latest vote is shown */
+  voteMissing?: string | null;
 }
 
 export class ColumnStore {
@@ -25,6 +29,9 @@ export class ColumnStore {
     if (!ld || !id) return null;
     const meta = this.base.metas.get(id);
     if (!meta || !meta.levels.includes(ld.level)) return null;
+    // per-vote metrics (yes share, turnout ...): the vote chosen in the vote picker, from its own file
+    const voteId = meta.per_vote && meta.vote_index && app.vote && voteIdOf(meta.latest) !== app.vote ? app.vote : null;
+    if (voteId) return this.vote(ld, id, voteId);
     const periods = seriesPeriods(meta, ld.level);
     const wanted = year && year !== meta.latest && periods.includes(year) ? year : null;
     const noSeries = !!wanted && this.#noSeries.has(id);
@@ -67,6 +74,42 @@ export class ColumnStore {
           })
           .catch(fail);
       }
+    }
+    return undefined;
+  }
+
+  /** Column of a per-vote metric for one vote; unknown vote or no vote files: the latest vote, flagged. */
+  private vote(ld: LevelData, id: string, voteId: string): ColView | null | undefined {
+    const meta = this.base.metas.get(id)!;
+    const key = `${ld.level}|${id}|vote:${voteId}`;
+    const hit = this.#cache.get(key);
+    const flags = { yearMissing: null, noSeries: false };
+    if (hit !== undefined) return hit && { ...hit, ...flags, voteMissing: hit.col.period === meta.latest ? voteId : null };
+    if (!this.#pending.has(key)) {
+      this.#pending.add(key);
+      const done = (v: ColRef | null) => {
+        this.#pending.delete(key);
+        this.#cache.set(key, v);
+      };
+      const latest = () =>
+        loadTheme(ld.level, meta.file, ld.core).then((f) => {
+          const col = f.metrics[id];
+          done(col ? { meta, level: ld.level, col, file: f } : null);
+        });
+      loadVoteIndex()
+        .then((ix) => {
+          const e = ix?.votes.find((v) => v.id === voteId);
+          if (!e) return latest();
+          return loadVoteFile(e.file).then((vf) => {
+            const rows = vf?.levels[ld.level]?.[id];
+            if (!vf || !rows) return latest();
+            done({ meta, level: ld.level, col: { period: e.period, v: ld.units.map((u) => rows[u] ?? null) }, file: null });
+          });
+        })
+        .catch((e) => {
+          this.#pending.delete(key);
+          this.error = String(e);
+        });
     }
     return undefined;
   }
