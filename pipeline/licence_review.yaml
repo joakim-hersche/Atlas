@@ -28,10 +28,30 @@ bfe_energy:
   metrics: [en_ecar_count, en_ecar_share, en_charging_spots, en_pv_installed_kwp, en_pv_kwp_per_capita,
             en_solar_potential_used, en_heat_renewable_count, en_heat_nonrenewable_count,
             en_heat_renewable_share, en_elec_consumption_mwh, en_elec_consumption_per_capita,
-            en_renelec_production_mwh, en_renelec_hydro_mwh, en_renelec_solar_mwh, en_renelec_per_capita]
-  evidence: "Energie Reporter: CC BY 4.0 (README in the downloaded zip). BFE solar potential and Energiestädte stay blocked until their terms are verified."
+            en_renelec_production_mwh, en_renelec_hydro_mwh, en_renelec_solar_mwh, en_renelec_per_capita,
+            energiestadt_label, energiestadt_gold, energiestadt_score]
+  evidence: "Energie Reporter: CC BY 4.0 (README in the downloaded zip). Energiestaedte: STAC https://data.geo.admin.ch/api/stac/v1/collections/ch.bfe.energiestaedte links https://opendata.swiss/en/terms-of-use/#terms_by (provider SFOE) = 'Freie Nutzung. Quellenangabe ist Pflicht' (category text on https://www.bfs.admin.ch/de/nutzungsbedingungen), checked 2026-11-10; same basis as BLN/ARE. BFE municipal solar potential (en_solar_roof_*) stays held back: the aggregate file https://www.uvek-gis.admin.ch/BFE/ogd/52/... carries no licence and its opendata.swiss entry is unreadable (403)."
 
 bafu_protected_areas:
   status: cleared
   metrics: [pa_municipal_area_ha, pa_bln_ha, pa_bln_share]
-  evidence: "BLN: STAC links opendata.swiss terms_by. Parks and biotope inventories: no licence link (to verify)."
+  evidence: "BLN: STAC https://data.geo.admin.ch/api/stac/v1/collections/ch.bafu.bundesinventare-bln links opendata.swiss terms_by. Parks (ch.bafu.schutzgebiete-paerke_nationaler_bedeutung) and moors/floodplains/dry grasslands: STAC 'proprietary' without licence link, geocat.ch unreadable (checked 2026-11-10); biotope union mixes them with amphibians (terms_by), so parks and biotopes stay held back."
+
+# --- Verification pass D22, 2026-11-10 (excerpts: scratchpad samples/licences/) ---
+
+geo_identity:
+  status: cleared
+  evidence: "swissBOUNDARIES3D: product page links https://www.swisstopo.admin.ch/de/nutzungsbedingungen-kostenlose-geodaten-und-geodienste: 'Die kostenlosen Geodaten und Geodienste von swisstopo duerfen genutzt, verbreitet und zugaenglich gemacht werden. Weiter duerfen sie angereichert, bearbeitet sowie auch kommerziell genutzt werden. Eine Quellenangabe ist Pflicht.' Elevation: BFS G1 boundaries, DAM asset 36390147 termsOfUse OPEN-BY ('Freie Nutzung - Quellenangabe ist Pflicht'), checked 2026-11-10."
+
+bfs_accessibility:
+  status: cleared
+  evidence: "Binding dataset-level terms on the BFS asset https://statistik.admin.ch/de/asset/32029919: 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht'. Stricter statements also permit this use: data description PDF in the official zip 'Wiedergabe unter Angabe der Quelle fuer nichtkommerzielle Nutzung gestattet'; STAC links opendata.swiss terms_by_ask (commercial use needs permission). Cleared for non-commercial use with attribution only, checked 2026-11-10."
+
+kt_crime:
+  status: cleared
+  evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json, dataset 1202@kantonspolizei-kanton-zuerich, file KTZH_00001202_00003600.csv licence 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'; ZH OGD terms https://www.zh.ch/de/politik-staat/opendata.html 'Sie duerfen offene Daten vervielfaeltigen, verbreiten und weiter zugaenglich machen, anreichern und bearbeiten, kommerziell nutzen'. BS: https://data.bs.ch dataset 100508 licence 'CC BY 4.0'. Checked 2026-11-10."
+
+kt_landprice:
+  status: cleared
+  metrics: [land_price_m2, land_price_model_m2]
+  evidence: "ZH: OGD catalogue https://www.web.statistik.zh.ch/ogd/daten/zhweb.json lists KANTON_ZUERICH_199.csv (296@statistisches-amt) and _477.csv (332@statistisches-amt) with 'NonCommercialAllowed-CommercialAllowed-ReferenceRequired'. BL: https://data.bl.ch/terms/terms-and-conditions/ 'Alle Datensaetze koennen unter der Lizenz CC-BY (freie Nutzung mit Quellenangabe) weiterverarbeitet und kommerziell genutzt werden'; dataset 10200 dcat_ap_ch terms_by. land_transactions stays held back: ZH indicator 402 is not in the OGD catalogue (no licence). Checked 2026-11-10."
