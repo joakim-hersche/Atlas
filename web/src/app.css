@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f8;
+  --panel: #ffffff;
+  --panel-2: #f1f3f5;
+  --text: #16191d;
+  --muted: #5d6670;
+  --border: #d9dde2;
+  --accent: #0b5cad;
+  --accent-text: #ffffff;
+  --focus: #0b5cad;
+  --map-bg: #e9ecef;
+  --water: #b9d3e6;
+  --gem-line: #ffffff;
+  --kt-line: #2b2f36;
+  --sel-line: #000000;
+  --nodata-fill: #e4e6e9;
+  --nodata-line: #a9afb6;
+  --reach-line: #d1005a;
+  --reach-casing: #ffffff;
+  --shadow: 0 4px 18px rgba(20, 25, 35, 0.16);
+  --radius: 14px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101317;
+    --panel: #1a1e24;
+    --panel-2: #232830;
+    --text: #e8eaed;
+    --muted: #9aa3ad;
+    --border: #333a43;
+    --accent: #6cb4ff;
+    --accent-text: #0b1520;
+    --focus: #6cb4ff;
+    --map-bg: #15191e;
+    --water: #233a4f;
+    --gem-line: #15191e;
+    --kt-line: #c9ced4;
+    --sel-line: #ffffff;
+    --nodata-fill: #2a2f36;
+    --nodata-line: #59616b;
+    --reach-line: #ff4d94;
+    --reach-casing: #15191e;
+    --shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+    --bg: #101317;
+    --panel: #1a1e24;
+    --panel-2: #232830;
+    --text: #e8eaed;
+    --muted: #9aa3ad;
+    --border: #333a43;
+    --accent: #6cb4ff;
+    --accent-text: #0b1520;
+    --focus: #6cb4ff;
+    --map-bg: #15191e;
+    --water: #233a4f;
+    --gem-line: #15191e;
+    --kt-line: #c9ced4;
+    --sel-line: #ffffff;
+    --nodata-fill: #2a2f36;
+    --nodata-line: #59616b;
+    --reach-line: #ff4d94;
+    --reach-casing: #15191e;
+    --shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+#app { position: fixed; inset: 0; }
+
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.maplibregl-ctrl-group { background: var(--panel) !important; box-shadow: var(--shadow) !important; }
+.maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
+.maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(1); }
+  :root:not([data-theme="light"]) .maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib.maplibregl-compact { background: var(--panel) !important; color: var(--muted); }
+  :root:not([data-theme="light"]) .maplibregl-ctrl-attrib a { color: var(--muted); }
+  :root:not([data-theme="light"]) .maplibregl-ctrl-attrib-button { filter: invert(1); }
+}
+:root[data-theme="dark"] .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(1); }
+:root[data-theme="dark"] .maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib.maplibregl-compact { background: var(--panel) !important; color: var(--muted); }
+:root[data-theme="dark"] .maplibregl-ctrl-attrib a { color: var(--muted); }
+:root[data-theme="dark"] .maplibregl-ctrl-attrib-button { filter: invert(1); }
+
+.reach-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
