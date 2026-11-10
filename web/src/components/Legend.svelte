@@ -190,7 +190,7 @@
   {/if}
 
   <p class="meta">
-    {#if mask}<span class="num">{tr('ux.nMatching', { n: fmtNumber(s.length, 0) })}</span> · {/if}<span class="num">n = {fmtNumber(scale.n, 0)}</span>
+    {#if mask}<span class="num">{tr('ux.nMatching', { n: fmtNumber(s.length, 0) })}</span>{' · '}{/if}<span class="num">n = {fmtNumber(scale.n, 0)}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> <span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}<Term k="majority_election" />
       <button type="button" class="link" onclick={() => (app.maj = true)}>{tr('lg.majInclude')}</button></span>

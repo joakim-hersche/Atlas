@@ -53,6 +53,7 @@
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
   import { hasStation, kindLabel, mainStation, methodText, nearestHubOf, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
   import { divRamp, lighten, seqRamp, token } from '../lib/theme';
+  import { fmtRange, fmtSpread, loadSpread, loadSpreadIndex, spreadDef, spreadIdx, spreadOf, type SpreadFile, type SpreadIndex, type SpreadKind } from '../lib/spread';
 
   interface Props {
     base: Base;
@@ -679,7 +680,7 @@
     view.map.on('movestart', (e) => {
       if ((e as { originalEvent?: unknown }).originalEvent) userMoved = true;
     });
-    if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = view.map;
+    if (new URLSearchParams(location.search).has("debug")) Object.assign(window, { __map: view.map, __ref: refLayer });
     view.ready.then(() => {
       mapReady = true;
       fit();
@@ -903,6 +904,13 @@
   ];
   const phoneTab = $derived(PHONE_TABS.some((t) => t.id === app.tab) ? app.tab! : 'map');
   const deskTab = $derived(app.tab === 'rank' ? 'rank' : 'stats');
+  /** D7: on desktop the right panel stays closed (the map gets the room) until a place is selected or the
+   *  Ranking / Statistics tab is opened */
+  const sideOpen = $derived(desktop && !app.embed && (selIdx !== null || app.tab === 'rank' || app.tab === 'stats'));
+  function closeSide() {
+    app.sel = null;
+    app.tab = null;
+  }
   function openTab(id: string) {
     // the open tab tapped again folds the sheet away
     if (sheetOpen && phoneTab === id) {
@@ -1046,6 +1054,7 @@
           door: { minutes: dd, reason: dd === null ? miss(ddRef, 'pt') : null },
           active: reachKind,
           method: methodText(reachKind, hub.name, rt, true),
+          spread: spreadCard(uid),
         };
       } else if (reachRef && reachCol) {
         const x = reachCol.v[selIdx];
@@ -1101,6 +1110,33 @@
     }
     return { i, reach, sub, extra, notes, ci, relText };
   });
+  // C1: the morning spread of the shown hub (one file per hub, loaded while public-transport reach is on)
+  let spreadIx = $state.raw<SpreadIndex | null>(null);
+  let spreadF = $state.raw<SpreadFile | null>(null);
+  $effect(() => {
+    const on = reachOn && reachMode === 'pt' && ld.level === 'gemeinde';
+    const h = hub.slug;
+    let live = true;
+    if (!on) return;
+    loadSpreadIndex().then((x) => live && (spreadIx = x)).catch(() => {});
+    loadSpread(h).then((f) => live && (spreadF = f)).catch(() => {});
+    return () => (live = false);
+  });
+  function spreadCard(uid: string) {
+    if (!spreadIx || !spreadF || spreadF.hub !== hub.slug) return null;
+    const k = spreadIdx(spreadIx, uid);
+    if (k < 0) return null;
+    const line = (kind: SpreadKind) => {
+      const out = {
+        to: fmtSpread(spreadOf(spreadF!, k, 'to', kind, 'journey')),
+        from: fmtSpread(spreadOf(spreadF!, k, 'from', kind, 'journey')),
+        waitTo: fmtRange(spreadOf(spreadF!, k, 'to', kind, 'with_wait')),
+        waitFrom: fmtRange(spreadOf(spreadF!, k, 'from', kind, 'with_wait')),
+      };
+      return out.to || out.from ? out : null;
+    };
+    return { st: line('pt_station'), dd: line('pt'), title: `${t('sp2.legend')} ${spreadDef(spreadIx, 'with_wait', app.lang)}` };
+  }
   const centreRef = $derived(metaA.id === 'nrw_leaning' ? cols.get(ld, 'nrw_share_bloc_centre', app.year) : null);
   const tip = $derived.by(() => {
     if (hover === null || !hoverAt || !colA) return null;
@@ -1157,7 +1193,7 @@
   {/if}
 {/snippet}
 
-<main class="stage" class:full={full || app.embed} class:embed={app.embed} id="main" tabindex="-1">
+<main class="stage" class:full={full || app.embed} class:embed={app.embed} class:sideopen={sideOpen} class:siderank={sideOpen && deskTab === 'rank'} id="main" tabindex="-1">
   <h1 class="sr-only">{t('mv.h1', { metric: ml(metaA), units: levelName(ld.level) })}</h1>
   <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label={t('mv.controls')}>
     {#if !desktop}
@@ -1354,6 +1390,12 @@
           mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} />
       {/if}
       {#if !app.embed}
+      {#if desktop && !app.embed && !sideOpen}
+        <div class="sideopen seg" role="group" aria-label={t('mv.side')}>
+          <button type="button" onclick={() => (app.tab = 'rank')}>{t('tab.rank')}</button>
+          <button type="button" onclick={() => (app.tab = 'stats')}>{t('tab.stats')}</button>
+        </div>
+      {/if}
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
@@ -1415,8 +1457,13 @@
     {/if}
   </section>
 
-  {#if desktop && !app.embed}
+  {#if sideOpen}
     <aside class="side" aria-label={t('tab.stats')}>
+      {#if !card}
+        <button type="button" class="sclose" aria-label={t('common.close')} title={t('common.close')} onclick={closeSide}>
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" /></svg>
+        </button>
+      {/if}
       {#if card && refA && colA}
         <div class="caps lab">{t('mv.selected', { one })}</div>
         <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
@@ -1428,7 +1475,7 @@
       {/if}
       <div class="tabs side-tabs" role="tablist" aria-label={t('mv.side')}>
         <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>{t('tab.rank')}</button>
-        <button type="button" role="tab" aria-selected={deskTab === 'stats'} onclick={() => (app.tab = null)}>{t('tab.stats')}</button>
+        <button type="button" role="tab" aria-selected={deskTab === 'stats'} onclick={() => (app.tab = 'stats')}>{t('tab.stats')}</button>
       </div>
       <div class="sblock">
         {#if deskTab === 'rank'}{@render rankSnip()}{:else}{@render statsSnip()}{/if}
@@ -1449,7 +1496,7 @@
   .map { position: absolute; inset: 0; }
   .maptip {
     position: absolute; z-index: 5; pointer-events: none; transform: translate(14px, 14px); background: var(--panel);
-    border: 1px solid var(--ink); padding: 6px 9px; font-size: 0.8rem; white-space: nowrap;
+    border: 1px solid var(--ink); padding: 6px 9px; font-size: var(--fs-small); white-space: nowrap;
   }
   .muted { color: var(--muted); }
   .choose {
@@ -1477,13 +1524,13 @@
   .rhead { margin: 0 0 var(--sp-2); font-size: var(--fs-small); line-height: var(--lh-small); padding-left: var(--sp-2); border-left: 3px solid var(--ink); }
   .rhead .link { margin-left: var(--sp-1); }
   .lab { margin-bottom: 6px; }
-  .why { margin: 0; font-size: 0.8rem; }
+  .why { margin: 0; font-size: var(--fs-small); }
   .yr { margin-top: 10px; }
   .warn { color: var(--text); }
   .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
   .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
   .row2 > .caps { flex: none; white-space: nowrap; }
-  .row2 .seg button { padding: 3px 8px; font-size: 0.76rem; }
+  .row2 .seg button { padding: 3px 8px; font-size: var(--fs-meta); }
   .sp { margin-top: 8px; }
   p.sp { margin-bottom: 0; }
   .status {
@@ -1499,41 +1546,44 @@
   .body section + section { border-top: 1px solid var(--rule); }
   .legend-wrap { margin-top: 10px; }
   .reach .detail { display: block; margin-top: 3px; }
-  .side { background: var(--panel); border-left: 1px solid var(--rule); padding: 14px 16px; overflow-y: auto; }
+  .side { position: relative; min-width: 0; background: var(--panel); border-left: var(--rule-edge); padding: var(--sp-4) var(--gutter); overflow-y: auto; overflow-x: hidden; }
+  .sclose { position: absolute; top: var(--sp-1); right: var(--sp-1); width: var(--ctl-h); height: var(--ctl-h); display: grid; place-items: center; border: 0; background: none; cursor: pointer; color: var(--text); z-index: 2; }
+  .side > .lab, .side > .hint { padding-right: 36px; }
+  .sideopen.seg { position: absolute; z-index: 3; top: 10px; right: 56px; }
   .sblock { margin-top: 10px; }
   .tabs { display: flex; border-bottom: 1px solid var(--ink); }
   .tabs button {
-    flex: 1; padding: 6px 4px; border: 0; background: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; color: var(--muted);
+    flex: 1; padding: 6px 4px; border: 0; background: none; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; color: var(--muted);
     border-bottom: 3px solid transparent; margin-bottom: -1px;
   }
   .tabs button[aria-selected='true'] { color: var(--text); border-bottom-color: var(--ink); }
   .side-tabs { margin-top: 18px; border-top: 1px solid var(--rule); }
-  .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
+  .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: var(--fs-cap); }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
   .exrow { margin: 6px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
   .vd { margin-top: 6px; }
-  .regn { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--ink); padding-left: 6px; }
+  .regn { margin: 6px 0 0; font-size: var(--fs-meta); border-left: 3px solid var(--ink); padding-left: 6px; }
   .ur { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin-top: 6px; }
-  .ur .seg button { padding: 2px 7px; font-size: 0.72rem; }
+  .ur .seg button { padding: 2px 7px; font-size: var(--fs-meta); }
   .pl { margin: 4px 0 0; }
-  .vd button { padding: 3px 8px; font-size: 0.74rem; }
-  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
+  .vd button { padding: 3px 8px; font-size: var(--fs-meta); }
+  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; color: var(--text); }
   .exb:disabled { opacity: 0.5; cursor: progress; }
-  .hintc { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--accent); padding-left: 6px; }
+  .hintc { margin: 6px 0 0; font-size: var(--fs-meta); border-left: 3px solid var(--ink); padding-left: 6px; }
   .flegend {
     position: absolute; z-index: 4; left: 10px; bottom: 26px; width: min(340px, calc(100% - 20px)); background: var(--panel);
     border: 1px solid var(--ink); padding: 6px 8px;
   }
-  .fl-t { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; }
+  .fl-t { font-weight: 700; font-size: var(--fs-small); margin-bottom: 2px; }
   .stage:focus { outline: none; }
   .spsec { padding: 10px 0; }
   .embed-foot {
     flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 10px; background: var(--panel);
-    border-top: 1px solid var(--rule); font-size: 0.7rem; color: var(--faint); min-height: 26px;
+    border-top: 1px solid var(--rule); font-size: var(--fs-cap); color: var(--faint); min-height: 26px;
   }
   .embed-foot .credit { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .embed-foot .open { flex: none; color: var(--text); font-weight: 700; font-size: 0.76rem; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+  .embed-foot .open { flex: none; color: var(--text); font-weight: 700; font-size: var(--fs-meta); text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
   /* D16: the embed legend sits top-left, clear of Genève */
   .stage.embed .flegend { top: 10px; bottom: auto; width: min(260px, calc(100% - 20px)); }
   /* full-screen map: header and panels hidden, the map fills the viewport */
@@ -1545,7 +1595,9 @@
   .lvlbar > :global(*) { pointer-events: auto; }
 
   @media (min-width: 900px) {
-    .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; }
+    .stage { display: grid; grid-template-columns: 320px minmax(0, 1fr); }
+    .stage.sideopen { grid-template-columns: 320px minmax(0, 1fr) 300px; }
+    .stage.siderank { grid-template-columns: 320px minmax(0, 1fr) 360px; }
     .controls { border-right: 1px solid var(--rule); min-height: 0; }
     .body { padding-top: 4px; }
   }

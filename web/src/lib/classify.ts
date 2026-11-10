@@ -181,10 +181,14 @@ export function buildScale(v: (number | null)[], method: Method, diverging: bool
       const pos: number[] = [];
       for (let c = 0; c < nCls; c++) (upperOf(c) <= c0 && lowerOf(c) < c0 ? neg : pos).push(c);
       classColours = new Array(nCls);
-      const grade = (k: number, len: number) => (len === 1 ? 2 : 1 + Math.round((k * 2) / (len - 1)));
+      // D3: one distinct colour per class. Each arm is interpolated from its pale end (next to the centre) to its
+      // dark end, in as many steps as it has classes (a 3-step arm used to repeat colours with 4 or more classes).
+      const negArm = [div[2], div[1], div[0]];
+      const posArm = [div[4], div[5], div[6]];
+      const step = (k: number, len: number) => (len === 1 ? 0.5 : k / (len - 1));
       // neg is ascending (most negative first): the class next to 0 is the last one
-      neg.forEach((c, j) => (classColours[c] = div[3 - grade(neg.length - 1 - j, neg.length)]));
-      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === c0 && upperOf(c) === c0 ? div[3] : div[3 + grade(j, pos.length)]));
+      neg.forEach((c, j) => (classColours[c] = interpolate(negArm, step(neg.length - 1 - j, neg.length))));
+      pos.forEach((c, j) => (classColours[c] = lowerOf(c) === c0 && upperOf(c) === c0 ? div[3] : interpolate(posArm, step(j, pos.length))));
     }
     colourOf = (x) => classColours[classIndex(x, breaks)];
   }

@@ -109,8 +109,8 @@
 
 <style>
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-  .label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
-  .count { color: var(--muted); font-size: 0.8rem; font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: auto; }
+  .label { font-size: var(--fs-cap); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
+  .count { color: var(--muted); font-size: var(--fs-small); font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: auto; }
   .count strong { color: var(--text); }
   .slider { position: relative; height: 40px; }
   .track {
@@ -133,10 +133,10 @@
     background: var(--ink); border: 0; cursor: grab;
   }
   .inputs { display: flex; gap: 8px; align-items: end; }
-  .inputs label { display: flex; flex-direction: column; font-size: 0.78rem; color: var(--text); flex: 1; min-width: 0; }
+  .inputs label { display: flex; flex-direction: column; font-size: var(--fs-meta); color: var(--text); flex: 1; min-width: 0; }
   .inputs input {
     width: 100%; padding: 6px 8px; border: 1px solid var(--ink); background: var(--panel);
-    font-size: 16px; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: var(--fs-input); font-family: var(--font-mono); font-variant-numeric: tabular-nums;
   }
   .reset {
     padding: 7px 10px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-weight: 500;

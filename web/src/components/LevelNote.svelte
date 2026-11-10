@@ -37,12 +37,12 @@
 {/if}
 
 <style>
-  .lnote { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.76rem; background: var(--panel); }
+  .lnote { margin: 0; display: flex; align-items: center; gap: 6px; font-size: var(--fs-meta); background: var(--panel); }
   .float { max-width: 440px; border: 1px solid var(--ink); padding: 3px 3px 3px 8px; }
-  .bar { flex: none; padding: 5px 8px 5px 16px; font-size: 0.78rem; border-bottom: 1px solid var(--rule); }
+  .bar { flex: none; padding: 5px 8px 5px 16px; font-size: var(--fs-meta); border-bottom: 1px solid var(--rule); }
   .tx { flex: 1; min-width: 0; }
-  .back { flex: none; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); padding: 2px 8px; cursor: pointer; font-size: 0.74rem; font-weight: 600; white-space: nowrap; }
-  .stay { flex: none; border: 1px solid var(--ink); background: var(--panel); color: var(--text); padding: 2px 8px; cursor: pointer; font-size: 0.74rem; font-weight: 600; white-space: nowrap; }
+  .back { flex: none; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); padding: 2px 8px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; white-space: nowrap; }
+  .stay { flex: none; border: 1px solid var(--ink); background: var(--panel); color: var(--text); padding: 2px 8px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; white-space: nowrap; }
   .ask { flex-wrap: wrap; row-gap: 4px; }
-  .lx { flex: none; border: 0; background: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; color: var(--text); }
+  .lx { flex: none; border: 0; background: none; cursor: pointer; font-size: var(--fs-body); line-height: 1; padding: 0 4px; color: var(--text); }
 </style>

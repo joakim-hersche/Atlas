@@ -198,6 +198,8 @@ export class RefLayer {
     // lakes first when large enough for their name, then cities by population, then the other lakes
     const floor = minPop(z);
     const av = this.avoid ? m.project(this.avoid) : null;
+    // the hub dot (radius 5.5) is an obstacle for every other label
+    if (av) boxes.push([av.x - 6, av.y - 6, av.x + 6, av.y + 6]);
     type Cand = { kind: 'city'; c: City } | { kind: 'lake'; l: Lake };
     const cands: Cand[] = [];
     for (const c of d.cities) {
@@ -215,15 +217,17 @@ export class RefLayer {
         const size = citySize(c.pop, W < 600);
         const w = this.width(g, c.name, this.font('city', size));
         // next to the reach hub dot (radius 5.5): no own dot, the text set further out
-        const onHub = !!av && Math.hypot(av.x - p.x, av.y - p.y) < 12;
-        const gap = onHub ? 10 : 5;
+        const onHub = !!av && Math.hypot(av.x - p.x, av.y - p.y) < 24;
+        const gap = onHub ? 13 : 5;
         const cx = onHub ? av!.x : p.x;
         const cy = onHub ? av!.y : p.y;
         let align: Placed['align'] = 'left';
-        let box: [number, number, number, number] = [cx - gap + 1.5, cy - size / 2 - 1, cx + gap + w, cy + size / 2 + 1];
+        // the box covers the city's own dot, but not the hub dot (an obstacle of its own)
+        const dot = onHub ? -gap + 2 : 3.5;
+        let box: [number, number, number, number] = [cx - dot, cy - size / 2 - 1, cx + gap + w, cy + size / 2 + 1];
         if (!free(box)) {
           align = 'right';
-          box = [cx - gap - w, cy - size / 2 - 1, cx + gap - 1.5, cy + size / 2 + 1];
+          box = [cx - gap - w, cy - size / 2 - 1, cx + dot, cy + size / 2 + 1];
           if (!free(box)) continue;
         }
         boxes.push(box);

@@ -59,7 +59,7 @@
   .rail { position: relative; flex: 1; min-width: 0; }
   input { display: block; width: 100%; min-width: 0; }
   .yv { font-weight: 700; min-width: 3.2em; text-align: right; }
-  .latest { padding: 2px 7px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-size: 0.74rem; font-weight: 500; }
+  .latest { padding: 2px 7px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-size: var(--fs-meta); font-weight: 500; }
   .latest:disabled { opacity: 0.45; cursor: default; }
   .range { margin: 2px 0 0; }
   /* marker: a small triangle under the track, hollow = incomplete round, red = break in the series */
@@ -69,7 +69,7 @@
   .mk::before {
     content: ''; position: absolute; left: 3px; top: 1px; border: 4px solid transparent; border-bottom: 7px solid var(--ink); border-top: 0;
   }
-  .mk.brk::before { border-bottom-color: var(--accent); }
+  .mk.brk::before { border-bottom-color: var(--ink); }
   .mkn { margin: 2px 0 0; display: flex; align-items: center; gap: 5px; }
   .mi { flex: none; width: 0; height: 0; border: 4px solid transparent; border-bottom: 7px solid var(--ink); border-top: 0; }
 </style>

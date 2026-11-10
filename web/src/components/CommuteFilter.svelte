@@ -116,10 +116,10 @@
 <style>
   .ch { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   .grow { flex: 1; min-width: 0; }
-  .x { flex: none; width: 28px; height: 28px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-size: 1.05rem; line-height: 1; }
-  .cf { margin: 4px 0 0; font-size: 0.74rem; color: var(--muted); }
+  .x { flex: none; width: 28px; height: 28px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-size: var(--fs-lead); line-height: 1; }
+  .cf { margin: 4px 0 0; font-size: var(--fs-meta); color: var(--muted); }
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 4px; }
-  .chip { padding: 2px 7px; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; font-size: 0.76rem; font-weight: 500; }
+  .chip { padding: 2px 7px; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; font-size: var(--fs-meta); font-weight: 500; }
   .rr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .mode { margin-top: 6px; }
   .lim { margin-top: 8px; }
@@ -127,13 +127,13 @@
   .rng { width: 100%; margin: var(--sp-1) 0 0; }
   .sel {
     min-width: 0; padding: 3px 24px 3px 6px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); cursor: pointer;
-    -webkit-appearance: none; appearance: none; font-size: 0.82rem; color: var(--text);
+    -webkit-appearance: none; appearance: none; font-size: var(--fs-small); color: var(--text);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 6px center; background-size: 11px;
   }
   .sel.add { width: 100%; }
-  .seg button { padding: 2px 8px; font-size: 0.76rem; }
+  .seg button { padding: 2px 8px; font-size: var(--fs-meta); }
   @media (max-width: 899px) {
-    .sel { font-size: 16px; }
+    .sel { font-size: var(--fs-input); }
   }
 </style>

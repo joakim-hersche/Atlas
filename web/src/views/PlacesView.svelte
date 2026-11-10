@@ -191,8 +191,8 @@
           <span class="nd"><span class="hatch"></span> {t('p.noData')}</span>
           <span class="why">{e.gap} · {fmtPeriod(e.period)}</span>
         {:else}
-          {#if mark}<span class="mk">{mark.text}</span>{/if}
-          <span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span>
+          <!-- D14: the highest / lowest badge after the value, so the values of a row align -->
+          <span class="vrow"><span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span>{#if mark}<span class="mk">{mark.text}</span>{/if}</span>
           {#each e.flags as f}<span class="why">{f}</span>{/each}
           <span class="yr">{fmtPeriod(e.period)}{#if e.rank}{' · '}{t('pl.rank', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{tiedText(e.rank)}{/if}</span>
           {#if e.rank}<PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />{/if}
@@ -271,12 +271,12 @@
   .pg:focus { outline: none; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 16px 24px 40px; }
-  h1 { margin: 0; font-size: 2rem; letter-spacing: -0.03em; }
-  .intro { margin: 4px 0 0; color: var(--muted); font-size: 0.86rem; }
+  h1 { margin: 0; font-size: var(--fs-h2); letter-spacing: -0.03em; }
+  .intro { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-small); }
   .addrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 4px; padding-bottom: 12px; border-bottom: 3px solid var(--rule); }
   .add { width: 320px; max-width: 100%; }
   .ex { margin-left: 8px; }
-  .chip { padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer; font-size: 0.8rem; white-space: nowrap; }
+  .chip { padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer; font-size: var(--fs-small); white-space: nowrap; }
   .chip:hover { background: var(--panel-2); }
   .legend { margin: 10px 0 8px; max-width: 760px; }
   a { color: var(--text); text-underline-offset: 2px; }
@@ -285,42 +285,43 @@
   .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: calc(180px + var(--n) * 150px); table-layout: fixed; }
   .mcol { width: 300px; text-align: left; position: sticky; left: 0; z-index: 1; background: var(--panel); padding: 6px 12px 6px 0; vertical-align: top; }
-  thead th { position: sticky; top: 0; z-index: 2; background: var(--panel); border-bottom: 2px solid var(--rule); vertical-align: bottom; padding: 6px 10px 6px 0; text-align: left; }
-  thead .corner { z-index: 3; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
-  .uname { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
-  .usub { font-size: 0.72rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
-  .x { flex: none; border: 1px solid var(--ink); background: var(--panel); width: 22px; height: 22px; line-height: 1; cursor: pointer; font-size: 0.95rem; padding: 0; }
-  .lbl { display: block; font-weight: 600; font-size: 0.84rem; line-height: 1.25; }
-  .tags { display: block; font-size: 0.68rem; color: var(--faint); font-weight: 400; margin-top: 1px; }
+  thead th { position: sticky; top: 0; z-index: 2; background: var(--panel); border-bottom: 1px solid var(--rule); vertical-align: bottom; padding: 6px 10px 6px 0; text-align: left; }
+  thead .corner { z-index: 3; font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: 0.06em; }
+  .uname { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; font-size: var(--fs-lead); font-weight: 700; line-height: 1.2; }
+  .usub { font-size: var(--fs-meta); color: var(--muted); font-weight: 400; margin-top: 2px; }
+  .x { flex: none; border: 1px solid var(--ink); background: var(--panel); width: 22px; height: 22px; line-height: 1; cursor: pointer; font-size: var(--fs-body); padding: 0; }
+  .lbl { display: block; font-weight: 600; font-size: var(--fs-small); line-height: 1.25; }
+  .tags { display: block; font-size: var(--fs-cap); color: var(--faint); font-weight: 400; margin-top: 1px; }
   .tags a { color: var(--faint); }
-  .th th { text-align: left; padding: 18px 0 0; border-bottom: 2px solid var(--rule); }
-  .thl { position: sticky; left: 0; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .th th { text-align: left; padding: var(--sec-top) 0 var(--sp-1); border-bottom: 3px solid var(--rule); }
+  .thl { position: sticky; left: 0; font-size: var(--fs-meta); text-transform: uppercase; letter-spacing: 0.06em; }
   tbody tr:not(.th):not(.morer) > * { border-bottom: 1px solid var(--border); }
-  td { vertical-align: top; padding: 6px 10px 6px 8px; font-size: 0.8rem; border-left: 1px solid var(--border); }
-  td .v { display: block; font-weight: 700; font-size: 0.96rem; }
-  td .yr { display: block; font-size: 0.7rem; color: var(--muted); }
+  td { vertical-align: top; padding: 6px 10px 6px 8px; font-size: var(--fs-small); border-left: 1px solid var(--border); }
+  .vrow { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px var(--sp-2); }
+  td .v { font-weight: 700; font-size: var(--fs-lead); line-height: var(--lh-lead); font-variant-numeric: tabular-nums; }
+  td .yr { display: block; font-size: var(--fs-cap); color: var(--muted); }
   td :global(.pb) { max-width: 120px; }
-  .mk { display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 4px; margin-bottom: 1px; border: 1px solid var(--ink); }
+  .mk { display: inline-block; font-size: var(--fs-cap); line-height: var(--lh-cap); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 var(--sp-1); border: 1px solid var(--ink); }
   td.best { box-shadow: inset 3px 0 0 var(--ink); }
   td.best .mk { background: var(--ink); color: var(--ink-text); }
   td.worst .mk { color: var(--muted); border-color: var(--muted); }
   td.ext { box-shadow: inset 3px 0 0 var(--border); }
   .nd { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
-  .why { display: block; font-size: 0.72rem; margin-top: 2px; }
-  .fl { font-size: 0.6rem; color: var(--accent); margin-left: 2px; }
+  .why { display: block; font-size: var(--fs-meta); margin-top: 2px; }
+  .fl { font-size: var(--fs-cap); color: var(--text); margin-left: 2px; }
   .morer td { border-left: 0; padding: 6px 0 2px; }
-  .more { border: 1px solid var(--ink); background: none; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; position: sticky; left: 0; }
+  .more { border: 1px solid var(--ink); background: none; padding: 4px 10px; font-size: var(--fs-meta); font-weight: 600; cursor: pointer; position: sticky; left: 0; }
   .more[aria-expanded='true'] { background: var(--ink); color: var(--ink-text); }
 
   @media (max-width: 899px) {
     .wrap { padding: 12px 16px calc(32px + env(safe-area-inset-bottom)); }
-    h1 { font-size: 1.5rem; }
+    h1 { font-size: var(--fs-stat); }
     .add { width: 100%; }
     .ex { margin-left: 0; }
     .mcol { width: 132px; padding-right: 8px; }
     table { min-width: calc(132px + var(--n) * 128px); }
-    .lbl { font-size: 0.78rem; }
-    .uname { font-size: 0.92rem; }
-    td .v { font-size: 0.86rem; }
+    .lbl { font-size: var(--fs-meta); }
+    .uname { font-size: var(--fs-body); }
+    td .v { font-size: var(--fs-small); }
   }
 </style>

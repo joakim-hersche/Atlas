@@ -38,7 +38,7 @@
 
   /* ---- controls (D8): 32 px on desktop, 40 px on touch screens */
   --ctl-h: 32px;
-  --ctl-h-sm: 28px;
+  --ctl-h-sm: 32px;
 
   /* ---- rules (D9): heavy 3 px black (page header, section start), 1 px black (component edge), 1 px grey (rows) */
   --rule-heavy: 3px solid #000;
@@ -90,9 +90,12 @@
   --font-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
   --font-mono: 'Inter', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
   font-family: var(--font-sans);
-  font-feature-settings: 'tnum' 1, 'cv11' 1;
-  font-size: 14px;
-  line-height: 1.4;
+  /* D2: no global tabular figures (they space hyphens and colons in prose); .num, table cells, legend counts and
+     stat values set tabular-nums themselves. cv11: single-storey a. */
+  font-feature-settings: 'cv11' 1;
+  /* D1: root 16 px, running text and controls 14/20 */
+  font-size: 16px;
+  line-height: var(--lh-body);
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -100,39 +103,52 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+body { font-size: var(--fs-body); line-height: var(--lh-body); }
+td, .tnum { font-variant-numeric: tabular-nums; }
 #app { position: fixed; inset: 0; }
 
 button, select, input { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: var(--text); text-underline-offset: 2px; }
 
 /* shared typographic roles */
-.caps { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
+.caps { font-size: var(--fs-cap); line-height: var(--lh-cap); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
 .num, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.foot { font-size: 0.72rem; color: var(--faint); line-height: 1.4; }
+.foot { font-size: var(--fs-meta); color: var(--text-3); line-height: var(--lh-meta); }
+/* type roles (D1) for markup that wants them by name */
+.t-cap { font-size: var(--fs-cap); line-height: var(--lh-cap); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.t-meta { font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-3); }
+.t-small { font-size: var(--fs-small); line-height: var(--lh-small); }
+.t-body { font-size: var(--fs-body); line-height: var(--lh-body); }
+.t-lead { font-size: var(--fs-lead); line-height: var(--lh-lead); font-weight: 600; }
+.t-stat { font-size: var(--fs-stat); line-height: var(--lh-stat); font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 700; letter-spacing: -0.01em; }
+.t-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; }
 .hatch {
   display: inline-block; width: 14px; height: 10px; border: 1px solid var(--nodata-line); vertical-align: -1px;
   background: repeating-linear-gradient(-45deg, var(--nodata-line) 0 1px, var(--nodata-fill) 1px 4px);
 }
 .seg { display: inline-flex; border: 1px solid var(--ink); overflow: hidden; background: var(--panel); }
-.seg button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text); }
+.seg button { min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); border: 0; background: none; cursor: pointer; font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 500; white-space: nowrap; color: var(--text); }
 .seg button + button { border-left: 1px solid var(--ink); }
-.seg a { padding: 4px 10px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text); text-decoration: none; }
+.seg a { display: inline-flex; align-items: center; min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 500; white-space: nowrap; color: var(--text); text-decoration: none; }
 .seg a + a { border-left: 1px solid var(--ink); }
 .seg button[aria-checked='true'], .seg button[aria-pressed='true'], .seg a[aria-current='page'] { background: var(--ink); color: var(--ink-text); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .maplibregl-ctrl-group { background: var(--panel) !important; box-shadow: none !important; border: 1px solid var(--ink); border-radius: 0 !important; }
-.maplibregl-ctrl-group button { width: 26px !important; height: 26px !important; }
+.maplibregl-ctrl-group button { width: var(--ctl-h) !important; height: var(--ctl-h) !important; }
 .maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
 .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
 .gb-btn-b { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
 .gb-btn-b:hover { background: var(--panel-2) !important; }
-.gb-ch { font: 700 10px/1 var(--font-sans); letter-spacing: 0.02em; }
+/* D8: letter icons 11/700 on an outlined button, pressed = black fill */
+.gb-ch { font: 700 var(--fs-cap)/1 var(--font-sans); letter-spacing: 0.02em; }
 .gb-btn-b[aria-pressed='true'] { background: var(--ink) !important; color: var(--ink-text); }
-.maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 10px; color: var(--muted); }
+.maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: var(--fs-cap); color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
-.maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }
+.maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: var(--fs-body); }
 
 /* buttons (D8): primary black, secondary 1 px outline, text link; 32 px high on desktop, 40 px on touch */
 .btn, .btn-primary {
@@ -169,7 +185,34 @@ input[type='range']:not(.dual):focus-visible { outline: 2px solid var(--focus); 
 .reach-canvas, .ref-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 ::placeholder { color: var(--muted); opacity: 1; }
 
+/* D8: on desktop every button, select and text field is a 32 px control (link-buttons and table-row buttons
+   excepted); the touch rules below raise this to 40 */
+button:not(.link):not(.btn-link):not(.rowbtn):not(.i), select, input[type='text'], input[type='search'], input[type='number'], input:not([type]) {
+  min-height: var(--ctl-h);
+}
+
 /* touch screens: every control at least 40 x 40 (U16) */
 @media (max-width: 899px), (pointer: coarse) {
   :root { --ctl-h: 40px; --ctl-h-sm: 40px; }
+  /* every control is a 40 x 40 target; inline text links in sentences are the exception (WCAG 2.5.8), but the
+     app's link-buttons get the height too, with negative margins so the text around them does not move */
+  button, select, summary, input[type='text'], input[type='search'], input[type='number'], input:not([type]) { min-height: 40px; }
+  button, select { min-width: 40px; }
+  summary { display: flex; align-items: center; }
+  .btn-link, button.link { display: inline-flex; align-items: center; vertical-align: baseline; margin-top: -11px; margin-bottom: -11px; }
+  /* links: the same 40 px target, the line spacing kept by negative margins (components that lay links out as
+     blocks set their own display) */
+  a[href]:not(.skip) { display: inline-flex; align-items: center; min-height: 40px; min-width: 40px; margin-top: -12px; margin-bottom: -12px; vertical-align: baseline; }
+  /* check boxes: a 40 x 40 box around an 18 px square (drawn here, so the whole box can be tapped) */
+  input[type='checkbox'] {
+    -webkit-appearance: none; appearance: none; flex: none; width: 40px !important; height: 40px !important; margin: -11px -11px -11px -11px !important;
+    cursor: pointer; vertical-align: middle; background: center / 18px 18px no-repeat
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Crect x='.5' y='.5' width='17' height='17' fill='%23fff' stroke='%23000'/%3E%3C/svg%3E");
+  }
+  input[type='checkbox']:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Crect width='18' height='18' fill='%23000'/%3E%3Cpath d='M4 9.2l3.3 3.3L14 5.6' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E");
+  }
+  input[type='checkbox']:disabled { opacity: 0.45; cursor: not-allowed; }
+  .maplibregl-ctrl-attrib-button { width: 40px !important; height: 40px !important; background-position: center !important; }
+  .maplibregl-ctrl-attrib.maplibregl-compact { min-height: 40px; }
 }

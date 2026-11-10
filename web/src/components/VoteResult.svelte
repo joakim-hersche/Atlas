@@ -51,9 +51,9 @@
 </section>
 
 <style>
-  .vr { font-size: 0.8rem; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
-  .tt { margin: 3px 0 0; font-weight: 700; font-size: 0.9rem; line-height: 1.3; }
-  .dt { margin: 1px 0 4px; color: var(--muted); font-size: 0.76rem; }
+  .vr { font-size: var(--fs-small); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .tt { margin: 3px 0 0; font-weight: 700; font-size: var(--fs-body); line-height: 1.3; }
+  .dt { margin: 1px 0 4px; color: var(--muted); font-size: var(--fs-meta); }
   .nat { width: 100%; border-collapse: collapse; }
   .nat th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 8px 3px 0; }
   .nat td { text-align: right; padding: 3px 0; }
@@ -62,11 +62,11 @@
   .muted { color: var(--muted); }
   .kts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 14px; margin-top: 8px; }
   .kt { display: grid; grid-template-columns: 2.4em minmax(0, 1fr) 2.8em; align-items: center; gap: 4px; }
-  .kc { font-weight: 600; font-size: 0.74rem; }
+  .kc { font-weight: 600; font-size: var(--fs-meta); }
   .bar { position: relative; height: 8px; background: var(--panel-2); }
-  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #d98a55; }
-  .bar i.yes { background: #6290bb; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--div-n2); }
+  .bar i.yes { background: var(--div-p2); }
   .bar b { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink); }
-  .kv { text-align: right; font-size: 0.74rem; }
+  .kv { text-align: right; font-size: var(--fs-meta); }
   .foot { margin: 6px 0 0; }
 </style>

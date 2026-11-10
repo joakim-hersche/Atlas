@@ -402,7 +402,7 @@ export const FR: Dict = {
   'p.partOf': 'Fait partie de',
   'p.otherNames': 'Autres noms',
   'p.metrics': 'Tous les indicateurs',
-  'p.rankNote': `Rang 1 = valeur la plus élevée (la plus basse lorsque moins est mieux). Les valeurs égales partagent le meilleur rang et sont marquées «${n}ex aequo${n}». La marque rouge indique le percentile parmi toutes les {units} avec données${n}; une bande claire couvre un groupe d’ex aequo.`,
+  'p.rankNote': `Rang 1 = valeur la plus élevée (la plus basse lorsque moins est mieux). Les valeurs égales partagent le meilleur rang et sont marquées «${n}ex aequo${n}». La marque noire indique le percentile parmi toutes les {units} avec données${n}; une bande claire couvre un groupe d’ex aequo.`,
   'p.showAll': 'Les {n} indicateurs',
   'p.loadingTheme': 'Chargement…',
   'p.rankCH': 'Rang {r} sur {n}',

@@ -80,13 +80,13 @@
   .hl { flex-basis: 100%; }
   .hub {
     flex: 1 1 9em; min-width: 0; padding: 4px 26px 4px 8px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel);
-    font-size: 0.85rem; font-weight: 600; -webkit-appearance: none; appearance: none; cursor: pointer;
+    font-size: var(--fs-small); font-weight: 600; -webkit-appearance: none; appearance: none; cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 7px center; background-size: 12px;
   }
   .seg { flex: none; }
   .ptm { margin-top: 6px; justify-content: space-between; }
-  .ptm .seg button { padding: 2px 8px; font-size: 0.74rem; }
+  .ptm .seg button { padding: 2px 8px; font-size: var(--fs-meta); }
   .short { display: none; }
   .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
   .time input { flex: 1; min-width: 0; }
@@ -96,7 +96,7 @@
   }
   .play svg { fill: currentColor; }
   .tval { min-width: 4.2em; text-align: right; }
-  .note { margin: 6px 0 0; font-size: 0.8rem; }
+  .note { margin: 6px 0 0; font-size: var(--fs-small); }
   .only {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: var(--ctl-h); margin-top: var(--sp-2); padding: 0 var(--sp-3) 0 var(--sp-2);
     border: 1px solid var(--ink); background: var(--panel); color: var(--text); font-size: var(--fs-body); font-weight: 500; cursor: pointer;
@@ -106,7 +106,7 @@
   .only[aria-pressed='true'] .box { background: var(--ink-text); box-shadow: inset 0 0 0 3px var(--ink); }
   @media (max-width: 899px) {
     .hl { flex-basis: auto; }
-    .hub { font-size: 16px; padding: 2px 24px 2px 6px; font-weight: 500; }
+    .hub { font-size: var(--fs-input); padding: 2px 24px 2px 6px; font-weight: 500; }
     .long { display: none; }
     .short { display: inline; }
     .seg button { padding: 4px 8px; }

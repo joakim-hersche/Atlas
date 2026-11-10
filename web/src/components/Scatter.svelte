@@ -113,7 +113,8 @@
   const sx = (t: number) => M.l + ((t - dx.lo) / (dx.hi - dx.lo)) * (w - M.l - M.r);
   const sy = (t: number) => h - M.b - ((t - dy.lo) / (dy.hi - dy.lo)) * (h - M.t - M.b);
   const maxPop = $derived(Math.max(1, ...pts.pw));
-  const radius = (k: number) => (sizeByPop ? 1.6 + 11 * Math.sqrt(pts.pw[k] / maxPop) : w < 500 ? 2.2 : 2.6);
+  // D15: points of radius 3 at opacity 0.7 (sized by population when asked)
+  const radius = (k: number) => (sizeByPop ? 1.6 + 11 * Math.sqrt(pts.pw[k] / maxPop) : 3);
   let screen: Float32Array = new Float32Array(0);
 
   function ticksFor(d: { lo: number; hi: number }, log: boolean, target: number) {
@@ -194,7 +195,7 @@
       screen[3 * k + 1] = Y;
       screen[3 * k + 2] = r;
       const reg = region[idx[k]];
-      g.globalAlpha = out(k) ? 0.9 : sizeByPop ? 0.62 : 0.78;
+      g.globalAlpha = out(k) ? 0.9 : sizeByPop ? 0.62 : 0.7;
       g.fillStyle = out(k) ? grey : reg >= 0 ? cols[reg] : muted;
       g.beginPath();
       g.arc(X, Y, r, 0, Math.PI * 2);
@@ -387,37 +388,37 @@
   .scatter { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 0 18px; height: 100%; min-height: 0; }
   .plotcol { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px; }
-  .opts { display: flex; gap: 12px; font-size: 0.78rem; color: var(--text); }
+  .opts { display: flex; gap: 12px; font-size: var(--fs-meta); color: var(--text); }
   .opts label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
   .opts input { accent-color: var(--ink); margin: 0; }
-  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 1px 8px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
+  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 1px 8px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; color: var(--text); }
   .exb:disabled { opacity: 0.5; }
   .plot { position: relative; flex: 1; min-height: 220px; }
   canvas { position: absolute; inset: 0; touch-action: pan-y; cursor: crosshair; }
   .tip {
     position: absolute; transform: translate(12px, -50%); pointer-events: none; background: var(--panel); border: 1px solid var(--ink);
-    padding: 6px 9px; font-size: 0.8rem; white-space: nowrap; z-index: 2;
+    padding: 6px 9px; font-size: var(--fs-small); white-space: nowrap; z-index: 2;
   }
   .tip.flip { transform: translate(calc(-100% - 12px), -50%); }
   .k { display: inline-block; width: 1.3em; color: var(--muted); font-weight: 500; }
-  .regions { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.76rem; margin-top: 4px; }
+  .regions { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-meta); margin-top: 4px; }
   .regions i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
   .muted { color: var(--muted); }
   .stats { border-left: 1px solid var(--rule); padding-left: 16px; min-width: 0; overflow-y: auto; }
   table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 0; font-size: 0.8rem; }
-  td { text-align: right; padding: 4px 0; font-size: 0.9rem; }
+  th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 0; font-size: var(--fs-small); }
+  td { text-align: right; padding: 4px 0; font-size: var(--fs-body); }
   tr + tr { border-top: 1px solid var(--border); }
-  .slope { display: block; color: var(--text); font-weight: 600; font-size: 0.86rem; margin-top: 1px; white-space: normal; }
+  .slope { display: block; color: var(--text); font-weight: 600; font-size: var(--fs-small); margin-top: 1px; white-space: normal; }
   .gr { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05em; }
-  .strong { font-weight: 700; font-size: 1.15rem; }
+  .strong { font-weight: 700; font-size: var(--fs-lead); }
   .foot { margin: 6px 0 0; }
-  .sel { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rule); font-size: 0.82rem; }
+  .sel { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--rule); font-size: var(--fs-small); }
   .sname { margin: 2px 0; }
   @media (max-width: 899px) {
     .scatter { grid-template-columns: 1fr; gap: 10px; height: auto; }
     .plot { flex: none; height: 300px; }
     .stats { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 8px; }
-    .opts { gap: 10px; font-size: 0.74rem; }
+    .opts { gap: 10px; font-size: var(--fs-meta); }
   }
 </style>

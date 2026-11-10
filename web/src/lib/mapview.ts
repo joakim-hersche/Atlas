@@ -30,20 +30,19 @@ function hatchImage(bg: string, line: string): ImageData {
   return g.getImageData(0, 0, c.width, c.height);
 }
 
-/** D37: dot pattern for single-seat (majority-election) cantons, distinct from the no-data hatch. */
+/** D37 / D11: dot pattern for single-seat (majority-election) cantons, distinct from the no-data hatch but of
+ *  the same weight: 1 px dots every 5 px (the image is drawn at pixel ratio 2). */
 function dotImage(bg: string, dot: string): ImageData {
   const c = document.createElement('canvas');
-  c.width = c.height = 8;
+  c.width = c.height = 10;
   const g = c.getContext('2d')!;
   g.fillStyle = bg;
-  g.fillRect(0, 0, 8, 8);
+  g.fillRect(0, 0, 10, 10);
   g.fillStyle = dot;
-  for (const [x, y] of [[2, 2], [6, 6]]) {
-    g.beginPath();
-    g.arc(x, y, 1.1, 0, 2 * Math.PI);
-    g.fill();
-  }
-  return g.getImageData(0, 0, 8, 8);
+  g.beginPath();
+  g.arc(5, 5, 1, 0, 2 * Math.PI);
+  g.fill();
+  return g.getImageData(0, 0, 10, 10);
 }
 
 /** A small square map button (top right). Used for "fit to Switzerland" (a "CH" label, so it does not
@@ -239,7 +238,7 @@ export class UnitMap {
     m.addSource('lakes', { type: 'geojson', data: b.lakes, tolerance: 0.25 });
     m.addSource('sym', { type: 'geojson', data: EMPTY });
     m.addImage('hatch', hatchImage(token('--nodata-fill'), token('--nodata-line')), { pixelRatio: 2 });
-    m.addImage('majdots', dotImage(token('--panel'), token('--ink')), { pixelRatio: 2 });
+    m.addImage('majdots', dotImage(token('--nodata-fill'), token('--nodata-line')), { pixelRatio: 2 });
 
     m.addLayer({ id: 'unit-fill', type: 'fill', source: 'units', paint: { 'fill-color': this.fillColour(), 'fill-antialias': false } });
     m.addLayer({
@@ -270,7 +269,7 @@ export class UnitMap {
     });
     m.addLayer({
       id: 'unit-hl', type: 'line', source: 'units',
-      paint: { 'line-color': token('--sel-line'), 'line-width': ['case', on, ['case', ['boolean', ['feature-state', 'sel'], false], 2.2, 1.4], 0] as never },
+      paint: { 'line-color': token('--sel-line'), 'line-width': ['case', on, ['case', ['boolean', ['feature-state', 'sel'], false], 2.5, 1.5], 0] as never },
     });
     m.addLayer({
       id: 'sym', type: 'circle', source: 'sym',
@@ -310,7 +309,7 @@ export class UnitMap {
     m.setPaintProperty('sym', 'circle-stroke-opacity', ['case', dim, filled ? 0.5 : 0.22, 1] as never);
     m.setPaintProperty('sym', 'circle-stroke-color', ['case', ['any', sel, hov], token('--sel-line'),
       filled ? (['case', ['boolean', ['feature-state', 'nd'], false], token('--nodata-line'), token('--sym-stroke')]) : token('--ink')] as never);
-    m.setPaintProperty('sym', 'circle-stroke-width', ['case', sel, 2.2, hov, 1.6, filled ? 0.6 : 1] as never);
+    m.setPaintProperty('sym', 'circle-stroke-width', ['case', sel, 2.5, hov, 1.5, filled ? 0.6 : 1] as never);
   }
 
   /** Regional values (D21): municipal borders hidden, the outlines of the native regions drawn instead.

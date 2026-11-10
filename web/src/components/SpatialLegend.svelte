@@ -50,16 +50,15 @@
       {/if}
     </ul>
   {:else}
-    <div class="bv">
-      <div class="grid" role="img" aria-label={t('sp.legendBi', { a: labelA, b: labelB })}>
+    <!-- D6: the shade metric along the bottom, the second metric up the left side (rotated), both with arrows -->
+    <div class="bv" role="img" aria-label={t('sp.legendBi', { a: labelA, b: labelB })}>
+      <span class="ay" title={labelB}>{t('sp.bi.axisX', { m: labelB })}</span>
+      <div class="grid">
         {#each cells as c}
           <span class="cell" style="background:{BIVARIATE[c.i]}" title={title(c)}></span>
         {/each}
       </div>
-      <div class="ax">
-        <p><span class="chip" style="background:{BIVARIATE[2]}"></span>{t('sp.bi.axisX', { m: labelA })}</p>
-        <p><span class="chip" style="background:{BIVARIATE[6]}"></span>{t('sp.bi.axisY', { m: labelB })}</p>
-      </div>
+      <span class="ax" title={labelA}>{t('sp.bi.axisX', { m: labelA })}</span>
     </div>
   {/if}
   {#if !compact}
@@ -69,21 +68,24 @@
 </div>
 
 <style>
-  .sl { font-size: 0.76rem; }
+  .sl { font-size: var(--fs-meta); }
   .cl { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 3px; }
   .cl li { display: flex; align-items: center; gap: 7px; }
-  .sw { width: 14px; height: 14px; flex: none; border: 1px solid rgba(0, 0, 0, 0.25); }
-  .sw.none { background: repeating-linear-gradient(45deg, #fff, #fff 2px, #cfcfcf 2px, #cfcfcf 3px); }
+  .sw { width: 14px; height: 14px; flex: none; border: 1px solid var(--ink); }
+  .sw.none { background: repeating-linear-gradient(-45deg, var(--nodata-line) 0 1px, var(--nodata-fill) 1px 4px); }
   .lab { flex: 1; min-width: 0; }
   .cn { color: var(--faint); }
-  .compact .cl { grid-template-columns: 1fr 1fr; gap: 1px 10px; font-size: 0.7rem; }
+  .compact .cl { grid-template-columns: 1fr 1fr; gap: 1px 10px; font-size: var(--fs-cap); }
   .compact .sw { width: 10px; height: 10px; }
-  .bv { display: flex; align-items: flex-start; gap: 10px; }
-  .ax { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-self: stretch; }
-  .ax p { margin: 0 0 6px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
-  .chip { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border: 1px solid rgba(0, 0, 0, 0.25); vertical-align: baseline; }
-  .grid { display: grid; grid-template-columns: repeat(3, 28px); grid-auto-rows: 28px; gap: 1px; background: #fff; border: 1px solid var(--ink); }
+  .bv { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: var(--sp-1); row-gap: var(--sp-1); justify-content: start; }
+  .grid { grid-column: 2; grid-row: 1; justify-self: start; display: grid; grid-template-columns: repeat(3, 28px); grid-auto-rows: 28px; gap: 1px; background: var(--panel); border: 1px solid var(--ink); }
+  .ay {
+    grid-column: 1; grid-row: 1; writing-mode: vertical-rl; transform: rotate(180deg); max-height: 88px; overflow: hidden;
+    font-weight: 600; text-align: left; line-height: 14px;
+  }
+  .ax { grid-column: 2; grid-row: 2; max-width: 220px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .compact .grid { grid-template-columns: repeat(3, 16px); grid-auto-rows: 16px; }
+  .compact .ay { max-height: 52px; white-space: nowrap; text-overflow: ellipsis; }
   .cell { display: block; }
   .note { margin: 4px 0 0; }
   .link { border: 0; background: none; padding: 0; margin-top: 4px; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }

@@ -87,6 +87,11 @@ const EN: Record<string, string> = {
   'sp2.dirTo': 'to the hub',
   'sp2.dirFrom': 'from the hub',
   'sp2.legend': 'Median minutes, with the 10–90 % range over the morning in brackets.',
+  'sp2.late': 'no arrival by 08:30: the hour from the earliest arrival ({t})',
+  'sp2.how': 'How is this measured?',
+  'sp2.notBuilt': 'The morning spread is not in this build.',
+  'sp2.open': 'Morning spread to and from {hub}',
+  'sp2.short': 'spread',
 };
 
 const DE: Record<string, string> = {
@@ -157,6 +162,11 @@ const DE: Record<string, string> = {
   'sp2.dirTo': 'zum Ausgangsort',
   'sp2.dirFrom': 'vom Ausgangsort',
   'sp2.legend': 'Median in Minuten, in Klammern die Spanne 10–90 % über den Morgen.',
+  'sp2.late': 'keine Ankunft bis 08:30: die Stunde ab der frühesten Ankunft ({t})',
+  'sp2.how': 'Wie wird das gemessen?',
+  'sp2.notBuilt': 'Die Streuung am Morgen ist in diesem Build nicht enthalten.',
+  'sp2.open': 'Streuung am Morgen nach und ab {hub}',
+  'sp2.short': 'Streuung',
 };
 
 const n = ' ';
@@ -228,6 +238,11 @@ export const FR_UX: Record<string, string> = {
   'sp2.dirTo': 'vers le point de départ',
   'sp2.dirFrom': 'depuis le point de départ',
   'sp2.legend': 'Médiane en minutes, entre parenthèses la plage 10–90 % sur la matinée.',
+  'sp2.late': `pas d'arrivée avant 08:30${n}: l'heure à partir de la première arrivée ({t})`,
+  'sp2.how': `Comment est-ce mesuré${n}?`,
+  'sp2.notBuilt': 'La dispersion du matin ne figure pas dans cette version.',
+  'sp2.open': 'Dispersion du matin vers et depuis {hub}',
+  'sp2.short': 'dispersion',
 };
 
 addStrings(EN, DE);

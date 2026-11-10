@@ -7,11 +7,12 @@ export function token(name: string): string {
 // ---------------------------------------------------------------- data colour scales
 // Sequential: one steel-blue hue, monotone in lightness (checked with the dataviz validator): low = pale, high = dark.
 const SEQ = ['#d3e0ec', '#9dbad5', '#6290bb', '#356799', '#173f68'];
-// Diverging: orange (negative) – grey (0) – blue (positive), 3 steps per arm.
-const DIV = ['#a4541f', '#d98a55', '#f0c9a8', '#e3e5e8', '#b3c8dc', '#6290bb', '#244f7c'];
-// Language regions (BFS Sprachgebiete 1–4): fixed order, validated all-pairs for CVD;
-// Romansh (few municipalities) takes a neutral grey and is always labelled in the legend.
-const REGION = ['#2a78d6', '#eb6834', '#1baf7a', '#6b7079'];
+// Diverging: orange (negative) – grey (0) – blue (positive), 3 steps per arm (the same values as the --div-* tokens
+// in app.css; D10: the dark 'no' end is #b5602a, lighter than before, so it reads as a colour, not as black).
+const DIV = ['#b5602a', '#e0965f', '#f3cfae', '#e6e8eb', '#b3c8dc', '#6290bb', '#244f7c'];
+// Language regions (BFS Sprachgebiete 1–4) in scatter and residual plots (D15): German dark grey, French teal,
+// Italian ochre, Romansh violet; always labelled in the legend.
+const REGION = ['#3d3d3d', '#1f8a8a', '#d9a21b', '#8a63b8'];
 
 export const seqRamp = () => SEQ;
 export const divRamp = () => DIV;

@@ -167,34 +167,34 @@
 </div>
 
 <style>
-  .rank { font-size: 0.8rem; min-width: 0; }
+  .rank { font-size: var(--fs-small); min-width: 0; }
   .cap { margin: 0 0 6px; color: var(--muted); }
-  .zoom { float: right; margin-left: 8px; border: 1px solid var(--ink); background: var(--panel); padding: 1px 7px; font-size: 0.74rem; font-weight: 600; cursor: pointer; color: var(--text); }
+  .zoom { float: right; margin-left: 8px; border: 1px solid var(--ink); background: var(--panel); padding: 1px 7px; font-size: var(--fs-meta); font-weight: 600; cursor: pointer; color: var(--text); }
   .wrap { overflow-x: auto; max-width: 100%; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  thead th { text-align: left; position: sticky; top: 0; background: var(--panel); border-bottom: 2px solid var(--ink); vertical-align: bottom; padding: 0; z-index: 1; }
-  th button { display: flex; flex-direction: column; width: 100%; border: 0; background: none; padding: 4px 4px 4px 0; cursor: pointer; text-align: inherit; font-weight: 700; font-size: 0.72rem; }
+  thead th { text-align: left; position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--ink); vertical-align: bottom; padding: 0; z-index: 1; }
+  th button { display: flex; flex-direction: column; width: 100%; border: 0; background: none; padding: 4px 4px 4px 0; cursor: pointer; text-align: inherit; font-weight: 700; font-size: var(--fs-meta); }
   th.v button { align-items: flex-end; text-align: right; padding: 4px 0 4px 6px; }
-  .tg { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+  .tg { font-size: var(--fs-cap); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
   .lb { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 9em; line-height: 1.2; }
-  .un { font-weight: 400; color: var(--muted); font-size: 0.68rem; }
+  .un { font-weight: 400; color: var(--muted); font-size: var(--fs-cap); }
   td { padding: 3px 0; border-bottom: 1px solid var(--border); }
   td.v { text-align: right; padding-left: 6px; white-space: nowrap; }
-  td.n, th.n { width: 1%; color: var(--muted); padding-right: 6px; text-align: right; font-size: 0.72rem; }
+  td.n, th.n { width: 1%; color: var(--muted); padding-right: 6px; text-align: right; font-size: var(--fs-meta); }
   th.n { font-weight: 700; color: var(--text); padding: 4px 6px 4px 0; }
   td.nm { max-width: 13em; line-height: 1.25; overflow-wrap: break-word; word-break: normal; hyphens: manual; }
   .rowbtn { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 500; text-align: left; }
-  .kt { color: var(--muted); font-size: 0.7rem; margin-left: 4px; }
+  .kt { color: var(--muted); font-size: var(--fs-cap); margin-left: 4px; }
   tbody tr { cursor: pointer; }
   tbody tr:hover { background: var(--panel-2); }
   tr.small td { color: var(--muted); }
-  .sm { color: var(--accent); font-size: 0.62rem; margin-left: 4px; }
-  tr.sel { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft); }
-  tr.sel .rowbtn { color: var(--accent); font-weight: 700; }
+  .sm { color: var(--text); font-size: var(--fs-cap); margin-left: 4px; }
+  tr.sel { box-shadow: inset 3px 0 0 var(--ink); background: var(--surface-2); }
+  tr.sel .rowbtn { color: var(--text); font-weight: 700; }
   .more { margin-top: 8px; width: 100%; padding: 6px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-weight: 500; }
   .foot { margin: 6px 0 0; }
   .ex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
-  .ex button { border: 1px solid var(--ink); background: var(--panel); padding: 4px 10px; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: var(--text); }
-  .ok { font-size: 0.74rem; color: var(--text); }
-  .fl { font-size: 0.6rem; color: var(--accent); margin-left: 1px; font-family: var(--font-sans); }
+  .ex button { border: 1px solid var(--ink); background: var(--panel); padding: 4px 10px; cursor: pointer; font-size: var(--fs-meta); font-weight: 600; color: var(--text); }
+  .ok { font-size: var(--fs-meta); color: var(--text); }
+  .fl { font-size: var(--fs-cap); color: var(--text); margin-left: 1px; font-family: var(--font-sans); }
 </style>

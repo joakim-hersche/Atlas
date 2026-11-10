@@ -230,37 +230,37 @@
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; border: 0; background: none; padding: 0; cursor: pointer; text-align: left; color: var(--text); text-decoration: none; }
   .skip {
-    position: absolute; left: 8px; top: -60px; z-index: 100; background: var(--ink); color: var(--ink-text); padding: 8px 12px; font-weight: 600;
+    position: absolute; left: 8px; top: -60px; z-index: 100; background: var(--ink); color: var(--ink-text); padding: 0 12px; min-height: 40px; display: flex; align-items: center; font-weight: 600;
     text-decoration: none;
   }
   .skip:focus { top: 8px; }
-  .brand strong { font-weight: 700; font-size: 1.15rem; letter-spacing: 0.08em; }
+  .brand strong { font-weight: 700; font-size: var(--fs-lead); letter-spacing: 0.08em; }
   .mark { width: 18px; height: 18px; background: var(--accent); flex: none; position: relative; }
   .mark::before, .mark::after { content: ''; position: absolute; background: #fff; }
   .mark::before { left: 7.5px; top: 3.5px; width: 3px; height: 11px; }
   .mark::after { left: 3.5px; top: 7.5px; width: 11px; height: 3px; }
-  .sub { color: var(--muted); font-size: 0.8rem; padding-left: 12px; border-left: 1px solid var(--rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { color: var(--muted); font-size: var(--fs-small); padding-left: 12px; border-left: 1px solid var(--rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .right { display: flex; align-items: center; gap: 10px; flex: none; }
   .modes a { padding: 5px 12px; }
   .plain {
-    border: 1px solid transparent; background: none; padding: 5px 8px; cursor: pointer; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid transparent; background: none; padding: 5px 8px; cursor: pointer; font-size: var(--fs-small); font-weight: 500;
     text-decoration: underline; text-underline-offset: 3px; color: var(--text);
   }
   .plain[aria-current='page'] { background: var(--ink); color: var(--ink-text); text-decoration: none; }
   .menu { position: relative; }
-  .lang button { padding: 5px 8px; font-size: 0.76rem; }
+  .lang button { padding: 5px 8px; font-size: var(--fs-meta); }
   .dlang { padding: 8px 14px 6px; border-top: 1px solid var(--border); margin-top: 3px; }
-  .drop .dlang .lang button { display: inline-block; width: auto; padding: 6px 14px; font-size: 0.85rem; }
+  .drop .dlang .lang button { display: inline-block; width: auto; padding: 6px 14px; font-size: var(--fs-small); }
   .drop .dlang .lang button[aria-checked='true'] { background: var(--ink); color: var(--ink-text); }
   .menubtn {
     display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 1px solid var(--ink); background: var(--panel);
-    font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    font-size: var(--fs-small); font-weight: 600; cursor: pointer; white-space: nowrap;
   }
   .drop {
     position: absolute; right: 0; top: calc(100% + 3px); min-width: 200px; background: var(--panel); border: 1px solid var(--ink);
     border-top: 3px solid var(--ink); padding: 3px 0; z-index: 70;
   }
-  .drop > a { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: none; font-size: 0.92rem; cursor: pointer; color: var(--text); text-decoration: none; }
+  .drop > a { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: none; font-size: var(--fs-body); cursor: pointer; color: var(--text); text-decoration: none; }
   .drop > a[aria-current='page'] { font-weight: 700; box-shadow: inset 3px 0 0 var(--ink); }
   .status {
     position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: var(--panel); color: var(--muted);
@@ -285,15 +285,15 @@
   .notice button { flex: none; width: var(--ctl-h); height: var(--ctl-h); display: grid; place-items: center; border: 0; background: none; cursor: pointer; color: var(--text); }
   .embed-open {
     position: absolute; right: 8px; bottom: 8px; z-index: 60; background: var(--panel); color: var(--text); border: 1px solid var(--ink);
-    padding: 5px 10px; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+    padding: 5px 10px; font-size: var(--fs-meta); font-weight: 700; text-decoration: none;
   }
 
   @media (max-width: 1279px) {
     .sub { display: none; }
   }
   @media (max-width: 899px) {
-    .top { height: 44px; border-bottom-width: 2px; gap: 8px; }
-    .brand strong { font-size: 1.02rem; }
+    .top { height: 44px;  gap: 8px; }
+    .brand strong { font-size: var(--fs-body); }
     .mark { width: 16px; height: 16px; }
     .mark::before { left: 6.5px; top: 3px; height: 10px; }
     .mark::after { left: 3px; top: 6.5px; width: 10px; }
