@@ -6,11 +6,13 @@
   import Legend from '../components/Legend.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import RangeFilter from '../components/RangeFilter.svelte';
+  import ReachControls from '../components/ReachControls.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
   import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    gapReason, levelInfo, loadCH, loadReach, unavailableReason, type Base, type LevelData, type MetricMeta, type ReachFile,
+    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta,
+    type ReachFile,
   } from '../lib/data';
   import { T_MAX, type ReachMode } from '../lib/hash';
   import { CH_BOUNDS, UnitMap } from '../lib/mapview';
@@ -27,7 +29,6 @@
   }
   let { base, ld, cols, desktop, onrendered }: Props = $props();
 
-  const HUB = { slug: 'zuerich', name: 'Zürich HB' };
   const MIN_PER_SECOND = 30; // Play speed: 0 -> 180 min in 6 s
 
   let mapReady = $state(false);
@@ -37,6 +38,8 @@
   let chA = $state.raw<{ value: number; period: string } | null>(null);
   let reachNets = $state.raw<Record<string, ReachFile | null>>({});
   let reachError = $state<string | null>(null);
+  let hubs = $state.raw<Hub[]>([{ slug: 'zuerich', name: 'Zürich HB' }]);
+  let carFiles = $state.raw<Set<string> | null>(null);
   let mapEl: HTMLDivElement;
   let panelEl = $state<HTMLElement>();
   let view: UnitMap | null = null;
@@ -99,9 +102,10 @@
   // ------------------------------------------------------------------ reach
   const reachOn = $derived(app.reach !== 'off');
   const reachMode = $derived(app.reach as 'pt' | 'car');
-  const reachRef = $derived(reachOn && ld.level === 'gemeinde' ? cols.get(ld, `reach_${reachMode}_${HUB.slug}`) : null);
+  const hub = $derived(hubs.find((h) => h.slug === app.hub) ?? hubs[0]);
+  const reachRef = $derived(reachOn && ld.level === 'gemeinde' ? cols.get(ld, `reach_${reachMode}_${hub.slug}`) : null);
   const reachCol = $derived(reachRef?.col ?? null);
-  const reachFile = $derived(reachOn ? reachNets[`${HUB.slug}_${reachMode}`] : undefined);
+  const reachFile = $derived(reachOn ? reachNets[`${hub.slug}_${reachMode}`] : undefined);
   const reachedCount = $derived.by(() => {
     if (!reachCol) return null;
     let n = 0;
@@ -111,12 +115,24 @@
     }
     return n;
   });
-  const carHeld = $derived(reachNets[`${HUB.slug}_car`] === null);
+  // car networks can be held back by the licence gate: the index lists the files of this build
+  const carAvailable = $derived(carFiles ? carFiles.has(hub.slug) : reachNets[`${hub.slug}_car`] !== null);
+  onMount(() => {
+    loadReachIndex().then((ix) => {
+      if (!ix) return;
+      if (ix.hubs?.length) hubs = ix.hubs;
+      carFiles = new Set(ix.files.filter((f) => f.mode === 'car').map((f) => f.hub));
+    });
+  });
+  // the network of the chosen hub and mode, loaded on demand (one file per hub and mode)
   $effect(() => {
     if (!reachOn) return;
-    const key = `${HUB.slug}_${reachMode}`;
+    const slug = hub.slug;
+    const mode = reachMode;
+    const key = `${slug}_${mode}`;
     if (key in reachNets) return;
-    loadReach(HUB.slug, reachMode)
+    reachError = null;
+    loadReach(slug, mode)
       .then((f) => (reachNets = { ...reachNets, [key]: f }))
       .catch((e) => (reachError = String(e)));
   });
@@ -257,13 +273,13 @@
       if (reachRef && reachCol) {
         const x = reachCol.v[selIdx];
         reach = {
-          label, short: label, hub: HUB.name, minutes: x,
+          label, short: label, hub: hub.name, minutes: x,
           reason: x === null ? gapReason(reachRef.file, reachCol, selIdx, reachRef.meta, ld.canton[selIdx]) : null,
           within: x !== null && x <= app.t,
         };
       } else {
         const reason = ld.level !== 'gemeinde' ? 'per municipality only' : reachRef === null ? 'held back in this build' : 'loading…';
-        reach = { label, short: label, hub: HUB.name, minutes: null, reason, within: false };
+        reach = { label, short: label, hub: hub.name, minutes: null, reason, within: false };
       }
     }
     const i = selIdx;
@@ -302,43 +318,21 @@
       </section>
 
       <section class="reach">
-        <div class="row">
-          <span class="caps">Reach from {HUB.name}</span>
-          <div class="seg" role="radiogroup" aria-label="Reach mode">
-            <button type="button" role="radio" aria-checked={app.reach === 'off'} onclick={() => setReach('off')}>Off</button>
-            <button type="button" role="radio" aria-checked={app.reach === 'pt'} onclick={() => setReach('pt')}>Public transport</button>
-            <button type="button" role="radio" aria-checked={app.reach === 'car'} disabled={carHeld}
-              title={carHeld ? 'Car reach is not in this build' : ''} onclick={() => setReach('car')}>Car</button>
-          </div>
-        </div>
-        {#if reachOn}
-          <div class="time">
-            <button type="button" class="play" onclick={play} aria-label={app.playing ? 'Pause' : 'Play'}>
-              {#if app.playing}
-                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>
-              {:else}
-                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 2v12l10-6z" /></svg>
-              {/if}
-            </button>
-            <input type="range" min="0" max={T_MAX} step="1" value={app.t} aria-label="Travel time in minutes"
-              oninput={(e) => { stop(); app.t = +e.currentTarget.value; }} />
-            <output class="tval num">{Math.round(app.t)} min</output>
-          </div>
-          <p class="note">
-            {#if reachError}
-              Reach data could not be loaded: {reachError}
-            {:else if reachFile === undefined || reachRef === undefined}
-              Loading network…
-            {:else if reachFile === null}
-              No {reachMode === 'car' ? 'car' : 'public transport'} network in this build.
-            {:else}
-              {#if reachedCount !== null}<span class="num">{fmtNumber(reachedCount, 0)}</span> municipalities within {Math.round(app.t)} min{filtered ? ' (among the filtered)' : ''}; others shown desaturated.
-              {:else if ld.level !== 'gemeinde'}Travel times are per municipality; the network is drawn, units are not highlighted at this level.
-              {:else}Municipality times are held back in this build; only the network is drawn.{/if}
-              <span class="foot detail">{reachMode === 'pt' ? `Weekday departure ${reachFile.departure ?? ''}, wait at the hub included. Own routing on the national GTFS timetable.` : 'Average weekday, ARE NPVM 2023.'}</span>
-            {/if}
-          </p>
-        {/if}
+        <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable}
+          onhub={(slug) => { stop(); app.hub = slug; }} onmode={setReach} ont={(v) => { stop(); app.t = v; }} onplay={play}>
+          {#if reachError}
+            Reach data could not be loaded: {reachError}
+          {:else if reachFile === undefined || reachRef === undefined}
+            Loading network…
+          {:else if reachFile === null}
+            No {reachMode === 'car' ? 'car' : 'public transport'} network for {hub.name} in this build.
+          {:else}
+            {#if reachedCount !== null}<span class="num">{fmtNumber(reachedCount, 0)}</span> municipalities within {Math.round(app.t)} min{filtered ? ' (among the filtered)' : ''}; others shown desaturated.
+            {:else if ld.level !== 'gemeinde'}Travel times are per municipality: the network is drawn, units are not highlighted at this level.
+            {:else}Municipality times are held back in this build; only the network is drawn.{/if}
+            <span class="foot detail">{reachMode === 'pt' ? `Weekday departure ${reachFile.departure ?? ''} from ${hub.name}, wait at the hub included. Own routing on the national GTFS timetable.` : 'Average weekday, ARE NPVM 2023.'}</span>
+          {/if}
+        </ReachControls>
       </section>
 
       <section class="extra">
@@ -422,17 +416,7 @@
   .body section { padding: 14px 0; }
   .body section + section { border-top: 1px solid var(--rule); }
   .legend-wrap { margin-top: 10px; }
-  .row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-  .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-  .time input { flex: 1; accent-color: var(--ink); min-width: 0; height: 24px; }
-  .play {
-    width: 28px; height: 28px; border-radius: var(--radius); border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text);
-    display: grid; place-items: center; cursor: pointer; flex: none;
-  }
-  .play svg { fill: currentColor; }
-  .tval { min-width: 4.2em; text-align: right; }
-  .note { margin: 6px 0 0; font-size: 0.8rem; }
-  .note .foot { display: block; margin-top: 3px; }
+  .reach .detail { display: block; margin-top: 3px; }
   .side { background: var(--panel); border-left: 1px solid var(--rule); padding: 14px 16px; overflow-y: auto; }
   .sblock { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--rule); }
   .hint { margin: 0; }
@@ -462,8 +446,6 @@
     .legend-wrap { margin-top: 6px; }
     .extra { display: none; }
     .controls.open .extra { display: block; }
-    .row { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
-    .reach .seg button { padding: 4px 7px; }
     .controls:not(.open) .detail { display: none; }
     :global(.single .maplibregl-ctrl-top-right) { display: none; }
   }
