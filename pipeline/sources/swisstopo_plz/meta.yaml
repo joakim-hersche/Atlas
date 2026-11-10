@@ -1,0 +1,12 @@
+source_id: swisstopo_plz
+kind: lookup   # no observations; feeds search.json (postal codes) via pipeline/build/profile.py
+title: Official directory of localities with postal codes (Amtliches Ortschaftenverzeichnis)
+publisher: swisstopo (Federal Office of Topography), cadastral surveying
+url: https://data.geo.admin.ch/ch.swisstopo-vd.ortschaftenverzeichnis_plz/ortschaftenverzeichnis_plz/ortschaftenverzeichnis_plz_2056.csv.zip
+url_stac: https://data.geo.admin.ch/api/stac/v1/collections/ch.swisstopo-vd.ortschaftenverzeichnis_plz
+license: "swisstopo free geodata terms (OGD): free use, also commercial, source attribution mandatory (https://www.swisstopo.admin.ch/ogd-conditions, linked as 'Terms of use' from the STAC collection; STAC licence field says 'proprietary')"
+attribution: "© swisstopo – Amtliches Ortschaftenverzeichnis mit PLZ"
+vintage: "release 2026-11-01; BFS numbers match the municipality state 2026-01-01 (jaccard 0.994 – the rest are Liechtenstein and two municipality-free territories); reprojected with the backbone crosswalk"
+years: "snapshot 2026-11"
+outputs: [data/interim/swisstopo_plz/plz.parquet, data/interim/swisstopo_plz/unmapped.csv]
+catalog_ids: [swisstopo_plz_directory]
