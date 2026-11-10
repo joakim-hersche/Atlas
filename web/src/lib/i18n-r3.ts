@@ -31,6 +31,14 @@ const EN: Record<string, string> = {
   "r3.majUnits": "{n} {units} in single-seat cantons (majority election), not compared",
   "r3.pngHidden": "Hatched “hidden”: values resting on small numbers (one person more or less moves them a lot), left out of the classes.",
   "r3.cmpYours": "From your map: filter and shade metrics",
+  "r3.vinAuto": "“{was}” has no values on the {y} boundaries: showing {now} instead.",
+  "r3.vinFormed": "Today part of {name}, which was formed in {year} from {n} municipalities.",
+  "r3.vinFormedNoYear": "Today part of {name}, formed from {n} municipalities of {y}.",
+  "r3.vinJoined": "Today part of {name}, which it joined in {year} ({n} municipalities of {y} in all).",
+  "r3.vinFilters": "The {n} filter condition(s) of this link are not used on older boundaries; they apply again on the harmonised map.",
+  "r3.formerly": "formerly",
+  "r3.until": "until {y}",
+  "r3.vinUnit": "Municipality {y}",
 };
 
 const DE: Record<string, string> = {
@@ -57,6 +65,14 @@ const DE: Record<string, string> = {
   "r3.majUnits": "{n} {units} in Kantonen mit einem Sitz (Majorzwahl), nicht verglichen",
   "r3.pngHidden": "Schraffiert «ausgeblendet»: Werte, die auf kleinen Zahlen beruhen (eine Person mehr oder weniger verschiebt sie stark), nicht in den Klassen.",
   "r3.cmpYours": "Aus Ihrer Karte: Filter- und Farbkennzahlen",
+  "r3.vinAuto": "«{was}» hat auf dem Gemeindestand {y} keine Werte: stattdessen {now}.",
+  "r3.vinFormed": "Heute Teil von {name}, {year} aus {n} Gemeinden entstanden.",
+  "r3.vinFormedNoYear": "Heute Teil von {name}, entstanden aus {n} Gemeinden des Stands {y}.",
+  "r3.vinJoined": "Heute Teil von {name}, dem es sich {year} angeschlossen hat (insgesamt {n} Gemeinden des Stands {y}).",
+  "r3.vinFilters": "Die {n} Filterbedingung(en) dieses Links gelten nicht auf früheren Grenzen; auf der harmonisierten Karte wieder.",
+  "r3.formerly": "früher",
+  "r3.until": "bis {y}",
+  "r3.vinUnit": "Gemeinde {y}",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -83,6 +99,14 @@ export const FR_R3: Record<string, string> = {
   "r3.majUnits": "{n} {units} dans des cantons à un siège (élection majoritaire), non comparées",
   "r3.pngHidden": "Hachuré « masqué » : valeurs reposant sur de petits nombres (une personne de plus ou de moins les déplace fortement), exclues des classes.",
   "r3.cmpYours": "De votre carte : indicateurs des filtres et de la couleur",
+  "r3.vinAuto": "« {was} » n’a pas de valeurs sur les limites de {y} : affichage de {now}.",
+  "r3.vinFormed": "Aujourd’hui dans {name}, issue en {year} de {n} communes.",
+  "r3.vinFormedNoYear": "Aujourd’hui dans {name}, issue de {n} communes de {y}.",
+  "r3.vinJoined": "Aujourd’hui dans {name}, rejointe en {year} ({n} communes de {y} en tout).",
+  "r3.vinFilters": "Les {n} condition(s) de filtre de ce lien ne s’appliquent pas aux anciennes limites ; elles s’appliquent à nouveau sur la carte harmonisée.",
+  "r3.formerly": "anciennement",
+  "r3.until": "jusqu’en {y}",
+  "r3.vinUnit": "Commune {y}",
 };
 
 addStrings(EN, DE);

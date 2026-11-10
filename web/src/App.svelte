@@ -8,6 +8,8 @@
   import MapView from './views/MapView.svelte';
   import SourcesView from './views/SourcesView.svelte';
   import Search from './components/Search.svelte';
+  import type { SearchHit } from './lib/places';
+  import { vintageFind } from './lib/vintage-strings.svelte';
   import ShareButton from './components/ShareButton.svelte';
   import Locator from './components/Locator.svelte';
   import { initRadioGroups } from './lib/a11y';
@@ -105,7 +107,16 @@
   const navHref = (r: string) =>
     r === 'places' && app.route === 'profile' && app.params.id ? hrefFor('places', { ids: app.params.id }) : hrefFor(r);
   /** a search result opens the place's profile */
-  function openPlace(ref: string) {
+  /** B5: on the older-boundaries map a place (or a former name) is found on that map; elsewhere its profile opens */
+  function openPlace(ref: string, hit?: SearchHit) {
+    if (ref.startsWith('vin:')) {
+      vintageFind.q = { bfs: ref.slice(4) };
+      return;
+    }
+    if (app.route === 'vintage' && (!hit || hit.level === 'gemeinde')) {
+      vintageFind.q = { name: hit?.former?.name, bfs: hit?.former?.bfs, current: ref };
+      return;
+    }
     app.go('profile', { id: ref });
   }
   function outsideMenu(e: PointerEvent) {

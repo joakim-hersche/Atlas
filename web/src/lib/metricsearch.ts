@@ -5,16 +5,21 @@ import type { MetricMeta } from './data';
 
 type Lang = 'en' | 'de' | 'fr';
 
-/** Lower case, accents removed, punctuation as spaces. */
+/** Lower case, accents removed, punctuation as spaces; F13: the German spellings ae / oe / ue read as ä / ö / ü
+ *  ("Laerm" finds "Lärm"; both sides are folded the same way). */
 export function normWords(s: string): string[] {
   return s
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/ß/g, 'ss')
+    .replace(/([aou])e/g, '$1')
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
 }
+
+/** Search words of every federal vote metric (R3: "Abstimmung" finds the yes share). */
+const VOTE_WORDS = 'vote votes referendum Abstimmung Volksabstimmung Abstimmungen votation votations';
 
 export interface MetricKey {
   m: MetricMeta;
@@ -26,7 +31,8 @@ export interface MetricKey {
   other: string[];
 }
 
-export function metricKey(m: MetricMeta): MetricKey {
+/** `topics`: further words, e.g. the theme's name in every language (F13: German and French topic words). */
+export function metricKey(m: MetricMeta, topics = ''): MetricKey {
   const en = normWords(m.label_en);
   const de = normWords(m.label_de || m.label_en);
   const fr = normWords(m.label_fr || m.label_en);
@@ -34,17 +40,19 @@ export function metricKey(m: MetricMeta): MetricKey {
     m,
     label: { en, de, fr },
     flat: { en: en.join(' '), de: de.join(' '), fr: fr.join(' ') },
-    kw: normWords(m.keywords ?? ''),
-    other: [...normWords(m.id), ...normWords(m.theme)],
+    kw: normWords(`${m.keywords ?? ''} ${m.per_vote ? VOTE_WORDS : ''}`),
+    other: [...normWords(m.id), ...normWords(m.theme), ...normWords(typeof topics === 'string' ? topics : '')],
   };
 }
 
-/** Score of one query word against a list of words: exact word, else start of a word. */
+/** Score of one query word against a list of words: exact word, else start of a word, else (4+ letters) inside a
+ *  compound word ("lärm" in "Strassenlärm") at a low score. */
 function wordScore(w: string, words: string[], exact: number, prefix: number): number {
   let s = 0;
   for (const x of words) {
     if (x === w) return exact;
     if (x.startsWith(w)) s = prefix;
+    else if (!s && w.length >= 4 && x.includes(w)) s = 1;
   }
   return s;
 }

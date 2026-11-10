@@ -33,10 +33,13 @@
   import { fmtNumber } from '../lib/classify';
   import { peekLevel } from '../lib/data';
   import { levelName, t } from '../lib/i18n.svelte';
-  import { loadSearch, search, type SearchHit, type SearchIndex } from '../lib/places';
+  import { loadSearch, norm, search, type SearchHit, type SearchIndex } from '../lib/places';
+  import { vintageFind } from '../lib/vintage-strings.svelte';
+  import '../lib/i18n-r3';
 
   interface Props {
-    onpick: (ref: string) => void;
+    /** the hit is passed too (a former name selects the old unit on the older-boundaries map) */
+    onpick: (ref: string, hit?: SearchHit) => void;
     /** 'header': on phones an icon that opens a full-width field; 'inline': always a field */
     variant?: 'header' | 'inline';
     /** phone layout of the header variant */
@@ -68,7 +71,21 @@
       if (v) pop = new Map(ld.units.map((u, i) => [u, v[i] ?? 0]));
     });
   }
-  const hits = $derived<SearchHit[]>(ix && q.trim() ? search(ix, q, 12, pop).filter((h) => !exclude.includes(h.ref)) : []);
+  // B5 (R1): on the older-boundaries map, the municipalities of that state are searched too (former villages
+  // such as Obstalden), listed first; picking one selects it on that map (ref "vin:<BFS number>")
+  const local = $derived(variant === 'header' && vintageFind.units?.length ? vintageFind.units : null);
+  const localHits = $derived.by<SearchHit[]>(() => {
+    const nq = norm(q);
+    if (!local || !nq) return [];
+    const out: SearchHit[] = [];
+    for (const u of local) {
+      const k = norm(u.name);
+      if (k.startsWith(nq) || k.split(' ').some((w) => w.startsWith(nq))) out.push({ ref: `vin:${u.id}`, name: u.name, level: 'gemeinde', kanton: u.kanton, vintage: vintageFind.label ?? '' });
+      if (out.length >= 5) break;
+    }
+    return out;
+  });
+  const hits = $derived<SearchHit[]>(ix && q.trim() ? [...localHits, ...search(ix, q, 12, pop).filter((h) => !exclude.includes(h.ref))] : localHits);
   $effect(() => {
     void hits;
     active = 0;
@@ -76,7 +93,7 @@
 
   function pick(h: SearchHit | undefined) {
     if (!h) return;
-    onpick(h.ref);
+    onpick(h.ref, h);
     q = '';
     open = false;
     expanded = false;
@@ -121,6 +138,7 @@
   }
   /** U14: the type as a legible chip, the canton next to it */
   const typeOf = (h: SearchHit) => {
+    if (h.vintage) return h.vintage;
     const lv = levelName(h.level, false);
     return lv.charAt(0).toUpperCase() + lv.slice(1);
   };
@@ -150,7 +168,7 @@
       <div class="pop" id="{id}-list" role="listbox" aria-label={t('search.label')}>
         {#if failed}
           <p class="msg">{t('search.error')}</p>
-        {:else if !ix}
+        {:else if !ix && !localHits.length}
           <p class="msg">{t('search.loading')}</p>
         {:else if !hits.length}
           <p class="msg">{t('search.none', { q: q.trim() })}</p>
@@ -163,6 +181,7 @@
                 {#if h.bfs}<span class="code num">BFS {h.ref}</span>{/if}
                 <strong>{h.name}</strong>
                 {#if h.via}<span class="via">{t('search.also')}: {h.via}</span>{/if}
+                {#if h.former}<span class="via">{t('r3.formerly')}: {h.former.name}{h.former.until ? ` (${t('r3.until', { y: h.former.until.slice(0, 4) })})` : ''}</span>{/if}
                 {#if h.plz && h.plz.locality !== h.name}<span class="via">{h.plz.locality}</span>{/if}
               </span>
               <span class="hs">

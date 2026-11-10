@@ -992,6 +992,10 @@ const THEME_DE: Record<string, string> = {
   Politics: 'Politik',
   'Geography & identity': 'Geografie & Identität',
 };
+/** The theme's name in every language the app has loaded (metric search, F13). French needs the French dictionary. */
+export function themeWords(theme: string): string {
+  return [theme, THEME_DE[theme] ?? '', fr?.THEME_FR[theme] ?? ''].join(' ');
+}
 export function themeName(theme: string): string {
   if (app.lang === 'de') return THEME_DE[theme] ?? theme;
   if (app.lang === 'fr') return fr?.THEME_FR[theme] ?? theme;

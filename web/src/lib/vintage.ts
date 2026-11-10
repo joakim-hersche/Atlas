@@ -7,6 +7,12 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Feature, FeatureCollection, MultiLineString } from 'geojson';
 import { getOptionalJSON, type Base, type Column, type ColumnFile, type MetricMeta, type Source } from './data';
 import { app } from './state.svelte';
+import { ml, t } from './i18n.svelte';
+import './i18n-r3';
+
+/** B5 (R2, E3): metrics shown when the shaded one has no values on an older state, in this order: the
+ *  population, the census residents, the main language (German share). */
+export const VINTAGE_FALLBACK = ['pop_total', 'vz_lang_total', 'vz_lang_de_share'];
 
 export interface VintageMetric {
   periods: string[];
@@ -209,6 +215,16 @@ export async function switchVintage(base: Base, target: string | null): Promise<
   app.go('vintage', { vin: target });
   app.level = 'gemeinde';
   app.sel = sel;
+  // B5: a metric without values on that state is replaced by one that has values, with a short note
+  if (!ti.metrics[app.metric]) {
+    const alt = VINTAGE_FALLBACK.find((id) => ti.metrics[id]) ?? Object.keys(ti.metrics)[0];
+    const was = base.metas.get(app.metric);
+    const now = alt ? base.metas.get(alt) : undefined;
+    if (alt && now) {
+      app.metric = alt;
+      app.notice = t('r3.vinAuto', { was: was ? ml(was) : app.metric, now: ml(now), y: ti.id });
+    }
+  }
   const vm = ti.metrics[app.metric];
   if (app.year && !vm?.periods.includes(app.year)) app.year = null;
 }

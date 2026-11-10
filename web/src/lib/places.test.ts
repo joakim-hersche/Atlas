@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { norm, parseRef, refOf, search, searchUnit, type SearchIndex, type SearchUnit } from './places';
+import { norm, parseFormer, parseRef, refOf, search, searchUnit, type SearchIndex, type SearchUnit } from './places';
 import { shortName } from './data';
 
 // a small hand-made index in the shape of web/search.json: [id, level, name, canton, alternative names]
@@ -69,6 +69,11 @@ describe('search', () => {
     expect(refs[0]).toBe('261');
     expect(refs).toContain('kanton:ZH');
   });
+  it('reads ae / oe / ue as ä / ö / ü (F13)', () => {
+    expect(first('zuerich').ref).toBe('261');
+    expect(first('Koeniz').ref).toBe('242');
+    expect(first('zurich').ref).toBe('261');
+  });
   it('matches Sankt, Saint and St spellings', () => {
     expect(first('Sankt Gallen').ref).toBe('3203');
     expect(first('St Moritz').ref).toBe('3787');
@@ -133,5 +138,22 @@ describe('unit references', () => {
     expect(parseRef('kanton:ZH')).toEqual({ level: 'kanton', id: 'ZH' });
     expect(parseRef(refOf('bezirk', '101'))).toEqual({ level: 'bezirk', id: '101' });
     expect(refOf('gemeinde', '261')).toBe('261');
+  });
+});
+
+describe('former names (B5)', () => {
+  it('reads the shapes a build may ship', () => {
+    expect(parseFormer('Obstalden')).toEqual({ name: 'Obstalden' });
+    expect(parseFormer(['Obstalden', '2010-12-31', '1624'])).toEqual({ name: 'Obstalden', until: '2010-12-31', bfs: '1624' });
+    expect(parseFormer({ name: 'Mollis', bfs: 1617, until: 2010 })).toEqual({ name: 'Mollis', bfs: '1617', until: '2010' });
+  });
+  it('a former name finds today’s municipality and says so', () => {
+    const units = [searchUnit('1630', 'gemeinde', 'Glarus Nord', 'GL', [], [{ name: 'Obstalden', bfs: '1624', until: '2010' }]), searchUnit('1631', 'gemeinde', 'Glarus', 'GL', [])];
+    const ix: SearchIndex = { units, byRef: new Map(units.map((u) => [u.ref, u])), plz: {}, plzKeys: [] };
+    const h = search(ix, 'obstal')[0];
+    expect(h.ref).toBe('1630');
+    expect(h.former?.bfs).toBe('1624');
+    expect(h.via).toBeUndefined();
+    expect(search(ix, 'glarus')[0].ref).toBe('1631');
   });
 });
