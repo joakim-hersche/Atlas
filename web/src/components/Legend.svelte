@@ -1,6 +1,7 @@
 <script lang="ts">
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
+  import { sourceHref } from '../lib/nav';
   import { partialCantons, type MetricMeta, type Source } from '../lib/data';
   import {
     axisDomain, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
@@ -136,7 +137,7 @@
     {#if scale.diverging}<span> · centred on 0</span>{/if}
   </p>
   <p class="foot">
-    Source: {publisher} · {fmtPeriod(period)} · {meta.precision}{cov ? '' : ' · national'}
+    Source: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {meta.precision}{cov ? '' : ' · national'}
     {#if cov}<span class="partial"> · partial: {cov.length} of 26 cantons</span>{/if}
   </p>
 </div>
@@ -165,6 +166,7 @@
   .meta { margin: 5px 0 0; color: var(--muted); font-size: 0.74rem; }
   .foot { margin: 2px 0 0; }
   .partial { color: var(--text); }
+  .foot a { color: inherit; }
   .compact .head { margin-bottom: 2px; }
   .classes.vertical { gap: 0; margin-top: 6px; }
   .vertical .cls { flex-direction: row; align-items: center; gap: 8px; padding: 2px 0; border-bottom: 1px solid var(--border); }
