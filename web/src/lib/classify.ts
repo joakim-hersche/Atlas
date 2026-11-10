@@ -37,6 +37,13 @@ export interface Scale {
 }
 
 /** Values sorted ascending, without gaps. */
+/** A class range as text: "10–20", but with a negative bound "−14.5 – −6.5" (an en dash between thin spaces),
+ *  so the minus signs and the dash do not run together ("−14.5−−6.5"). */
+export function rangeText(lo: string, hi: string): string {
+  const neg = /^[−-]/.test(lo) || /^[−-]/.test(hi);
+  return neg ? `${lo}\u2009–\u2009${hi}` : `${lo}–${hi}`;
+}
+
 export function sortedValues(v: (number | null)[]): number[] {
   return v.filter((x): x is number => x !== null && Number.isFinite(x)).sort((a, b) => a - b);
 }
@@ -325,6 +332,10 @@ export function rankOf(v: (number | null)[], i: number, direction: MetricMeta['d
   return { rank, rankTo, n, tied: equal - 1, pct, pctLo: pctAt(below), pctHi: pctAt(below + equal - 1) };
 }
 
+/** D5: "higher than P % of the units" counts the units with a strictly lower value, so a value tied with many
+ *  others (a block of zeros) is not said to be higher than the ones it equals: the bottom of the tie group. */
+export const higherThan = (r: RankInfo): number => r.pctLo;
+
 // ---------------------------------------------------------------- ticks
 export function niceStep(span: number, target: number): number {
   const raw = span / Math.max(1, target);
@@ -488,7 +499,7 @@ export function legendItems(scale: Scale, meta: MetricMeta | { decimals: number 
   });
   return out.map((c, k) => {
     const after = k > 0 && out[k - 1].single !== null && fmtTick(c.lo, meta) === fmtTick(out[k - 1].single!, meta);
-    return { colour: c.colour, label: c.single !== null ? fmtTick(c.single, meta) : `${after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}` };
+    return { colour: c.colour, label: c.single !== null ? fmtTick(c.single, meta) : `${after ? '> ' : ''}${rangeText(fmtTick(c.lo, meta), fmtTick(c.hi, meta))}` };
   });
 }
 
@@ -497,6 +508,6 @@ export function fixedLabels(scale: Scale, meta: MetricMeta | { decimals: number 
   const b = scale.breaks;
   return scale.classColours.map((colour, k) => ({
     colour,
-    label: k === 0 ? `< ${fmtTick(b[0], meta)}` : k === b.length ? `> ${fmtTick(b[b.length - 1], meta)}` : `${fmtTick(b[k - 1], meta)}–${fmtTick(b[k], meta)}`,
+    label: k === 0 ? `< ${fmtTick(b[0], meta)}` : k === b.length ? `> ${fmtTick(b[b.length - 1], meta)}` : rangeText(fmtTick(b[k - 1], meta), fmtTick(b[k], meta)),
   }));
 }

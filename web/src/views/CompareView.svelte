@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { INCOME_OLD, preferNormal } from '../lib/data';
+  import { colon } from '../lib/typo';
   // Compare mode: two synced maps (metric A and B) and a scatter plot with r, ρ and weighted r.
   import { onMount, tick } from 'svelte';
   import Legend from '../components/Legend.svelte';
@@ -48,7 +50,7 @@
   /** unit names in the UI language */
   const names = $derived(namesOf(ld));
   const presetsOf = (m: Map<string, MetricMeta>) =>
-    PRESETS.flatMap((p) => {
+    PRESETS.map((p) => ({ ...p, b: preferNormal(p.b, m) })).flatMap((p) => {
       if (m.has(p.a) && m.has(p.b)) return [p];
       // left bloc not in this build: SP share vs income
       if (p.fallback && m.has(p.fallback.b) && m.has(p.b)) return [{ ...p, a: p.fallback.b, label: p.fallback.label }];
@@ -62,7 +64,8 @@
     app.sel = null;
   }
   function defaultB(a: string) {
-    return a === 'tax_np_mean_taxable_income' ? 'nrw_share_svp' : 'tax_np_mean_taxable_income';
+    const inc = preferNormal(INCOME_OLD, metas);
+    return a === inc || a === INCOME_OLD ? 'nrw_share_svp' : inc;
   }
   // bare '#compare' or '#<preset>' from a shared link
   function initPreset(b: Base) {
@@ -311,7 +314,7 @@
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
         region={regions.idx} regionNames={regions.names} {pop} names={names} cantons={ld.canton}
         hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only}
-        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}: ${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
+        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}${colon()}${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
         note={[levelName(ld.level), filtered ? `${t('tab.filters')}: ${filterText} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})` : ''].filter(Boolean).join(' · ')} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
       <p class="muted loading">{t('cv.needBoth')}</p>

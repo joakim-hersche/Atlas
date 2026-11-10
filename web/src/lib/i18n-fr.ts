@@ -91,7 +91,7 @@ export const FR: Dict = {
   'ex.notMatching': 'ne correspond pas aux filtres',
   // public transport (D31)
   'pt.st': 'TP, de la gare au centre',
-  'pt.stS': 'Gare',
+  'pt.stS': 'De gare à gare',
   'pt.dd': 'TP, porte à porte',
   'pt.ddS': 'Porte à porte',
   'pt.measure': 'Mesure des transports publics',
@@ -242,7 +242,7 @@ export const FR: Dict = {
   'mp.search': 'Rechercher parmi {n} indicateurs',
   'mp.partial': 'partiel',
   'mp.searchL': 'Rechercher des indicateurs',
-  'mp.unavail': `{n} indicateurs ne sont pas disponibles pour les {level}${n}: médianes, indices et temps de parcours ne s’additionnent pas, et certaines sources ne publient qu’un seul niveau.`,
+  'mp.unavail': `{n} indicateurs n’ont pas de carte pour les {level}${n}: certaines sources ne publient que d’autres niveaux, certaines valeurs (médianes, indices, temps de parcours) ne s’additionnent pas entre lieux, et certaines cartes sont omises faute de couverture suffisante.`,
   'mv.backLatest': 'Revenir au plus récent',
   'mv.choro': 'Aplats',
   'mv.controls': 'Commandes de la carte',
@@ -511,8 +511,8 @@ export const FR: Dict = {
   'is.pt': 'transports publics',
   'is.travel': '{m} min jusqu’à {hub} en {mode}',
   'is.travelCar': '{m} min jusqu’à {hub} en {mode}, {c} min en voiture',
-  'is.travelNote': `depuis {st}${n}; centre le plus proche sur {n} selon l’horaire {d}`,
-  'is.travelNoteDoor': `porte à porte${n}; centre le plus proche sur {n} selon l’horaire {d}`,
+  'is.travelNote': `depuis {st}${n}; le plus proche des {n} pôles principaux (●), horaire {d}`,
+  'is.travelNoteDoor': `porte à porte${n}; le plus proche des {n} pôles principaux (●), horaire {d}`,
   'is.travelOwn': `${n}; {hub} se trouve dans cette commune et n’est pas compté`,
   'is.foot': `Construit à partir des données ci-dessous avec des phrases fixes${n}; chaque chiffre indique son année. Quand un lieu est proche du milieu de la distribution, rien n’est dit à ce sujet.`,
   'p.history': 'Historique territorial',
@@ -732,3 +732,6 @@ Object.assign(FR, FR_MAPX);
 // usability and design review fixes (ux.*, sp2.*): defined with their English and German strings
 import { FR_UX } from './i18n-ux';
 Object.assign(FR, FR_UX);
+// review round 3 fixes (r3.*): defined with their English and German strings
+import { FR_R3 } from './i18n-r3';
+Object.assign(FR, FR_R3);

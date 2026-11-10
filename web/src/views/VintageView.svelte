@@ -19,10 +19,13 @@
   import { app } from '../lib/state.svelte';
   import { divRamp, seqRamp } from '../lib/theme';
   import {
-    loadVintage, loadVintageIndex, loadVintageValues, switchVintage, vintageColumn, vintageLabel, vintageMeta,
+    loadVintage, loadVintageIndex, loadVintageValues, switchVintage, vintageColumn, vintageLabel, vintageMeta, VINTAGE_FALLBACK, predecessorOf,
     type VintageData, type VintageIndex, type VintageValues,
   } from '../lib/vintage';
-  import { fmtDate, tv } from '../lib/vintage-strings.svelte';
+  import { fmtDate, tv, vintageFind } from '../lib/vintage-strings.svelte';
+  import { RefLayer, lakesOf, type RefData } from '../lib/reflayer';
+  import { loadHistory, norm, type HistoryFile } from '../lib/places';
+  import '../lib/i18n-r3';
   import type maplibregl from 'maplibre-gl';
   import type { FeatureCollection } from 'geojson';
 
@@ -43,6 +46,7 @@
   let hoverAt = $state<{ x: number; y: number } | null>(null);
   let mapEl: HTMLDivElement;
   let view: UnitMap | null = null;
+  let refLayer: RefLayer | null = null;
 
   onMount(() => {
     loadVintageIndex().then((x) => {
@@ -125,21 +129,38 @@
     // where the municipality is today: one row per current municipality (short values: the card keeps
     // label and value on one line)
     const extra: { label: string; value: string }[] = [];
+    const notes: string[] = [];
     if (u.to.length === 1) {
       const [id, name, , parts] = u.to[0];
-      extra.push({ label: tv(parts > 1 ? 'vin.today' : 'vin.todayOne'), value: `${name} (${id})` });
-      if (parts > 1) extra.push({ label: tv('vin.mergedL'), value: tv('vin.mergedV', { n: parts, y: vin }) });
+      if (parts > 1) {
+        // B5 (R15): one sentence, "Today part of Glarus Nord, which was formed in 2011 from 8 municipalities"
+        const ev = joinEvent(u.id, id);
+        const year = ev ? ev.d.slice(0, 4) : null;
+        const key = ev?.t === 'absorption' ? 'r3.vinJoined' : year ? 'r3.vinFormed' : 'r3.vinFormedNoYear';
+        notes.push(t(key, { name: `${name} (${id})`, year: year ?? '', n: parts, y: vin }));
+      } else extra.push({ label: tv('vin.todayOne'), value: `${name} (${id})` });
     } else {
       u.to.forEach((x, k) => extra.push({ label: k === 0 ? tv('vin.today') : '', value: `${x[1]} · ${tv('vin.share', { p: pct(x[2]) })}` }));
     }
     const main = u.to[0];
     return {
-      i: selIdx, u, extra,
+      i: selIdx, u, extra, notes,
       sub: `${u.kanton} · BFS ${u.id} · ${vin}`,
       profile: main ? profileHref(refOf('gemeinde', main[0])) : undefined,
       profileLabel: main ? tv('vin.profile') : undefined,
     };
   });
+  // boundary history (mergers and their dates) for the card wording
+  let hist = $state.raw<HistoryFile | null>(null);
+  $effect(() => {
+    if (selIdx !== null && !hist) loadHistory().then((h) => (hist = h)).catch(() => {});
+  });
+  /** the event after this state that took the old municipality `old` into today's `current` */
+  function joinEvent(old: string, current: string) {
+    const evs = hist?.units?.[current];
+    if (!evs || !info) return null;
+    return evs.find((e) => e.d > info.date && (e.t === 'merger' || e.t === 'absorption') && e.from.some((f) => f[0] === old)) ?? null;
+  }
   const tip = $derived(hover !== null && shown && col && meta ? (col.v[hover] === null ? t('lg.noData') : fmtValue(col.v[hover]!, meta)) : null);
 
   // ------------------------------------------------------------------ map
@@ -155,7 +176,11 @@
     view = new UnitMap(mapEl, base, {
       onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
+      onLabels: () => (app.labels = !app.labels), labelsLabel: () => t('lb.toggle'), labelsOn: () => app.labels,
     });
+    // B5 (R1): place names of that state and lake names, as on the harmonised map
+    refLayer = new RefLayer(view.map, mapEl);
+    refLayer.setVisible(app.labels);
     view.ready.then(() => {
       mapReady = true;
       fit();
@@ -168,8 +193,86 @@
       view?.map.remove();
     };
   });
+  /** B5 (R14): a link with a selection opens zoomed to it (once per selection from a link or the search) */
+  let focusSel = $state(app.sel !== null);
+  $effect(() => {
+    const i = selIdx;
+    const d = shown;
+    if (mapReady && focusSel && i !== null && d) tick().then(() => requestAnimationFrame(() => fit(true)));
+  });
+  /** the selection's outline, when a link or the search asked to zoom to it */
+  function focusTarget() {
+    if (!focusSel || selIdx === null || !shown) return null;
+    return shown.geo.features.find((x) => x.id === selIdx) ?? null;
+  }
+  // the header search lists the municipalities of this state while it is shown
+  $effect(() => {
+    const d = shown;
+    vintageFind.units = d ? d.units.map((u) => ({ id: u.id, name: u.name, kanton: u.kanton })) : null;
+    vintageFind.label = d ? t('r3.vinUnit', { y: d.info.id }) : null;
+  });
+  onMount(() => () => {
+    vintageFind.units = null;
+    vintageFind.label = null;
+  });
+  // the header search on this route: a former name or a current municipality selects the old unit
+  $effect(() => {
+    const q = vintageFind.q;
+    const d = shown;
+    if (!q || !d) return;
+    vintageFind.q = null;
+    let id: string | null = q.bfs && d.index.has(q.bfs) ? q.bfs : null;
+    if (!id && q.name) id = d.units.find((u) => norm(u.name) === norm(q.name!))?.id ?? null;
+    if (!id && q.current) id = predecessorOf(d.units, q.current);
+    if (id) {
+      app.sel = id;
+      focusSel = true;
+    }
+  });
+  // reference labels: every municipality of that state (towns at the national zoom, all names zoomed in)
+  let popVals = $state.raw<{ key: string; v: VintageValues } | null>(null);
+  const popId = $derived(info ? (VINTAGE_FALLBACK.slice(0, 2).find((id) => info!.metrics[id]) ?? null) : null);
+  $effect(() => {
+    const i = info;
+    const id = popId;
+    if (!i || !id) return;
+    const key = `${i.id}:${id}`;
+    if (popVals?.key === key) return;
+    loadVintageValues(i, i.metrics[id].file).then((v) => (popVals = { key, v })).catch(() => {});
+  });
+  const refData = $derived.by<RefData | null>(() => {
+    const d = shown;
+    if (!d) return null;
+    const pc = popVals && popId && popVals.key === `${d.info.id}:${popId}` ? vintageColumn(popVals.v, popId, null) : null;
+    const pos = pc ? new Map(pc.file.units.map((u, k) => [u, pc.col.v[k] ?? 0])) : null;
+    const cities = d.units
+      .filter((u) => u.label)
+      .map((u) => ({ name: u.name.replace(/\s*\([A-Z]{2}\)$/, ''), lng: u.label![0], lat: u.label![1], pop: pos?.get(u.id) ?? 0 }))
+      .sort((a, b) => b.pop - a.pop);
+    // as on the harmonised map up to zoom 10.5; deeper, every municipality (the placement still avoids overlaps)
+    const floor = (z: number) => (z < 7 ? 50000 : z < 8 ? 28000 : z < 8.8 ? 13000 : z < 9.6 ? 4000 : z < 10.3 ? 1000 : 0);
+    return { cities, lakes: lakesOf(base.lakes), floor };
+  });
+  $effect(() => {
+    const r = refData;
+    if (mapReady) refLayer?.setData(r);
+  });
+  $effect(() => {
+    const on = app.labels;
+    if (mapReady) {
+      refLayer?.setVisible(on);
+      view?.relabel();
+    }
+  });
   function fit(animate = false) {
     if (!view) return;
+    const f = focusTarget();
+    if (f) {
+      focusSel = false;
+      view.map.resize();
+      view.fitGeometry(f.geometry, desktop ? { top: 40, bottom: 40, left: 40, right: 60 } : { top: 30, bottom: 90, left: 20, right: 44 }, { animate, maxZoom: 11 });
+      return;
+    }
     const padding = desktop ? { top: 24, bottom: 24, left: 24, right: 48 } : { top: 46, bottom: 12, left: 10, right: 10 };
     view.map.resize();
     view.map.fitBounds(CH_BOUNDS, { padding, animate, duration: animate ? 500 : 0 });
@@ -249,6 +352,7 @@
           <p class="foot yr">{tv('vin.noYear', { y: app.year ?? '' })} · {fmtPeriod(col.period)}</p>
         {/if}
         <VintageSwitch {base} />
+        {#if app.filters.length}<p class="foot fnote">{t('r3.vinFilters', { n: app.filters.length })}</p>{/if}
         {#if vm}
           <p class="prov">{provText}{#if vm.provenance === 'forward' && vm.n_estimate}{' '}{tv('vin.nEst', { n: fmtNumber(vm.n_estimate, 0) })}{/if}
             {#if source}<a href={srcLink}>{source.publisher.split(' (')[0]}</a>{/if}</p>
@@ -266,7 +370,7 @@
       {#if !desktop && card && ref && meta}
         <div class="card-wrap">
           <Card name={card.u.name} canton={card.u.kanton} sub={card.sub} {meta} file={ref.file} col={ref.col} index={card.i}
-            {source} reach={null} unitWord={word} extra={card.extra} compact onclose={() => (app.sel = null)}
+            {source} reach={null} unitWord={word} extra={card.extra} notes={card.notes} compact onclose={() => (app.sel = null)}
             profile={card.profile} profileLabel={card.profileLabel} sourceLink={srcLink} />
         </div>
       {/if}
@@ -289,7 +393,7 @@
       {#if card && ref && meta}
         <div class="caps lab">{t('mv.selected', { one: levelName('gemeinde', false) })}</div>
         <Card name={card.u.name} canton={card.u.kanton} sub={card.sub} {meta} file={ref.file} col={ref.col} index={card.i}
-          {source} reach={null} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
+          {source} reach={null} unitWord={word} extra={card.extra} notes={card.notes} docked onclose={() => (app.sel = null)}
           profile={card.profile} profileLabel={card.profileLabel} sourceLink={srcLink} />
       {:else}
         <p class="foot hint">{tv('vin.hint')}</p>
@@ -324,6 +428,7 @@
   .act.alt { background: var(--panel); color: var(--text); }
   .yr { margin-top: 10px; }
   .warn { color: var(--text); }
+  .fnote { margin: 8px 0 0; border-left: 3px solid var(--ink); padding-left: 6px; color: var(--text); }
   .prov { margin: 10px 0 0; font-size: 0.74rem; color: var(--muted); line-height: 1.4; }
   .prov a { color: var(--text); }
   .side { background: var(--panel); border-left: 1px solid var(--rule); padding: 14px 16px; overflow-y: auto; }

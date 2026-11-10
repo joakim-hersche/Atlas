@@ -4,7 +4,7 @@
 // said that the data does not support: a fact is left out when the value is missing or not unusual.
 // Wording is descriptive (larger, younger, higher), never an assessment.
 import { fmtNumber, fmtPeriod, fmtValue } from './classify';
-import type { Base, ColumnFile, MetricMeta } from './data';
+import { preferNormal, type Base, type ColumnFile, type MetricMeta } from './data';
 import { levelWord, ml, t } from './i18n.svelte';
 import type { ReachTimes } from './places';
 import type { PlaceLevel } from './profile';
@@ -25,7 +25,7 @@ interface Stat {
   median: number;
 }
 
-function statOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta | undefined, i: number): Stat | null {
+function statOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta | undefined, i: number, minN = 10): Stat | null {
   if (!meta) return null;
   const col = file.metrics[meta.id];
   const x = col?.v[i];
@@ -39,7 +39,7 @@ function statOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta | undefined, 
     if (y < x) lo++;
     else if (y > x) hi++;
   }
-  if (n < 10) return null;
+  if (n < minN) return null;
   all.sort((a, b) => a - b);
   const median = n % 2 ? all[(n - 1) / 2] : (all[n / 2 - 1] + all[n / 2]) / 2;
   return { meta, x, period: col.period, below: (100 * lo) / (n - 1), above: (100 * hi) / (n - 1), median };
@@ -60,8 +60,15 @@ const spread = (s: Stat) => Math.abs(s.below - s.above) / 2;
 
 const GENERIC = ['geo_elev_mean', 'geo_pop_density', 'share_foreign', 'tax_np_mean_taxable_income', 'ent_jobs_per_1000'];
 
-export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: ReachTimes | null; placeName: string }): Fact[] {
+export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: ReachTimes | null; placeName: string; files?: Record<string, ColumnFile> }): Fact[] {
   const { pl, idx, base, reach } = a;
+  /** the loaded theme file of a metric (core first) */
+  const fileOf = (id: string): ColumnFile | null => {
+    const m = base.metas.get(id);
+    if (!m) return null;
+    if (pl.core.metrics[id]) return pl.core;
+    return a.files?.[m.file] ?? null;
+  };
   const core = pl.core;
   const units = levelWord(pl.level);
   const out: Fact[] = [];
@@ -87,14 +94,23 @@ export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: Rea
     else out.push({ text: t(sd === 'hi' ? 'is.age.hi' : 'is.age.lo', { ...vars, than: than(pctFor(age, sd), units) }) });
   }
 
-  // language (Swiss-wide shares of the three large languages; left out where other languages dominate)
-  const lg = (['de', 'fr', 'it'] as const)
-    .map((k) => ({ k, s: statOf(pl, core, base.metas.get(`vz_lang_${k}_share`), idx) }))
-    .filter((q): q is { k: 'de' | 'fr' | 'it'; s: Stat } => q.s !== null);
+  // language (Swiss-wide shares of the three large languages; left out where other languages dominate).
+  // B6 (D10, E13): the Structural Survey shares of the cities (lang_sec_*, recent, pooled years) where they exist,
+  // else the census 2000; the sentence names its source and years.
+  const langOf = (pre: string) =>
+    (['de', 'fr', 'it'] as const)
+      .map((k) => {
+        const id = `${pre}_${k}_share`;
+        const f = fileOf(id);
+        return { k, s: f ? statOf(pl, f, base.metas.get(id), idx, 1) : null };
+      })
+      .filter((q): q is { k: 'de' | 'fr' | 'it'; s: Stat } => q.s !== null);
+  const sec = pl.level === 'gemeinde' ? langOf('lang_sec') : [];
+  const lg = sec.length === 3 ? sec : langOf('vz_lang');
   if (lg.length === 3) {
     const sum = lg.reduce((p, q) => p + q.s.x, 0);
     lg.sort((p, q) => q.s.x - p.s.x);
-    const y = fmtPeriod(lg[0].s.period);
+    const y = t(sec.length === 3 ? 'r3.langSE' : 'r3.langVZ', { y: fmtPeriod(lg[0].s.period) });
     if (sum >= 80) {
       if (lg[0].s.x >= 60) out.push({ text: t('is.lang.one', { l: t(`is.l.${lg[0].k}`), v: fmtValue(lg[0].s.x, lg[0].s.meta), y }) });
       else
@@ -107,7 +123,8 @@ export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: Rea
   }
 
   // up to three more figures where the place stands out (clearly above or below the middle of the units)
-  const extra = GENERIC.map((id) => statOf(pl, core, base.metas.get(id), idx))
+  const extra = GENERIC.map((id) => preferNormal(id, base.metas))
+    .map((id) => statOf(pl, fileOf(id) ?? core, base.metas.get(id), idx))
     .filter((s): s is Stat => s !== null && spread(s) >= 25)
     .sort((p, q) => spread(q) - spread(p))
     .slice(0, 3);
@@ -123,11 +140,14 @@ export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: Rea
       const st = reach.pt_station;
       // D39: "nearest hub" counts only the 15 agglomeration hubs when the build lists them
       const pool = reach.nearest_hubs?.length ? reach.nearest_hubs : reach.hubs;
-      const best = pool
+      const rows = pool
         .map(([slug, hub]) => ({ slug, hub, m: (st ? st[slug]?.[k] : reach.pt[slug]?.[k]) ?? null, car: reach.car[slug]?.[k] ?? null }))
         // a hub whose station is this municipality's main station (0 min) is not "near", it is here
         .filter((h): h is typeof h & { m: number } => h.m !== null && h.m > 0)
-        .sort((p, q) => p.m - q.m)[0];
+        .sort((p, q) => p.m - q.m);
+      // B6 (R9, F10): the hub the nearest-hub metric names for the same measure, so the summary and the metric agree
+      const named = reach.nearest?.[st ? 'pt_station' : 'pt']?.[k] ?? null;
+      const best = (named ? rows.find((r) => r.hub === named) : undefined) ?? rows[0];
       const own = pool.filter(([slug]) => (st ? st[slug]?.[k] : reach.pt[slug]?.[k]) === 0).map(([, hub]) => hub);
       if (best) {
         const stop = reach.main_station?.[k];

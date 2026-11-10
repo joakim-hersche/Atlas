@@ -1,4 +1,5 @@
 // Data loading and the column format written by pipeline/build/web.py.
+import { tx } from './texts.svelte';
 import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
 import { fixLabel, t, levelWord } from './i18n.svelte';
@@ -50,7 +51,10 @@ export interface MetricMeta {
   /** level -> reason (English) why the metric has no values there */
   unavailable_levels?: Record<string, string> | null;
   /** small-number rule (flag bits 1/2) */
-  reliability?: { count: string | null; base: string | null; min_count: number; min_base: number; rule_en?: string; rule_de?: string; rule_fr?: string } | null;
+  reliability?: {
+    count: string | string[] | null; base: string | string[] | null; min_count: number | null; min_base: number | null; years?: number | null;
+    rule_en?: string; rule_de?: string; rule_fr?: string;
+  } | null;
   /** pooled multi-year rate of an annual metric */
   pooled?: { of: string; years: number } | null;
   /** NRW: cantons with a majority election per election year (flag bit 4); only party shares, blocs, leaning (D37) */
@@ -448,7 +452,8 @@ export function gapReason(file: ColumnFile | null, col: Column, i: number, meta:
 /** The column's note for unit i (the real reason for a gap, or the provenance of a fallback value). */
 export function noteOf(col: Column, i: number): string | null {
   const k = col.n?.[String(i)];
-  return k !== undefined && col.notes?.[k] ? col.notes[k] : null;
+  // R5 / E1: the pipeline's English note in the UI language (web/texts.json)
+  return k !== undefined && col.notes?.[k] ? tx(col.notes[k]) : null;
 }
 
 export const FLAG = { small_base: 1, small_count: 2, majority_election: 4, published_value: 8, provisional: 16, estimate: 32, special: 64 } as const;
@@ -460,6 +465,13 @@ export function flagsOf(file: ColumnFile | null, col: Column, i: number): number
 export function hasFlag(file: ColumnFile | null, flags: number, name: FlagName): boolean {
   const bit = file?.flag_bits?.[name] ?? FLAG[name];
   return (flags & bit) !== 0;
+}
+
+/** X3 / A2: the headline income metric: the normal-cases mean (same population as the median) where the build has
+ *  it, else the all-cases mean. Presets and defaults go through this. */
+export const INCOME_OLD = 'tax_np_mean_taxable_income';
+export function preferNormal(id: string, metas: Map<string, MetricMeta>): string {
+  return id === INCOME_OLD && metas.has(`${INCOME_OLD}_normal`) ? `${INCOME_OLD}_normal` : id;
 }
 
 /** Unstable small-number value (base or count below the metric's reliability rule), or a special case
@@ -524,11 +536,29 @@ export interface ColRef {
 const lvlLabel = (id: string) => levelWord(id);
 
 /** Why a metric cannot be shown at a level (one line), or null when it can. */
+/** The build's reason why a metric has no map at a level, in the UI language when the build ships one
+ *  (`unavailable_levels` as text or {en, de, fr}, or `unavailable_levels_de` / `_fr`), cleaned for the sentence it
+ *  goes into: no leading "not offered as a map:" (the sentence says that already), no final full stop. */
+export function curationReason(meta: MetricMeta, level: string): string | null {
+  const raw = meta.unavailable_levels?.[level] as unknown;
+  const lang: string = app.lang;
+  const per = (meta as unknown as Record<string, Record<string, string> | null | undefined>)[`unavailable_levels_${lang}`]?.[level];
+  let s: string | null =
+    per ?? (raw && typeof raw === 'object' ? ((raw as Record<string, string>)[lang] ?? (raw as Record<string, string>).en ?? null) : (raw as string | null) ?? null);
+  if (!s) return null;
+  if (!per) s = tx(s);
+  s = s.trim().replace(/^(not offered as a map|not available|nicht als karte angeboten|nicht verfügbar|pas proposé comme carte|non disponible)\s*[:\u202f\u00a0]*\s*/i, '');
+  s = s.replace(/[.\s]+$/, '');
+  return s ? s[0].toUpperCase() + s.slice(1) : null;
+}
+
 export function unavailableReason(meta: MetricMeta, level: string): string | null {
   if (availableAt(meta, level)) return null;
-  const real = meta.unavailable_levels?.[level];
+  const real = curationReason(meta, level);
   const where = meta.levels.filter((l) => l !== 'schweiz' && l !== 'gemeindetyp').map(lvlLabel);
-  const list = where.length ? where.join(', ') : t('why.chOnly');
+  // C5: a metric with no map at any level says so (it is on the profiles), not "Available for: Switzerland only"
+  if (!where.length) return real ? t('r3.noMapWhy', { reason: real }) : t('r3.noMap');
+  const list = where.join(', ');
   if (real) return t('why.real', { reason: real, list });
   if (meta.aggregation === 'not_aggregatable')
     return t('why.notAgg', { level: lvlLabel(level), list });

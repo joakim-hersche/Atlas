@@ -183,6 +183,8 @@ input[type='range']:not(.dual)::-moz-range-thumb { width: 14px; height: 14px; bo
 input[type='range']:not(.dual):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 .reach-canvas, .ref-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+/* E11: city and lake names above the reach lines */
+.ref-canvas { z-index: 2; }
 ::placeholder { color: var(--muted); opacity: 1; }
 
 /* D8: on desktop every button, select and text field is a 32 px control (link-buttons and table-row buttons

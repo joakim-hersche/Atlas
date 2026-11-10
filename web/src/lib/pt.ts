@@ -5,6 +5,7 @@
 import type { MetricMeta } from './data';
 import { app } from './state.svelte';
 import { t } from './i18n.svelte';
+import { tx } from './texts.svelte';
 import type { ReachTimes } from './places';
 
 /** 'ptst' station time, 'pt' door to door, 'car' */
@@ -62,7 +63,7 @@ export function reachNote(rt: ReachTimes | null, kind: ReachKind, hub: string, u
   const n = rt?.notes?.[key]?.[hub];
   if (!n) return null;
   const k = index ? index.get(unitId) : rt!.units.indexOf(unitId);
-  return k === undefined || k < 0 ? null : (n[String(k)] ?? null);
+  return k === undefined || k < 0 ? null : n[String(k)] ? tx(n[String(k)]) : null;
 }
 
 /** Why a municipality has no time for a measure (reach_times.json reasons), or null. */
@@ -77,9 +78,9 @@ export function reasonAt(rt: ReachTimes, key: string, hub: string, k: number): s
   const r = rt.reasons?.[key];
   if (!r) return null;
   const h = r[hub];
-  if (h && typeof h === 'object') return h[String(k)] ?? null;
+  if (h && typeof h === 'object') return h[String(k)] ? tx(h[String(k)]) : null;
   const flat = r[String(k)];
-  return typeof flat === 'string' ? flat : null;
+  return typeof flat === 'string' ? tx(flat) : null;
 }
 
 /** Label of a reach measure ('long' for headings, else short for buttons). Without station times in the

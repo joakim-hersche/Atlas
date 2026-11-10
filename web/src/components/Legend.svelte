@@ -1,15 +1,17 @@
 <script lang="ts">
+  import { colon } from '../lib/typo';
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
   import { ml, mdesc, t as tr } from '../lib/i18n.svelte';
   import '../lib/i18n-mapx';
+  import '../lib/i18n-r3';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { coverageLabel, majorityCount, partialCantons, precisionText, type Column, type MetricMeta, type Source } from '../lib/data';
   import { app } from '../lib/state.svelte';
   import {
     axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
-    type Method, type Scale, fixedLabels } from '../lib/classify';
+    type Method, type Scale, fixedLabels, rangeText } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -35,11 +37,17 @@
     /** U11: a title line above the legend (change maps: what changed, between which years, in which unit) */
     title?: string | null;
     /** U13: a warning shown at the top (sparse coverage), with an optional action */
-    warn?: { text: string; action?: string; onaction?: () => void } | null;
+    warn?: { text: string; action?: string; onaction?: () => void; action2?: string; onaction2?: () => void } | null;
+    /** B2: values hidden as small numbers (counted apart from units without data, with a way to show them) */
+    nHidden?: number;
+    /** B3: meaning of the two ends of a diverging scale (default: the vote and leaning maps' own) */
+    sides?: { left: string; right: string } | null;
+    /** level shown (J8: single-seat cantons below canton level are counted in units of that level) */
+    level?: string;
     /** a small legend over the map (phone with the sheet folded, embeds): unit, the coloured axis, nothing else */
     mini?: boolean;
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [], mask = null, title = null, warn = null, mini = false }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [], mask = null, title = null, warn = null, mini = false, nHidden = 0, sides = null, level = '' }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
@@ -116,7 +124,7 @@
   /** D37: units of single-seat cantons kept apart (own pattern), or merged in by the toggle */
   const nMaj = $derived(col ? majorityCount(col) : 0);
   const nMajIn = $derived(col?.mIncluded ?? 0);
-  const nGap = $derived(nUnits - scale.n - nMaj);
+  const nGap = $derived(Math.max(0, nUnits - scale.n - nMaj - nHidden));
   /** D37 rule 1: the default period is not the newest one (newest incomplete): say so */
   const older = $derived(period === meta.latest && meta.latest_available && meta.latest_available !== meta.latest ? meta.latest_available : null);
   const olderWhy = $derived.by(() => {
@@ -135,7 +143,7 @@
 
 <div class="legend" class:compact class:mini>
   {#if warn}
-    <p class="warnbar">{warn.text}{#if warn.action && warn.onaction}{' '}<button type="button" class="link" onclick={warn.onaction}>{warn.action}</button>{/if}</p>
+    <p class="warnbar">{warn.text}{#if warn.action && warn.onaction}{' '}<button type="button" class="link" onclick={warn.onaction}>{warn.action}</button>{/if}{#if warn.action2 && warn.onaction2}{' · '}<button type="button" class="link" onclick={warn.onaction2}>{warn.action2}</button>{/if}</p>
   {/if}
   {#if title}<p class="ltitle">{title}</p>{/if}
   <div class="head">
@@ -171,7 +179,9 @@
     </svg>
   </div>
 
-  {#if scale.fixed && meta.id === 'vote_yes_share'}
+  {#if sides}
+    <div class="sides"><span>← {sides.left}</span><span>{sides.right} →</span></div>
+  {:else if scale.fixed && meta.id === 'vote_yes_share'}
     <div class="sides"><span>← {tr('lg.no')}</span><span>{tr('lg.yes')} →</span></div>
   {:else if scale.fixed && meta.id === 'nrw_leaning'}
     <div class="sides"><span>← {tr('lg.leftLean')}</span><span>{tr('lg.rightLean')} →</span></div>
@@ -182,7 +192,7 @@
       {#each classes as c, k}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
-          <span class="rng num">{fixedL ? fixedL[k].label : c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
+          <span class="rng num">{fixedL ? fixedL[k].label : c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${rangeText(fmtTick(c.lo, meta), fmtTick(c.hi, meta))}`}</span>
           <span class="cn num">{fmtNumber(c.n, 0)}</span>
         </div>
       {/each}
@@ -190,9 +200,11 @@
   {/if}
 
   <p class="meta">
-    {#if mask}<span class="num">{tr('ux.nMatching', { n: fmtNumber(s.length, 0) })}</span>{' · '}{/if}<span class="num">n = {fmtNumber(scale.n, 0)}</span>
+    {#if mask}<span class="num">{tr('ux.nMatching', { n: fmtNumber(s.length, 0) })}</span>{' · '}{/if}<span class="num">{tr('r3.nUnits', { n: fmtNumber(scale.n, 0), units: unitWord })}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
-    {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> <span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}<Term k="majority_election" />
+    {#if nHidden > 0}<span> · <span class="hatch"></span> {tr('r3.hiddenN', { n: fmtNumber(nHidden, 0) })}
+      <button type="button" class="link" onclick={() => (app.unstable = 'show')}>{tr('r3.showThem')}</button></span>{/if}
+    {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> {#if level && level !== 'kanton'}{tr('r3.majUnits', { n: fmtNumber(nMaj, 0), units: unitWord })}{:else}<span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}{/if}<Term k="majority_election" />
       <button type="button" class="link" onclick={() => (app.maj = true)}>{tr('lg.majInclude')}</button></span>
     {:else if nMajIn > 0}<span class="majl"> · {tr('lg.majIncluded', { n: fmtNumber(nMajIn, 0) })}
       <button type="button" class="link" onclick={() => (app.maj = false)}>{tr('lg.majExclude')}</button></span>{/if}
@@ -212,7 +224,7 @@
     <p class="rel"><span class="rb rb-{rel.kind}">{tr(`rl.b.${rel.kind}`)}</span> {rel.text}{#if rel.extra}{' '}<span class="rx">{rel.extra}</span>{/if}</p>
   {/if}
   <p class="foot">
-    {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
+    {tr('lg.source')}{colon()}<a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
     {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
   </p>
   {/if}
@@ -249,6 +261,7 @@
   .foot { margin: 2px 0 0; }
   .majp { display: inline-block; width: 12px; height: 9px; vertical-align: -1px; border: 1px solid var(--nodata-line);
     background: radial-gradient(circle, #9a9a9a 1px, transparent 1.3px) 0 0 / 5px 5px, var(--surface-2); }
+  .meta .link { margin-left: var(--sp-1); border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
   .majl .link { margin-left: var(--sp-1); border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
   .older { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text); border-left: 3px solid var(--ink); padding-left: var(--sp-2); }
   .dnote { margin: var(--sp-1) 0 0; font-size: var(--fs-meta); line-height: var(--lh-meta); color: var(--text-2); }

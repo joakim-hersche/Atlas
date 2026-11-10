@@ -75,6 +75,8 @@ export interface ThemeBlock {
   /** theme files needed for `rest` */
   files: string[];
 }
+/** headline metric (pattern) -> companion metric shown right after it */
+const PAIRS: [RegExp, string][] = [[/^tax_np_mean_taxable_income/, 'tax_np_median_taxable_income']];
 export function themeBlocks(base: Base, level: string): ThemeBlock[] {
   // D38: profiles keep values whose map is curated away at this level (profile_levels)
   const at = base.metrics.filter((m) => !m.hidden && (m.profile_levels ?? m.levels).includes(level));
@@ -82,7 +84,16 @@ export function themeBlocks(base: Base, level: string): ThemeBlock[] {
     .map((theme) => {
       const ms = at.filter((m) => m.theme === theme);
       const head = ms.filter((m) => m.headline !== null).sort((a, b) => a.headline! - b.headline!);
-      const rest = ms.filter((m) => m.headline === null).sort((a, b) => a.label_en.localeCompare(b.label_en));
+      let rest = ms.filter((m) => m.headline === null).sort((a, b) => a.label_en.localeCompare(b.label_en));
+      // B6 (X13): a median goes right after its mean in the headline rows (median and mean together)
+      for (const [mean, median] of PAIRS) {
+        const k = head.findIndex((m) => mean.test(m.id));
+        const md = rest.find((m) => m.id === median);
+        if (k >= 0 && md) {
+          head.splice(k + 1, 0, md);
+          rest = rest.filter((m) => m !== md);
+        }
+      }
       return { theme, head, rest, files: [...new Set(rest.map((m) => m.file))] };
     })
     .filter((b) => b.head.length || b.rest.length);

@@ -23,7 +23,14 @@ interface Lake {
 export interface RefData {
   cities: City[];
   lakes: Lake[];
+  /** smallest place labelled at a zoom (default: towns of 2,000+ only; the older-boundaries map names every
+   *  municipality when zoomed in, so a former village can be found, B5) */
+  floor?: (zoom: number) => number;
 }
+
+/** Lakes with their label points (for reference layers built elsewhere, e.g. the older-boundaries map). */
+export const lakesOf = (fc: { features: unknown[] }): Lake[] =>
+  fc.features.map((f) => lakeOf(f as Feature<Geometry>)).filter((l): l is Lake => l !== null);
 
 /** Interior label point of a polygon ring: the middle of the widest chord at the ring's centroid height
  *  (the centroid itself can lie on land for a bent lake). */
@@ -196,7 +203,7 @@ export class RefLayer {
       return true;
     };
     // lakes first when large enough for their name, then cities by population, then the other lakes
-    const floor = minPop(z);
+    const floor = d.floor ? d.floor(z) : minPop(z);
     const av = this.avoid ? m.project(this.avoid) : null;
     // the hub dot (radius 5.5) is an obstacle for every other label
     if (av) boxes.push([av.x - 6, av.y - 6, av.x + 6, av.y + 6]);

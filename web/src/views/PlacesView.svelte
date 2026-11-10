@@ -57,6 +57,7 @@
   import { parseRef, type UnitRef } from '../lib/places';
   import { entryOf, loadPlaceLevel, themeBlocks, themeOrder, type Entry, type PlaceLevel } from '../lib/profile';
   import { app } from '../lib/state.svelte';
+  import '../lib/i18n-r3';
 
   interface Props {
     base: Base;
@@ -129,6 +130,20 @@
         return { theme, head: [...head.values()].sort((a, b) => a.headline! - b.headline!), rest: [...rest.values()] };
       })
       .filter((b) => b.head.length || b.rest.length);
+  });
+  // B4 (F2): the metrics of the map's filters and its shade metric come first
+  const yours = $derived.by(() => {
+    if (!levels.length) return [] as MetricMeta[];
+    const ids = [...app.filters.flatMap((f) => (f.kind === 'num' ? [f.metric] : [])), ...(app.metric ? [app.metric] : [])];
+    const out: MetricMeta[] = [];
+    for (const id of ids) {
+      const m = base.metas.get(id);
+      if (m && !out.includes(m) && levels.some((lv) => (m.profile_levels ?? m.levels).includes(lv))) out.push(m);
+    }
+    return out;
+  });
+  $effect(() => {
+    for (const lv of levels) for (const m of yours) need(lv, m.file);
   });
   function toggle(theme: string, rest: MetricMeta[]) {
     open = { ...open, [theme]: !open[theme] };
@@ -244,6 +259,12 @@
               {/each}
             </tr>
           </thead>
+          {#if yours.length}
+            <tbody class="yours">
+              <tr class="th"><th colspan={units.length + 1} scope="colgroup"><span class="thl">{t('r3.cmpYours')}</span></th></tr>
+              {#each yours as m (m.id)}{@render row(m)}{/each}
+            </tbody>
+          {/if}
           {#each blocks as b (b.theme)}
             <tbody>
               <tr class="th"><th colspan={units.length + 1} scope="colgroup"><span class="thl">{themeName(b.theme)}</span></th></tr>
@@ -318,10 +339,28 @@
     h1 { font-size: var(--fs-stat); }
     .add { width: 100%; }
     .ex { margin-left: 0; }
-    .mcol { width: 132px; padding-right: 8px; }
-    table { min-width: calc(132px + var(--n) * 128px); }
-    .lbl { font-size: var(--fs-meta); }
-    .uname { font-size: var(--fs-body); }
+    /* B4 (F2): every place visible at once. Each metric is a full-width label line over one row of value
+       cells, one equal column per place; the place names stick to the top while scrolling. */
+    .scroll { overflow: visible; }
+    table, thead, tbody { display: block; width: 100%; min-width: 0; }
+    tr { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+    thead { position: sticky; top: 0; z-index: 3; background: var(--panel); }
+    thead th { position: static; padding: 6px 6px 6px 0; }
+    thead .corner { display: none; }
+    .mcol { grid-column: 1 / -1; position: static; width: auto; padding: 8px 0 2px; border-bottom: 0 !important; }
+    tr.th, tr.morer { display: block; }
+    .th th, .morer td { display: block; }
+    td { padding: 2px 6px 8px; min-width: 0; overflow-wrap: anywhere; }
+    td:nth-child(2) { border-left: 0; padding-left: 0; }
+    .lbl { font-size: var(--fs-small); }
+    .uname { flex-direction: column; font-size: var(--fs-small); gap: 4px; hyphens: auto; }
+    .uname a { min-width: 0; max-width: 100%; }
+    .x { width: 28px; height: 28px; order: 2; }
+    .usub { font-size: var(--fs-cap); }
     td .v { font-size: var(--fs-small); }
+    td :global(.pb) { max-width: none; }
+    .why { font-size: var(--fs-cap); line-height: var(--lh-cap); }
+    tbody tr:not(.th):not(.morer) > td { border-bottom: 1px solid var(--border); }
+    tbody tr:not(.th):not(.morer) > th { border-bottom: 0; }
   }
 </style>

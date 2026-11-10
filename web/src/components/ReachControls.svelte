@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // Reach controls: hub picker, mode (off / public transport / car), time slider and Play.
   import { t as tr } from '../lib/i18n.svelte';
   import type { Snippet } from 'svelte';
@@ -49,9 +50,11 @@
       <span class="caps">{tr('rc.measure')}</span>
       <div class="seg" role="radiogroup" aria-label={tr('pt.measure')}>
         <button type="button" role="radio" aria-checked={ptm === 'st'} onclick={() => onptm?.('st')}>{tr('pt.stS')}</button>
-        <button type="button" role="radio" aria-checked={ptm === 'dd'} onclick={() => onptm?.('dd')}>{tr('pt.ddS')}</button>
+        <button type="button" role="radio" aria-checked={ptm === 'dd'} onclick={() => onptm?.('dd')}>{tr('r3.ddL')}</button>
       </div>
     </div>
+    <!-- B7 (F5): what the two measures are, in place -->
+    <p class="foot pth">{tr('r3.ptHint')}</p>
   {/if}
   {#if mode !== 'off'}
     <div class="time">
@@ -85,7 +88,8 @@
     background-repeat: no-repeat; background-position: right 7px center; background-size: 12px;
   }
   .seg { flex: none; }
-  .ptm { margin-top: 6px; justify-content: space-between; }
+  .ptm { margin-top: 6px; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  .pth { margin: 4px 0 0; }
   .ptm .seg button { padding: 2px 8px; font-size: var(--fs-meta); }
   .short { display: none; }
   .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }

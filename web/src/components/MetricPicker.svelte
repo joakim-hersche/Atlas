@@ -2,7 +2,7 @@
   // Metric picker: headline metrics grouped by theme; typing searches every metric (accent- and
   // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
-  import { levelName, mdesc, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
+  import { levelName, mdesc, ml, t, themeName, levelWord, themeWords } from '../lib/i18n.svelte';
   import { availableAt, type MetricMeta } from '../lib/data';
   import { fmtPeriod, unitOf } from '../lib/classify';
   import { metricKey, rankMetrics, suggestMetrics } from '../lib/metricsearch';
@@ -36,7 +36,8 @@
   const nAvail = $derived(usable.filter(ok).length);
   const current = $derived(metrics.find((m) => m.id === value));
   // U5: word starts only, the label in the UI language ranked first; D37 party names (keywords) searchable too
-  const keys = $derived(usable.map(metricKey));
+  // F13: theme names in every language are search words too ("Lärm" or "Umwelt" in the English UI)
+  const keys = $derived(usable.map((m) => metricKey(m, themeWords(m.theme))));
   const SEARCH = '\u0000search';
   const ranked = $derived(q.trim() ? rankMetrics(keys, q, { lang: app.lang, ok }) : []);
   const sugg = $derived(q.trim() && !ranked.length ? suggestMetrics(keys, q, { lang: app.lang, ok }) : null);
@@ -228,6 +229,7 @@
     .x { width: 32px; height: 32px; }
   }
   @media (max-width: 899px) {
-    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; max-height: 72vh; }
+    /* B4 (R4): on a phone the list is a modal sheet over the page; a scrim shows that it covers the tabs */
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; max-height: 72vh; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.32); }
   }
 </style>

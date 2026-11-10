@@ -90,3 +90,73 @@ export function kindOf(precision: string, hasCi: boolean): Kind | null {
   if (precision === 'modelled') return 'modelled';
   return null;
 }
+
+// ---------------------------------------------------------------- small numbers (D32, M9) for any period
+/** The small-number rule of a metric as metrics.json ships it (`reliability`). A base or count given as a
+ *  list, or as ids joined by "+", is the sum of those metrics (e.g. a share of yes + no votes). */
+export interface SmallRule {
+  base?: string | string[] | null;
+  count?: string | string[] | null;
+  min_base?: number | null;
+  min_count?: number | null;
+  /** pooled windows (3-year rates) are judged on the window, which the series files do not carry */
+  years?: number | null;
+}
+
+/** Ids of the metrics a rule reads (base and count terms). A sum is shipped as a list or as "vote_yes+vote_no";
+ *  "mean:bil_pop_jan+bil_pop_dec" is the mean of the terms (a mean population, compared as residents). */
+export function ruleTerms(rule: SmallRule | null | undefined): { base: string[]; count: string[]; baseMean?: boolean; countMean?: boolean } {
+  const mean = (x: string | string[] | null | undefined) => typeof x === 'string' && x.startsWith('mean:');
+  const ids = (x: string | string[] | null | undefined) =>
+    x ? (Array.isArray(x) ? x : x.replace(/^mean:/, '').split('+')).map((id) => id.trim()).filter(Boolean) : [];
+  const out: { base: string[]; count: string[]; baseMean?: boolean; countMean?: boolean } = { base: ids(rule?.base), count: ids(rule?.count) };
+  if (mean(rule?.base)) out.baseMean = true;
+  if (mean(rule?.count)) out.countMean = true;
+  return out;
+}
+
+/** Units whose value rests on small numbers under the metric's own rule (base below min_base or count below
+ *  min_count, read from the base and count values of the same period), or exceeds the special cap. Used for
+ *  periods whose files carry no small-number flags (past years from the series files); the latest values carry
+ *  the build's own flags. Units without a value are never listed. */
+export function ruleUnstable(
+  v: (number | null)[],
+  rule: SmallRule | null | undefined,
+  base: (number | null)[] | null,
+  count: (number | null)[] | null,
+  specialMax?: number | null,
+): number[] {
+  const out: number[] = [];
+  const minB = rule?.min_base ?? null;
+  const minC = rule?.min_count ?? null;
+  for (let i = 0; i < v.length; i++) {
+    const x = v[i];
+    if (x === null || x === undefined) continue;
+    const b = base?.[i];
+    const c = count?.[i];
+    const small = (minB !== null && b !== null && b !== undefined && b < minB) || (minC !== null && c !== null && c !== undefined && c < minC);
+    const special = specialMax !== null && specialMax !== undefined && x > specialMax;
+    if (small || special) out.push(i);
+  }
+  return out;
+}
+
+/** Element-wise sum of columns (null where a term is missing); null for no terms. */
+export function sumColumns(cols: (number | null)[][]): (number | null)[] | null {
+  if (!cols.length) return null;
+  return cols[0].map((_, i) => {
+    let s = 0;
+    for (const c of cols) {
+      const x = c[i];
+      if (x === null || x === undefined) return null;
+      s += x;
+    }
+    return s;
+  });
+}
+
+/** Units unstable in either of two periods (a change between them), among those with a change value. */
+export function unstableEither(a: number[], b: number[], change: (number | null)[]): number[] {
+  const s = new Set([...a, ...b]);
+  return [...s].filter((i) => change[i] !== null && change[i] !== undefined).sort((x, y) => x - y);
+}

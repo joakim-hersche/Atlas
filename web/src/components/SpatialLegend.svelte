@@ -42,7 +42,7 @@
         <li>
           <span class="sw" style="background:{r.c}"></span>
           <span class="lab">{t(`sp.lisa.${r.k}`)}</span>
-          {#if lisa && !compact}<span class="cn num">{fmtNumber(lisa.counts[r.k], 0)}</span>{/if}
+          {#if lisa}<span class="cn num">{fmtNumber(lisa.counts[r.k], 0)}</span>{/if}
         </li>
       {/each}
       {#if lisa && lisa.counts.none && !compact}
@@ -55,7 +55,8 @@
       <span class="ay" title={labelB}>{t('sp.bi.axisX', { m: labelB })}</span>
       <div class="grid">
         {#each cells as c}
-          <span class="cell" style="background:{BIVARIATE[c.i]}" title={title(c)}></span>
+          <!-- X11: the number of places in each cell -->
+          <span class="cell" style="background:{BIVARIATE[c.i]}" title={title(c)}>{#if counts && !compact}<span class="cc num" class:dark={c.a + c.b >= 3}>{fmtNumber(counts[c.i], 0)}</span>{/if}</span>
         {/each}
       </div>
       <span class="ax" title={labelA}>{t('sp.bi.axisX', { m: labelA })}</span>
@@ -86,7 +87,11 @@
   .ax { grid-column: 2; grid-row: 2; max-width: 220px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .compact .grid { grid-template-columns: repeat(3, 16px); grid-auto-rows: 16px; }
   .compact .ay { max-height: 52px; white-space: nowrap; text-overflow: ellipsis; }
-  .cell { display: block; }
+  .cell { display: grid; place-items: center; }
+  .cc { font-size: 10px; line-height: 1; color: #1a1a1a; }
+  .cc.dark { color: #fff; }
+  .grid { grid-template-columns: repeat(3, 34px) !important; grid-auto-rows: 26px !important; }
+  .compact .grid { grid-template-columns: repeat(3, 16px) !important; grid-auto-rows: 16px !important; }
   .note { margin: 4px 0 0; }
   .link { border: 0; background: none; padding: 0; margin-top: 4px; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
 </style>

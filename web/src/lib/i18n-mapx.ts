@@ -61,7 +61,7 @@ addStrings(
     // symbols for counts, labels
     'sym.auto': '{metric} is a count: shown as circles, because shading would favour large units.',
     'sym.back': 'Shade instead',
-    'lb.toggle': 'City and lake names',
+    'lb.toggle': 'Place names (cities and lakes)',
   },
   {
     'yc.view': 'Jahresansicht',
@@ -118,6 +118,6 @@ addStrings(
     'rl.crossOne': 'Das Intervall reicht in eine andere Klasse: die Farbe ist unsicher.',
     'sym.auto': '{metric} ist eine Anzahl: als Kreise gezeigt, weil Flächenfarben grosse Einheiten bevorzugen würden.',
     'sym.back': 'Stattdessen einfärben',
-    'lb.toggle': 'Orts- und Seenamen',
+    'lb.toggle': 'Ortsnamen (Orte und Seen)',
   },
 );

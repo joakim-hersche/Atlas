@@ -312,7 +312,7 @@
         subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${unitOf(xMeta)})` : ''}, ${fmtPeriod(xPeriod, true)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${unitOf(yMeta)})` : ''}, ${fmtPeriod(yPeriod, true)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
         legend, credits: [...credits, tr('ex.made')], link: tr('ex.view', { url: location.href }),
       });
-      downloadBlob(blob, `gemeindebank-${slug(ml(yMeta))}-vs-${slug(ml(xMeta))}.png`);
+      downloadBlob(blob, `atlas-${slug(ml(yMeta))}-vs-${slug(ml(xMeta))}.png`);
     } finally {
       pngBusy = false;
     }

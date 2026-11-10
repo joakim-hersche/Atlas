@@ -186,7 +186,9 @@ export class UnitMap {
       style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': token('--map-bg') } }] },
       bounds: CH_BOUNDS,
       fitBoundsOptions: { padding: 12 },
-      maxBounds: [-4, 36, 24, 56],
+      // E4: the view stays around Switzerland, with room for a tall phone map showing all of it (a box larger than
+      // the viewport is needed, else MapLibre zooms in to fit the bounds): no drifting far abroad
+      maxBounds: [CH_BOUNDS[0] - 3, CH_BOUNDS[1] - 2.5, CH_BOUNDS[2] + 3, CH_BOUNDS[3] + 2.5],
       minZoom: 5.5,
       maxZoom: 13,
       dragRotate: false,

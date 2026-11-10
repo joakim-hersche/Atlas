@@ -4,6 +4,7 @@
 import type { MetricMeta } from './data';
 import { fmtNumber, type RankInfo } from './classify';
 import { app } from './state.svelte';
+import { frTypo } from './typo';
 
 type Dict = Record<string, string>;
 
@@ -94,7 +95,7 @@ const EN: Dict = {
   "ex.view": "View: {url}",
   "ex.notMatching": "not matching the filters",
   "pt.st": "Public transport, station to hub",
-  "pt.stS": "Station",
+  "pt.stS": "Station to station",
   "pt.dd": "Public transport, door to door",
   "pt.ddS": "Door to door",
   "pt.measure": "Public transport measure",
@@ -246,7 +247,7 @@ const EN: Dict = {
   "mp.search": "Search {n} metrics",
   "mp.partial": "partial",
   "mp.searchL": "Search metrics",
-  "mp.unavail": "{n} metrics are not available for {level}: medians, indices and travel times cannot be aggregated, and some sources publish one level only.",
+  "mp.unavail": "{n} metrics have no map for {level}: some publishers report other levels only, some values (medians, indices, travel times) cannot be added up across places, and some maps are left out for too little coverage.",
   "mv.backLatest": "Back to latest",
   "mv.choro": "Choropleth",
   "mv.controls": "Map controls",
@@ -558,7 +559,7 @@ const DE: Dict = {
   "ex.view": "Ansicht: {url}",
   "ex.notMatching": "passt nicht zu den Filtern",
   "pt.st": "ÖV, Bahnhof bis Zentrum",
-  "pt.stS": "Bahnhof",
+  "pt.stS": "Bahnhof zu Bahnhof",
   "pt.dd": "ÖV, von Tür zu Tür",
   "pt.ddS": "Tür zu Tür",
   "pt.measure": "ÖV-Messgrösse",
@@ -707,7 +708,7 @@ const DE: Dict = {
   "mp.search": "{n} Kennzahlen durchsuchen",
   "mp.partial": "teilweise",
   "mp.searchL": "Kennzahlen durchsuchen",
-  "mp.unavail": "{n} Kennzahlen gibt es nicht für {level}: Mediane, Indizes und Reisezeiten lassen sich nicht aggregieren, und manche Quellen publizieren nur eine Ebene.",
+  "mp.unavail": "{n} Kennzahlen haben keine Karte für {level}: manche Quellen publizieren nur andere Ebenen, manche Werte (Mediane, Indizes, Reisezeiten) lassen sich nicht über Orte zusammenzählen, und manche Karten fehlen wegen zu geringer Abdeckung.",
   "mv.backLatest": "Zurück zum neuesten",
   "mv.choro": "Flächen",
   "mv.controls": "Kartensteuerung",
@@ -948,8 +949,9 @@ export function loadFrench(): Promise<unknown> {
 
 export function t(key: string, vars?: Record<string, string | number>): string {
   const s = (app.lang === 'de' ? DE[key] : app.lang === 'fr' ? fr?.FR[key] : undefined) ?? EN[key] ?? key;
-  if (!vars) return s;
-  return s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`));
+  const out = vars ? s.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : `{${k}}`)) : s;
+  // B8 (E8): one French typography for every string (narrow no-break space before : ; ! ? %, curly apostrophes)
+  return app.lang === 'fr' ? frTypo(out, 'fr') : out;
 }
 
 export const isDe = () => app.lang === 'de';
@@ -958,7 +960,7 @@ export const isDe = () => app.lang === 'de';
 export function ml(m: MetricMeta | undefined | null): string {
   if (!m) return '';
   if (app.lang === 'de' && m.label_de) return m.label_de;
-  if (app.lang === 'fr' && m.label_fr) return m.label_fr;
+  if (app.lang === 'fr' && m.label_fr) return frTypo(m.label_fr, 'fr');
   return m.label_en;
 }
 
@@ -966,7 +968,7 @@ export function ml(m: MetricMeta | undefined | null): string {
 export function mdesc(m: MetricMeta | undefined | null): string | null {
   if (!m) return null;
   if (app.lang === 'de' && m.description_de) return m.description_de;
-  if (app.lang === 'fr' && m.description_fr) return m.description_fr;
+  if (app.lang === 'fr' && m.description_fr) return frTypo(m.description_fr, 'fr');
   return m.description;
 }
 
@@ -990,6 +992,10 @@ const THEME_DE: Record<string, string> = {
   Politics: 'Politik',
   'Geography & identity': 'Geografie & Identität',
 };
+/** The theme's name in every language the app has loaded (metric search, F13). French needs the French dictionary. */
+export function themeWords(theme: string): string {
+  return [theme, THEME_DE[theme] ?? '', fr?.THEME_FR[theme] ?? ''].join(' ');
+}
 export function themeName(theme: string): string {
   if (app.lang === 'de') return THEME_DE[theme] ?? theme;
   if (app.lang === 'fr') return fr?.THEME_FR[theme] ?? theme;

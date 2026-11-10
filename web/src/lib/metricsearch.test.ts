@@ -14,9 +14,27 @@ const METRICS = [
   meta('rent_3room', 'Rent of a 3-room flat', 'Miete 3-Zimmer-Wohnung', 'Loyer d’un 3 pièces', { theme: 'Housing & buildings' }),
   meta('geo_pop_density', 'Population density', 'Bevölkerungsdichte', 'Densité de population', { theme: 'Geography & identity', headline: 1 }),
   meta('pop_total', 'Population', 'Bevölkerung', 'Population', { theme: 'Population & demography', headline: 2 }),
+  meta('noise_share_road_day_60', 'Residents with road noise of 60 dB(A) or more by day', 'Anteil Einwohner mit Strassenlärm ab 60 dB(A) tagsüber',
+    'Part des habitants exposés au bruit routier', { theme: 'Environment & hazards' }),
+  meta('vote_yes_share', 'Yes share', 'Ja-Anteil', 'Part de oui', { per_vote: true, headline: 90 }),
 ];
-const keys = METRICS.map(metricKey);
+const keys = METRICS.map((m) => metricKey(m));
 const ids = (q: string, lang: 'en' | 'de' | 'fr' = 'en') => rankMetrics(keys, q, { lang }).map((m) => m.id);
+
+describe('metric search: spellings and topic words (F13, R3)', () => {
+  it('reads ae / oe / ue as ä / ö / ü', () => {
+    expect(normWords('Zürich')).toEqual(normWords('Zuerich'));
+    expect(ids('Laerm', 'de')[0]).toBe('noise_share_road_day_60');
+    expect(ids('lärm', 'en')[0]).toBe('noise_share_road_day_60');
+  });
+  it('finds the yes share with the word for a vote in any language', () => {
+    for (const q of ['Abstimmung', 'votation', 'vote']) expect(ids(q, 'de')).toContain('vote_yes_share');
+  });
+  it('finds metrics by their theme in another language', () => {
+    const k = METRICS.map((m) => metricKey(m, m.theme === 'Environment & hazards' ? 'Environment & hazards Umwelt & Naturgefahren Environnement & dangers naturels' : m.theme));
+    expect(rankMetrics(k, 'Umwelt', { lang: 'en' }).map((m) => m.id)).toEqual(['noise_share_road_day_60']);
+  });
+});
 
 describe('metric search (U5)', () => {
   it('normalises words', () => {
@@ -34,7 +52,8 @@ describe('metric search (U5)', () => {
   it('uses the labels of the UI language first', () => {
     expect(ids('miete', 'de')[0]).toBe('rent_avg');
     expect(ids('loyer', 'fr')[0]).toBe('rent_avg');
-    expect(ids('dichte', 'de')).toEqual([]);
+    // F13: a word inside a German compound is found, behind word starts
+    expect(ids('dichte', 'de')).toEqual(['geo_pop_density']);
     expect(ids('bevolkerungsdichte', 'de')[0]).toBe('geo_pop_density');
   });
   it('finds a party by its full name in the keywords', () => {

@@ -121,3 +121,14 @@ export function fmtDate(iso: string): string {
   if (app.lang === 'en') return `${d} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ${y}`;
   return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
 }
+
+// ---------------------------------------------------------------- a place to find on the vintage map (B5)
+/** Set by the header search on the older-boundaries route: a former name (with its old BFS number when the
+ *  search index gives one) or a current municipality; the vintage view selects the old unit and zooms to it. */
+export const vintageFind = $state<{
+  q: { name?: string; bfs?: string; current?: string } | null;
+  /** municipalities of the state on the map (searched first by the header search on that route) */
+  units: { id: string; name: string; kanton: string }[] | null;
+  /** chip of those hits ("Municipality 2010") */
+  label: string | null;
+}>({ q: null, units: null, label: null });

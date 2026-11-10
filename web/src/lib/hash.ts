@@ -5,6 +5,8 @@
 // Year comparisons: yc=<earlier year> (change since that year, up to the slider year y), ym=p (percent instead of
 // absolute), fx=1 (class limits fixed across all years), smy=2010,2015,2020 (small multiples of those periods);
 // lb=0 hides the city and lake names on the map.
+// lang=de|fr: UI language (English is the default and is left out). Without lang= the language stored on the
+// device is used, else (first visit) the browser's language (German / French; Italian and others: English).
 // Reach as a filter: ro=1 (only the places within t minutes of the hub count: match count, ranking, aggregate;
 // written only while reach is on).
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
@@ -213,14 +215,32 @@ export function parseHash(hash: string): ViewState {
   };
 }
 
-/** Language chosen earlier on this device (localStorage can throw or be empty: then English). */
+/** Language chosen earlier on this device; on a first visit (nothing stored, B7 / E2) the browser's language. */
 export function storedLang(): Lang {
   try {
     const l = localStorage.getItem('gb-lang') as Lang | null;
-    return l && LANGS.includes(l) ? l : 'en';
+    if (l && LANGS.includes(l)) return l;
+  } catch {
+    /* blocked storage: fall through to the browser's language */
+  }
+  try {
+    return browserLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
   } catch {
     return 'en';
   }
+}
+
+/** UI language from the browser's preferred languages, in their order: German (also Swiss German and Romansh,
+ *  whose speakers all read German), French or English. Italian has no UI yet and is skipped in favour of the
+ *  next listed language; with nothing else, English (neutral; place names stay in their official form). */
+export function browserLang(tags: readonly string[]): Lang {
+  for (const tag of tags) {
+    const p = (tag || '').toLowerCase().split(/[-_]/)[0];
+    if (p === 'de' || p === 'gsw' || p === 'rm') return 'de';
+    if (p === 'fr') return 'fr';
+    if (p === 'en') return 'en';
+  }
+  return 'en';
 }
 export function storeLang(l: Lang): void {
   try {

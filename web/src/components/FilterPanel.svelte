@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // Stacked filters: numeric ranges on any metric, categorical conditions and travel time to a hub,
   // combined with AND. Each condition shows how many units pass it and how many have no value.
   import { ml, t } from '../lib/i18n.svelte';
@@ -60,6 +61,7 @@
   let search = $state<Record<number, string>>({});
   const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const short = (o: CatOption[]) => o.length > 0 && o.every((x) => x.name.length <= 14);
+  const nInactive = $derived(evals.filter((e) => e.status === 'inactive').length);
   const nameOf = (field: CatField, id: string) => options(field).find((o) => o.id === id)?.name ?? id;
 </script>
 
@@ -69,9 +71,13 @@
       <span class="num">{t('fp.match', { n: fmtNumber(match.n, 0), total: fmtNumber(total, 0), units: unitWord })}</span>
       {#if match.active > 1}{t('fp.all', { n: match.active })}{/if}
       {#if match.nMissingOnly}<span class="miss">· <span class="hatch"></span> <span class="num">{fmtNumber(match.nMissingOnly, 0)}</span> {t('fp.excluded')}</span>{/if}
+    {:else if nInactive}
+      <!-- C7: conditions that cannot apply at this level (travel times, commute) are not "no conditions" -->
+      {t('r3.fpInactive', { n: nInactive, total: fmtNumber(total, 0), units: unitWord })}
     {:else}
       {t('fp.none', { n: fmtNumber(total, 0), units: unitWord })}
     {/if}
+    {#if match.active && nInactive}<span class="miss">· {t('r3.fpSomeInactive', { n: nInactive })}</span>{/if}
     {#if filters.length}
       <span class="acts">
         {#if match.active && onzoom}<button type="button" class="link" onclick={onzoom}>{t('fp.zoom')}</button>{/if}
@@ -150,6 +156,7 @@
             <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
+        {#if station && f.mode !== 'car'}<p class="foot pth">{t('r3.ptHint')}</p>{/if}
         <input type="range" class="rng" min="0" max={T_MAX} step="5" value={f.max} style="--pct:{(100 * f.max) / T_MAX}%" aria-label={t('fp.maxTime')}
           oninput={(ev) => update(k, { ...f, max: +ev.currentTarget.value })} />
         {#if e.status === 'active'}
@@ -177,6 +184,7 @@
 </div>
 
 <style>
+  .pth { margin: 2px 0 4px; }
   .filters { font-size: var(--fs-small); }
   .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; }
   .miss { color: var(--text); }

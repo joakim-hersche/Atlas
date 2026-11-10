@@ -19,8 +19,11 @@
   import YearTools from '../components/YearTools.svelte';
   import SmallMultiples from '../components/SmallMultiples.svelte';
   import '../lib/i18n-mapx';
-  import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
-  import { ciSpec, crossesClass, intervals, kindOf, rankRange } from '../lib/reliability';
+  import { changeColumn, changeMeta, defaultPeriods, innerLabel, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
+  import { ciSpec, crossesClass, intervals, kindOf, rankRange, unstableEither } from '../lib/reliability';
+  import { unstableIndices } from '../lib/small.svelte';
+  import '../lib/i18n-r3';
+  import { colon, pctSep } from '../lib/typo';
   import { RefLayer, loadRefData } from '../lib/reflayer';
   import VotePicker from '../components/VotePicker.svelte';
   import VoteResult from '../components/VoteResult.svelte';
@@ -37,7 +40,7 @@
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
-  import { majorityMask, precisionText } from '../lib/data';
+  import { FLAG, hasFlag, majorityCount, majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, loadFine, loadFineLines, FINE_LEVELS, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -141,26 +144,49 @@
       : refRaw,
   );
   // small numbers (D32): units whose value rests on a small base or count (flag bits 1/2)
+  // B1: the latest values carry the build's flags; a past year (series file) is judged by the metric's own rule on
+  // the base and count values of that year (lib/small.svelte.ts). A change is unstable when either year is.
   const unstableIdx = $derived.by(() => {
-    const r = refRaw;
-    if (!r?.col.f || cmpActive) return [] as number[];
-    const out: number[] = [];
-    for (const k of Object.keys(r.col.f)) if (isUnstable(r.file, r.col.f[k]) && r.col.v[+k] !== null) out.push(+k);
-    return out;
+    const to = unstableIndices(cols, ld, metaRaw, refRaw);
+    if (!cmpActive || !refChg) return to;
+    return unstableEither(to, unstableIndices(cols, ld, metaRaw, cmpFromRef), refChg.col.v);
   });
-  // 'hide': unstable values become gaps with their reason (classes, ranks and statistics leave them out)
+  // 'hide': unstable values become gaps with their reason (classes, ranks and statistics leave them out);
+  // 'show' / 'light': a computed column (change, past year) gets the flag bit so the card and ranking mark it
   const refA = $derived.by(() => {
     const r = refDiff;
-    if (!r || app.unstable !== 'hide' || !unstableIdx.length) return r;
+    if (!r || !unstableIdx.length) return r;
+    if (app.unstable !== 'hide') {
+      if (r.file) return r;
+      const f = { ...(r.col.f ?? {}) };
+      for (const i of unstableIdx) f[String(i)] = (f[String(i)] ?? 0) | FLAG.small_base;
+      return { ...r, col: { ...r.col, f } };
+    }
     const v = r.col.v.slice();
-    const notes = [...(r.col.notes ?? []), t('fl.hidden')];
+    const notes = [...(r.col.notes ?? []), t(cmpActive ? 'r3.hiddenChg' : 'fl.hidden', { from: app.cmpFrom ?? '', to: cmpTo ?? '' })];
+    const small = notes.length - 1;
+    // D4: a special case (car fleets) is hidden for its own reason, not as small numbers
+    const sp = metaRaw.special;
+    const lang: string = app.lang;
+    const why = sp ? ((lang === 'de' ? sp.rule_de : lang === 'fr' ? sp.rule_fr : null) ?? sp.rule_en ?? '') : '';
+    let special = -1;
     const n = { ...(r.col.n ?? {}) };
     for (const i of unstableIdx) {
       v[i] = null;
-      n[String(i)] = notes.length - 1;
+      const fl = refRaw?.col.f?.[String(i)] ?? 0;
+      const isSpecial = !cmpActive && sp && ((refRaw?.file && hasFlag(refRaw.file, fl, 'special')) || (refRaw?.col.v[i] ?? 0) > sp.max);
+      if (isSpecial) {
+        if (special < 0) {
+          notes.push(t('r3.hiddenSpecial', { why }));
+          special = notes.length - 1;
+        }
+        n[String(i)] = special;
+      } else n[String(i)] = small;
     }
     return { ...r, col: { ...r.col, v, n, notes } };
   });
+  /** values hidden as small numbers (told apart from units without data, B2) */
+  const nHidden = $derived(app.unstable === 'hide' ? unstableIdx.length : 0);
   // ------------------------------------------------------------------ spatial statistics (Moran's I, clusters, bivariate)
   let spOpen = $state(app.spatial !== 'off');
   $effect(() => {
@@ -320,7 +346,18 @@
   const legendTitle = $derived.by(() => {
     if (!cmpActive || !metaChg || !app.cmpFrom || !cmpTo) return null;
     const u = metaChg.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaChg);
-    return `${t('ux.chgTitle', { metric: ml(metaRaw), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
+    return `${t('ux.chgTitle', { metric: innerLabel(ml(metaRaw)), from: app.cmpFrom, to: cmpTo })}${u ? ` (${u})` : ''}`;
+  });
+  /** J8: single-seat cantons at their level: "8 cantons" at canton level, "12 districts in single-seat cantons" below */
+  const majorityText = (k: number) => (ld.level === 'kanton' ? `${fmtNumber(k, 0)} ${t('lg.maj')}` : t('r3.majUnits', { n: fmtNumber(k, 0), units: word }));
+  /** B3: what the two ends of a diverging scale mean (legend and PNG) */
+  const sides = $derived.by<{ left: string; right: string } | null>(() => {
+    if (!scaleA?.diverging) return null;
+    if (metaA.id === 'vote_yes_share') return scaleA.fixed ? { left: t('lg.no'), right: t('lg.yes') } : null;
+    if (metaA.id === 'nrw_leaning') return { left: t('lg.leftLean'), right: t('lg.rightLean') };
+    if (metaA.id === 'vote_yes_share_diff') return { left: t('r3.lessYes'), right: t('r3.moreYes') };
+    if (cmpActive) return { left: t('r3.down'), right: t('r3.up') };
+    return null;
   });
   /** U13: sparse metrics (partial coverage): the warning goes on top of the legend, with a zoom to the data */
   const sparse = $derived.by(() => {
@@ -332,12 +369,18 @@
     for (let i = 0; i < nUnits; i++) if (colA.v[i] !== null) idx.push(i);
     return { n, idx };
   });
-  const legendWarn = $derived(
-    sparse
-      ? { text: t('ux.sparse', { n: fmtNumber(sparse.n, 0), total: fmtNumber(nUnits, 0), units: word, pct: `${fmtNumber((100 * sparse.n) / nUnits, 0)} %` }),
-          action: t('ux.zoomData'), onaction: () => zoomTo(sparse!.idx) }
-      : null,
-  );
+  // B2: values hidden as small numbers are not "no data": the banner tells them apart and offers to show them
+  const legendWarn = $derived.by(() => {
+    if (!sparse) return null;
+    const vars = { n: fmtNumber(sparse.n, 0), total: fmtNumber(nUnits, 0), units: word, pct: `${fmtNumber((100 * sparse.n) / nUnits, 0)}${pctSep()}%` };
+    const zoom = { action: t('ux.zoomData'), onaction: () => zoomTo(sparse!.idx) };
+    if (!nHidden) return { text: t('ux.sparse', vars), ...zoom };
+    const g = nUnits - sparse.n - nHidden;
+    return {
+      text: t(g > 0 ? 'r3.sparseHidden' : 'r3.sparseHiddenOnly', { ...vars, h: fmtNumber(nHidden, 0), g: fmtNumber(g, 0) }),
+      action: t('r3.showThem'), onaction: () => (app.unstable = 'show'), action2: zoom.action, onaction2: zoom.onaction,
+    };
+  });
   const smPooled = $derived(app.multi !== null && yearPeriods.length > 1 ? pooledValues(metaRaw, ld.level) : undefined);
 
   // reliability of survey and modelled values: the published 95 % interval (companion metric <id>_ci), else a badge
@@ -490,6 +533,16 @@
       autoSym = null;
     }
     app.metric = id;
+    // C5: a metric picked that has no map at this level: switch to a level where it has one (with "switch back")
+    if (m && !availableAt(m, ld.level)) {
+      const lv = levelsOf(m)[0];
+      if (lv) {
+        const prev = { level: ld.level, metric: metaRaw.id, metricB: app.metricB, size: app.size };
+        app.setLevel(lv);
+        app.levelNote = { text: t('r3.levelAuto', { metric: ml(m), from: levelWord(ld.level), to: levelName(lv) }), level: lv, metric: id, prev };
+        return;
+      }
+    }
     if (isCount && !keepChoro && (app.display === 'choropleth' || autoSym)) {
       app.size = id;
       app.display = 'symbols';
@@ -622,8 +675,10 @@
   // ------------------------------------------------------------------ selection
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
   // a selection or hub from a link that does not exist here is dropped (the hash follows)
+  // C6: only once the level asked for is loaded (Back to "municipality 261 selected" arrives while the district
+  // map is still shown; dropping the selection then would lose that history entry)
   $effect(() => {
-    if (app.sel !== null && !ld.index.has(app.sel)) {
+    if (app.sel !== null && ld.level === app.level && !ld.index.has(app.sel)) {
       replaceNext();
       app.sel = null;
     }
@@ -734,13 +789,13 @@
     if (desktop) return { top: 56, bottom: 24, left: 24, right: 56 };
     // phone: the level bar on top; the sheet sits below the map (it does not cover it)
     // the floating legend sits at the bottom of the map while the sheet is folded
-    return { top: 52, bottom: !sheetOpen && selIdx === null ? 100 : 12, left: 10, right: 10 };
+    return { top: 12, bottom: !sheetOpen && selIdx === null ? 100 : 12, left: 10, right: 44 };
   }
   /** the user panned or zoomed since the last fit: then a resize keeps their view */
   let userMoved = false;
   /** Zoom to a set of units (matches, a ranking row). */
   const boxes = $derived(ld.geo.features.map((f) => geomBounds(f.geometry)));
-  function zoomTo(idx: number[], maxZoom = 10.5) {
+  function zoomTo(idx: number[], maxZoom = 10.5, keepSheet = false) {
     if (!view || !idx.length) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     const byId = new Map(ld.geo.features.map((f, k) => [f.id as number, k]));
@@ -751,7 +806,7 @@
       x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
     }
     if (!Number.isFinite(x0)) return;
-    if (!desktop) sheetOpen = false;
+    if (!desktop && !keepSheet) sheetOpen = false;
     tick().then(() => {
       view!.map.resize();
       view!.fitBox([x0, y0, x1, y1], mapPadding(), { animate: true, maxZoom });
@@ -943,7 +998,10 @@
       const marks = col.f ? (i: number) => flagMarks(f, flagsOf(f, col, i)) : undefined;
       out.push({ key, tag, meta: ref.meta, v: ref.col.v, period: ref.col.period, label, marks });
     };
-    if (!whyA) push(metaA.id, 'Shade', refA);
+    if (!whyA) {
+      push(metaA.id, 'Shade', refA);
+      if (nHidden && out.length) out[out.length - 1].hiddenNote = t('r3.csvHidden');
+    }
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
     for (const e of evals) {
       if (e.status === 'active' && e.values && e.filter.kind === 'commute') {
@@ -987,10 +1045,26 @@
     for (let i = 0; i < nUnits; i++) if (match.m[i] && !(hide && belowMin.has(i))) out.push(i);
     return out;
   });
+  /** B4 (F1): on a phone a ranking row selects and zooms while the sheet stays open, so the list keeps its place */
   function selectFromList(i: number) {
-    select(i);
-    zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5);
+    choose = null;
+    app.sel = ld.units[i];
+    zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5, true);
   }
+  // the sheet's scroll position per tab survives folding and switching tabs (a folded body is not laid out)
+  let bodyEl = $state<HTMLDivElement>();
+  const scrollMem: Record<string, number> = {};
+  function onBodyScroll() {
+    if (!desktop && sheetOpen && bodyEl) scrollMem[phoneTab] = bodyEl.scrollTop;
+  }
+  $effect(() => {
+    const open = sheetOpen;
+    const tab = phoneTab;
+    if (desktop || !open) return;
+    tick().then(() => requestAnimationFrame(() => {
+      if (bodyEl && scrollMem[tab]) bodyEl.scrollTop = scrollMem[tab];
+    }));
+  });
 
   // ------------------------------------------------------------------ PNG export (D32)
   let pngBusy = $state(false);
@@ -1005,8 +1079,22 @@
       const lc = refLayer?.snapshot(img.width, img.height, img.width / Math.max(1, mapEl.clientWidth));
       if (lc) layers.push(lc);
       const sLeg = spatialLegendItems();
-      const legend: LegendItem[] = sLeg ?? legendItems(scaleA, metaA);
-      if (!sLeg && scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
+      const legend: LegendItem[] = (sLeg ?? legendItems(scaleA, metaA)).slice();
+      /** class swatches (a continuous scale draws a gradient instead; the pattern rows after them stay) */
+      const nClass = legend.length;
+      // B3: every pattern on the map is explained, with its count (no data, hidden small numbers, single-seat cantons)
+      const notes: string[] = [];
+      if (!sLeg) {
+        const nMaj = native ? 0 : majorityCount(colA);
+        const nH = native ? 0 : nHidden;
+        const nGap = (native ? native.v.length : nUnits) - scaleA.n - nMaj - nH;
+        const w = native?.word ?? word;
+        if (nGap > 0) legend.push({ colour: null, label: `${t('lg.noData')} (${fmtNumber(nGap, 0)} ${w})` });
+        if (nH > 0) legend.push({ colour: null, label: t('r3.hiddenN', { n: fmtNumber(nH, 0) }) });
+        if (nMaj > 0) legend.push({ colour: null, pattern: 'dots', label: `${majorityText(nMaj)}` });
+        if (nH > 0) notes.push(t('r3.pngHidden'));
+        if (regional) notes.push(t('rg.note', { level: levelName(regional, false) }));
+      }
       if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
       if (filtered) legend.push({ colour: token('--muted-fill') || '#ececec', label: t('ex.notMatching') });
       if (reachOn && reachMask && !reachFilter) legend.push({ colour: lighten(scaleA.classColours[2] ?? '#6290bb', 0.78), label: t('ux.notReached', { t: Math.round(app.t) }) });
@@ -1015,20 +1103,24 @@
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
         : null;
       const src = base.sources.get(metaA.source);
-      const sub = [unitOf(metaA), fmtPeriod(colA.period, true), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
+      // B3: the classification actually drawn (fixed classes of a vote or leaning map are not quantiles)
+      const clsText = sLeg ? '' : scaleA.fixed ? t('r3.clsFixed') : t(`lg.m.${scaleA.method}`);
+      const sub = [metaA.unit === 'pp' ? t('ux.ppFirst') : unitOf(metaA), fmtPeriod(colA.period, true), levelName(ld.level), clsText].filter(Boolean).join(' · ');
       const extra: string[] = [];
-      if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
-      if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
+      if (filtered) extra.push(`${t('tab.filters')}${colon()}${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
+      if (reachOn) extra.push(`${t('rc.from')} ${hub.name}${colon()}${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
       const blob = await figurePNG({
         layers, scale: img.width / Math.max(1, mapEl.clientWidth), title: spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : spatialMode === 'lisa' ? t('sp.legendTitle', { metric: ml(metaA) }) : ml(metaA), subtitle: [sub, ...extra].join('\n'),
-        legend: gradient ? [] : legend, gradient,
+        legend: gradient ? legend.slice(nClass) : legend, gradient,
+        sides: !sLeg && sides ? { ...sides, leftColour: token('--div-n3') || undefined, rightColour: token('--div-p3') || undefined } : null,
+        notes,
         credits: [
-          `${t('lg.source')}: ${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
+          `${t('lg.source')}${colon()}${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
           `${t('ex.boundaries')} · ${t('ex.made')}`,
         ],
         link: t('ex.view', { url: location.href }),
       });
-      downloadBlob(blob, `gemeindebank-${slug(ml(metaA))}-${slug(colA.period)}.png`);
+      downloadBlob(blob, `atlas-${slug(cmpActive ? `${ml(metaRaw)} ${t('yc.change')}` : ml(metaA))}-${slug(colA.period)}.png`);
     } finally {
       pngBusy = false;
     }
@@ -1102,6 +1194,8 @@
       notes.push(t(ld.units[i] === 'JU' ? 'card.juMoutier' : 'card.beMoutier'));
     const stx = spatialText(i);
     if (stx) extra.push({ label: t('sp.title'), value: stx });
+    // B1: a change is flagged when either year rests on small numbers
+    if (cmpActive && app.unstable !== 'hide' && unstableIdx.includes(i)) notes.push(t('r3.chgEither', { from: app.cmpFrom ?? '', to: cmpTo ?? '' }));
     // reliability of this unit's value: its 95 % interval, or the survey / modelled sentence
     let ci = null;
     let relText: string | null = null;
@@ -1156,7 +1250,7 @@
   const embedCredit = $derived.by(() => {
     const ids = [metaA.source, spatialMode === 'bi' && metaB ? metaB.source : null].filter((x, k, a): x is string => !!x && a.indexOf(x) === k);
     const srcs = ids.map((id) => bareAttribution(base.sources.get(id)?.attribution || base.sources.get(id)?.publisher || id));
-    return [`${t('lg.source')}: ${srcs.join('; ')}${colA ? ` · ${fmtPeriod(colA.period)}` : ''}`, t('ex.boundaries')].join(' · ');
+    return [`${t('lg.source')}${colon()}${srcs.join('; ')}${colA ? ` · ${fmtPeriod(colA.period)}` : ''}`, t('ex.boundaries')].join(' · ');
   });
   const fullHref = $derived(app.embed ? viewUrl(false) : '');
 </script>
@@ -1231,7 +1325,7 @@
         {/each}
       </div>
     {/if}
-    <div class="body">
+    <div class="body" bind:this={bodyEl} onscroll={onBodyScroll}>
       {#if desktop || phoneTab === 'map'}
       <section>
         <div class="row2 lab">
@@ -1264,7 +1358,7 @@
           {:else if scaleA && colA}
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle} warn={legendWarn}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} axisRef={fixedRef} notes={legendNotes} rel={relLegend} nHidden={native ? 0 : nHidden} {sides} level={ld.level} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
           {:else if refA === undefined}
@@ -1272,7 +1366,7 @@
           {/if}
           {#if unstableIdx.length && !whyA && !spatialMode}
             <div class="ur">
-              <span class="foot">{t('fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
+              <span class="foot">{t(cmpActive ? 'r3.urChg' : 'fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
               <div class="seg" role="radiogroup" aria-label={t('fl.show')}>
                 {#each ['show', 'light', 'hide'] as const as o}
                   <button type="button" role="radio" aria-checked={app.unstable === o} onclick={() => (app.unstable = o)}>{t(`fl.opt.${o}`)}</button>
@@ -1374,7 +1468,7 @@
           {#snippet extra()}
             <AggregateLine metrics={base.metrics} {metas} level={ld.level} {nUnits} mask={match.m} nMatch={match.n}
               metricId={app.agg ?? app.metric} getCol={(id) => cols.get(ld, id, app.year)} unitWord={word}
-              onpick={(id) => (app.agg = id === app.metric ? null : id)} />
+              onpick={(id) => (app.agg = id === app.metric ? null : id)} hiddenIdx={cmpActive ? [] : unstableIdx} shadeId={metaRaw.id} />
           {/snippet}
         </FilterPanel>
       </section>
@@ -1390,11 +1484,18 @@
   </aside>
 
   <section class="pane">
+    {#if !desktop && !app.embed}
+      <!-- B4 (R4, E10, F1): on a phone the level control is a compact row above the map, not over its north -->
+      <div class="lvlrow">
+        <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
+        <LevelNote {base} />
+      </div>
+    {/if}
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
       {#if app.multi !== null}
         <SmallMultiples {base} {ld} {cols} meta={metaRaw} periods={yearPeriods} picked={app.multi} pooled={smPooled} method={app.cls}
-          mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} />
+          mask={filtered ? (match.m as Uint8Array) : null} onpick={(p) => (app.multi = p)} onclose={() => (app.multi = null)} change={cmpActive} />
       {/if}
       {#if !app.embed}
       {#if desktop && !app.embed && !sideOpen}
@@ -1403,10 +1504,12 @@
           <button type="button" onclick={() => (app.tab = 'stats')}>{t('tab.stats')}</button>
         </div>
       {/if}
+      {#if desktop}
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
       </div>
+      {/if}
       {/if}
       {#if (!desktop || app.embed) && card && refA && colA}
         <div class="card-wrap">
@@ -1422,6 +1525,11 @@
           {#each choose.ids as k}<button type="button" onclick={() => select(k)}>{names[k]}{#if ld.canton[k] && ld.level !== 'kanton'}<span class="kt">{ld.canton[k]}</span>{/if}</button>{/each}
           <button type="button" class="cx" aria-label={t('common.close')} onclick={() => (choose = null)}>×</button>
         </div>
+      {/if}
+      {#if whyA && mapReady && !app.embed}
+        <!-- C5: why the map is empty, on the map itself -->
+        <div class="mapwhy" role="status"><p>{whyA}</p>
+          {#if levelsOf(metaRaw)[0]}<button type="button" class="btn-primary" onclick={() => { stop(); requestLevel(base, levelsOf(metaRaw)[0]); }}>{t('r3.showLevel', { level: levelName(levelsOf(metaRaw)[0]) })}</button>{/if}</div>
       {/if}
       {#if filtered && match.n === 0 && mapReady}
         <div class="zero" role="status">
@@ -1445,7 +1553,7 @@
             <div class="fl-t">{ml(metaA)}</div>
             <Legend meta={metaA} col={native ? null : colA} v={native?.v ?? colA.v} period={colA.period} scale={scaleA} nUnits={native ? native.v.length : nUnits} unitWord={native?.word ?? word} source={base.sources.get(metaA.source)}
               mask={filtered ? (native?.mask ?? match.m) : null} title={legendTitle}
-              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} />
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact mini={app.embed || (!desktop && !full)} nHidden={native ? 0 : nHidden} {sides} level={ld.level} />
           {/if}
         </div>
       {/if}
@@ -1516,6 +1624,12 @@
   }
   .choose .kt { font-weight: 400; color: var(--text-2); font-size: var(--fs-meta); }
   .choose .cx { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border: 0; background: none; font-size: var(--fs-lead); cursor: pointer; color: var(--text); }
+  .mapwhy {
+    position: absolute; z-index: 5; left: 50%; top: 45%; transform: translate(-50%, -50%); max-width: min(420px, calc(100% - 32px));
+    padding: var(--sp-3) var(--sp-4); background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy);
+  }
+  .mapwhy button { margin-top: var(--sp-3); }
+  .mapwhy p { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
   .zero {
     position: absolute; z-index: 6; left: 50%; top: 40%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
     padding: var(--sp-4) var(--sp-6); background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy); max-width: calc(100% - 32px); text-align: center;
@@ -1613,8 +1727,11 @@
     /* phone (D7, U16): map on top, the sheet below it. Folded, the sheet is the grab handle and the tab row
        (plus the reach bar while reach is on), so the map keeps most of the screen; opening it shrinks the map. */
     .stage { display: flex; flex-direction: column; }
-    .pane { order: 0; flex: 1 1 auto; min-height: 30%; }
-    .controls { order: 1; flex: none; border-top: var(--rule-heavy); max-height: 64%; padding-bottom: env(safe-area-inset-bottom); }
+    /* B4: the map keeps at least ~45 % of the height with the sheet open (it was a strip of ~25 %) */
+    .pane { order: 0; flex: 1 1 auto; min-height: 45%; }
+    .controls { order: 1; flex: none; border-top: var(--rule-heavy); max-height: 55%; padding-bottom: env(safe-area-inset-bottom); }
+    .lvlrow { flex: none; display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-1) var(--sp-2); background: var(--panel); border-bottom: 1px solid var(--rule); }
+    .lvlrow :global(.seg button) { padding: 4px 8px; }
     .controls:not(.open) .body { display: none; }
     .controls .body { min-height: 0; }
     .sheet-tabs { flex: none; padding: 0 var(--sp-3); }
