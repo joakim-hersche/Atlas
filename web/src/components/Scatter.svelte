@@ -25,8 +25,13 @@
     isDark: boolean;
     onhover: (i: number | null) => void;
     onselect: (i: number | null) => void;
+    unitWord?: string;
+    unitOne?: string;
   }
-  let { xMeta, yMeta, x, y, xPeriod, yPeriod, region, regionNames, pop, names, cantons, hover, sel, isDark, onhover, onselect }: Props = $props();
+  let {
+    xMeta, yMeta, x, y, xPeriod, yPeriod, region, regionNames, pop, names, cantons, hover, sel, isDark, onhover, onselect,
+    unitWord = 'municipalities', unitOne = 'municipality',
+  }: Props = $props();
 
   let sizeByPop = $state(false);
   let logX = $state(false);
@@ -265,7 +270,7 @@
 <div class="scatter">
   <div class="plotcol">
     <div class="bar">
-      <span class="caps">A × B · each point a municipality</span>
+      <span class="caps">A × B · each point a {unitOne}</span>
       <span class="opts">
         <label><input type="checkbox" bind:checked={sizeByPop} /> size by population</label>
         <label><input type="checkbox" bind:checked={logX} /> log x</label>
@@ -306,10 +311,10 @@
       <p class="foot">
         {logX || logY ? `Computed on ${[logX ? 'log₁₀ A' : '', logY ? 'log₁₀ B' : ''].filter(Boolean).join(' and ')}. ` : ''}Weighted r uses resident population (STATPOP) as weights.
         {both - stats.n > 0 ? `${fmtNumber(both - stats.n, 0)} non-positive values left out of the log axis.` : ''}
-        Correlation across municipalities, not individuals.
+        Correlation across {unitWord}, not individuals.
       </p>
     {:else}
-      <p class="muted">Fewer than 3 municipalities have both values.</p>
+      <p class="muted">Fewer than 3 {unitWord} have both values.</p>
     {/if}
     <div class="sel">
       {#if focus !== null}
@@ -318,7 +323,7 @@
         <div class="num"><span class="k">A</span> {fmt(x[focus], xMeta)} <span class="muted">{fmtPeriod(xPeriod)}</span></div>
         <div class="num"><span class="k">B</span> {fmt(y[focus], yMeta)} <span class="muted">{fmtPeriod(yPeriod)}</span></div>
       {:else}
-        <p class="foot">Hover or tap a municipality on either map or in the plot; it is outlined in all three views.</p>
+        <p class="foot">Hover or tap a {unitOne} on either map or in the plot; it is outlined in all three views.</p>
       {/if}
     </div>
   </div>

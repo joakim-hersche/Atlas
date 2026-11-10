@@ -2,6 +2,7 @@
   // Compare mode: two synced maps (metric A and B) and a scatter plot with r, ρ and weighted r.
   import { onMount, tick } from 'svelte';
   import Legend from '../components/Legend.svelte';
+  import LevelSelect from '../components/LevelSelect.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import Scatter from '../components/Scatter.svelte';
   import { buildScale, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
@@ -205,6 +206,7 @@
 </script>
 
 <nav class="presets" aria-label="Example comparisons">
+  <LevelSelect value={ld.level} onchange={(l) => app.setLevel(l)} />
   <span class="caps">Examples</span>
   {#each presets as p}
     <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{p.label}</button>
@@ -248,7 +250,7 @@
     {#if metaB && colA && colB && regions && !whyA && !whyB}
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
         region={regions.idx} regionNames={regions.names} {pop} names={ld.name} cantons={ld.canton}
-        hover={hover} sel={selIdx} isDark={false} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
+        hover={hover} sel={selIdx} isDark={false} unitWord={word} unitOne={levelInfo(ld.level).one} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
       <p class="muted loading">The scatter plot needs both metrics at this level.</p>
     {:else}
@@ -262,7 +264,7 @@
     flex: none; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--rule);
     overflow-x: auto; scrollbar-width: none;
   }
-  .presets .caps { margin-right: 4px; flex: none; }
+  .presets .caps { margin: 0 4px 0 8px; flex: none; }
   .chip {
     flex: none; padding: 4px 10px; border: 1px solid var(--ink); background: none; cursor: pointer;
     font-size: 0.8rem; font-weight: 500; white-space: nowrap;
