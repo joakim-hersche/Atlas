@@ -162,7 +162,9 @@ def apply_majority(con, meta: pd.DataFrame, region_levels: list[str], majority: 
                 b = sum(row_w[t] for t in den)
                 ra = sum(row_r[t] for t in num)
                 rb = sum(row_r[t] for t in den)
-                if not complete or not b or rb == 0:
+                if complete and rb == 0:   # the proportional cantons held no vote (tacit election)
+                    out.append((u, lvl, mid, per, None, "majority_election", MAJ_REGION_ONLY, True))
+                elif not complete or not b or rb == 0:
                     out.append((u, lvl, mid, per, None, "no_data", note, False))
                 elif ra == 0:
                     out.append((u, lvl, mid, per, None, "not_applicable", "party did not stand; " + note, False))
@@ -171,8 +173,12 @@ def apply_majority(con, meta: pd.DataFrame, region_levels: list[str], majority: 
     if out:
         df = pd.DataFrame(out, columns=["unit_id", "level", "metric_id", "period", "value", "status", "note", "keep"])
         con.register("prop_df", df)
+        # a unit made only of single-seat cantons keeps its value under status majority_election; where its
+        # own computation is a gap (party did not stand there) the gap and its reason stay
         con.execute("""UPDATE der SET value = CASE WHEN p.keep THEN der.value ELSE p.value END,
-                                      status = p.status, note = p.note, provenance = 'derived'
+                                      status = CASE WHEN p.keep AND der.status <> 'ok' THEN der.status ELSE p.status END,
+                                      note = CASE WHEN p.keep AND der.status <> 'ok' THEN der.note ELSE p.note END,
+                                      provenance = 'derived'
                        FROM prop_df p WHERE der.unit_id = p.unit_id AND der.level = p.level
                          AND der.metric_id = p.metric_id AND der.period = p.period""")
         stats["regions"] = len(df)

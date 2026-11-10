@@ -30,6 +30,22 @@ function hatchImage(bg: string, line: string): ImageData {
   return g.getImageData(0, 0, c.width, c.height);
 }
 
+/** D37: dot pattern for single-seat (majority-election) cantons, distinct from the no-data hatch. */
+function dotImage(bg: string, dot: string): ImageData {
+  const c = document.createElement('canvas');
+  c.width = c.height = 8;
+  const g = c.getContext('2d')!;
+  g.fillStyle = bg;
+  g.fillRect(0, 0, 8, 8);
+  g.fillStyle = dot;
+  for (const [x, y] of [[2, 2], [6, 6]]) {
+    g.beginPath();
+    g.arc(x, y, 1.1, 0, 2 * Math.PI);
+    g.fill();
+  }
+  return g.getImageData(0, 0, 8, 8);
+}
+
 /** A small square map button (top right). Used for "fit to Switzerland" (a "CH" label, so it does not
  *  read as fullscreen) and for the fullscreen-map toggle. */
 class ButtonControl implements maplibregl.IControl {
@@ -205,11 +221,16 @@ export class UnitMap {
     m.addSource('lakes', { type: 'geojson', data: b.lakes, tolerance: 0.25 });
     m.addSource('sym', { type: 'geojson', data: EMPTY });
     m.addImage('hatch', hatchImage(token('--nodata-fill'), token('--nodata-line')), { pixelRatio: 2 });
+    m.addImage('majdots', dotImage(token('--panel'), token('--ink')), { pixelRatio: 2 });
 
     m.addLayer({ id: 'unit-fill', type: 'fill', source: 'units', paint: { 'fill-color': this.fillColour(), 'fill-antialias': false } });
     m.addLayer({
       id: 'unit-hatch', type: 'fill', source: 'units',
       paint: { 'fill-pattern': 'hatch', 'fill-opacity': ['case', ['boolean', ['feature-state', 'nd'], false], 1, 0], 'fill-antialias': false },
+    });
+    m.addLayer({
+      id: 'unit-maj', type: 'fill', source: 'units',
+      paint: { 'fill-pattern': 'majdots', 'fill-opacity': ['case', ['boolean', ['feature-state', 'mj'], false], 1, 0], 'fill-antialias': false },
     });
     m.addLayer({ id: 'lakes', type: 'fill', source: 'lakes', paint: { 'fill-color': token('--water') } });
     m.addLayer({
@@ -253,6 +274,7 @@ export class UnitMap {
     m.setPaintProperty('unit-line', 'line-color', this.display === 'symbols' && !gem ? token('--sym-line') : token('--gem-line'));
     m.setPaintProperty('unit-fill', 'fill-color', this.fillColour());
     m.setLayoutProperty('unit-hatch', 'visibility', this.display === 'symbols' ? 'none' : 'visible');
+    m.setLayoutProperty('unit-maj', 'visibility', this.display === 'symbols' ? 'none' : 'visible');
   }
 
   private styleSymbols() {
@@ -294,6 +316,7 @@ export class UnitMap {
     this.dim = new Array(this.n).fill(false);
     this.sel = null;
     this.hov = null;
+    this.#maj = null;
     this.styleUnits();
   }
 
@@ -340,6 +363,19 @@ export class UnitMap {
         this.dim[i] = d;
       }
     }
+  }
+
+  #maj: Uint8Array | null = null;
+  /** D37: units of single-seat cantons whose value is kept apart (drawn with the dot pattern). */
+  setMajority(mask: Uint8Array | null) {
+    if (!this.isReady) return;
+    const prev = this.#maj;
+    for (let i = 0; i < this.n; i++) {
+      const a = prev?.[i] === 1;
+      const b = mask?.[i] === 1;
+      if (a !== b) this.map.setFeatureState({ source: 'units', id: i }, { mj: b });
+    }
+    this.#maj = mask;
   }
 
   private flag(key: 'sel' | 'hov', id: number | null) {

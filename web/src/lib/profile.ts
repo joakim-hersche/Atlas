@@ -4,7 +4,7 @@
 import type { Feature, FeatureCollection, Geometry, Position } from 'geojson';
 import { rankOf, type RankInfo } from './classify';
 import {
-  flagMarks, flagsOf, flagTexts, gapReason, regionalAt, LEVELS, loadLevel, loadTheme, noteOf, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
+  flagMarks, flagsOf, flagTexts, gapReason, majorityValue, regionalAt, LEVELS, loadLevel, loadTheme, noteOf, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
 } from './data';
 import { loadRows } from './places';
 
@@ -112,11 +112,13 @@ export interface Entry {
 export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: number): Entry | null {
   const col = file.metrics[meta.id];
   if (!col) return null;
-  const value = col.v[i] ?? null;
+  // D37: a single-seat canton's party share is shown with its flag, but not ranked
+  const maj = col.v[i] === null || col.v[i] === undefined ? majorityValue(col, i) : null;
+  const value = col.v[i] ?? maj;
   const n = col.v.length;
   let rank: Rank | null = null;
   let rankKt: Rank | null = null;
-  if (value !== null && n > 1) {
+  if (value !== null && maj === null && n > 1) {
     rank = rankOf(col.v, i, meta.direction);
     const grp = pl.byCanton.get(pl.canton[i]);
     if (grp && grp.length > 1) {
@@ -132,7 +134,7 @@ export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: n
     regional: regionalAt(meta, pl.level),
     marks: value !== null ? flagMarks(file, flagsOf(file, col, i)) : '',
     flags: value !== null ? flagTexts(file, flagsOf(file, col, i), meta) : [],
-    note: value !== null ? noteOf(col, i) : null,
+    note: value !== null && maj === null ? noteOf(col, i) : null,
   };
 }
 
@@ -148,7 +150,7 @@ export const SIMILAR_METRICS: { id: string; log?: boolean }[] = [
   { id: 'ent_jobs_per_1000', log: true },
   { id: 'tax_np_mean_taxable_income', log: true },
   { id: 'edu_share_tertiary' },
-  { id: 'nrw_share_left_bloc' },
+  { id: 'nrw_share_bloc_left' },
   { id: 'area_share_settlement' },
   { id: 'geo_elev_mean' },
 ];

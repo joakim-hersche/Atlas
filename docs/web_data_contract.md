@@ -27,19 +27,25 @@ indices are strings. "null" means the field is absent or null when it does not a
 | `unavailable_levels` | object \| null | `{level: reason_en}` for levels without values, with the real reason, e.g. `"published only at district level (Structural Survey)"`, `"median: cannot be aggregated; no published value at this level"` (D) |
 | `reliability` | object \| null | small-number rule (J): `{"count": "<metric id>"\|null, "base": "<metric id>"\|null, "min_count": 20, "min_base": 1000, "rule_en": "...", "rule_de": "..."}`. Units failing it carry flag bit 1/2 in the latest columns (section 3) |
 | `pooled` | object \| null | for pooled rates (J): `{"of": "<annual metric id>", "years": 3}`; periods look like `"2023-2025"` |
-| `majority_cantons` | object \| null | NRW metrics only (A): `{"2023": ["AI","AR","GL","NW","OW","UR"], ...}` cantons with one seat (majority election, Majorz) per election year. Units in them carry flag bit 4 |
+| `majority_cantons` | object \| null | party shares, blocs and leaning only (D37; not turnout): `{"2023": ["AI","AR","GL","NW","OW","UR"], ...}` cantons with one seat (majority election, Majorz) per election year, from BFS cube px-x-1702020000_103 (seats = 1): UR, OW, NW, GL, AI 1971–2023, AR 2003–2023. Units in them carry flag bit 4 |
+| `keywords` | string \| null | D37: search words (full party names DE/FR/IT/EN, e.g. "Grünliberale Partei · Vert'libéraux (PVL)") |
+| `until` | number \| null | D37: former party, last election it stood in (picker groups these last, label "(until YYYY)") |
 | `vote_index` | string \| null | per-vote metrics only: `"votes/index.json"` (B) |
 | `latest_title` | object \| null | per-vote metrics only: title of the `latest` vote `{de, fr, it, en}` — use instead of `#6870` (K) |
 | `source` | string | unchanged meaning (source id for the sources page). Car metrics now point to `are_npvm`; PT metrics to `reach_metrics` (computed by Gemeindebank from the `otd_gtfs` timetable) (K) |
 | `description` | string \| null | unchanged; texts added/clarified for lake share, area, vacancy, BEV shares, out-commuting (C, E, K) |
 
-**Default-period rule (F).** Per metric and level, coverage(p) = number of units with status `ok` in
-period p. Starting from the newest period, the default steps back while a period has fewer than
-95 % of the units of the period before it (an incomplete newer round: Arealstatistik 2020/25 with
-1,007 of 2,110 → 2013/18; unemployment 2025 with GE only → 2024; social assistance 2025 → 2024). A
-metric that is small but steady (land price, 25–30 municipalities) keeps its newest period. `latest/<level>/*.json` hold the default period of each
-level (so a canton column can be on an older period than the municipality column only when the
-newer canton values are incomplete). Per-vote metrics: the newest vote.
+**Default-period rule (F, revised by D37 and the all-data audit).** One default period per metric,
+used at every level. It is chosen on the metric's primary level (its native level, else the lowest
+level with values) by covered units: coverage(p) = units with status `ok`, `not_applicable` (party did
+not stand), `majority_election` or `suppressed` in period p. Starting from the newest period with any
+value, the default steps back while a period has fewer than 95 % of the units of the period before it
+(an incomplete newer round: Arealstatistik 2020/25 with 1,007 of 2,110 → 2013/18). A level without a
+value for the default period ships an explicit gap column (status `no_data`, note "no value for P at
+this level (newest here: Q)") instead of an older year. `latest` ≠ `latest_available` means the newest
+period is incomplete; the legend says so. Per-vote metrics: the newest vote. Audit numbers per build
+in `data/out/web/default_periods.json` (2026-11-10: metric×level defaults not equal to the newest period
+at that level 284 → 161; metrics with different defaults across levels 60 → 0).
 
 **Precision.** Arealstatistik metrics (`area_*`) are now `"survey"` (sample points), not exact (F).
 
@@ -96,13 +102,23 @@ the name in the unit of that level.
 - Bit 4 (A): NRW value in a majority-election canton (single seat); label "majority election
   (single seat): party shares not comparable with proportional cantons".
 - Bit 16: provisional value (e.g. federal vote of 2026-09-27 from voteinfo, `provisorisch: true`).
+- **D37 status `majority_election` (6)** and **`m`** `{unit index: value}`: a party share, bloc or
+  leaning value of a single-seat canton (UR, OW, NW, GL, AI; AR from 2003) at municipality, district
+  or canton level. `v` is null there, so classes, ranks, histograms, statistics, correlations and
+  regressions leave it out; the value is in `m` (card, profile). The frontend's "include single-seat
+  cantons" toggle (hash `mj=1`) merges `m` into `v`. Bit 4 is set on every row of those canton-years
+  (also where the party did not stand). Regions and typologies are computed from proportional cantons
+  only (note "proportional-representation cantons only: excludes k of n municipalities …"); a region of
+  single-seat cantons only gets status 6. Switzerland includes them, as BFS (note says so).
 - Status `not_applicable` (5) now marks "party did not stand" for the party-share ratios in
   municipalities/districts/cantons where the party had no list (A); these are gaps, not 0 %.
 - **Ties (C, frontend):** values are unchanged; the classifier should give exact zeros (or the
   modal tie) their own class when they exceed a class width (e.g. lake share: 1,800 municipalities at 0).
 
-`series/<id>.json` is unchanged in shape; it now also contains the incomplete newer periods and
-the pooled-rate periods.
+`series/<id>.json` now also contains the incomplete newer periods and the pooled-rate periods. D37:
+for metrics with `majority_cantons`, single-seat-canton values are null in `levels` and given in
+`"m": {level: {unit: {period index: value}}}`, with `"f": {level: {unit: {period index: 4}}}` on every
+row of those canton-years.
 
 ## 4. `reach_times.json` — new fields (I, D31)
 

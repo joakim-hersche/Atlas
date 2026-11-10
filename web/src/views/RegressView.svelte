@@ -225,7 +225,10 @@
       if (useFilter && !match.m[i]) { why(t('rg.d.filter')); continue; }
       for (const vi of vars) {
         const x = vi.ref.col.v[i];
-        if (x === null || x === undefined || !Number.isFinite(x)) { why(t('rg.d.miss', { v: ml(vi.meta) })); continue unit; }
+        if (x === null || x === undefined || !Number.isFinite(x)) {
+          why(t(vi.ref.col.m?.[String(i)] !== undefined ? 'rg.d.maj' : 'rg.d.miss', { v: ml(vi.meta) }));
+          continue unit;
+        }
         if (spec.drop && dropOf(vi, i)) { why(t('rg.d.flag', { v: ml(vi.meta) })); continue unit; }
         if (vi.log && x <= 0) { why(t('rg.d.log', { v: ml(vi.meta) })); continue unit; }
       }
@@ -709,7 +712,9 @@
           <li>{t('rg.cav.spatial')}</li>
           <li>{t('rg.cav.small')}{ok && !spec.drop && ok.flaggedSmall ? ` ${t('rg.cav.smallN', { n: fmtNumber(ok.flaggedSmall, 0) })}` : ''}</li>
           {#if periodsText}<li>{t('rg.cav.years', { list: periodsText })}</li>{/if}
-          {#if partyVar}<li>{t('rg.cav.maj')}{ok && !spec.drop && ok.flaggedMaj ? ` ${t('rg.cav.majN', { n: fmtNumber(ok.flaggedMaj, 0) })}` : ''}</li>{/if}
+          {#if partyVar}<li>{t('rg.cav.maj')}{ok && !spec.drop && ok.flaggedMaj ? ` ${t('rg.cav.majN', { n: fmtNumber(ok.flaggedMaj, 0) })}` : ''}
+            {app.maj ? t('rg.majIn') : t('rg.majOut')}
+            <button type="button" class="majt" onclick={() => (app.maj = !app.maj)}>{app.maj ? t('lg.majExclude') : t('lg.majInclude')}</button></li>{/if}
           {#each regionalVars as r}<li>{t('rg.cav.reg', { v: r.label, level: r.level })}</li>{/each}
         </ul>
       </div>
@@ -879,4 +884,5 @@
     .coef .tc { display: none; }
     :global(.regress .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-btn)) { display: none; }
   }
+  .majt { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
 </style>

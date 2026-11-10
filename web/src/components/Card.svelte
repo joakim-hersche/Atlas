@@ -2,7 +2,7 @@
   import { levelName, ml, t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
-  import { coverageLabel, flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, majorityValue, flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
   interface Reach {
@@ -43,6 +43,8 @@
     unitWord?: string;
     /** further rows, e.g. the size metric */
     extra?: Extra[];
+    /** further one-line notes (e.g. canton boundaries) */
+    notes?: string[];
     /** link to the place's profile page */
     profile?: string;
     profileLabel?: string;
@@ -53,18 +55,20 @@
     compact?: boolean;
     onclose: () => void;
   }
-  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, compact = false, onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], notes = [], profile, profileLabel = 'Profile', sourceLink, regional = null, compact = false, onclose }: Props = $props();
   /** compact strip opened to the full card (kept while other places are selected) */
   let expanded = $state(false);
 
   const value = $derived(col.v[index]);
+  /** D37: a single-seat canton's value, kept apart from classes and ranks (shown here, labelled) */
+  const majVal = $derived(value === null ? majorityValue(col, index) : null);
   const rank = $derived(rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
 
   /** flags of the value (small numbers, majority election, published value, provisional) */
-  const flags = $derived(value !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);
+  const flags = $derived(value !== null || majVal !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);
   /** provenance note of a shown value (e.g. "published canton value; …") */
   const note = $derived(value !== null ? noteOf(col, index) : null);
   /** strip: the travel time in one line ("Winterthur → Zürich HB 20 min") */
@@ -87,6 +91,10 @@
           <span class="yr">{fmtPeriod(col.period)}</span>
           {#if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
           {#if flags.length}<span class="smark">{flags.map((f) => f.split(' ')[0]).join('')}</span>{/if}
+        {:else if majVal !== null}
+          <span class="sval">{fmtValue(majVal, meta)}</span>
+          <span class="yr">{fmtPeriod(col.period)}</span>
+          <span class="smark">M</span> <span class="srank">{t('card.majShort')}</span>
         {:else}
           <span class="nodata"><span class="hatch"></span>{t('p.noData')}</span>
         {/if}
@@ -123,6 +131,12 @@
         </span>
       {/if}
     </div>
+  {:else if majVal !== null}
+    <div class="valrow">
+      <span class="val">{fmtValue(majVal, meta)}</span>
+      <span class="yr">{fmtPeriod(col.period)}</span>
+      <span class="rank reason">{t('card.majNoRank')}</span>
+    </div>
   {:else}
     <div class="valrow">
       <span class="val nodata"><span class="hatch"></span>{t('p.noData')}</span>
@@ -132,6 +146,7 @@
   {/if}
   {#each flags as f}<p class="flag">{f}{#if f.startsWith('M ')}<Term k="majority_election" />{/if}</p>{/each}
   {#if note}<p class="flag">{note}</p>{/if}
+  {#each notes as nt}<p class="flag">{nt}</p>{/each}
   {#each extra as x}
     <div class="extra"><span class="xl">{x.label}</span><span class="xv num">{x.value}</span></div>
   {/each}

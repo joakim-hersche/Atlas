@@ -22,7 +22,8 @@ headline:
   Health & social: [sh_rate, kvg_mean_premium_adult]
   Education: [edu_share_tertiary, edu_labb_matura_rate]
   Safety: [pks_stgb_per_1000, pks_violent_per_1000, pks_burglary_per_1000, acc_injury_per_1000]   # PKS district rates (national, regional value) replace the ZH/BS-only crime_stgb_per_1000
-  Politics: [nrw_share_left_bloc, nrw_share_right_bloc, vote_turnout, vote_yes_share, nrw_turnout, nrw_share_svp, nrw_share_sp, nrw_share_fdp, nrw_share_mitte, nrw_share_gruene]
+  # D37: parties in order of their 2023 national strength, the three blocs, leaning, turnout; then votes
+  Politics: [nrw_share_svp, nrw_share_sp, nrw_share_mitte, nrw_share_fdp, nrw_share_gruene, nrw_share_glp, nrw_share_bloc_left, nrw_share_bloc_centre, nrw_share_bloc_right, nrw_leaning, nrw_turnout, vote_yes_share, vote_turnout]
 
 hidden:
   - bil_births          # D28: births come from BEVNAT (bevnat_births, 1969+)
@@ -34,3 +35,29 @@ hidden:
   - gk_population            # technical denominator
   - edu_imputation_share     # data-quality indicator, shown in the profile notes instead
   - pks_pop                  # technical denominator of the PKS district rates
+  - nrw_fw_fdp          # D37: fictitious voters are the technical base of party strength
+  - nrw_fw_mitte
+  - nrw_fw_sp
+  - nrw_fw_svp
+  - nrw_fw_lps
+  - nrw_fw_evp
+  - nrw_fw_csp
+  - nrw_fw_glp
+  - nrw_fw_pda
+  - nrw_fw_sol
+  - nrw_fw_fga
+  - nrw_fw_gruene
+  - nrw_fw_sd
+  - nrw_fw_edu
+  - nrw_fw_lega
+  - nrw_fw_mcr
+  - nrw_fw_cvp
+  - nrw_fw_bdp
+  - nrw_fw_ldu
+  - nrw_fw_poch
+  - nrw_fw_rep
+  - nrw_fw_psa
+  - nrw_fw_fps
+  - nrw_fw_sep
+  - nrw_fw_other
+  - nrw_fw_total

@@ -39,7 +39,9 @@ from pyproj import Transformer
 from pipeline.common import REFERENCE_DATE, interim_path
 from pipeline.sources.otd_gtfs.fetch import FEED, gtfs
 
-SERVICE_DATE = dt.date(2026, 11, 17)   # Tuesday, see reach.md for the choice
+SERVICE_DATE = dt.date(2026, 11, 17)   # Tuesday, see reach.md for the choice (network, drawing, hub-outward)
+# towards-hub station and door-to-door times: median over three normal weekdays (docs/reach_method.md)
+REVERSE_DAYS = [SERVICE_DATE, dt.date(2026, 11, 25), dt.date(2026, 12, 3)]
 WINDOW = (7 * 3600 + 30 * 60, 18 * 3600)   # forward runs: departures 07:30 .. 18:00
 EARLIEST_DEP = 4 * 3600 + 30 * 60          # keep connections from 04:30 (reverse runs: arrivals at the hub 07:30-08:30)
 SERVED = (WINDOW[0] - 3600, WINDOW[1])     # a stop is "served" with a departure/arrival 06:30-18:00

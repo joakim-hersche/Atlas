@@ -9,7 +9,7 @@
   import { buildScale, divergeCentre, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import { fmtNumber } from '../lib/classify';
-  import { loadReachIndex, loadUnits, namesOf, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
+  import { majorityMask, loadReachIndex, loadUnits, namesOf, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
   import { catOptions, combine, describeFilter, evalFilter } from '../lib/filters';
   import { hrefFor } from '../lib/nav';
   import { bareAttribution } from '../lib/export';
@@ -38,7 +38,7 @@
     fallback?: { b: string; label: string };
   }
   const PRESETS: Preset[] = [
-    { slug: 'left-income', label: 'cv.p.left', a: 'nrw_share_left_bloc', b: 'tax_np_mean_taxable_income',
+    { slug: 'left-income', label: 'cv.p.left', a: 'nrw_share_bloc_left', b: 'tax_np_mean_taxable_income',
       fallback: { b: 'nrw_share_sp', label: 'cv.p.sp' } },
     { slug: 'density-foreigners', label: 'cv.p.density', a: 'geo_pop_density', b: 'share_foreign' },
     { slug: 'age-svp', label: 'cv.p.age', a: 'share_age_65plus', b: 'nrw_share_svp' },
@@ -222,6 +222,13 @@
     if (mapReadyB) viewB!.setColours(scaleB && !whyB ? dimmed(scaleB.unitColour) : blank);
   });
   $effect(() => {
+    const a = !whyA ? majorityMask(colA, ld.units.length) : null;
+    const b = !whyB ? majorityMask(colB, ld.units.length) : null;
+    void ld;
+    if (mapReadyA) viewA!.setMajority(a);
+    if (mapReadyB) viewB!.setMajority(b);
+  });
+  $effect(() => {
     const s = selIdx;
     if (mapReadyA) viewA!.setSelected(s);
     if (mapReadyB) viewB!.setSelected(s);
@@ -287,7 +294,7 @@
           {#if P.why}
             <p class="why">{P.why}</p>
           {:else if P.meta && P.scale && P.col}
-            <Legend meta={P.meta} v={P.col.v} period={P.col.period} scale={P.scale} {nUnits} unitWord={word}
+            <Legend meta={P.meta} col={P.col} v={P.col.v} period={P.col.period} scale={P.scale} {nUnits} unitWord={word}
               source={base.sources.get(P.meta.source)} method={app.cls} onmethod={(m) => (app.cls = m)} />
             {#if P.ref?.yearMissing}<p class="foot">{t('cv.noYear', { y: P.ref.yearMissing })}</p>{/if}
           {:else if P.ref === undefined}

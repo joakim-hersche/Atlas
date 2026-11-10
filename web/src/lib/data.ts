@@ -45,8 +45,12 @@ export interface MetricMeta {
   reliability?: { count: string | null; base: string | null; min_count: number; min_base: number; rule_en?: string; rule_de?: string; rule_fr?: string } | null;
   /** pooled multi-year rate of an annual metric */
   pooled?: { of: string; years: number } | null;
-  /** NRW: cantons with a majority election per election year (flag bit 4) */
+  /** NRW: cantons with a majority election per election year (flag bit 4); only party shares, blocs, leaning (D37) */
   majority_cantons?: Record<string, string[]> | null;
+  /** full names and other search words (party names in DE/FR/IT/EN) */
+  keywords?: string | null;
+  /** former party: last election it stood in */
+  until?: number | null;
   /** per-vote metrics: path of the vote index */
   vote_index?: string | null;
   /** per-vote metrics: title of the latest vote */
@@ -61,6 +65,10 @@ export interface Column {
   s?: Record<string, number>; // unit index -> status code (only for gaps)
   p?: Record<string, number>; // unit index -> precision code (when it differs per unit)
   f?: Record<string, number>; // unit index -> flag bitmask (flag_bits of the file)
+  /** D37: unit index -> value of a single-seat canton (status majority_election; v is null there) */
+  m?: Record<string, number>;
+  /** D37: number of single-seat-canton values merged into v (include toggle on) */
+  mIncluded?: number;
   n?: Record<string, number>; // unit index -> index into notes (gap reason or provenance)
   notes?: string[];
 }
@@ -270,6 +278,10 @@ export interface SeriesFile {
   metric: string;
   periods: string[];
   levels: Record<string, Record<string, (number | null)[]>>;
+  /** D37: level -> unit -> period index -> value of a single-seat canton (null in `levels`) */
+  m?: Record<string, Record<string, Record<string, number>>>;
+  /** D37: level -> unit -> period index -> flag bits (majority election) */
+  f?: Record<string, Record<string, Record<string, number>>>;
 }
 const seriesFiles = new Map<string, Promise<SeriesFile | null>>();
 /** All periods of one metric for municipalities, districts, cantons and Switzerland (on demand). */
@@ -343,7 +355,7 @@ export function loadReach(hub: string, mode: 'pt' | 'car'): Promise<ReachFile | 
 }
 
 // ---------------------------------------------------------------- gap reasons (D21)
-const STATUS = ['no_data', 'suppressed', 'not_published', 'not_covered', 'not_applicable'];
+const STATUS = ['no_data', 'suppressed', 'not_published', 'not_covered', 'not_applicable', 'majority_election'];
 const statusText = (k: string) => t(`gap.${k}`);
 
 const PRECISIONS = ['exact', 'survey', 'modelled', 'boundary_estimate'];
@@ -370,6 +382,7 @@ export function partialCantons(meta: MetricMeta): string[] | null {
 export function gapReason(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta, canton: string): string {
   const note = noteOf(col, i);
   if (note) return note;
+  if (col.m?.[String(i)] !== undefined) return statusText('majority_election');
   if (!file) return statusText('no_data');
   const code = col.s?.[String(i)];
   if (code !== undefined) {
@@ -487,4 +500,38 @@ export function seriesPeriods(meta: MetricMeta, level: string): string[] {
   const li = LEVELS.find((l) => l.id === level);
   if (!li?.series || meta.per_vote || meta.periods.length < 2 || !meta.levels.includes(level)) return [];
   return meta.periods;
+}
+
+/** D37: value of a single-seat (majority-election) canton kept apart from the map values, or null. */
+export const majorityValue = (col: Column, i: number): number | null => col.m?.[String(i)] ?? null;
+
+/** Number of single-seat-canton values kept apart (not drawn, ranked or counted) in a column. */
+export function majorityCount(col: Column): number {
+  if (!col.m) return 0;
+  let n = 0;
+  for (const k of Object.keys(col.m)) if (col.v[+k] === null) n++;
+  return n;
+}
+
+/** Column with the single-seat-canton values merged into v ("include single-seat cantons"). */
+const mergedCols = new WeakMap<Column, Column>();
+export function withMajority(col: Column): Column {
+  if (!col.m) return col;
+  let c = mergedCols.get(col);
+  if (!c) {
+    const v = col.v.slice();
+    for (const [k, x] of Object.entries(col.m)) if (v[+k] === null) v[+k] = x;
+    c = { ...col, v, m: undefined, mIncluded: Object.keys(col.m).length } as Column;
+    mergedCols.set(col, c);
+  }
+  return c;
+}
+
+/** Mask (1 = drawn with the single-seat-canton pattern) for the map, or null when none is kept apart. */
+export function majorityMask(col: Column | null | undefined, n: number): Uint8Array | null {
+  if (!col?.m) return null;
+  const out = new Uint8Array(n);
+  let any = false;
+  for (const k of Object.keys(col.m)) if (col.v[+k] === null && +k < n) { out[+k] = 1; any = true; }
+  return any ? out : null;
 }

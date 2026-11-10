@@ -6,7 +6,7 @@
 // Routes: 'map' (default) and 'compare'; later pages (profile, places, search, sources) add their own
 // route names and read their extra keys from `params`. The regression panel (#v=regress) uses
 // ry, rx, rc, rw, rse, rd, rs (documented in regmodel.ts), e.g.
-//   #v=regress&ry=nrw_share_left_bloc&rx=log:tax_np_mean_taxable_income,log:geo_pop_density&rc=lang
+//   #v=regress&ry=nrw_share_bloc_left&rx=log:tax_np_mean_taxable_income,log:geo_pop_density&rc=lang
 import type { Method } from './classify';
 
 export type ReachMode = 'off' | 'pt' | 'car';
@@ -47,6 +47,8 @@ export interface ViewState {
   vote: string | null;
   /** yes share shown as the difference from the national result */
   vdiff: boolean;
+  /** D37: include single-seat (majority-election) cantons in classes, ranks and statistics */
+  maj: boolean;
   /** values resting on small numbers: shown, drawn lighter, or hidden (treated as gaps) */
   unstable: 'show' | 'light' | 'hide';
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
@@ -137,6 +139,7 @@ export function parseHash(hash: string): ViewState {
     ptm: get('ptm') === 'dd' ? 'dd' : 'st',
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
     vdiff: get('vd') === '1',
+    maj: get('mj') === '1',
     unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
     preset,
     params,
@@ -185,6 +188,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.year) add('y', s.year);
   if (s.vote) add('vote', s.vote);
   if (s.vdiff) add('vd', '1');
+  if (s.maj) add('mj', '1');
   if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
   for (const f of s.filters) add('f', filterKey(f));
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);

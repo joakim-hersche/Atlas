@@ -49,15 +49,17 @@ export function quantile(s: number[], p: number): number {
   return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (pos - lo);
 }
 
-/** Midpoint of a diverging scale: 50 % for vote yes shares (D32), else 0. */
+/** Metrics with a meaningful 50 % midpoint: vote yes share (D32), political leaning (D37). */
+export const CENTRED_50 = new Set(['vote_yes_share', 'nrw_leaning']);
+/** Midpoint of a diverging scale: 50 % for vote yes shares (D32) and political leaning (D37), else 0. */
 export function divergeCentre(meta: { id: string }): number {
-  return meta.id === 'vote_yes_share' ? 50 : 0;
+  return CENTRED_50.has(meta.id) ? 50 : 0;
 }
 
 /** Change metrics, neutral metrics with negative values and vote yes shares get a diverging scale. */
 export function isDiverging(meta: MetricMeta & { aggregation?: string }, s: number[]): boolean {
   if ((meta.aggregation ?? '').startsWith('change:')) return true;
-  if (meta.id === 'vote_yes_share') return true;
+  if (CENTRED_50.has(meta.id)) return true;
   if (/(^|_)change(_\d+y)?$/.test(meta.id) && meta.unit.startsWith('%')) return true;
   return meta.direction === 'neutral' && s.length > 0 && s[0] < 0 && s[s.length - 1] > 0;
 }

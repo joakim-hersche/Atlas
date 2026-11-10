@@ -2,7 +2,7 @@
 // yet returns undefined and starts the download (theme file, or series file for a past year);
 // the value appears once loaded and every $derived that asked for it re-runs.
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { attachedFrom, loadSeries, loadTheme, loadUnits, seriesPeriods, type Base, type ColRef, type LevelData } from './data';
+import { attachedFrom, loadSeries, loadTheme, loadUnits, seriesPeriods, withMajority, type Base, type ColRef, type Column, type LevelData } from './data';
 import { app } from './state.svelte';
 import { loadVoteFile, loadVoteIndex, voteIdOf } from './votes';
 
@@ -42,7 +42,7 @@ export class ColumnStore {
     const yearMissing = year && year !== meta.latest && !wanted ? year : null;
     const key = `${ld.level}|${id}|${useYear ?? ''}`;
     const hit = this.#cache.get(key);
-    if (hit !== undefined) return hit && { ...hit, yearMissing, noSeries };
+    if (hit !== undefined) return hit && { ...hit, col: app.maj ? withMajority(hit.col) : hit.col, yearMissing, noSeries };
     if (!this.#pending.has(key)) {
       this.#pending.add(key);
       const done = (v: ColRef | null) => {
@@ -73,7 +73,23 @@ export class ColumnStore {
             const k = s.periods.indexOf(useYear);
             const rows = s?.levels[ld.level] ?? {};
             const v = ld.units.map((u) => (k >= 0 ? (rows[u]?.[k] ?? null) : null));
-            done({ meta, level: ld.level, col: { period: useYear, v }, file: null });
+            const col: Column = { period: useYear, v };
+            // D37: single-seat-canton values and flags of that election
+            const mv = s.m?.[ld.level];
+            const fl = s.f?.[ld.level];
+            if (k >= 0 && (mv || fl)) {
+              const m: Record<string, number> = {};
+              const f: Record<string, number> = {};
+              ld.units.forEach((u, i) => {
+                const x = mv?.[u]?.[String(k)];
+                if (x !== undefined) m[String(i)] = x;
+                const b = fl?.[u]?.[String(k)];
+                if (b) f[String(i)] = b;
+              });
+              if (Object.keys(m).length) col.m = m;
+              if (Object.keys(f).length) col.f = f;
+            }
+            done({ meta, level: ld.level, col, file: null });
           })
           .catch(fail);
       }

@@ -437,7 +437,7 @@ nrw_fw_fdp: {label_fr: "Conseil national : électeurs fictifs PLR", unit_en: "fi
 nrw_fw_mitte: {label_fr: "Conseil national : électeurs fictifs Le Centre", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_sp: {label_fr: "Conseil national : électeurs fictifs PS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_svp: {label_fr: "Conseil national : électeurs fictifs UDC", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
-nrw_fw_lps: {label_fr: "Conseil national : électeurs fictifs PLS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_lps: {label_fr: "Conseil national : électeurs fictifs PLS / LDP Bâle-Ville", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_evp: {label_fr: "Conseil national : électeurs fictifs PEV", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_csp: {label_fr: "Conseil national : électeurs fictifs PCS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_glp: {label_fr: "Conseil national : électeurs fictifs PVL", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
@@ -457,7 +457,7 @@ nrw_fw_rep: {label_fr: "Conseil national : électeurs fictifs Rép.", unit_en: "
 nrw_fw_psa: {label_fr: "Conseil national : électeurs fictifs PSA", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
 nrw_fw_fps: {label_fr: "Conseil national : électeurs fictifs PSL", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_sep: {label_fr: "Conseil national : électeurs fictifs Sép.", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
-nrw_fw_other: {label_fr: "Conseil national : électeurs fictifs Autres", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_other: {label_fr: "Conseil national : électeurs fictifs autres partis", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_fw_total: {label_fr: "Conseil national : électeurs fictifs, tous les partis", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
 nrw_eligible: {label_fr: "Électeurs inscrits (Conseil national)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
 nrw_voters: {label_fr: "Votants / bulletins rentrés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
@@ -467,10 +467,10 @@ nrw_ballots_valid: {label_fr: "Bulletins valables (Conseil national)", unit_en: 
 nrw_ballots_unchanged: {label_fr: "Bulletins non modifiés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
 nrw_ballots_changed: {label_fr: "Bulletins modifiés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
 nrw_share_fdp: {label_fr: "Force du parti PLR (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_mitte: {label_fr: "Force du parti Le Centre (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_mitte: {label_fr: "Force du parti Le Centre (jusqu'en 2019 : PDC + PBD) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_sp: {label_fr: "Force du parti PS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_svp: {label_fr: "Force du parti UDC (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_lps: {label_fr: "Force du parti PLS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_lps: {label_fr: "Force du parti PLS / LDP Bâle-Ville (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_evp: {label_fr: "Force du parti PEV (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_csp: {label_fr: "Force du parti PCS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_glp: {label_fr: "Force du parti PVL (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
@@ -481,20 +481,25 @@ nrw_share_gruene: {label_fr: "Force du parti Verts (Conseil national)", unit_en:
 nrw_share_sd: {label_fr: "Force du parti DS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_edu: {label_fr: "Force du parti UDF (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_share_lega: {label_fr: "Force du parti Lega (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_mcr: {label_fr: "Force du parti MCG (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_cvp: {label_fr: "Force du parti PDC (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_bdp: {label_fr: "Force du parti PBD (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_ldu: {label_fr: "Force du parti AdI (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_poch: {label_fr: "Force du parti POCH (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_rep: {label_fr: "Force du parti Rép. (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
-nrw_share_psa: {label_fr: "Force du parti PSA (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
-nrw_share_fps: {label_fr: "Force du parti PSL (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_sep: {label_fr: "Force du parti Sép. (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
-nrw_share_other: {label_fr: "Force du parti Autres (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_mcr: {label_fr: "Force du parti MCR / MCG (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_cvp: {label_fr: "Force du parti PDC (jusqu'en 2019) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bdp: {label_fr: "Force du parti PBD (jusqu'en 2019) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_ldu: {label_fr: "Force du parti AdI (jusqu'en 1999) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_poch: {label_fr: "Force du parti POCH (jusqu'en 1991) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_rep: {label_fr: "Force du parti Rép. (jusqu'en 1987) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_psa: {label_fr: "Force du parti PSA (jusqu'en 1991) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_fps: {label_fr: "Force du parti PSL (jusqu'en 2007) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_sep: {label_fr: "Force du parti Sép. (jusqu'en 2003) (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_other: {label_fr: "Force du parti autres partis (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_turnout: {label_fr: "Participation (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 nrw_unchanged_share: {label_fr: "Bulletins de liste non modifiés (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_left_bloc: {label_fr: "Bloc de gauche (PS + Verts)", unit_en: "%", unit_de: "%", unit_fr: "%"}
-nrw_share_right_bloc: {label_fr: "Bloc de droite (UDC + PLR)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_left_bloc: {label_fr: "PS + Verts (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_right_bloc: {label_fr: "UDC + PLR (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bloc_left: {label_fr: "Bloc de gauche (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bloc_centre: {label_fr: "Bloc du centre (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bloc_right: {label_fr: "Bloc de droite (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bloc_other: {label_fr: "Autres partis (hors blocs, Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_leaning: {label_fr: "Orientation politique : part de la droite dans gauche + droite (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
 
 # --- bfs_rents ---
 rent_avg_chf: {label_fr: "Loyer net moyen (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
@@ -907,9 +912,12 @@ reach_car_neuchatel: {label_fr: "Voiture vers Neuchâtel", unit_en: "min", unit_
 reach_ptst_thun: {label_fr: "Temps de trajet train/TP de gare à gare vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
 reach_pt_thun: {label_fr: "Transports publics porte-à-porte vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
 reach_car_thun: {label_fr: "Voiture vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
-reach_ptst_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
-reach_pt_nearest_hub: {label_fr: "Transports publics porte-à-porte vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
-reach_car_nearest_hub: {label_fr: "Voiture vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_baden: {label_fr: "Temps de trajet train/TP de gare à gare vers Baden", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_baden: {label_fr: "Transports publics porte-à-porte vers Baden", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_baden: {label_fr: "Voiture vers Baden", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min", description_de: "Kürzeste Fahrzeit ab Bahnhof zu einem der 15 Zentren. Zentren: Hauptbahnhof der Kernstadt jeder Agglomeration (BFS-Definition 2020) mit mindestens 100 000 Einwohnerinnen und Einwohnern (STATPOP 2025): Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten.", description_fr: "Temps de trajet de gare à gare le plus court vers l'un des 15 pôles. Pôles : gare principale de la ville-centre de chaque agglomération (définition OFS 2020) d'au moins 100 000 habitants (STATPOP 2025) : Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten."}
+reach_pt_nearest_hub: {label_fr: "Transports publics porte-à-porte vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min", description_de: "Kürzeste ÖV-Reisezeit Tür zu Tür zu einem der 15 Zentren. Zentren: Hauptbahnhof der Kernstadt jeder Agglomeration (BFS-Definition 2020) mit mindestens 100 000 Einwohnerinnen und Einwohnern (STATPOP 2025): Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten.", description_fr: "Temps de trajet porte-à-porte en TP le plus court vers l'un des 15 pôles. Pôles : gare principale de la ville-centre de chaque agglomération (définition OFS 2020) d'au moins 100 000 habitants (STATPOP 2025) : Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten."}
+reach_car_nearest_hub: {label_fr: "Voiture vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min", description_de: "Kürzeste Autofahrzeit zu einem der 15 Zentren. Zentren: Hauptbahnhof der Kernstadt jeder Agglomeration (BFS-Definition 2020) mit mindestens 100 000 Einwohnerinnen und Einwohnern (STATPOP 2025): Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten.", description_fr: "Temps de trajet en voiture le plus court vers l'un des 15 pôles. Pôles : gare principale de la ville-centre de chaque agglomération (définition OFS 2020) d'au moins 100 000 habitants (STATPOP 2025) : Zürich HB, Genève, Basel SBB, Lausanne, Bern, Luzern, St. Gallen, Lugano, Winterthur, Zug, Baden, Aarau, Neuchâtel, Biel/Bienne, Olten."}
 
 # --- wikidata_identity ---
 wiki_sitelinks: {label_fr: "Éditions linguistiques de Wikipédia", unit_en: "editions", unit_de: "Sprachversionen", unit_fr: "éditions"}  # guess (unit: guess)

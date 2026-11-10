@@ -4,7 +4,8 @@
   import { ml, t as tr } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
-  import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, majorityCount, partialCantons, precisionText, type Column, type MetricMeta, type Source } from '../lib/data';
+  import { app } from '../lib/state.svelte';
   import {
     axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
     type Method, type Scale, fixedLabels } from '../lib/classify';
@@ -20,8 +21,10 @@
     onmethod: (m: Method) => void;
     compact?: boolean;
     unitWord?: string;
+    /** the column shown (D37: single-seat-canton values kept apart, majority toggle) */
+    col?: Column | null;
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities' }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
@@ -82,7 +85,19 @@
           n: scale.counts[k],
         })));
   const fixedL = $derived(scale.fixed ? fixedLabels(scale, meta) : null);
-  const nGap = $derived(nUnits - scale.n);
+  /** D37: units of single-seat cantons kept apart (own pattern), or merged in by the toggle */
+  const nMaj = $derived(col ? majorityCount(col) : 0);
+  const nMajIn = $derived(col?.mIncluded ?? 0);
+  const nGap = $derived(nUnits - scale.n - nMaj);
+  /** D37 rule 1: the default period is not the newest one (newest incomplete): say so */
+  const older = $derived(period === meta.latest && meta.latest_available && meta.latest_available !== meta.latest ? meta.latest_available : null);
+  const olderWhy = $derived.by(() => {
+    const ip = older ? meta.incomplete_periods?.[older] : undefined;
+    if (!ip) return '';
+    const l = app.lang === 'de' ? ip.label_de : app.lang === 'fr' ? ip.label_fr : null;
+    return l ?? ip.label_en ?? '';
+  });
+  const nrw = $derived(meta.id.startsWith('nrw_'));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
   const unitText = $derived(unitOf(meta) || tr('fp.value'));
@@ -128,6 +143,8 @@
 
   {#if scale.fixed && meta.id === 'vote_yes_share'}
     <div class="sides"><span>← {tr('lg.no')}</span><span>{tr('lg.yes')} →</span></div>
+  {:else if scale.fixed && meta.id === 'nrw_leaning'}
+    <div class="sides"><span>← {tr('lg.leftLean')}</span><span>{tr('lg.rightLean')} →</span></div>
   {/if}
   {#if classes.length && !compact}
     <div class="classes" class:vertical style="grid-template-columns: repeat({vertical ? 1 : classes.length}, 1fr)">
@@ -144,10 +161,20 @@
   <p class="meta">
     <span class="num">n = {fmtNumber(scale.n, 0)}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
+    {#if nMaj > 0}<span class="majl"> · <span class="majp"></span> <span class="num">{fmtNumber(nMaj, 0)}</span> {tr('lg.maj')}<Term k="majority_election" />
+      <button type="button" class="link" onclick={() => (app.maj = true)}>{tr('lg.majInclude')}</button></span>
+    {:else if nMajIn > 0}<span class="majl"> · {tr('lg.majIncluded', { n: fmtNumber(nMajIn, 0) })}
+      <button type="button" class="link" onclick={() => (app.maj = false)}>{tr('lg.majExclude')}</button></span>{/if}
     {#if scale.method === 'continuous'}<span> · {tr('lg.clamped')}</span>{/if}
     {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}<Term k="axis_clipped" /></span>{/if}
     {#if scale.diverging}<span> · {tr('lg.centredOn', { c: fmtTick(scale.centre, meta) + (meta.unit.startsWith('%') ? '%' : '') })}</span>{/if}
   </p>
+  {#if older}<p class="older">{tr('lg.older', { p: fmtPeriod(period), n: fmtPeriod(older) })}{olderWhy ? ` (${olderWhy})` : ''}</p>{/if}
+  {#if meta.id === 'nrw_leaning'}<p class="dnote">{tr('lg.leanNote')}</p>{/if}
+  {#if !compact && meta.description}
+    <details class="def"><summary>ⓘ {tr('lg.definition')}</summary><p>{meta.description}</p></details>
+  {/if}
+  {#if nrw && !compact}<p class="dnote">{tr('lg.ncOnly')}</p>{/if}
   <p class="foot">
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
     {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
@@ -181,6 +208,14 @@
   .cn { font-size: 0.7rem; color: var(--text); }
   .meta { margin: 5px 0 0; color: var(--muted); font-size: 0.74rem; }
   .foot { margin: 2px 0 0; }
+  .majp { display: inline-block; width: 12px; height: 9px; vertical-align: -1px; border: 1px solid var(--nodata-line);
+    background: radial-gradient(circle, var(--ink) 1px, transparent 1.3px) 0 0 / 4px 4px, var(--panel); }
+  .majl .link { margin-left: 4px; border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
+  .older { margin: 4px 0 0; font-size: 0.74rem; color: var(--text); border-left: 3px solid var(--accent); padding-left: 6px; }
+  .dnote { margin: 3px 0 0; font-size: 0.72rem; color: var(--muted); }
+  .def { margin: 4px 0 0; font-size: 0.74rem; }
+  .def summary { cursor: pointer; color: var(--text); font-weight: 600; }
+  .def p { margin: 3px 0 0; color: var(--text); line-height: 1.35; }
   .partial { color: var(--text); }
   .foot a { color: inherit; }
   .compact .head { margin-bottom: 2px; }

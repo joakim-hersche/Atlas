@@ -140,32 +140,115 @@ def reverse_summary(journey: np.ndarray, wait: np.ndarray):
     return (*out, late)
 
 
-def main_stations(net: Network, gem_ids: np.ndarray) -> pd.DataFrame:
-    """Main station per municipality: among the served stations inside it (reference polygon), the one
-    with the most rail departures 06:30-18:00; without a rail station, the stop with the most
-    departures of any mode. A municipality with no served stop inside gets the station chosen the same
-    way among those within 2 km of its population-weighted centre (inside = False)."""
+RAIL_TYPES = set(range(100, 118)) | {2}
+MODE_OF_TYPE = [  # (label, GTFS route types: basic + extended)
+    ("rail", RAIL_TYPES), ("metro", {1} | set(range(400, 406))), ("tram", {0, 5} | set(range(900, 907))),
+    ("boat", {4, 1200} | set(range(1000, 1022))), ("cableway", {6} | set(range(1300, 1308))),
+    ("funicular", {7, 1400}), ("bus", {3, 11} | set(range(200, 210)) | set(range(700, 718)) | set(range(1500, 1508))),
+]
+MAIN_SIMILAR = 0.5       # stations serving >= half the best coverage compete on departures (drops outlying halts)
+MAIN_RAIL_MIN = 0.5      # rail is preferred when its best station serves >= half of what the best stop serves
+
+
+def station_modes(net: Network) -> pd.Series:
+    """Main mode per station (idx -> 'rail', 'bus', 'boat', 'tram', 'metro', 'cableway', 'funicular'):
+    rail if any rail departure 06:30-18:00, else the mode with the most boardable departures."""
+    from pipeline.reach.gtfs_prep import SERVED
+    c = net.connections
+    c = c[c.board & (c.dep >= SERVED[0]) & (c.dep <= SERVED[1])]
+    lab = pd.Series("bus", index=pd.Index(np.unique(c.route_type), name="route_type"))
+    for name, types in MODE_OF_TYPE[::-1]:
+        lab[lab.index.isin(types)] = name
+    k = pd.DataFrame({"idx": c.from_idx.to_numpy(), "mode": c.route_type.map(lab).to_numpy()})
+    n = k.groupby(["idx", "mode"]).size().unstack(fill_value=0)
+    out = n.idxmax(axis=1)
+    if "rail" in n:
+        out[n["rail"] > 0] = "rail"
+    return out.reindex(net.stations.idx).fillna("none")
+
+
+def main_stations(net: Network, gem_ids: np.ndarray, access: pd.DataFrame | None = None,
+                  hub_didoks: list[int] | None = None) -> pd.DataFrame:
+    """Main station per municipality, chosen by the population it serves (expert audit MUST 2; before
+    2026-11-11 it was the station with the most departures, which picked intermediate halts such as
+    Grafenort for Engelberg).
+
+    Candidates: the stations served 06:30-18:00 inside the municipality (reference polygon). Coverage
+    of a candidate = residents (STATPOP 2025) of the municipality's inhabited hectares within 1.5 km
+    straight line of it (the door-to-door access radius). Rail first: if the best rail station
+    covers at least MAIN_RAIL_MIN of what the best stop of any mode covers, only rail stations
+    compete. Among the competing stations, those covering at least MAIN_SIMILAR (half) of the best
+    coverage remain (this drops outlying halts such as Grafenort, St. Peter-Molinis, Alp Grüm,
+    Riazzino) and the one with the most departures 06:30-18:00 (rail departures for rail) wins
+    (so Rapperswil SG beats the more central Jona; 0.9 picked Kempten for Wetzikon, see reach_method.md). A hub municipality takes its hub station. A municipality with no served stop inside
+    takes the station chosen the same way among those within 2 km of its population-weighted centre
+    (inside = False). Columns: bfs_nr, idx, inside, name, didok, mode, pop_share (coverage share)."""
     sta = net.stations
+    if access is None:
+        access = access_links(sta)
     cand = sta[sta.served_in_window].copy()
-    cand = cand.sort_values(["n_dep_rail", "n_dep"], ascending=False, kind="stable")
-    ins = cand[cand.bfs_nr.notna()].drop_duplicates("bfs_nr")
-    out = pd.DataFrame({"bfs_nr": ins.bfs_nr.astype(int), "idx": ins.idx, "inside": True})
+    modes = station_modes(net)
+    cand["mode"] = cand.idx.map(modes)
+    a = access.dropna(subset=["bfs_nr", "idx"])
+    cov = a.groupby(["bfs_nr", "idx"]).BBTOT.sum().rename("cov").reset_index().astype({"bfs_nr": int, "idx": int})
+    pop = access.dropna(subset=["bfs_nr"]).drop_duplicates("RELI").groupby("bfs_nr").BBTOT.sum()
+    pop.index = pop.index.astype(int)
+    cov_by = {int(b): g.set_index("idx")["cov"] for b, g in cov.groupby("bfs_nr")}
+
+    def pick(b: int, c: pd.DataFrame):
+        c = c.assign(cov=c.idx.map(cov_by.get(b, pd.Series(dtype=float))).fillna(0.0))
+        best_any = c["cov"].max()
+        rail = c[c.n_dep_rail > 0]
+        if len(rail) and rail["cov"].max() >= MAIN_RAIL_MIN * best_any:
+            c, key = rail, "n_dep_rail"
+        else:
+            key = "n_dep"
+        top = c[c["cov"] >= MAIN_SIMILAR * c["cov"].max()]
+        r = top.sort_values([key, "n_dep", "cov"], ascending=False, kind="stable").iloc[0]
+        return int(r.idx), float(r["cov"])
+
+    rows = []
+    hub_idx = {}
+    for d in hub_didoks or []:
+        h = sta[sta.didok == str(d)]
+        if len(h) and h.bfs_nr.notna().iloc[0]:
+            hub_idx[int(h.bfs_nr.iloc[0])] = int(h.idx.iloc[0])
+    ins = cand[cand.bfs_nr.notna()].astype({"bfs_nr": int})
+    for b, c in ins.groupby("bfs_nr"):
+        if b in hub_idx:
+            i = hub_idx[b]
+            cv = float(cov_by.get(b, pd.Series(dtype=float)).get(i, 0.0))
+        else:
+            i, cv = pick(b, c)
+        rows.append({"bfs_nr": b, "idx": i, "inside": True, "cov": cv})
+    out = pd.DataFrame(rows)
     miss = sorted(set(int(b) for b in gem_ids) - set(out.bfs_nr))
     if miss:
         h = hectares_in_zones().dropna(subset=["bfs_nr"])
         h = h[h.bfs_nr.astype(int).isin(miss)]
-        c = h.assign(wx=h.x * h.BBTOT, wy=h.y * h.BBTOT).groupby("bfs_nr")[["wx", "wy", "BBTOT"]].sum()
-        rows = []
-        for b, r in c.iterrows():
+        cen = h.assign(wx=h.x * h.BBTOT, wy=h.y * h.BBTOT).groupby("bfs_nr")[["wx", "wy", "BBTOT"]].sum()
+        extra = []
+        for b, r in cen.iterrows():
             cx, cy = r.wx / r.BBTOT, r.wy / r.BBTOT
-            d = np.hypot(cand.x - cx, cand.y - cy)
-            near = cand[d <= MAIN_FALLBACK_RADIUS]
+            near = cand[np.hypot(cand.x - cx, cand.y - cy) <= MAIN_FALLBACK_RADIUS]
             if len(near):
-                rows.append({"bfs_nr": int(b), "idx": int(near.idx.iloc[0]), "inside": False})
-        if rows:
-            out = pd.concat([out, pd.DataFrame(rows)], ignore_index=True)
-    out = out.merge(sta[["idx", "name", "didok"]], on="idx", how="left")
+                i, cv = pick(int(b), near)
+                extra.append({"bfs_nr": int(b), "idx": i, "inside": False, "cov": cv})
+        if extra:
+            out = pd.concat([out, pd.DataFrame(extra)], ignore_index=True)
+    out["pop_share"] = (out["cov"] / out.bfs_nr.map(pop)).round(3)
+    out = out.drop(columns="cov").merge(sta[["idx", "name", "didok"]], on="idx", how="left")
+    out["mode"] = out.idx.map(modes)
     return out.astype({"idx": int})
+
+
+def main_stations_by_departures(net: Network, gem_ids: np.ndarray) -> pd.DataFrame:
+    """The rule used until 2026-11-10 (most rail departures, else most departures), kept for the
+    before/after report (pipeline/reach/run.py)."""
+    sta = net.stations
+    cand = sta[sta.served_in_window].sort_values(["n_dep_rail", "n_dep"], ascending=False, kind="stable")
+    ins = cand[cand.bfs_nr.notna()].drop_duplicates("bfs_nr")
+    return pd.DataFrame({"bfs_nr": ins.bfs_nr.astype(int), "idx": ins.idx.astype(int), "name": ins.name})
 
 
 def weighted_median(v: np.ndarray, w: np.ndarray) -> float:
@@ -277,17 +360,19 @@ def popweighted_rows(slug: str, med_station: np.ndarray, med_wait_station: np.nd
 COLS = ["hub", "mode", "bfs_nr", "minutes", "minutes_incl_wait", "status", "method", "pop_share_with_stop"]
 
 
-def towards_hub_results(net: Network, slug: str, journey: np.ndarray, wait: np.ndarray, access: pd.DataFrame,
-                        gem_ids: np.ndarray, mains: pd.DataFrame) -> pd.DataFrame:
-    """D31: station time (main station -> hub) and door-to-door towards the hub, morning arrivals."""
-    med, medw, p10, p90, late = reverse_summary(journey, wait)
+def towards_hub_results(net: Network, slug: str, summary: tuple, access: pd.DataFrame,
+                        gem_ids: np.ndarray, mains: pd.DataFrame, by_day: dict | None = None) -> pd.DataFrame:
+    """D31: station time (main station -> hub) and door-to-door towards the hub, morning arrivals.
+    summary = (median, median incl. wait, P10, P90, late-window start) per station, as from
+    reverse_summary() or combine_days(); by_day = {date: per-station median (s)} for the record."""
+    med, medw, p10, p90, late = summary
     ms = mains.set_index("bfs_nr")
     rows = []
     for bfs in gem_ids:
         b = int(bfs)
         if b not in ms.index:
             rows.append((slug, "pt", b, np.nan, np.nan, "no stop within 2 km", "gtfs_rcsa_mainstation", np.nan,
-                         None, None, None, np.nan, np.nan, np.nan))
+                         None, None, None, np.nan, np.nan, np.nan, None, np.nan, None))
             continue
         r = ms.loc[b]
         i = int(r.idx)
@@ -296,9 +381,11 @@ def towards_hub_results(net: Network, slug: str, journey: np.ndarray, wait: np.n
                      round(medw[i] / 60, 1) if st == "ok" else np.nan, st, "gtfs_rcsa_mainstation", np.nan,
                      r["name"], str(r.didok), bool(r.inside),
                      round(p10[i] / 60, 1) if st == "ok" else np.nan, round(p90[i] / 60, 1) if st == "ok" else np.nan,
-                     late[i]))
+                     late[i], r["mode"], r.pop_share,
+                     ";".join(f"{k}:{v[i] / 60:.0f}" if np.isfinite(v[i]) else f"{k}:-" for k, v in (by_day or {}).items())
+                     or None))
     d = pd.DataFrame(rows, columns=COLS + ["main_station", "main_didok", "main_inside", "minutes_p10", "minutes_p90",
-                                           "window_start_min"])
+                                           "window_start_min", "main_mode", "main_pop_share", "minutes_by_day"])
     pw = pd.DataFrame(popweighted_rows(slug, med, medw, access, gem_ids, method="gtfs_rcsa_popweighted",
                                        unreached="no arrival at the hub by 10:30"), columns=COLS)
     return pd.concat([d, pw], ignore_index=True)
@@ -334,29 +421,82 @@ def representative_departure(journey: np.ndarray, net: Network) -> int:
     return int(np.argmin(dev))
 
 
+def day_networks(primary: Network) -> dict:
+    """{date: (Network, primary idx -> that day's idx or -1)} for the reverse-scan days (REVERSE_DAYS).
+    Stations are matched by GTFS station id; a station without service that day maps to -1."""
+    import datetime as dt
+    from pipeline.reach.gtfs_prep import REVERSE_DAYS, SERVICE_DATE, build
+    out = {}
+    pid = primary.stations.station_id.to_numpy()
+    for d in REVERSE_DAYS:
+        if d == SERVICE_DATE:
+            out[d] = (primary, np.arange(len(pid)))
+            continue
+        if not (outdir(d) / "connections.parquet").exists():
+            build(d)
+        n = Network.load(outdir(d))
+        m = pd.Series(n.stations.idx.to_numpy(), index=n.stations.station_id.to_numpy())
+        out[d] = (n, m.reindex(pid).fillna(-1).astype(int).to_numpy())
+    assert isinstance(next(iter(out)), dt.date)
+    return out
+
+
+def combine_days(per_day: list[tuple]) -> tuple:
+    """Per station, the summary (median, incl. wait, P10, P90, late start) of the day whose median is the
+    median of the daily medians (3 days: the middle one; unreached = inf sorts last). Choosing one day
+    keeps P10/P90 and the late window consistent with the value, and drops a day with works."""
+    meds = np.vstack([p[0] for p in per_day])
+    k = meds.shape[0]
+    pick = np.argsort(meds, axis=0, kind="stable")[(k - 1) // 2]
+    cols = np.arange(meds.shape[1])
+    return tuple(np.vstack([p[j] for p in per_day])[pick, cols] for j in range(5))
+
+
+def hub_reverse(days: dict, didok: int) -> tuple[tuple, dict]:
+    """Reverse scans for one hub on every reverse day, mapped to the primary station index."""
+    per_day, by_day = [], {}
+    for d, (n, m) in days.items():
+        rj, rw = reverse_journey_times(ld_matrix(n, hub_sources(n, didok)))
+        summ = reverse_summary(rj, rw)
+        del rj, rw
+        ok = m >= 0
+        mapped = []
+        for j, x in enumerate(summ):
+            y = np.full(len(m), np.nan if j == 4 else np.inf)
+            y[ok] = x[m[ok]]
+            mapped.append(y)
+        per_day.append(tuple(mapped))
+        by_day[d.isoformat()] = mapped[0]
+    return combine_days(per_day), by_day
+
+
 def run(hubs=HUBS, save_station_times: bool = True):
+    import time
     net = Network.load(outdir())
     access = access_links(net.stations)
     gem = gpd.read_file(interim_path("geo", f"units_{REFERENCE_DATE.isoformat()}.gpkg"), layer="gemeinde",
                         ignore_geometry=True)
     gem_ids = gem["id"].astype(int).to_numpy()
-    res, rep = [], {}
-    mains = main_stations(net, gem_ids)
+    res, rep, timing = [], {}, {}
+    mains = main_stations(net, gem_ids, access, [h[2] for h in HUBS])
+    days = day_networks(net)
     for slug, name, didok in hubs:
         src = hub_sources(net, didok)
-        # towards the hub (D31): reverse scan for morning arrivals
-        ld = ld_matrix(net, src)
-        rj, rw = reverse_journey_times(ld)
-        del ld
+        t0 = time.time()
+        # towards the hub (D31): reverse scans for morning arrivals on every reverse day, median day per station
+        summ, by_day = hub_reverse(days, didok)
+        t1 = time.time()
         if save_station_times:
-            m_, mw_, p10_, p90_, late_ = reverse_summary(rj, rw)
+            m_, mw_, p10_, p90_, late_ = summ
             pd.DataFrame({"idx": net.stations.idx, "median_journey_s": m_, "median_incl_wait_s": mw_,
-                          "p10_s": p10_, "p90_s": p90_, "window_start_min": late_}
+                          "p10_s": p10_, "p90_s": p90_, "window_start_min": late_,
+                          **{f"median_journey_s_{k}": v for k, v in by_day.items()}}
                          ).to_parquet(interim_path("reach", "pt_station_times_to_hub", f"{slug}.parquet"))
-        tw = towards_hub_results(net, slug, rj, rw, access, gem_ids, mains)
+        tw = towards_hub_results(net, slug, summ, access, gem_ids, mains, by_day)
         res.append(tw)
         okt = tw[(tw.method == "gtfs_rcsa_mainstation") & (tw.status == "ok")]
-        print(f"{slug}: towards hub, {len(okt)} main stations reach it, median {okt.minutes.median():.0f} min")
+        print(f"{slug}: towards hub ({len(days)} days, {t1 - t0:.0f} s), {len(okt)} main stations reach it, "
+              f"median {okt.minutes.median():.0f} min")
         ea = ea_matrix(net, src)
         journey, wait = journey_times(ea)
         k = representative_departure(journey, net)
@@ -368,8 +508,10 @@ def run(hubs=HUBS, save_station_times: bool = True):
             st.to_parquet(interim_path("reach", "pt_station_times", f"{slug}.parquet"))
         r = municipality_results(net, slug, ea, journey, wait, access, gem_ids)
         res.append(r)
+        timing[slug] = {"reverse_s": round(t1 - t0, 1), "forward_s": round(time.time() - t1, 1)}
         ok = r[(r.method == "gtfs_csa_station") & (r.status == "ok")]
         print(f"{slug}: sources {src}, representative departure 07:30+{k} min, "
               f"{len(ok)} municipalities reached, median {ok.minutes.median():.0f} min")
     out = pd.concat(res, ignore_index=True)
+    out.attrs["timing"] = timing
     return out, rep

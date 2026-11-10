@@ -391,22 +391,35 @@ def build_neighbours(min_shared_m: float = 10.0, tol_m: float = 1.0) -> dict:
 # ---------------------------------------------------------------- reach times
 
 REACH_METHODS = {
-    "pt_station": {"en": "Timetable journey from the municipality's main station to the hub station, arriving "
-                         "07:30–08:30 on a weekday (median, as in a journey planner: no waiting).",
-                   "de": "Fahrplan-Reisezeit vom Hauptbahnhof der Gemeinde zum Zentrumsbahnhof, Ankunft "
-                         "07:30–08:30 an einem Werktag (Median, wie im Online-Fahrplan: ohne Wartezeit).",
-                   "fr": "Temps de trajet selon l'horaire, de la gare principale de la commune à la gare du pôle, "
-                         "arrivée 07:30–08:30 un jour ouvrable (médiane, comme dans l'horaire en ligne : sans attente)."},
+    "pt_station": {"en": "Timetable journey from the municipality's main station (the one serving most residents, "
+                         "rail preferred) to the hub station, arriving 07:30–08:30 on a weekday (median over three "
+                         "weekdays, as in a journey planner: no waiting).",
+                   "de": "Fahrplan-Reisezeit vom Hauptbahnhof der Gemeinde (der Bahnhof, der am meisten Einwohner "
+                         "erschliesst, Bahn bevorzugt) zum Zentrumsbahnhof, Ankunft 07:30–08:30 an einem Werktag "
+                         "(Median über drei Werktage, wie im Online-Fahrplan: ohne Wartezeit).",
+                   "fr": "Temps de trajet selon l'horaire, de la gare principale de la commune (celle qui dessert le "
+                         "plus d'habitants, train de préférence) à la gare du pôle, arrivée 07:30–08:30 un jour "
+                         "ouvrable (médiane sur trois jours ouvrables, comme dans l'horaire en ligne : sans attente)."},
     "pt": {"en": "Door to door towards the hub, arriving 07:30–08:30: walk from where people live to the best stop "
                  "within 1.5 km, then the timetable journey (population-weighted median).",
            "de": "Tür zu Tür Richtung Zentrum, Ankunft 07:30–08:30: Fussweg vom Wohnort zur besten Haltestelle "
                  "innerhalb 1,5 km, dann die Fahrplan-Reisezeit (bevölkerungsgewichteter Median).",
            "fr": "Porte à porte vers le pôle, arrivée 07:30–08:30 : marche du domicile au meilleur arrêt à moins "
                  "de 1,5 km, puis le trajet selon l'horaire (médiane pondérée par la population)."},
-    "car": {"en": "Car travel time, average weekday, from the national passenger transport model (ARE NPVM 2023).",
-            "de": "Autofahrzeit, durchschnittlicher Werktag, aus dem Nationalen Personenverkehrsmodell (ARE NPVM 2023).",
-            "fr": "Temps de trajet en voiture, jour ouvrable moyen, selon le modèle national du trafic voyageurs (ARE MNTP 2023)."},
+    "car": {"en": "Car travel time towards the hub, average weekday model incl. congestion (national passenger "
+                  "transport model ARE NPVM 2023).",
+            "de": "Autofahrzeit Richtung Zentrum, Modell für den durchschnittlichen Werktag inkl. Stau (Nationales "
+                  "Personenverkehrsmodell ARE NPVM 2023).",
+            "fr": "Temps de trajet en voiture vers le pôle, modèle du jour ouvrable moyen, congestion comprise "
+                  "(modèle national du trafic voyageurs ARE MNTP 2023)."},
 }
+# generic per-metric notes of pipeline/sources/reach_metrics (the per-unit additions follow after "; ")
+_REACH_GENERIC = ("GTFS timetable 2026", "ARE NPVM 2023")
+REACH_MODE_TEXT = {"bus": {"en": "bus", "de": "Bus", "fr": "bus"}, "boat": {"en": "boat", "de": "Schiff", "fr": "bateau"},
+                   "tram": {"en": "tram", "de": "Tram", "fr": "tram"}, "metro": {"en": "metro", "de": "Metro", "fr": "métro"},
+                   "cableway": {"en": "cableway", "de": "Seilbahn", "fr": "téléphérique"},
+                   "funicular": {"en": "funicular", "de": "Standseilbahn", "fr": "funiculaire"},
+                   "rail": {"en": "train", "de": "Bahn", "fr": "train"}}
 
 
 def build_reach_times() -> dict:
@@ -415,14 +428,27 @@ def build_reach_times() -> dict:
 
     Values are the reach_<mode>_<hub> metrics in latest/gemeinde/mobility_accessibility.json (the same
     values the map shows): pt = reach_pt_* (door-to-door towards the hub), pt_station = reach_ptst_*
-    (main station -> hub, D31), car = reach_car_*. Reasons for gaps come from the columns' notes; the
-    main station per municipality from data/interim/reach/travel_times.parquet.
+    (main station -> hub, D31), car = reach_car_* (towards the hub). Reasons for gaps come from the
+    columns' notes; the main station per municipality from data/interim/reach/travel_times.parquet.
+    D39: `nearest_hubs` is the hub set of the reach_*_nearest_hub metrics (derived from STATPOP by
+    pipeline.reach.hubs.nearest_hubs()), `nearest_rule` its definition, `nearest[mode]` the nearest hub's
+    name per unit (null without a time). `notes[mode][hub][unit index]` holds per-unit additions to the
+    method (late window, station time from a bus/boat stop).
     """
+    from pipeline.reach.hubs import NAMES, nearest_hubs, nearest_rule_text
     src = json.loads(out_path("web", "latest", "gemeinde", "mobility_accessibility.json").read_text(encoding="utf-8"))
     idx = json.loads(out_path("reach", "index.json").read_text(encoding="utf-8"))
+    nearest, q = nearest_hubs()
+    year = str(q["year"].iloc[0])
     out = {"units": src["units"], "hubs": [[h["slug"], h["name"]] for h in idx["hubs"]],
-           "service_date": idx.get("service_date"), "pt": {}, "pt_station": {}, "car": {}, "periods": {},
+           "nearest_hubs": [[s, NAMES[s]] for s in nearest],
+           "nearest_rule": {l: nearest_rule_text(l, year, nearest) for l in ("en", "de", "fr")},
+           "nearest_agglomerations": [{"agglomeration": int(r.agglomeration), "name": r.agglomeration_name,
+                                       "pop": int(r.pop), "hub": r.hub} for r in q.itertuples()],
+           "service_date": idx.get("service_date"), "reverse_days": idx.get("reverse_days"),
+           "pt": {}, "pt_station": {}, "car": {}, "periods": {},
            "methods": REACH_METHODS, "reasons": {"pt": {}, "pt_station": {}, "car": {}}, "late_from": {},
+           "notes": {"pt": {}, "pt_station": {}, "car": {}},
            "late_text": {"en": "No arrival by 08:30; median over the hour from the earliest possible arrival ({t}).",
                          "de": "Keine Ankunft bis 08:30; Median über die Stunde ab der frühestmöglichen Ankunft ({t}).",
                          "fr": "Pas d'arrivée avant 08:30 ; médiane sur l'heure suivant la première arrivée possible ({t})."}}
@@ -437,15 +463,40 @@ def build_reach_times() -> dict:
             for i, k in (m.get("n") or {}).items():
                 if m["v"][int(i)] is None:
                     out["reasons"][mode].setdefault(h["slug"], {})[i] = notes[k]
-                elif (t := re.search(r"no arrival by 08:30.*\((\d\d:\d\d)\)", notes[k])):
+                    continue
+                if (t := re.search(r"no arrival by 08:30.*\((\d\d:\d\d)\)", notes[k])):
                     # value from the first hour of possible arrivals: keep only its start time
                     out["late_from"].setdefault(mode, {}).setdefault(h["slug"], {})[i] = t.group(1)
+                extra = notes[k].split("; ", 1)[1] if notes[k].startswith(_REACH_GENERIC) and "; " in notes[k] else None
+                if extra:
+                    out["notes"][mode].setdefault(h["slug"], {})[i] = extra
+    # nearest hub per unit and mode, among the nearest-hub set only (same minimum as reach_*_nearest_hub)
+    out["nearest"] = {}
+    for mode, prefix in (("pt_station", "reach_ptst_"), ("pt", "reach_pt_"), ("car", "reach_car_")):
+        m = src["metrics"].get(f"{prefix}nearest_hub")
+        if m is not None and m.get("n"):   # the metric names its hub in the note ("nearest hub: <name>; ...")
+            notes = m.get("notes") or []
+            res = [None] * len(out["units"])
+            for i, k in m["n"].items():
+                if m["v"][int(i)] is not None and notes[k].startswith("nearest hub: "):
+                    res[int(i)] = notes[k][len("nearest hub: "):].split("; ")[0]
+            out["nearest"][mode] = res
+            continue
+        cols = [(s, out[mode][s]) for s in nearest if s in out[mode]]
+        res = []
+        for k in range(len(out["units"])):
+            vals = [(v[k], s) for s, v in cols if v[k] is not None]
+            res.append(NAMES[min(vals, key=lambda x: x[0])[1]] if vals else None)
+        out["nearest"][mode] = res
     tt = pd.read_parquet(interim_path("reach", "travel_times.parquet"))
     ms = tt[(tt["method"] == "gtfs_rcsa_mainstation") & tt["main_station"].notna()].drop_duplicates("bfs_nr")
     ms = ms.set_index(ms["bfs_nr"].astype(int).astype(str))
-    out["main_station"] = [[ms.loc[u, "main_station"], int(ms.loc[u, "main_didok"]), bool(ms.loc[u, "main_inside"])]
+    has_mode = "main_mode" in ms
+    out["main_station"] = [[ms.loc[u, "main_station"], int(ms.loc[u, "main_didok"]), bool(ms.loc[u, "main_inside"]),
+                            ms.loc[u, "main_mode"] if has_mode else None]
                            if u in ms.index else None for u in src["units"]]
-    out["main_station_fields"] = ["name", "didok", "inside_municipality"]
+    out["main_station_fields"] = ["name", "didok", "inside_municipality", "mode"]
+    out["mode_text"] = REACH_MODE_TEXT
     return out
 
 

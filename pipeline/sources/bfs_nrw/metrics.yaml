@@ -4,6 +4,9 @@
 # published (25 BFS codes): CVP+BDP -> Mitte from 2021 (cvp/bdp up to 2019, mitte from 2023), LPS -> FDP 2009.
 # LPS: from 2011 BFS counts LPS (e.g. LDP Basel-Stadt) under FDP in the national total (cube 104 CH), while
 # municipal and canton values keep LPS separate: Σ municipal nrw_fw_fdp = CH FDP − Σ nrw_fw_lps (checked exactly).
+# D37 (pipeline/build/elections.py): above canton level ATLAS does the same from 2011 (FDP := FDP + LPS, LPS
+# not_applicable); `majority_election: true` marks party shares, blocs and leaning for the single-seat-canton
+# rules; `keywords` are search words (full party names), `until` the last election of a former party.
 # zero_when: statuses that count as 0 when aggregating (party did not stand; municipality counted with a
 # neighbour, whose figures include its votes). Municipal values keep their status.
 # Pseudo-units (D17, 9xxx: Swiss abroad, postal voting, other) are level 'pseudo' rows; canton/national only.

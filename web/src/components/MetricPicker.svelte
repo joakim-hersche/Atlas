@@ -34,7 +34,8 @@
   const usable = $derived(metrics.filter((m) => !m.hidden && m.levels.some((l) => MAP_LEVELS.includes(l))));
   const nAvail = $derived(usable.filter(ok).length);
   const current = $derived(metrics.find((m) => m.id === value));
-  const keyed = $derived(usable.map((m) => ({ m, key: norm(`${m.label_en} ${m.label_de} ${m.id} ${m.theme}`) })));
+  // D37: full party names in DE/FR/IT/EN (keywords) and the French label are searchable too
+  const keyed = $derived(usable.map((m) => ({ m, key: norm(`${m.label_en} ${m.label_de} ${m.label_fr ?? ''} ${m.keywords ?? ''} ${m.id} ${m.theme}`) })));
 
   const list = $derived.by(() => {
     const words = norm(q).split(/\s+/).filter(Boolean);
@@ -48,9 +49,13 @@
         .sort((a, b) => Number(ok(b)) - Number(ok(a)) || (a.headline ?? 1e9) - (b.headline ?? 1e9) || ml(a).localeCompare(ml(b)))
         .slice(0, 120);
     }
+    // former parties (until YYYY) form their own group at the end
     const groups = new Map<string, MetricMeta[]>();
-    for (const m of items) groups.set(m.theme, [...(groups.get(m.theme) ?? []), m]);
-    return [...groups.entries()];
+    for (const m of items) {
+      const g = m.until ? `${m.theme}|former` : m.theme;
+      groups.set(g, [...(groups.get(g) ?? []), m]);
+    }
+    return [...groups.entries()].sort((a, b) => Number(a[0].endsWith('|former')) - Number(b[0].endsWith('|former')));
   });
   const flat = $derived(list.flatMap(([, ms]) => ms).filter(ok));
 
@@ -115,12 +120,13 @@
           <p class="empty">{t('mp.none', { q })}</p>
         {/if}
         {#each list as [theme, ms]}
-          <div class="grp caps">{themeName(theme)}</div>
+          <div class="grp caps">{theme.endsWith('|former') ? `${themeName(theme.slice(0, -7))} · ${t('mp.former')}` : themeName(theme)}</div>
+          {#if theme === 'Politics'}<p class="hint pol">{t('lg.ncOnly')}</p>{/if}
           {#each ms as m}
             {@const k = flat.indexOf(m)}
             {#if ok(m)}
               <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
-                onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
+                title={m.description ?? undefined} onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
                 <span class="ol">{ml(m)}</span>
                 <span class="om">{unitOf(m) || '–'} · {fmtPeriod(m.latest)}{m.coverage.startsWith('partial:') ? ` · ${t('mp.partial')}` : ''}</span>
               </button>
@@ -190,6 +196,7 @@
   .om { min-width: 0; color: var(--muted); font-size: 0.72rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .empty { padding: 12px; color: var(--muted); margin: 0; }
   .hint { padding: 8px 12px 0; margin: 0; }
+  .hint.pol { padding: 4px 12px; font-size: 0.72rem; color: var(--muted); border-bottom: 1px solid var(--border); }
   @media (min-width: 900px) {
     .search input { font-size: 0.875rem; height: 32px; line-height: 32px; }
     .x { width: 32px; height: 32px; }

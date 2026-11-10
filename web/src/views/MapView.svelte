@@ -19,7 +19,7 @@
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
-  import { precisionText } from '../lib/data';
+  import { majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -473,6 +473,12 @@
     void ld;
     if (mapReady) view!.setSelected(s);
   });
+  // D37: single-seat cantons whose party shares are kept apart get their own pattern
+  $effect(() => {
+    const mk = !whyA && colA ? majorityMask(colA, nUnits) : null;
+    void ld;
+    if (mapReady) view!.setMajority(mk);
+  });
   $effect(() => {
     const h = hover;
     if (mapReady) view!.setHover(h);
@@ -659,8 +665,19 @@
       const x = sizeRef.col.v[i];
       extra.push({ label: `${t('mv.size')}: ${ml(sizeMeta)}`, value: x === null ? t('lg.noData') : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
     }
-    return { i, reach, sub, extra };
+    // D37: the leaning ratio leaves the centre bloc out; its share is shown alongside
+    if (metaA.id === 'nrw_leaning' && centreRef) {
+      const cm = metas.get('nrw_share_bloc_centre');
+      const x = centreRef.col.v[i] ?? centreRef.col.m?.[String(i)] ?? null;
+      if (cm) extra.push({ label: ml(cm), value: x === null ? t('lg.noData') : `${fmtValue(x, cm)} (${centreRef.col.period})` });
+    }
+    const notes: string[] = [];
+    // D37 / D16: canton Jura on today's boundaries includes Moutier (voted in canton Bern until 2025)
+    if (ld.level === 'kanton' && (ld.units[i] === 'JU' || ld.units[i] === 'BE') && (metaA.id.startsWith('nrw_') || metaA.id.startsWith('vote_')))
+      notes.push(t(ld.units[i] === 'JU' ? 'card.juMoutier' : 'card.beMoutier'));
+    return { i, reach, sub, extra, notes };
   });
+  const centreRef = $derived(metaA.id === 'nrw_leaning' ? cols.get(ld, 'nrw_share_bloc_centre', app.year) : null);
   const tip = $derived.by(() => {
     if (hover === null || !hoverAt || !colA) return null;
     const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? t('lg.noData') : fmtValue(x, m));
@@ -733,7 +750,7 @@
           {#if whyA}
             <p class="why">{whyA}</p>
           {:else if scaleA && colA}
-            <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
+            <Legend meta={metaA} col={colA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
               method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} />
           {:else if colA && !scaleA}
             <p class="why">{t('mv.noValues', { p: fmtPeriod(colA.period) })}</p>
@@ -849,14 +866,14 @@
       {#if !desktop && card && refA && colA}
         <div class="card-wrap">
           <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-            source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} compact onclose={() => (app.sel = null)}
+            source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} notes={card.notes} compact onclose={() => (app.sel = null)}
             profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
         </div>
       {/if}
       {#if full && scaleA && colA && !whyA}
         <div class="flegend">
           <div class="fl-t">{ml(metaA)}</div>
-          <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
+          <Legend meta={metaA} col={colA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
             method={app.cls} onmethod={(m) => (app.cls = m)} compact />
         </div>
       {/if}
@@ -874,7 +891,7 @@
       {#if card && refA && colA}
         <div class="caps lab">{t('mv.selected', { one })}</div>
         <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
+          source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} notes={card.notes} docked onclose={() => (app.sel = null)}
           profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
       {:else}
         <p class="foot hint">{t('mv.hint')}</p>

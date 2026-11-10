@@ -175,6 +175,7 @@
   import Term from '../components/Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
   import PctBar from '../components/PctBar.svelte';
+  import ElectionBar from '../components/ElectionBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
   import { coverageLabel, loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
@@ -499,6 +500,7 @@
           {#each blocks as b (b.theme)}
             <section class="theme" id={slug(b.theme)}>
               <h2>{themeName(b.theme)}</h2>
+              {#if b.theme === 'Politics' && pl && idx !== null}<ElectionBar {base} level={unit.level} id={unit.id} canton={unit.level === 'kanton' ? '' : pl.canton[idx]} />{/if}
               {#each b.head as m (m.id)}{@render metricRow(m)}{/each}
               {#if b.rest.length}
                 {#if open[b.theme]}

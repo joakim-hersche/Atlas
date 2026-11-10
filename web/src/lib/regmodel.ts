@@ -71,7 +71,7 @@ const base = { weights: false, se: 'cluster' as SeType, drop: false, filtered: f
 export const REG_PRESETS: RegPreset[] = [
   {
     slug: 'left', label: 'rg.p.left',
-    spec: { ...base, y: { id: 'nrw_share_left_bloc', log: false }, xs: [{ id: 'tax_np_mean_taxable_income', log: true }, { id: 'geo_pop_density', log: true }], ctrl: 'lang' },
+    spec: { ...base, y: { id: 'nrw_share_bloc_left', log: false }, xs: [{ id: 'tax_np_mean_taxable_income', log: true }, { id: 'geo_pop_density', log: true }], ctrl: 'lang' },
   },
   {
     slug: 'svp', label: 'rg.p.svp',
