@@ -1,4 +1,4 @@
-"""Public-transport reach from the 20 hubs (decision D10), computed with the CSA in csa.py.
+"""Public-transport reach from the 21 hubs (decisions D10, D39), computed with the CSA in csa.py.
 
 Departures every minute 07:30-08:30 on the service day (gtfs_prep.SERVICE_DATE). For every
 departure minute t the earliest arrival EA_s(t) at every station is computed.
@@ -17,9 +17,10 @@ deadlines 07:30-08:30.
   (deadlines before the earliest possible arrival are left out of the median; if the hub cannot be
   reached by 08:30 at all, the hour from the earliest possible arrival is used if that is by 10:30,
   column window_start_min; otherwise status 'no arrival at the hub by 10:30')
-  gtfs_rcsa_mainstation  from the municipality's main station (main_stations(): most rail departures
-                         06:30-18:00 inside the municipality, else most departures of any mode; without
-                         a stop inside, the same choice within 2 km of the population-weighted centre)
+  gtfs_rcsa_mainstation  from the municipality's main station (main_stations(): chosen by the residents
+                         it serves within 1.5 km, rail preferred, then most departures; without a stop
+                         inside, the same choice within 2 km of the population-weighted centre)
+  Station times are the median day of three weekdays (gtfs_prep.REVERSE_DAYS, combine_days()).
   gtfs_rcsa_popweighted  door-to-door: each populated hectare walks to the best stop within 1.5 km
                          (min over stops of walk + stop's median journey), population-weighted median
 

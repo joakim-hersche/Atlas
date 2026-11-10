@@ -29,12 +29,12 @@ SPOT_TO_HUB = [("zuerich", 230, "Winterthur", (18, 26)), ("zuerich", 2701, "Base
                ("basel", 2829, "Liestal", (9, 16)), ("zuerich", 1711, "Zug", (21, 30)),
                ("zuerich", 351, "Bern", (54, 62)), ("zuerich", 93, "Oberweningen", (25, 50)),
                ("zuerich", 6621, "Genève", (155, 195)), ("zuerich", 5192, "Lugano", (100, 125)),
-               ("luzern", 1501, "Engelberg", (40, 50)), ("chur", 3921, "Arosa", (55, 68)),
+               ("luzern", 1402, "Engelberg", (40, 50)), ("chur", 3921, "Arosa", (55, 68)),
                ("zuerich", 4021, "Baden", (12, 20))]
 # main-station before/after report: the expert's cases (MUST 2) with their hub; then the 20 most populous
 # municipalities whose main station changed (time to the nearest of the 15 nearest-hub set)
-MAIN_REPORT = [(1501, "luzern"), (3921, "chur"), (3561, "chur"), (5113, "bellinzona"), (1367, "luzern"),
-               (1367, "bern")]
+MAIN_REPORT = [(1402, "luzern"), (3921, "chur"), (3561, "chur"), (5113, "bellinzona"), (1069, "luzern"),
+               (1069, "bern")]
 
 
 def car_rows(stations: pd.DataFrame, hubs) -> pd.DataFrame:
@@ -137,6 +137,8 @@ def main_station_report(net: Network, ptres: pd.DataFrame, gem_ids, n_other: int
         if hub is None:
             g2 = g[g.hub.isin(nearest)]
             hub = g2.loc[g2.minutes.idxmin(), "hub"] if g2.minutes.notna().any() else nearest[0]
+        if not (g.hub == hub).any():
+            continue
         r = g[g.hub == hub].iloc[0]
         o = old.loc[b] if b in old.index else None
         out.append({"bfs_nr": int(b), "pop": int(pop.get(b, 0)), "hub": hub,
@@ -171,8 +173,8 @@ def validate(net: Network, ptres: pd.DataFrame, stations: pd.DataFrame, hubs) ->
         n=("ratio", "size"), median_ratio=("ratio", "median"),
         r=("minutes", lambda s: float(np.corrcoef(s, m.loc[s.index, "npvm"])[0, 1])))
     out["gtfs_vs_npvm_pt_per_hub"] = per_hub.round(3).reset_index().to_dict("records")
-    sample = m[m.hub == "zuerich"].set_index("bfs_nr").loc[
-        [b for b in [351, 2701, 6621, 5586, 1061, 3203, 230, 5192, 3901, 6300, 2939, 5002] if b in set(m.bfs_nr)]]
+    z = m[m.hub == "zuerich"].set_index("bfs_nr")
+    sample = z.loc[[b for b in [351, 2701, 6621, 5586, 1061, 3203, 230, 5192, 3901, 6300, 2939, 5002] if b in z.index]]
     out["sample_zuerich"] = sample.reset_index()[["bfs_nr", "minutes", "minutes_incl_wait", "npvm"]].round(1).to_dict("records")
     return out
 
@@ -204,7 +206,7 @@ def main(slugs: list[str] | None = None):
                             ignore_geometry=True)["id"].astype(int).to_numpy()
     val = validate(net, ptres, stations, hubs)
     val.update(validate_to_hub(ptres, stations, hubs))
-    val["main_station_before_after"] = main_station_report(net, ptres, gem_ids)
+    val["main_station_before_after"] = main_station_report(net, tt[tt["mode"] == "pt"], gem_ids)
     old = pt.main_stations_by_departures(net, gem_ids).set_index("bfs_nr").idx
     new = ptres[ptres.method == "gtfs_rcsa_mainstation"].dropna(subset=["main_didok"]).drop_duplicates("bfs_nr")
     new_idx = new.set_index("bfs_nr").main_didok.astype(str).map(dict(zip(stations.didok.astype(str), stations.idx)))

@@ -53,10 +53,10 @@ at that level 284 → 161; metrics with different defaults across levels 60 → 
 
 | id | level(s) | meaning |
 |---|---|---|
-| `reach_ptst_<hub>` (20) | gemeinde | **station time towards the hub** (D31 headline figure), minutes. See section 4 |
-| `reach_ptst_nearest_hub` | gemeinde | min over hubs of the station time |
+| `reach_ptst_<hub>` (21, incl. Baden, D39) | gemeinde | **station time towards the hub** (D31 headline figure), minutes. See section 4 |
+| `reach_ptst_nearest_hub` | gemeinde | min over the **15 nearest-hub stations** (D39) of the station time; the hub is named in the note |
 | `reach_pt_<hub>` | gemeinde | **⚠ meaning changes (D31):** door-to-door *towards* the hub (was: from the hub outwards) |
-| `reach_pt_nearest_hub` | gemeinde | **⚠** min over hubs of the door-to-door time towards the hub |
+| `reach_pt_nearest_hub` | gemeinde | **⚠** min over the 15 nearest-hub stations (D39) of the door-to-door time towards the hub |
 | `com_leave_unit_share` | all levels | share of employed residents working **outside the unit** (municipality, district, canton, labour-market area, …), from the origin–destination commuter matrix (E) |
 | `com_leave_unit` | all levels | count behind it |
 | `bevnat_birth_rate_3y`, `bil_net_migration_rate_3y`, `sh_rate_3y` | all levels | pooled 3-year rates (J) |
@@ -120,7 +120,27 @@ for metrics with `majority_cantons`, single-seat-canton values are null in `leve
 `"m": {level: {unit: {period index: value}}}`, with `"f": {level: {unit: {period index: 4}}}` on every
 row of those canton-years.
 
-## 4. `reach_times.json` — new fields (I, D31)
+## 4. `reach_times.json` — new fields (I, D31, D39)
+
+**2026-11-11 (D39, expert audit MUST 2 / SHOULD 8 / SHOULD 9):**
+- `hubs` has 21 entries (Baden added; the picker shows all). `index.json` hubs carry `nearest_set: true|false`.
+- NEW `nearest_hubs`: `[[slug, name], ...]`, the 15 hubs of the `reach_*_nearest_hub` metrics, derived at build
+  time from STATPOP (core-city station of every agglomeration, BFS 2020 definition, with ≥ 100,000 residents).
+  NEW `nearest_rule`: `{"en","de","fr"}` one sentence naming the rule and the 15 hubs (show it next to every
+  nearest-hub figure). NEW `nearest_agglomerations`: `[{agglomeration, name, pop, hub}]`.
+- NEW `nearest`: `{"pt_station": [name|null per unit], "pt": [...], "car": [...]}` — the hub the nearest-hub
+  value refers to.
+- `main_station` entries get a 4th field `mode` (`rail`, `bus`, `boat`, `tram`, `metro`, `cableway`,
+  `funicular`); `main_station_fields` = `["name","didok","inside_municipality","mode"]`. NEW `mode_text`
+  `{mode: {en,de,fr}}`. When `mode` is not `rail`, show the station time as "from <stop> (bus/boat …)", not
+  as a train time.
+- NEW `notes[mode][hub][unit idx]`: per-unit additions to the method (late window; "from <stop> (bus), no
+  rail station in the municipality"). The frontend's `reachNote()` already reads this shape.
+- `reverse_days`: the three weekdays whose median day gives the station and door-to-door times.
+- Pairs with no arrival at the hub by 10:30 are `not_applicable` (not `no_data`) in the metrics, so they do not
+  make the coverage "partial"; the reason stays in `reasons` and in the column note.
+- Car (`car`, `reach_car_*`): now the NPVM matrix **column** (municipality → hub), the same direction as public
+  transport; label "average weekday model incl. congestion".
 
 ```jsonc
 {"units": [...2110 ids], "hubs": [["zuerich","Zürich HB"], ...], "service_date": "2026-11-17",
@@ -142,9 +162,10 @@ row of those canton-years.
   municipality's *main station* to the hub station, for arrivals at the hub between 07:30 and 08:30
   on Tuesday 17 Nov 2026: for every arrival minute T, the latest departure that still arrives by T,
   journey = actual arrival − that departure (no initial wait, no wait at the hub); median over the
-  61 arrival minutes. Main station = the station inside the municipality with the most rail
-  departures 06:30–18:00 on the service day; if it has no rail station, the stop with the most
-  departures of any mode. Hub municipalities: 0 for the hub's own station.
+  61 arrival minutes; per station the median day of three weekdays (17 Nov, 25 Nov, 3 Dec 2026).
+  Main station (since 2026-11-11) = the station inside the municipality serving the most residents
+  within 1.5 km, rail preferred, and among those serving at least half as many, the one with the most
+  departures (reach_method.md). Hub municipalities: 0 for the hub's own station.
 - **Door-to-door** (`pt`, metric `reach_pt_<hub>`): towards the hub, same arrival window; each
   inhabited hectare walks (straight line × 1.3, 1.2 m/s) to the best stop within 1.5 km (min over
   stops of walk + stop's median journey); population-weighted median over hectares.

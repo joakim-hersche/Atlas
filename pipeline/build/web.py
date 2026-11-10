@@ -560,7 +560,7 @@ def run() -> dict:
     canton_n = mem_all.groupby("kanton").size()
     con.register("mem_kt2", mem_all[["bfs_nr", "kanton", "bezirk"]].astype(str))
     cg = con.execute("""SELECT m.metric_id, k.kanton,
-                               COUNT(*) FILTER (WHERE m.status IN ('ok', 'suppressed', 'not_applicable')) AS n_cov,
+                               COUNT(*) FILTER (WHERE m.status IN ('ok', 'suppressed', 'not_applicable', 'majority_election')) AS n_cov,
                                COUNT(*) FILTER (WHERE m.status = 'ok') AS n_ok
                         FROM m JOIN lp ON m.metric_id = lp.metric_id AND m.level = lp.level AND m.period = lp.p
                         JOIN mem_kt2 k ON m.unit_id = k.bfs_nr

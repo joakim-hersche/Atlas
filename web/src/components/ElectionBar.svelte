@@ -95,6 +95,7 @@
     </table>
     <p class="note">{t('pf.elNote', { kt: canton || '–' })}</p>
     {#if rows.maj}<p class="note maj">M {t('pf.elMaj')}</p>{/if}
+    {#if level === 'kanton' && (id === 'JU' || id === 'BE')}<p class="note maj">{t(id === 'JU' ? 'card.juMoutier' : 'card.beMoutier')}</p>{/if}
   </section>
 {/if}
 
