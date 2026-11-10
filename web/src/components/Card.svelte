@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ml, t } from '../lib/i18n.svelte';
+  import { ml, t, tiedText } from '../lib/i18n.svelte';
   import { gapReason, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, fmtValue, rankOf } from '../lib/classify';
 
@@ -59,7 +59,7 @@
       <span class="yr">{fmtPeriod(col.period)}</span>
       {#if rank}
         <span class="rank">
-          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
+          {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)} · P{Math.round(rank.pct)}<span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}
           <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span></span>
         </span>
       {/if}

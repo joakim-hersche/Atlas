@@ -5,7 +5,7 @@
   import { ml, t as tr } from '../lib/i18n.svelte';
   import type { MetricMeta } from '../lib/data';
   import {
-    fmtNumber, fmtPeriod, fmtR, fmtTick, fmtValue, logTicks, niceTicks, pearson, sortedValues, spearman, wantsLog,
+    fmtNumber, fmtPeriod, fmtR, fmtTick, fmtValue, logTicks, niceTicks, pearson, slopeParts, sortedValues, spearman, wantsLog,
   } from '../lib/classify';
   import { regionColours, token } from '../lib/theme';
 
@@ -23,15 +23,18 @@
     cantons: string[];
     hover: number | null;
     sel: number | null;
-    isDark: boolean;
     onhover: (i: number | null) => void;
     onselect: (i: number | null) => void;
     unitWord?: string;
     unitOne?: string;
+    /** active filters: 1 = matching unit. Statistics cover the matches; the others are grey or left out */
+    mask?: Uint8Array | null;
+    /** true: only the matches are drawn */
+    only?: boolean;
   }
   let {
-    xMeta, yMeta, x, y, xPeriod, yPeriod, region, regionNames, pop, names, cantons, hover, sel, isDark, onhover, onselect,
-    unitWord = 'municipalities', unitOne = 'municipality',
+    xMeta, yMeta, x, y, xPeriod, yPeriod, region, regionNames, pop, names, cantons, hover, sel, onhover, onselect,
+    unitWord = 'municipalities', unitOne = 'municipality', mask = null, only = false,
   }: Props = $props();
 
   let sizeByPop = $state(false);
@@ -60,6 +63,7 @@
       const b = y[i];
       if (a === null || b === null || !Number.isFinite(a) || !Number.isFinite(b)) continue;
       if ((logX && a <= 0) || (logY && b <= 0)) continue;
+      if (mask && only && !mask[i]) continue;
       idx.push(i);
       px.push(logX ? Math.log10(a) : a);
       py.push(logY ? Math.log10(b) : b);
@@ -69,11 +73,18 @@
   });
   const both = $derived.by(() => {
     let n = 0;
-    for (let i = 0; i < x.length; i++) if (x[i] !== null && y[i] !== null) n++;
+    for (let i = 0; i < x.length; i++) if (x[i] !== null && y[i] !== null && (!mask || mask[i])) n++;
     return n;
   });
+  /** statistics over the points that match the filters (all points when there are none) */
   const stats = $derived.by(() => {
-    const { px, py, pw } = pts;
+    let { idx, px, py, pw } = pts;
+    if (mask) {
+      const keep = idx.map((i) => mask[i] === 1);
+      px = px.filter((_, k) => keep[k]);
+      py = py.filter((_, k) => keep[k]);
+      pw = pw.filter((_, k) => keep[k]);
+    }
     if (px.length < 3) return null;
     return { n: px.length, fit: pearson(px, py), rho: spearman(px, py), rw: pearson(px, py, pw).r };
   });
@@ -119,7 +130,7 @@
     const text = token('--text');
     const surface = token('--panel');
     const mono = getComputedStyle(document.documentElement).getPropertyValue('--font-mono');
-    const cols = regionColours(isDark);
+    const cols = regionColours();
 
     // grid and ticks
     g.font = `10px ${mono}`;
@@ -163,19 +174,23 @@
     const { idx, px, py } = pts;
     const order = Array.from(idx.keys());
     if (sizeByPop) order.sort((a, b) => pts.pw[b] - pts.pw[a]);
+    // filtered (highlight mode): the other units first, small and grey, the matches on top
+    const out = (k: number) => !!mask && !mask[idx[k]];
+    if (mask) order.sort((a, b) => Number(out(b)) - Number(out(a)));
+    const grey = token('--border');
     screen = new Float32Array(idx.length * 3);
     g.lineWidth = 0.6;
     g.strokeStyle = surface;
     for (const k of order) {
       const X = sx(px[k]);
       const Y = sy(py[k]);
-      const r = radius(k);
+      const r = out(k) ? Math.min(2, radius(k)) : radius(k);
       screen[3 * k] = X;
       screen[3 * k + 1] = Y;
       screen[3 * k + 2] = r;
       const reg = region[idx[k]];
-      g.globalAlpha = sizeByPop ? 0.62 : 0.78;
-      g.fillStyle = reg >= 0 ? cols[reg] : muted;
+      g.globalAlpha = out(k) ? 0.9 : sizeByPop ? 0.62 : 0.78;
+      g.fillStyle = out(k) ? grey : reg >= 0 ? cols[reg] : muted;
       g.beginPath();
       g.arc(X, Y, r, 0, Math.PI * 2);
       g.fill();
@@ -222,7 +237,7 @@
 
   $effect(() => {
     // redraw on any input change
-    void [pts, w, h, sizeByPop, hover, sel, isDark, stats, xMeta, yMeta];
+    void [pts, w, h, sizeByPop, hover, sel, stats, xMeta, yMeta, mask, only];
     draw();
   });
 
@@ -260,11 +275,22 @@
 
   const regionCount = $derived.by(() => {
     const c = [0, 0, 0, 0];
-    for (const i of pts.idx) if (region[i] >= 0) c[region[i]]++;
+    for (const i of pts.idx) if (region[i] >= 0 && (!mask || mask[i])) c[region[i]]++;
     return c;
   });
-  const cols = $derived(regionColours(isDark));
+  const cols = regionColours();
   const focus = $derived(sel ?? hover);
+  /** unit word in the slope text: '%' becomes percentage points */
+  const uw = (m: MetricMeta) => (m.unit.startsWith('%') ? tr('sc.pp') : m.unit || tr('fp.value'));
+  const slopeText = $derived.by(() => {
+    if (!stats) return '–';
+    const p = slopeParts(stats.fit.slope, logX, logY);
+    if (!p) return '–';
+    if (p.kind === 'elast') return tr('sc.elast', { v: p.value });
+    if (p.kind === 'tenfold') return tr('sc.perTen', { v: p.value, yu: uw(yMeta) });
+    if (p.kind === 'pct') return tr('sc.perPct', { v: p.value, step: p.step, xu: uw(xMeta) });
+    return tr('sc.per', { v: p.value, yu: uw(yMeta), step: p.step, xu: uw(xMeta) });
+  });
   const fmt = (v: number | null, m: MetricMeta) => (v === null ? 'no data' : fmtValue(v, m));
 </script>
 
@@ -293,7 +319,8 @@
       {#each regionNames as name, k}
         <span><i style="background:{cols[k]}"></i>{name} <span class="num muted">{fmtNumber(regionCount[k], 0)}</span></span>
       {/each}
-      <span class="muted">— {tr('sc.ols')}</span>
+      {#if mask && !only}<span><i style="background:var(--border)"></i>{tr('sc.notMatch')}</span>{/if}
+      <span class="muted">— {tr('sc.ols')}{mask ? ` (${tr('sc.matchesOnly')})` : ''}</span>
     </div>
   </div>
 
@@ -306,13 +333,13 @@
           <tr><th>Pearson r</th><td class="num strong">{fmtR(stats.fit.r)}</td></tr>
           <tr><th>Spearman <i class="gr">ρ</i></th><td class="num strong">{fmtR(stats.rho)}</td></tr>
           <tr><th>{tr('sc.rw')}</th><td class="num">{fmtR(stats.rw)}</td></tr>
-          <tr><th>{tr('sc.slope')}</th><td class="num">{Number.isFinite(stats.fit.slope) ? fmtNumber(stats.fit.slope, Math.abs(stats.fit.slope) < 0.01 ? 5 : Math.abs(stats.fit.slope) < 1 ? 3 : 2) : '–'}</td></tr>
+          <tr><th colspan="2">{tr('sc.slope')}<span class="slope num">{slopeText}</span></th></tr>
         </tbody>
       </table>
       <p class="foot">
         {logX || logY ? `${tr('sc.on', { what: [logX ? 'log₁₀ A' : '', logY ? 'log₁₀ B' : ''].filter(Boolean).join(tr('sc.and')) })} ` : ''}{tr('sc.weights')}
         {both - stats.n > 0 ? tr('sc.nonpos', { n: fmtNumber(both - stats.n, 0) }) : ''}
-        {tr('sc.across', { units: unitWord })}
+        {tr('sc.across', { units: unitWord })}{mask ? ` ${tr('sc.statsMatch')}` : ''}
       </p>
     {:else}
       <p class="muted">{tr('sc.few', { units: unitWord })}</p>
@@ -353,6 +380,7 @@
   th { text-align: left; font-weight: 400; color: var(--muted); padding: 4px 0; font-size: 0.8rem; }
   td { text-align: right; padding: 4px 0; font-size: 0.9rem; }
   tr + tr { border-top: 1px solid var(--border); }
+  .slope { display: block; color: var(--text); font-weight: 600; font-size: 0.86rem; margin-top: 1px; white-space: normal; }
   .gr { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05em; }
   .strong { font-weight: 700; font-size: 1.15rem; }
   .foot { margin: 6px 0 0; }

@@ -1,5 +1,6 @@
 // Data loading and the column format written by pipeline/build/web.py.
 import { feature } from 'topojson-client';
+import { SvelteMap } from 'svelte/reactivity';
 import { levelName, t, levelWord } from './i18n.svelte';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { FeatureCollection, Geometry } from 'geojson';
@@ -171,6 +172,8 @@ export function loadBase(): Promise<Base> {
 }
 
 const levelFiles = new Map<string, Promise<LevelData>>();
+/** number of units per level, for every level loaded so far (reactive: the header shows the real count) */
+export const unitCounts = new SvelteMap<string, number>();
 /** The level's data if it is loaded or loading, without starting a download. */
 export const peekLevel = (level: string): Promise<LevelData> | undefined => levelFiles.get(level);
 /** Geometry and headline values of one level (gemeinde at start; the others on first use). */
@@ -207,6 +210,7 @@ export function loadLevel(level: string): Promise<LevelData> {
       }
       features.push(f);
     }
+    unitCounts.set(level, core.units.length);
     return { level, units: core.units, index, geo: { type: 'FeatureCollection', features } as FeatureCollection, core, name, canton };
   });
 }

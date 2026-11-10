@@ -1,3 +1,21 @@
+/* Inter, self-hosted (SIL OFL 1.1, public/fonts/OFL.txt): latin always, latin-ext only when a page needs it. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/inter-latin-wght-normal.woff2') format('woff2-variations'), url('/fonts/inter-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/inter-latin-ext-wght-normal.woff2') format('woff2-variations'), url('/fonts/inter-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   /* Light only (D29): white Swiss style, black type, hairline and heavy black rules, red as the single accent. */
   color-scheme: light;
@@ -17,7 +35,8 @@
   --ink-text: #ffffff;
   --focus: #d52b1e;
   --map-bg: #ffffff;
-  --water: #dce6ee;
+  --water: #f1f6f9;       /* lakes: paler than the lightest class (#d3e0ec), with an outline */
+  --water-line: #6f8fa6;
   --gem-line: #ffffff;
   --kt-line: #000000;
   --sel-line: #d52b1e;
@@ -62,15 +81,19 @@ button, select, input { font: inherit; color: inherit; }
 .seg { display: inline-flex; border: 1px solid var(--ink); overflow: hidden; background: var(--panel); }
 .seg button { padding: 4px 10px; border: 0; background: none; cursor: pointer; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text); }
 .seg button + button { border-left: 1px solid var(--ink); }
-.seg button[aria-checked='true'], .seg button[aria-pressed='true'] { background: var(--ink); color: var(--ink-text); }
+.seg a { padding: 4px 10px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text); text-decoration: none; }
+.seg a + a { border-left: 1px solid var(--ink); }
+.seg button[aria-checked='true'], .seg button[aria-pressed='true'], .seg a[aria-current='page'] { background: var(--ink); color: var(--ink-text); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .seg button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .maplibregl-ctrl-group { background: var(--panel) !important; box-shadow: none !important; border: 1px solid var(--ink); border-radius: 0 !important; }
 .maplibregl-ctrl-group button { width: 26px !important; height: 26px !important; }
 .maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
 .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
-.gb-reset-btn { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
-.gb-reset-btn:hover { background: var(--panel-2) !important; }
+.gb-btn-b { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
+.gb-btn-b:hover { background: var(--panel-2) !important; }
+.gb-ch { font: 700 10px/1 var(--font-sans); letter-spacing: 0.02em; }
 .maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 10px; color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
 .maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }

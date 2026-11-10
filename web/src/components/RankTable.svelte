@@ -23,8 +23,10 @@
     sel: number | null;
     unitWord: string;
     onselect: (i: number) => void;
+    /** zoom the map to the listed units */
+    onzoom?: () => void;
   }
-  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect }: Props = $props();
+  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect, onzoom }: Props = $props();
 
   const PAGE = 100;
   let sortKey = $state<string | null>(null);
@@ -61,12 +63,30 @@
     }
     limit = PAGE;
   }
+  /** rank by the sorted column: equal values share the best rank ('=' marks a tie); by name: the row number */
+  const rankNo = $derived.by(() => {
+    const out = new Map<number, { r: number; tie: boolean }>();
+    if (key === 'name') {
+      sorted.forEach((i, k) => out.set(i, { r: k + 1, tie: false }));
+      return out;
+    }
+    const v = columns.find((c) => c.key === key)!.v;
+    let r = 0;
+    for (let k = 0; k < sorted.length; k++) {
+      const x = v[sorted[k]];
+      if (x === null || x === undefined) break;
+      if (k === 0 || x !== v[sorted[k - 1]]) r = k + 1;
+      const tie = (k > 0 && v[sorted[k - 1]] === x) || (k + 1 < sorted.length && v[sorted[k + 1]] === x);
+      out.set(sorted[k], { r, tie });
+    }
+    return out;
+  });
   const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? '–' : fmtNumber(x, m.decimals));
   const arrow = (k: string) => (k === key ? (desc ? ' ↓' : ' ↑') : '');
 </script>
 
 <div class="rank">
-  <p class="cap"><span class="num">{fmtNumber(rows.length, 0)}</span> {unitWord}{rows.length ? t('rt.sorted', { by: key === 'name' ? t('rt.nameL') : (columns.find((c) => c.key === key)?.label ?? ml(columns.find((c) => c.key === key)?.meta)) }) : ''}. {t('rt.tap')}</p>
+  <p class="cap">{#if onzoom}<button type="button" class="zoom" onclick={onzoom}>{t('fp.zoom')}</button>{/if}<span class="num">{fmtNumber(rows.length, 0)}</span> {unitWord}{rows.length ? t('rt.sorted', { by: key === 'name' ? t('rt.nameL') : (columns.find((c) => c.key === key)?.label ?? ml(columns.find((c) => c.key === key)?.meta)) }) : ''}. {t('rt.tap')}</p>
   <div class="wrap">
     <table>
       <thead>
@@ -85,9 +105,10 @@
         </tr>
       </thead>
       <tbody>
-        {#each shown as i, k (i)}
+        {#each shown as i (i)}
+          {@const rn = rankNo.get(i)}
           <tr class:sel={i === sel} onclick={() => onselect(i)}>
-            <td class="n num">{k + 1}</td>
+            <td class="n num" title={rn?.tie ? t('rt.tie') : undefined}>{rn ? `${rn.tie ? '=' : ''}${rn.r}` : '–'}</td>
             <td class="nm"><button type="button" class="rowbtn" onclick={(e) => { e.stopPropagation(); onselect(i); }}>{names[i]}</button>{#if showCanton && cantons[i]}<span class="kt">{cantons[i]}</span>{/if}</td>
             {#each columns as c (c.key)}<td class="v num">{fmt(c.v[i], c.meta)}</td>{/each}
           </tr>
@@ -104,6 +125,7 @@
 <style>
   .rank { font-size: 0.8rem; min-width: 0; }
   .cap { margin: 0 0 6px; color: var(--muted); }
+  .zoom { float: right; margin-left: 8px; border: 1px solid var(--ink); background: var(--panel); padding: 1px 7px; font-size: 0.74rem; font-weight: 600; cursor: pointer; color: var(--text); }
   .wrap { overflow-x: auto; max-width: 100%; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   thead th { text-align: left; position: sticky; top: 0; background: var(--panel); border-bottom: 2px solid var(--ink); vertical-align: bottom; padding: 0; z-index: 1; }
@@ -116,7 +138,7 @@
   td.v { text-align: right; padding-left: 6px; white-space: nowrap; }
   td.n, th.n { width: 1%; color: var(--muted); padding-right: 6px; text-align: right; font-size: 0.72rem; }
   th.n { font-weight: 700; color: var(--text); padding: 4px 6px 4px 0; }
-  td.nm { max-width: 13em; line-height: 1.25; overflow-wrap: anywhere; }
+  td.nm { max-width: 13em; line-height: 1.25; overflow-wrap: break-word; word-break: normal; hyphens: manual; }
   .rowbtn { border: 0; background: none; padding: 0; cursor: pointer; font-weight: 500; text-align: left; }
   .kt { color: var(--muted); font-size: 0.7rem; margin-left: 4px; }
   tbody tr { cursor: pointer; }

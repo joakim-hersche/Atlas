@@ -7,6 +7,7 @@
   import MetricPicker from '../components/MetricPicker.svelte';
   import FilterPanel from '../components/FilterPanel.svelte';
   import LevelSwitch from '../components/LevelSwitch.svelte';
+  import LevelNote from '../components/LevelNote.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
@@ -20,11 +21,11 @@
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
   import { T_MAX, type CatField, type ReachMode } from '../lib/hash';
-  import { CH_BOUNDS, UnitMap, zoomScale, type Symbol } from '../lib/mapview';
+  import { CH_BOUNDS, UnitMap, geomBounds, zoomScale, type Symbol } from '../lib/mapview';
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
   import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
-  import { currentLevelNote, switchLevel } from '../lib/levels';
+  import { switchLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { refOf } from '../lib/places';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
@@ -48,6 +49,8 @@
   let hover = $state<number | null>(null);
   let hoverAt = $state<{ x: number; y: number } | null>(null);
   let sheetOpen = $state(false);
+  /** map fills the viewport (header, panels hidden); not in the hash */
+  let full = $state(false);
   let chA = $state.raw<{ value: number; period: string } | null>(null);
   let reachNets = $state.raw<Record<string, ReachFile | null>>({});
   let reachError = $state<string | null>(null);
@@ -77,6 +80,12 @@
     return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp()) : null;
   });
   const yearPeriods = $derived(seriesPeriods(metaA, ld.level));
+  /** a count (sum) as a choropleth favours large units: suggest circles */
+  const countHint = $derived(metaA.aggregation === 'sum' && app.display === 'choropleth' && app.size !== metaA.id && !whyA);
+  function countAsSymbols() {
+    app.size = metaA.id;
+    app.display = 'symbols';
+  }
   const yearEmpty = $derived(!!colA && refA?.file === null && !colA.v.some((x) => x !== null));
   // national value: latest file, or the series row of Switzerland for a past year
   $effect(() => {
@@ -176,7 +185,13 @@
   onMount(() => {
     loadReachIndex().then((ix) => {
       if (!ix) return;
-      if (ix.hubs?.length) hubs = ix.hubs;
+      if (ix.hubs?.length) {
+        hubs = ix.hubs;
+        const known = new Set(ix.hubs.map((h) => h.slug));
+        if (!known.has(app.hub)) app.hub = ix.hubs[0].slug;
+        const fs = app.filters.filter((f) => f.kind !== 'reach' || known.has(f.hub));
+        if (fs.length !== app.filters.length) app.filters = fs;
+      }
       carFiles = new Set(ix.files.filter((f) => f.mode === 'car').map((f) => f.hub));
     });
   });
@@ -195,6 +210,10 @@
 
   // ------------------------------------------------------------------ selection
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
+  // a selection or hub from a link that does not exist here is dropped (the hash follows)
+  $effect(() => {
+    if (app.sel !== null && !ld.index.has(app.sel)) app.sel = null;
+  });
   function select(i: number | null) {
     app.sel = i === null ? null : ld.units[i];
     if (i !== null && !desktop) sheetOpen = false;
@@ -205,9 +224,13 @@
     view = new UnitMap(mapEl, base, {
       onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
+      onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full,
     });
     overlay = new ReachOverlay(view.map, mapEl);
     view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
+    view.map.on('movestart', (e) => {
+      if ((e as { originalEvent?: unknown }).originalEvent) userMoved = true;
+    });
     if (new URLSearchParams(location.search).has('debug')) (window as unknown as { __map: unknown }).__map = view.map;
     view.ready.then(() => {
       mapReady = true;
@@ -217,9 +240,13 @@
     });
     const ro = new ResizeObserver(() => view?.map.resize());
     ro.observe(mapEl);
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && full && setFull(false);
+    window.addEventListener('keydown', esc);
     return () => {
       ro.disconnect();
       stop();
+      window.removeEventListener('keydown', esc);
+      document.documentElement.classList.remove('mapfull');
       view?.map.remove();
     };
   });
@@ -231,11 +258,7 @@
     if (!view) return;
     if (animate) focus = false;
     let padding: { top: number; bottom: number; left: number; right: number };
-    if (desktop) padding = { top: 24, bottom: 24, left: 24, right: 48 };
-    else {
-      const top = panelEl ? panelEl.getBoundingClientRect().top - mapEl.getBoundingClientRect().top : mapEl.clientHeight;
-      padding = { top: 46, bottom: Math.max(12, mapEl.clientHeight - top + 8), left: 10, right: 10 };
-    }
+    padding = mapPadding();
     view.map.resize();
     const f = focus && selIdx !== null ? ld.geo.features.find((x) => x.id === selIdx) : undefined;
     if (f) {
@@ -244,19 +267,63 @@
       return;
     }
     view.map.fitBounds(CH_BOUNDS, { padding, animate, duration: animate ? 500 : 0 });
+    userMoved = false;
+  }
+  function mapPadding() {
+    if (desktop) return { top: 24, bottom: 24, left: 24, right: 48 };
+    // phone: the level bar on top; the sheet sits below the map (it does not cover it)
+    return { top: 46, bottom: 12, left: 10, right: 10 };
+  }
+  /** the user panned or zoomed since the last fit: then a resize keeps their view */
+  let userMoved = false;
+  /** Zoom to a set of units (matches, a ranking row). */
+  const boxes = $derived(ld.geo.features.map((f) => geomBounds(f.geometry)));
+  function zoomTo(idx: number[], maxZoom = 10.5) {
+    if (!view || !idx.length) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const byId = new Map(ld.geo.features.map((f, k) => [f.id as number, k]));
+    for (const i of idx) {
+      const k = byId.get(i);
+      const b = k === undefined ? null : boxes[k];
+      if (!b) continue;
+      x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
+    }
+    if (!Number.isFinite(x0)) return;
+    if (!desktop) sheetOpen = false;
+    tick().then(() => {
+      view!.map.resize();
+      view!.fitBox([x0, y0, x1, y1], mapPadding(), { animate: true, maxZoom });
+    });
+  }
+  const matchIdx = $derived.by(() => {
+    const out: number[] = [];
+    for (let i = 0; i < nUnits; i++) if (match.m[i]) out.push(i);
+    return out;
+  });
+  function setFull(v: boolean) {
+    full = v;
+    document.documentElement.classList.toggle('mapfull', v);
+    if (v) sheetOpen = false;
+    tick().then(() => requestAnimationFrame(() => {
+      view?.relabel();
+      if (!userMoved) fit();
+      else view?.map.resize();
+    }));
   }
   $effect(() => {
     void app.lang;
     if (mapReady) view!.relabel();
   });
-  const levelNote = $derived(currentLevelNote());
   $effect(() => {
     void desktop;
     if (mapReady) tick().then(() => requestAnimationFrame(() => fit()));
   });
   $effect(() => {
-    sheetOpen;
-    requestAnimationFrame(() => view?.map.resize());
+    void sheetOpen;
+    requestAnimationFrame(() => {
+      view?.map.resize();
+      if (mapReady && !desktop && !userMoved && !focus) fit();
+    });
   });
 
   const colours = $derived.by(() => {
@@ -328,6 +395,8 @@
       return;
     }
     if (app.t >= T_MAX) app.t = 0;
+    // phones: the sheet folds away so the growing network stays in view
+    if (!desktop) sheetOpen = false;
     app.playing = true;
     let last = performance.now();
     const step = (now: number) => {
@@ -389,8 +458,7 @@
   });
   function selectFromList(i: number) {
     select(i);
-    const p = labels?.[i];
-    if (p && view) view.reveal(p);
+    zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5);
   }
 
   // ------------------------------------------------------------------ card and tooltip
@@ -432,7 +500,8 @@
 {#snippet rankSnip()}
   {#if rankCols.length}
     <RankTable columns={rankCols} rows={rankRows} names={ld.name} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
-      sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} />
+      sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList}
+      onzoom={filtered && match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
   {/if}
@@ -440,13 +509,14 @@
 {#snippet statsSnip()}
   {#if colA && !whyA}
     <StatsBlock meta={metaA} v={colA.v} period={colA.period} names={ld.name} cantons={ld.canton} ch={chA} sel={null}
-      source={base.sources.get(metaA.source)} unitWord={word} />
+      source={base.sources.get(metaA.source)} unitWord={word} mask={filtered ? match.m : null} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
   {/if}
 {/snippet}
 
-<main class="stage">
+<main class="stage" class:full id="main" tabindex="-1">
+  <h1 class="sr-only">{t('mv.h1', { metric: ml(metaA), units: levelName(ld.level) })}</h1>
   <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label={t('mv.controls')}>
     <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
       <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="20" height="12" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
@@ -480,6 +550,10 @@
             <p class="why">No values for {colA.period} at this level.</p>
           {:else if refA === undefined}
             <p class="foot">{t('status.loading')}</p>
+          {/if}
+          {#if countHint}
+            <p class="hintc">{t('mv.countHint', { metric: ml(metaA) })}
+              <button type="button" class="link" onclick={countAsSymbols}>{t('mv.countBtn')}</button></p>
           {/if}
         </div>
         {#if yearPeriods.length > 1 && !whyA}
@@ -547,7 +621,7 @@
         <div class="caps lab">{t('tab.filters')}</div>
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
           options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
-          defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} />
+          defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} onzoom={match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
       </section>
 
       {/if}
@@ -565,11 +639,22 @@
       <div class="map" bind:this={mapEl}></div>
       <div class="lvlbar">
         <LevelSwitch value={ld.level} onchange={(l) => { stop(); switchLevel(base, l); }} />
-        {#if levelNote}
-          <p class="lnote" role="status">{levelNote}
-            <button type="button" class="lx" aria-label={t('common.dismiss')} onclick={() => (app.levelNote = null)}>×</button></p>
-        {/if}
+        <LevelNote />
       </div>
+      {#if !desktop && card && refA && colA}
+        <div class="card-wrap">
+          <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
+            source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
+            profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
+        </div>
+      {/if}
+      {#if full && scaleA && colA && !whyA}
+        <div class="flegend">
+          <div class="fl-t">{ml(metaA)}</div>
+          <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
+            method={app.cls} onmethod={(m) => (app.cls = m)} compact />
+        </div>
+      {/if}
       {#if tip && hover !== null && hoverAt && desktop}
         <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
           <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
@@ -599,13 +684,6 @@
     </aside>
   {/if}
 
-  {#if !desktop && card && refA && colA}
-    <div class="card-wrap">
-      <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-        source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
-        profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
-    </div>
-  {/if}
 
   {#if !mapReady}
     <div class="status" role="status">{t('status.loadingMap')}</div>
@@ -657,13 +735,20 @@
   .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
+  .hintc { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--accent); padding-left: 6px; }
+  .flegend {
+    position: absolute; z-index: 4; left: 10px; bottom: 26px; width: min(340px, calc(100% - 20px)); background: var(--panel);
+    border: 1px solid var(--ink); padding: 6px 8px;
+  }
+  .fl-t { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; }
+  .stage:focus { outline: none; }
+  /* full-screen map: header and panels hidden, the map fills the viewport */
+  :global(html.mapfull .app > header.top) { display: none; }
+  .stage.full { display: block; }
+  .stage.full .controls, .stage.full .side { display: none; }
+  .stage.full .pane { position: absolute; inset: 0; }
   .lvlbar { position: absolute; z-index: 3; top: 10px; left: 10px; right: 56px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
   .lvlbar > :global(*) { pointer-events: auto; }
-  .lnote {
-    margin: 0; max-width: 420px; background: var(--panel); border: 1px solid var(--ink); padding: 4px 4px 4px 8px; font-size: 0.76rem;
-    display: flex; align-items: flex-start; gap: 6px;
-  }
-  .lx { border: 0; background: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; color: var(--text); }
 
   @media (min-width: 900px) {
     .stage { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; }
@@ -672,12 +757,15 @@
   }
 
   @media (max-width: 899px) {
-    .pane { position: absolute; inset: 0; }
+    /* phone: map on top, the sheet below it (it never covers the map); opening the sheet shrinks the map */
+    .stage { display: flex; flex-direction: column; }
+    .pane { order: 0; flex: 1 1 auto; min-height: 38%; }
     .controls {
-      position: absolute; left: 0; right: 0; bottom: 0; border-top: 2px solid var(--rule); max-height: 48%;
+      order: 1; flex: none; border-top: 2px solid var(--rule); max-height: 46%;
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .controls.open { max-height: 86%; }
+    .controls.open { max-height: 62%; }
+    .controls .body { min-height: 0; }
     .sheet-tabs { flex: none; padding: 0 12px; }
     .sheet-tabs button { padding: 5px 2px 6px; }
     .handle {
@@ -693,7 +781,7 @@
     .controls.open .extra { display: block; }
     .controls:not(.open) .detail { display: none; }
     /* zoom buttons hidden on phones (pinch); the reset button stays */
-    :global(.single .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-reset)) { display: none; }
+    :global(.single .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-btn)) { display: none; }
     .lvlbar { top: 8px; left: 8px; }
     .card-wrap { top: 48px; }
   }

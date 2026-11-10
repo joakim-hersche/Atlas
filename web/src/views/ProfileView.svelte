@@ -31,7 +31,7 @@
       'p.partOf': 'Part of',
       'p.otherNames': 'Other names',
       'p.metrics': 'All metrics',
-      'p.rankNote': 'Rank 1 = highest value (lowest where lower is better). The red mark shows the percentile among all {units} with data.',
+      'p.rankNote': 'Rank 1 = highest value (lowest where lower is better). Equal values share the best rank and are marked “tied”. The red mark shows the percentile among all {units} with data; a pale band spans a tie group.',
       'p.showAll': 'All {n} metrics',
       'p.showLess': 'Headline metrics only',
       'p.moreN': '{n} more',
@@ -95,7 +95,7 @@
       'p.partOf': 'Gehört zu',
       'p.otherNames': 'Weitere Namen',
       'p.metrics': 'Alle Kennzahlen',
-      'p.rankNote': 'Rang 1 = höchster Wert (tiefster, wo tiefer besser ist). Die rote Marke zeigt das Perzentil unter allen {units} mit Daten.',
+      'p.rankNote': 'Rang 1 = höchster Wert (tiefster, wo tiefer besser ist). Gleiche Werte teilen sich den besten Rang und sind als «gleichauf» markiert. Die rote Marke zeigt das Perzentil unter allen {units} mit Daten; ein heller Balken umfasst gleichauf liegende Werte.',
       'p.showAll': 'Alle {n} Kennzahlen',
       'p.showLess': 'Nur Hauptkennzahlen',
       'p.moreN': '{n} weitere',
@@ -152,7 +152,7 @@
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
   import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
-  import { isDe, levelName, ml, t, themeName } from '../lib/i18n.svelte';
+  import { isDe, levelName, ml, t, themeName, tiedText } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
   import {
     hideAltNames, loadHistory, loadIdentity, loadNeighbours, loadReachTimes, loadRows, loadSearch, parseRef, refOf,
@@ -381,9 +381,9 @@
       <div class="mv"><span class="v">{fmtValue(e.value, m)}</span><span class="yr">{fmtPeriod(e.period)}</span></div>
       <div class="mr">
         {#if e.rank}
-          <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}</span>
-          {#if e.rankKt}<span class="rk num muted">{t('p.rankKt', { r: fmtNumber(e.rankKt.rank, 0), n: fmtNumber(e.rankKt.n, 0), kt: pl!.canton[idx!] })}</span>{/if}
-          <PctBar pct={e.rank.pct} label="P{Math.round(e.rank.pct)}" />
+          <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}{tiedText(e.rank)}</span>
+          {#if e.rankKt}<span class="rk num muted">{t('p.rankKt', { r: fmtNumber(e.rankKt.rank, 0), n: fmtNumber(e.rankKt.n, 0), kt: pl!.canton[idx!] })}{tiedText(e.rankKt)}</span>{/if}
+          <PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />
         {/if}
       </div>
       <div class="ms"><Sparkline meta={m} level={unit.level} id={unit.id} /></div>
@@ -391,7 +391,7 @@
   </div>
 {/snippet}
 
-<div class="pg" bind:this={scroller}>
+<main class="pg" id="main" tabindex="-1" bind:this={scroller}>
   <div class="wrap">
     <nav class="crumbs">
       <a href={hrefFor('map')}>← {t('p.back')}</a>
@@ -539,9 +539,10 @@
       </footer>
     {/if}
   </div>
-</div>
+</main>
 
 <style>
+  .pg:focus { outline: none; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 12px 24px 40px; }
   .crumbs { font-size: 0.82rem; margin-bottom: 10px; }

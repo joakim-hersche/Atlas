@@ -167,7 +167,7 @@
                 {#if h.plz && h.plz.locality !== h.name}<span class="via">{h.plz.locality}</span>{/if}
               </span>
               <span class="hs">
-                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{' · '}{/if}{subOf(h)}
+                {#if h.plz && h.plz.share < 100}<span class="num">{t('search.addresses', { p: h.plz.share < 0.05 ? '< 0.1' : fmtNumber(h.plz.share, h.plz.share < 1 ? 1 : 0) })}</span>{' · '}{/if}{subOf(h)}
               </span>
             </button>
           {/each}

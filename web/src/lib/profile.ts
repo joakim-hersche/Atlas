@@ -2,7 +2,7 @@
 // (value, rank in Switzerland and in the canton, percentile, gap reason, precision), the theme layout,
 // "similar places" and a small SVG locator.
 import type { Feature, FeatureCollection, Geometry, Position } from 'geojson';
-import { rankOf } from './classify';
+import { rankOf, type RankInfo } from './classify';
 import {
   gapReason, LEVELS, loadLevel, loadTheme, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
 } from './data';
@@ -88,11 +88,7 @@ export function themeBlocks(base: Base, level: string): ThemeBlock[] {
 }
 
 // ---------------------------------------------------------------- metric entries
-export interface Rank {
-  rank: number;
-  n: number;
-  pct: number;
-}
+export type Rank = RankInfo;
 export interface Entry {
   meta: MetricMeta;
   value: number | null;

@@ -4,13 +4,13 @@
 // from app.params, or navigate with app.go('profile', { id: '261' }).
 import type { Method } from './classify';
 import {
-  DEFAULT_HUB, DEFAULT_LEVEL, parseHash, readHash, storeLang, writeHash, type Display, type Filter, type Lang, type ReachMode, type ViewState,
+  DEFAULT_HUB, DEFAULT_LEVEL, DEFAULT_METRIC, parseHash, readHash, storeLang, writeHash, type Display, type Filter, type Lang, type ReachMode, type ViewState,
 } from './hash';
 
 export class AppState {
   route = $state('map');
   level = $state(DEFAULT_LEVEL);
-  metric = $state('pop_total');
+  metric = $state(DEFAULT_METRIC);
   metricB = $state<string | null>(null);
   size = $state<string | null>(null);
   display = $state<Display>('choropleth');
@@ -26,8 +26,12 @@ export class AppState {
   tab = $state<string | null>(null);
   params = $state<Record<string, string>>({});
   lang = $state<Lang>('en');
-  /** one-line note after a level switch replaced a metric that does not exist there (not in the hash) */
-  levelNote = $state<{ text: string; level: string; metric: string } | null>(null);
+  only = $state(false);
+  /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
+   *  `prev` is the view before the switch, for "switch back" */
+  levelNote = $state<{ text: string; level: string; metric: string; prev: { level: string; metric: string; metricB: string | null; size: string | null } } | null>(null);
+  /** counts state loads from the URL (initial and every hashchange), so the shell can check the new state */
+  loads = $state(0);
   /** fit the map to the selected unit once when the map view opens (set by 'show on map') */
   focusSel = false;
   /** reach animation running (the hash is not written meanwhile) */
@@ -42,7 +46,7 @@ export class AppState {
   load(v: ViewState) {
     this.route = v.route;
     this.level = v.level;
-    this.metric = v.metric ?? 'pop_total';
+    this.metric = v.metric ?? DEFAULT_METRIC;
     this.metricB = v.metricB;
     this.size = v.size;
     this.display = v.display;
@@ -56,14 +60,16 @@ export class AppState {
     this.tab = v.tab;
     this.params = v.params;
     this.lang = v.lang;
+    this.only = v.only;
     this.preset = v.preset;
+    this.loads++;
   }
 
   snapshot(): Omit<ViewState, 'preset'> {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, params: { ...this.params },
     };
   }
 

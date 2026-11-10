@@ -35,6 +35,8 @@ export interface ViewState {
   tab: string | null;
   /** UI language (English default) */
   lang: Lang;
+  /** compare view: the scatter shows only the units matching the filters (else matches are highlighted) */
+  only: boolean;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -44,9 +46,11 @@ export interface ViewState {
 export const T_MAX = 180;
 export const DEFAULT_HUB = 'zuerich';
 export const DEFAULT_LEVEL = 'gemeinde';
+/** default shade: a density, never a count as a choropleth (cartographic rule; review round 1) */
+export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -117,6 +121,7 @@ export function parseHash(hash: string): ViewState {
     sel: get('sel') ?? null,
     tab: get('tab') ?? null,
     lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
+    only: get('only') === '1',
     preset,
     params,
   };
@@ -170,6 +175,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);
   if (s.lang !== 'en') add('lang', s.lang);
+  if (s.route === 'compare' && s.only && s.filters.length) add('only', '1');
   for (const [k, v] of Object.entries(s.params)) add(k, v);
   return out.length ? '#' + out.map(([k, v]) => `${k}=${enc(v)}`).join('&') : '';
 }

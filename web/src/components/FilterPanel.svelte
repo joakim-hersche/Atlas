@@ -22,8 +22,10 @@
     defaultMetric: string;
     defaultHub: string;
     onset: (filters: Filter[]) => void;
+    /** zoom the map to the matching units (shown while filters are active) */
+    onzoom?: () => void;
   }
-  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset }: Props = $props();
+  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom }: Props = $props();
 
   const filters = $derived(evals.map((e) => e.filter));
   function update(k: number, f: Filter) {
@@ -60,7 +62,12 @@
     {:else}
       {t('fp.none', { n: fmtNumber(total, 0), units: unitWord })}
     {/if}
-    {#if filters.length}<button type="button" class="link" onclick={() => onset([])}>{t('fp.clear')}</button>{/if}
+    {#if filters.length}
+      <span class="acts">
+        {#if match.active && onzoom}<button type="button" class="link" onclick={onzoom}>{t('fp.zoom')}</button>{/if}
+        <button type="button" class="link" onclick={() => onset([])}>{t('fp.clear')}</button>
+      </span>
+    {/if}
   </div>
 
   {#each evals as e, k (k)}
@@ -152,7 +159,8 @@
   .filters { font-size: 0.82rem; }
   .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; }
   .miss { color: var(--text); }
-  .link { margin-left: auto; border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.78rem; }
+  .acts { margin-left: auto; display: inline-flex; gap: 10px; }
+  .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.78rem; }
   .cond { border-top: 1px solid var(--ink); padding: 8px 0 10px; }
   .cond.inactive .ch, .cond.inactive .chips, .cond.inactive .list { opacity: 0.6; }
   .ch { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }

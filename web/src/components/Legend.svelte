@@ -65,16 +65,22 @@
     const edges = [dom.lo, ...scale.breaks.filter((b) => b > dom.lo && b < dom.hi), dom.hi];
     return edges.slice(0, -1).map((e, k) => ({ x: px(e), w: Math.max(0.5, px(edges[k + 1]) - px(e)), fill: scale.colourOf((e + edges[k + 1]) / 2) }));
   });
-  const classes = $derived(
+  const classes = $derived.by(() => {
+    const out = rawClasses();
+    // the class right after a single-value class starts just above that value: "> 0–6", not "0–6"
+    return out.map((c, k) => ({ ...c, after: k > 0 && out[k - 1].single !== null && fmtTick(c.lo, meta) === fmtTick(out[k - 1].single!, meta) }));
+  });
+  const rawClasses = () => (
     scale.method === 'continuous'
       ? []
       : scale.classColours.map((c, k) => ({
           c,
           lo: k === 0 ? scale.min : scale.breaks[k - 1],
           hi: k === scale.breaks.length ? scale.max : scale.breaks[k],
+          /** a class holding one value only (a block of ties, e.g. 0) is labelled with that value */
+          single: scale.counts[k] > 0 && scale.classMin[k] === scale.classMax[k] ? scale.classMin[k] : null,
           n: scale.counts[k],
-        })),
-  );
+        })));
   const nGap = $derived(nUnits - scale.n);
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
@@ -123,7 +129,7 @@
       {#each classes as c}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
-          <span class="rng num">{fmtTick(c.lo, meta)}–{fmtTick(c.hi, meta)}</span>
+          <span class="rng num">{c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
           <span class="cn num">{fmtNumber(c.n, 0)}</span>
         </div>
       {/each}

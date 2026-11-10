@@ -100,6 +100,9 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
   const out: SearchHit[] = [];
   const digits = /^\d+$/.test(q);
   if (digits) {
+    // an exact BFS number comes first (it would otherwise be cut off behind the postal-code prefixes)
+    const u = ix.byRef.get(q);
+    if (u) out.push({ ref: u.ref, name: u.name, level: 'gemeinde', kanton: u.kanton, bfs: true });
     // postal codes: exact code first (all its municipalities, largest share first), then by prefix
     if (q.length >= 2 && q.length <= 4) {
       const codes = ix.plzKeys.filter((k) => k.startsWith(q)).slice(0, 6);
@@ -116,9 +119,7 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
         if (out.length >= limit) break;
       }
     }
-    const u = ix.byRef.get(q);
-    if (u) out.push({ ref: u.ref, name: u.name, level: 'gemeinde', kanton: u.kanton, bfs: true });
-    return out.slice(0, limit + 1);
+    return out.slice(0, limit);
   }
   const words = q.split(' ');
   const scored: { u: SearchUnit; s: number; via?: string }[] = [];

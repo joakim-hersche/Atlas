@@ -30,40 +30,56 @@ function hatchImage(bg: string, line: string): ImageData {
   return g.getImageData(0, 0, c.width, c.height);
 }
 
-/** A small square map control that resets the view to the whole of Switzerland. It sits under the
- *  zoom buttons on desktop and stays visible on phones (where the zoom buttons are hidden). */
-class ResetControl implements maplibregl.IControl {
+/** A small square map button (top right). Used for "fit to Switzerland" (a "CH" label, so it does not
+ *  read as fullscreen) and for the fullscreen-map toggle. */
+class ButtonControl implements maplibregl.IControl {
   private el: HTMLDivElement | null = null;
-  constructor(private onReset: () => void, private label: () => string) {}
+  constructor(private cls: string, private onClick: () => void, private label: () => string, private html: () => string) {}
   onAdd() {
     const el = document.createElement('div');
-    el.className = 'maplibregl-ctrl maplibregl-ctrl-group gb-reset';
+    el.className = `maplibregl-ctrl maplibregl-ctrl-group gb-btn ${this.cls}`;
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'gb-reset-btn';
-    b.setAttribute('aria-label', this.label());
-    b.title = this.label();
-    // four corner brackets ("fit to extent")
-    b.innerHTML =
-      '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
-      '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
-    b.addEventListener('click', () => this.onReset());
+    b.className = 'gb-btn-b';
+    b.addEventListener('click', () => this.onClick());
     el.appendChild(b);
     this.el = el;
+    this.refresh();
     return el;
   }
-  /** re-read the label (language switch) */
-  relabel() {
+  /** re-read label and icon (language switch, state change) */
+  refresh() {
     const b = this.el?.querySelector('button');
-    if (b) {
-      b.setAttribute('aria-label', this.label());
-      b.title = this.label();
-    }
+    if (!b) return;
+    b.setAttribute('aria-label', this.label());
+    b.title = this.label();
+    b.innerHTML = this.html();
   }
   onRemove() {
     this.el?.remove();
     this.el = null;
   }
+}
+
+const ICON_FULL =
+  '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
+  '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
+const ICON_EXIT =
+  '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
+  '<path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>';
+
+/** Bounding box [x0, y0, x1, y1] of a polygon geometry (lon/lat), or null. */
+export function geomBounds(g: Geometry | null): [number, number, number, number] | null {
+  if (!g) return null;
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of polys) for (const r of p) for (const [x, y] of r) {
+    if (x < x0) x0 = x;
+    if (y < y0) y0 = y;
+    if (x > x1) x1 = x;
+    if (y > y1) y1 = y;
+  }
+  return Number.isFinite(x0) ? [x0, y0, x1, y1] : null;
 }
 
 export interface MapEvents {
@@ -73,6 +89,11 @@ export interface MapEvents {
   onReset?: () => void;
   /** label of the reset button, in the UI language */
   resetLabel?: () => string;
+  /** fullscreen toggle pressed (the button is shown when this is set) */
+  onFull?: () => void;
+  /** label of the fullscreen toggle and whether the map is full screen now */
+  fullLabel?: () => string;
+  isFull?: () => boolean;
 }
 
 /** A proportional symbol: unit index, position and radius in px at the reference zoom. */
@@ -108,7 +129,7 @@ export class UnitMap {
   private display: Display = 'choropleth';
   private symbolsOn = false;
   private symbolStyle: 'filled' | 'hollow' = 'filled';
-  private resetCtl: ResetControl | null = null;
+  private ctls: ButtonControl[] = [];
 
   constructor(container: HTMLElement, base: Base, ev: MapEvents, opts: { nav?: boolean } = {}) {
     this.map = new maplibregl.Map({
@@ -128,9 +149,16 @@ export class UnitMap {
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation();
     if (opts.nav !== false) this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    if (ev.onFull) {
+      const isFull = ev.isFull ?? (() => false);
+      const c = new ButtonControl('gb-full', ev.onFull, ev.fullLabel ?? (() => 'Full-screen map'), () => (isFull() ? ICON_EXIT : ICON_FULL));
+      this.ctls.push(c);
+      this.map.addControl(c, 'top-right');
+    }
     if (ev.onReset) {
-      this.resetCtl = new ResetControl(ev.onReset, ev.resetLabel ?? (() => 'Show all of Switzerland'));
-      this.map.addControl(this.resetCtl, 'top-right');
+      const c = new ButtonControl('gb-reset', ev.onReset, ev.resetLabel ?? (() => 'Show all of Switzerland'), () => '<span class="gb-ch" aria-hidden="true">CH</span>');
+      this.ctls.push(c);
+      this.map.addControl(c, 'top-right');
     }
     this.map.addControl(
       new maplibregl.AttributionControl({ compact: true, customAttribution: 'Boundaries: BFS generalized boundaries' }),
@@ -184,6 +212,10 @@ export class UnitMap {
       paint: { 'fill-pattern': 'hatch', 'fill-opacity': ['case', ['boolean', ['feature-state', 'nd'], false], 1, 0], 'fill-antialias': false },
     });
     m.addLayer({ id: 'lakes', type: 'fill', source: 'lakes', paint: { 'fill-color': token('--water') } });
+    m.addLayer({
+      id: 'lakes-line', type: 'line', source: 'lakes',
+      paint: { 'line-color': token('--water-line'), 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 10, 1.1] },
+    });
     m.addLayer({ id: 'unit-line', type: 'line', source: 'units', paint: { 'line-color': token('--gem-line') } });
     m.addLayer({
       id: 'kt-line', type: 'line', source: 'kt',
@@ -317,9 +349,9 @@ export class UnitMap {
     if (this.isReady) this.flag('hov', i);
   }
 
-  /** Re-read the label of the reset button (language switch). */
+  /** Re-read labels and icons of the map buttons (language switch, fullscreen state). */
   relabel() {
-    this.resetCtl?.relabel();
+    for (const c of this.ctls) c.refresh();
   }
 
   /** Re-read the colour tokens. */
@@ -336,15 +368,15 @@ export class UnitMap {
     this.styleSymbols();
   }
 
-  /** Fit the view to one geometry (a place opened with 'show on map'). */
-  fitGeometry(g: Geometry, padding: maplibregl.PaddingOptions) {
-    const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const p of polys) for (const r of p) for (const [x, y] of r) {
-      x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
-    }
-    if (!Number.isFinite(x0)) return;
-    this.map.fitBounds([x0, y0, x1, y1], { padding, maxZoom: 10.5, animate: false });
+  /** Fit the view to one geometry (a place opened with 'show on map', a tapped ranking row). */
+  fitGeometry(g: Geometry, padding: maplibregl.PaddingOptions, opts: { animate?: boolean; maxZoom?: number } = {}) {
+    const b = geomBounds(g);
+    if (b) this.fitBox(b, padding, opts);
+  }
+
+  /** Fit a lon/lat box. */
+  fitBox(b: [number, number, number, number], padding: maplibregl.PaddingOptions, opts: { animate?: boolean; maxZoom?: number } = {}) {
+    this.map.fitBounds(b, { padding, maxZoom: opts.maxZoom ?? 10.5, animate: !!opts.animate, duration: opts.animate ? 500 : 0 });
   }
 
   /** Centre on a unit if it is outside the visible area. */
