@@ -43,8 +43,7 @@
 
 <div class="card" class:docked role="dialog" aria-label="{name} quick card">
   <div class="top">
-    <h2>{name}</h2>
-    <span class="sub">{sub}</span>
+    <div class="ttl"><h2>{name}</h2> <span class="sub">{sub}</span></div>
     <button type="button" class="close" aria-label="Close" onclick={onclose}>×</button>
   </div>
   <p class="mlabel">{meta.label_en}</p>
@@ -96,7 +95,9 @@
   .card.docked { box-shadow: none; border: 0; padding: 0; background: none; }
   .top { display: flex; align-items: baseline; gap: 8px; }
   h2 { margin: 0; font-size: 1.1rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
-  .sub { color: var(--muted); font-size: 0.78rem; flex: 1; min-width: 0; font-family: var(--font-mono); }
+  .ttl { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+  h2 { display: inline; }
+  .sub { color: var(--muted); font-size: 0.78rem; font-family: var(--font-mono); white-space: nowrap; }
   .close {
     border: 1px solid var(--ink); background: none; width: 26px; height: 26px; font-size: 1.05rem; line-height: 1;
     cursor: pointer; flex: none; align-self: start; color: var(--text);
