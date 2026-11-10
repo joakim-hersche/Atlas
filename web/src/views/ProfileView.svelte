@@ -45,7 +45,12 @@
       'p.reachPT': 'PT',
       'p.reachCar': 'Car',
       'p.reachHub': 'Hub',
-      'p.reachNote': 'Minutes. Public transport: own routing on the national timetable, weekday morning (service date {d}), wait at the start included. Car: ARE national passenger transport model (NPVM), average weekday.',
+      'p.reachSt': 'Station',
+      'p.reachDoor': 'Door',
+      'p.fromStation': 'Public transport from {st} station towards each hub, in minutes.',
+      'p.noStation': 'No stop in this municipality: station times are not available.',
+      'p.theHub': 'the hub',
+      'p.reachDate': 'Timetable of {d}.',
       'p.reachNone': '–',
       'p.reachNoneNote': '– = no travel time in the data for this municipality.',
       'p.reachHigher': 'Travel times are computed per municipality; open a municipality of this {one} for its times.',
@@ -109,7 +114,12 @@
       'p.reachPT': 'ÖV',
       'p.reachCar': 'Auto',
       'p.reachHub': 'Zentrum',
-      'p.reachNote': 'Minuten. ÖV: eigene Berechnung auf dem nationalen Fahrplan, Werktagmorgen (Fahrplantag {d}), Wartezeit am Start inbegriffen. Auto: Nationales Personenverkehrsmodell des ARE (NPVM), durchschnittlicher Werktag.',
+      'p.reachSt': 'Bahnhof',
+      'p.reachDoor': 'Tür',
+      'p.fromStation': 'ÖV ab Bahnhof {st} zu jedem Zentrum, in Minuten.',
+      'p.noStation': 'Keine Haltestelle in dieser Gemeinde: keine Bahnhofzeiten.',
+      'p.theHub': 'das Zentrum',
+      'p.reachDate': 'Fahrplan vom {d}.',
       'p.reachNone': '–',
       'p.reachNoneNote': '– = keine Reisezeit in den Daten für diese Gemeinde.',
       'p.reachHigher': 'Reisezeiten gibt es pro Gemeinde; Gemeinden dieser Einheit ({one}) öffnen.',
@@ -158,6 +168,7 @@
     hideAltNames, loadHistory, loadIdentity, loadNeighbours, loadReachTimes, loadRows, loadSearch, parseRef, refOf,
     type HistoryFile, type Identity, type NeighboursFile, type ReachTimes, type SearchIndex,
   } from '../lib/places';
+  import { methodText } from '../lib/pt';
   import { entryOf, loadPlaceLevel, similarPlaces, SIMILAR_METRICS, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
   import { app } from '../lib/state.svelte';
 
@@ -334,13 +345,25 @@
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
   });
   const similar = $derived(pl && idx !== null ? similarPlaces(pl, idx) : null);
+  // D31: station time towards the hub first (when the build has it), then door to door, then car
+  const hasSt = $derived(!!reach?.pt_station);
+  const reachK = $derived(reach && unit.level === 'gemeinde' ? reach.units.indexOf(unit.id) : -1);
   const reachRows = $derived.by(() => {
-    if (!reach || unit.level !== 'gemeinde') return null;
-    const k = reach.units.indexOf(unit.id);
-    if (k < 0) return null;
+    if (!reach || reachK < 0) return null;
+    const k = reachK;
     return reach.hubs
-      .map(([slug, hub]) => ({ hub, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null }))
-      .sort((a, b) => (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
+      .map(([slug, hub]) => ({ hub, st: reach!.pt_station?.[slug]?.[k] ?? null, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null }))
+      .sort((a, b) => (hasSt ? (a.st ?? 1e9) - (b.st ?? 1e9) : 0) || (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
+  });
+  const station = $derived(reach && reachK >= 0 ? (reach.main_station?.[reachK]?.[0] ?? null) : null);
+  const reachWhy = $derived.by(() => {
+    if (!reach?.reasons || reachK < 0) return [];
+    const out: { what: string; why: string }[] = [];
+    for (const [key, what] of [['pt_station', t('pt.st')], ['pt', t(hasSt ? 'pt.dd' : 'rc.pt')], ['car', t('common.car')]] as const) {
+      const why = reach.reasons[key]?.[String(reachK)];
+      if (why) out.push({ what, why });
+    }
+    return out;
   });
   const events = $derived(unit.level === 'gemeinde' && history ? (history.units[unit.id] ?? []) : null);
   const evType = (k: string) => (isDe() ? HISTORY_DE[k] : history?.types[k]) ?? k;
@@ -469,16 +492,28 @@
             {#if unit.level !== 'gemeinde'}
               <p class="foot">{t('p.reachHigher', { one: levelName(unit.level, false) })}</p>
             {:else if reachRows}
+              {#if hasSt}<p class="st">{station ? t('p.fromStation', { st: station }) : t('p.noStation')}</p>{/if}
               <table class="reach">
-                <thead><tr><th>{t('p.reachHub')}</th><th class="n">{t('p.reachPT')}</th><th class="n">{t('p.reachCar')}</th></tr></thead>
+                <thead><tr><th>{t('p.reachHub')}</th>
+                  {#if hasSt}<th class="n" title={t('pt.st')}>{t('p.reachSt')}</th><th class="n" title={t('pt.dd')}>{t('p.reachDoor')}</th>
+                  {:else}<th class="n">{t('p.reachPT')}</th>{/if}
+                  <th class="n">{t('p.reachCar')}</th></tr></thead>
                 <tbody>
                   {#each reachRows as r}
-                    <tr><td>{r.hub}</td><td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
+                    <tr><td>{r.hub}</td>
+                      {#if hasSt}<td class="n num strong">{r.st ?? t('p.reachNone')}</td>{/if}
+                      <td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
                   {/each}
                 </tbody>
               </table>
-              <p class="foot">{t('p.reachNote', { d: reach?.service_date ?? '' })}{reachRows.some((r) => r.pt === null || r.car === null) ? ' ' + t('p.reachNoneNote') : ''}
-                <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
+              <ul class="methods foot">
+                {#if hasSt}<li><strong>{t('p.reachSt')}:</strong> {methodText('ptst', t('p.theHub'), reach, true)}</li>{/if}
+                <li><strong>{hasSt ? t('p.reachDoor') : t('p.reachPT')}:</strong> {methodText('pt', t('p.theHub'), reach, hasSt)}</li>
+                <li><strong>{t('p.reachCar')}:</strong> {methodText('car', t('p.theHub'), reach, hasSt)}</li>
+                {#each reachWhy as w}<li>– {w.what}: {w.why}</li>{/each}
+                {#if !reachWhy.length && reachRows.some((r) => r.pt === null || r.car === null || (hasSt && r.st === null))}<li>{t('p.reachNoneNote')}</li>{/if}
+              </ul>
+              <p class="foot">{t('p.reachDate', { d: reach?.service_date ?? '' })} <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
             {:else}
               <p class="foot">…</p>
             {/if}
@@ -610,6 +645,9 @@
   .reach th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 0; border-bottom: 1px solid var(--rule); }
   .reach td { padding: 3px 0; border-bottom: 1px solid var(--border); }
   .reach .n { text-align: right; width: 56px; }
+  .reach .strong { font-weight: 700; }
+  .st { margin: 4px 0 0; font-size: 0.8rem; }
+  .methods { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 3px; }
   .chips { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; font-size: 0.84rem; }
   .sim, .hist { list-style: none; margin: 6px 0 0; padding: 0; font-size: 0.84rem; }
   .sim li { display: flex; gap: 6px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border); }

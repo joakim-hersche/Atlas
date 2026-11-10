@@ -197,9 +197,18 @@ export interface ReachTimes {
   units: string[];
   hubs: [string, string][];
   service_date: string;
+  /** door-to-door public transport (towards the hub once the D31 data is built; hub-outward before) */
   pt: Record<string, (number | null)[]>;
   car: Record<string, (number | null)[]>;
   periods: Record<string, string>;
+  /** D31 headline: timetable time from the municipality's main station to the hub station */
+  pt_station?: Record<string, (number | null)[]>;
+  /** per unit: [station name, UIC number] or null (no stop in the municipality) */
+  main_station?: ([string, number] | null)[];
+  /** one-line method texts per measure and language */
+  methods?: Record<string, Record<string, string>>;
+  /** per measure: unit index -> why there is no time */
+  reasons?: Record<string, Record<string, string>>;
 }
 
 function once<T>(path: string) {

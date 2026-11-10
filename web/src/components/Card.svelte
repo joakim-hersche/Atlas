@@ -10,6 +10,16 @@
     minutes: number | null;
     reason: string | null;
     within: boolean;
+    /** D31 headline: station time towards the hub ("Winterthur → Zürich HB 22 min, from Winterthur") */
+    station?: { minutes: number | null; from: string | null; reason: string | null; name: string };
+    /** D31 second line: door to door towards the hub */
+    door?: { minutes: number | null; reason: string | null };
+    /** measure used on the map ('ptst' | 'pt') */
+    active?: string;
+    /** one-line method of the active measure */
+    method?: string;
+    /** before the D31 data: public transport measured from the hub outwards */
+    outward?: boolean;
   }
   interface Extra {
     label: string;
@@ -81,13 +91,37 @@
       {#if sourceLink}<a class="tag src" href={sourceLink} title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</a>
       {:else}<span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>{/if}
     </span>
-    {#if reach}
+    {#if reach?.station}
+      {@const st = reach.station}
+      <div class="pt">
+        <div class="ptl">
+          <span class="rl">{st.name} → {reach.hub}</span>
+          {#if st.minutes !== null}
+            <span class="rv" class:within={reach.within && reach.active === 'ptst'}>{fmtNumber(st.minutes, 0)} min</span>
+            <span class="rl">{t('pt.byPt')}{st.from ? `, ${t('pt.from', { st: st.from })}` : ''}</span>
+          {:else}
+            <span class="rv muted">{st.reason ?? t('lg.noData')}</span>
+          {/if}
+        </div>
+        {#if reach.door}
+          <div class="ptl sub2">
+            <span class="rl">{t('pt.door')}</span>
+            {#if reach.door.minutes !== null}
+              <span class="rv" class:within={reach.within && reach.active === 'pt'}>{fmtNumber(reach.door.minutes, 0)} min</span>
+            {:else}
+              <span class="rv muted">{reach.door.reason ?? t('lg.noData')}</span>
+            {/if}
+          </div>
+        {/if}
+        {#if reach.method}<p class="pm">{reach.method}</p>{/if}
+      </div>
+    {:else if reach}
       <span class="reach">
-        <span class="rl"><span class="long">{reach.label} from {reach.hub}</span><span class="short">{reach.short}</span></span>
+        <span class="rl"><span class="long">{t(reach.outward ? 'card.fromHub' : 'card.toHub', { mode: reach.label, hub: reach.hub })}</span><span class="short">{reach.short}</span></span>
         {#if reach.minutes !== null}
           <span class="rv" class:within={reach.within}>{fmtNumber(reach.minutes, 0)} min</span>
         {:else}
-          <span class="rv muted">{reach.reason ?? 'no data'}</span>
+          <span class="rv muted">{reach.reason ?? t('lg.noData')}</span>
         {/if}
       </span>
     {/if}
@@ -134,6 +168,11 @@
   .rv { font-weight: 700; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .rv.within { color: var(--accent); }
   .short { display: none; }
+  .pt { flex-basis: 100%; font-size: 0.82rem; }
+  .ptl { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+  .ptl .rv { font-size: 1rem; }
+  .sub2 .rv { font-size: 0.86rem; }
+  .pm { margin: 2px 0 0; font-size: 0.7rem; color: var(--faint); line-height: 1.3; }
   @media (min-width: 900px) {
     .reach { flex-basis: 100%; justify-content: space-between; }
   }
@@ -153,7 +192,10 @@
     .long { display: none; }
     .short { display: inline; }
     .foot { margin-top: 5px; flex-wrap: nowrap; }
+    .foot:has(.pt) { flex-wrap: wrap; }
     .tags { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
     .reach { flex: none; font-size: 0.8rem; }
+    .pt { font-size: 0.78rem; }
+    .pm { display: none; }
   }
 </style>

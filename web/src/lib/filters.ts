@@ -171,7 +171,7 @@ export function combine(evals: FilterEval[], n: number): MatchResult {
 export function describeFilter(e: FilterEval, nameOf: (field: CatField, id: string) => string): string {
   const f = e.filter;
   if (f.kind === 'cat') return `${catLabel(f.field)}: ${f.values.map((v) => nameOf(f.field, v)).join(', ') || '–'}`;
-  if (f.kind === 'reach') return t('f.reachDesc', { max: f.max, hub: e.hubName ?? f.hub, mode: t(f.mode === 'pt' ? 'common.pt' : 'common.car') });
+  if (f.kind === 'reach') return t('f.reachDesc', { max: f.max, hub: e.hubName ?? f.hub, mode: t(f.mode === 'ptst' ? 'pt.stS' : f.mode === 'pt' ? 'common.pt' : 'common.car') });
   const m = e.col?.meta;
   const d = m?.decimals ?? 0;
   const lo = f.lo === null ? '' : fmtNumber(f.lo, d);

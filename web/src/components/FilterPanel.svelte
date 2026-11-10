@@ -24,8 +24,12 @@
     onset: (filters: Filter[]) => void;
     /** zoom the map to the matching units (shown while filters are active) */
     onzoom?: () => void;
+    /** D31 station times in this build: the reach condition offers station time and door to door */
+    station?: boolean;
+    /** method line of a reach measure */
+    method?: (mode: 'pt' | 'ptst' | 'car', hub: string) => string;
   }
-  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom }: Props = $props();
+  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom, station = false, method }: Props = $props();
 
   const filters = $derived(evals.map((e) => e.filter));
   function update(k: number, f: Filter) {
@@ -37,7 +41,7 @@
   function add(kind: string) {
     let f: Filter;
     if (kind === 'num') f = { kind: 'num', metric: defaultMetric, lo: null, hi: null };
-    else if (kind === 'reach') f = { kind: 'reach', hub: defaultHub, mode: 'pt', max: 30 };
+    else if (kind === 'reach') f = { kind: 'reach', hub: defaultHub, mode: station ? 'ptst' : 'pt', max: 30 };
     else f = { kind: 'cat', field: kind as CatField, values: [] };
     onset([...filters, f]);
   }
@@ -127,7 +131,12 @@
             {#each hubs as h}<option value={h.slug}>{h.name}</option>{/each}
           </select>
           <div class="seg" role="radiogroup" aria-label={t('common.mode')}>
-            <button type="button" role="radio" aria-checked={f.mode === 'pt'} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('common.pt')}</button>
+            {#if station}
+              <button type="button" role="radio" aria-checked={f.mode === 'ptst'} title={t('pt.st')} onclick={() => update(k, { ...f, mode: 'ptst' })}>{t('pt.stS')}</button>
+              <button type="button" role="radio" aria-checked={f.mode === 'pt'} title={t('pt.dd')} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('pt.ddS')}</button>
+            {:else}
+              <button type="button" role="radio" aria-checked={f.mode === 'pt' || f.mode === 'ptst'} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('common.pt')}</button>
+            {/if}
             <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
@@ -138,6 +147,7 @@
             {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noTimeEx')}{/if}
           </p>
         {/if}
+        {#if method}<p class="cf">{method(f.mode, e.hubName ?? f.hub)}</p>{/if}
       {/if}
       {#if e.note}<p class="cf note">{e.note}</p>{/if}
     </div>

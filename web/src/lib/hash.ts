@@ -16,7 +16,8 @@ export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 
 export type Filter =
   | { kind: 'num'; metric: string; lo: number | null; hi: number | null }
   | { kind: 'cat'; field: CatField; values: string[] }
-  | { kind: 'reach'; hub: string; mode: 'pt' | 'car'; max: number };
+  /** mode 'ptst' = PT station time towards the hub (D31), 'pt' = PT door to door, 'car' */
+  | { kind: 'reach'; hub: string; mode: 'pt' | 'ptst' | 'car'; max: number };
 
 export interface ViewState {
   route: string;
@@ -37,6 +38,8 @@ export interface ViewState {
   lang: Lang;
   /** compare view: the scatter shows only the units matching the filters (else matches are highlighted) */
   only: boolean;
+  /** public transport on the map: 'st' station time towards the hub (default), 'dd' door to door */
+  ptm: 'st' | 'dd';
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -50,7 +53,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -66,7 +69,7 @@ function parseFilter(raw: string): Filter | null {
   if (p[0] === 'c' && p.length === 3 && (CAT_FIELDS as string[]).includes(p[1])) {
     return { kind: 'cat', field: p[1] as CatField, values: p[2] ? p[2].split(',').filter(Boolean) : [] };
   }
-  if (p[0] === 'r' && p.length === 4 && (p[2] === 'pt' || p[2] === 'car')) {
+  if (p[0] === 'r' && p.length === 4 && (p[2] === 'pt' || p[2] === 'ptst' || p[2] === 'car')) {
     const max = numOrNull(p[3]);
     return { kind: 'reach', hub: p[1], mode: p[2], max: max === null ? 30 : Math.max(0, Math.min(T_MAX, max)) };
   }
@@ -122,6 +125,7 @@ export function parseHash(hash: string): ViewState {
     tab: get('tab') ?? null,
     lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
     only: get('only') === '1',
+    ptm: get('ptm') === 'dd' ? 'dd' : 'st',
     preset,
     params,
   };
@@ -171,6 +175,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.reach !== 'off') {
     add('reach', s.reach);
     add('t', String(Math.round(s.t)));
+    if (s.reach === 'pt' && s.ptm === 'dd') add('ptm', 'dd');
   }
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);

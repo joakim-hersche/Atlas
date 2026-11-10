@@ -28,6 +28,27 @@ export interface MetricMeta {
   headline: number | null;
   hidden: boolean;
   file: string;
+  // ---- web data contract, round 1 (docs/web_data_contract.md); all optional: older builds lack them
+  label_fr?: string | null;
+  unit_de?: string | null;
+  unit_fr?: string | null;
+  /** newest period with any value (latest = default period with near-complete coverage) */
+  latest_available?: string;
+  incomplete_periods?: Record<string, { n: number; of: number; level: string; label_en?: string; label_de?: string; label_fr?: string }> | null;
+  coverage_meta?: string;
+  coverage_detail?: { level: string; period: string; n: number; of: number; n_cantons: number } | null;
+  /** level -> reason (English) why the metric has no values there */
+  unavailable_levels?: Record<string, string> | null;
+  /** small-number rule (flag bits 1/2) */
+  reliability?: { count: string | null; base: string | null; min_count: number; min_base: number; rule_en?: string; rule_de?: string; rule_fr?: string } | null;
+  /** pooled multi-year rate of an annual metric */
+  pooled?: { of: string; years: number } | null;
+  /** NRW: cantons with a majority election per election year (flag bit 4) */
+  majority_cantons?: Record<string, string[]> | null;
+  /** per-vote metrics: path of the vote index */
+  vote_index?: string | null;
+  /** per-vote metrics: title of the latest vote */
+  latest_title?: Record<string, string> | null;
 }
 
 export interface Column {
@@ -35,6 +56,9 @@ export interface Column {
   v: (number | null)[];
   s?: Record<string, number>; // unit index -> status code (only for gaps)
   p?: Record<string, number>; // unit index -> precision code (when it differs per unit)
+  f?: Record<string, number>; // unit index -> flag bitmask (flag_bits of the file)
+  n?: Record<string, number>; // unit index -> index into notes (gap reason or provenance)
+  notes?: string[];
 }
 
 export interface ColumnFile {
@@ -43,6 +67,8 @@ export interface ColumnFile {
   metrics: Record<string, Column>;
   status_codes: Record<string, number>;
   precision_codes: Record<string, number>;
+  /** flag name -> bit (small_base 1, small_count 2, majority_election 4, published_value 8, provisional 16) */
+  flag_bits?: Record<string, number>;
 }
 
 export interface Source {
@@ -51,6 +77,10 @@ export interface Source {
   publisher: string;
   url: string;
   attribution: string;
+  /** ISO date of the newest download */
+  fetched?: string | null;
+  /** plain status wording (e.g. "held back: licence not yet confirmed") */
+  status_text?: string | null;
 }
 
 export type Segment = [number, number, number, number[]]; // t_start, t_end, kind, flat lon/lat
@@ -253,6 +283,8 @@ export interface UnitRow {
   stadt_land?: string;
   gemeindetyp?: string;
   n_gemeinden?: number;
+  /** official BFS names of typology units per language (de, fr, it, en); `name` is German */
+  names?: Record<string, string>;
 }
 let unitsP: Promise<UnitRow[]> | null = null;
 /** All units of all levels: names, label points, parent regions of each municipality. */
@@ -302,6 +334,8 @@ export function partialCantons(meta: MetricMeta): string[] | null {
 /** Reason a value is missing, from the status code, falling back to the coverage list.
  *  `file` is null for a column built from a series file (no status codes there). */
 export function gapReason(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta, canton: string): string {
+  const note = noteOf(col, i);
+  if (note) return note;
   if (!file) return statusText('no_data');
   const code = col.s?.[String(i)];
   if (code !== undefined) {
@@ -311,6 +345,23 @@ export function gapReason(file: ColumnFile | null, col: Column, i: number, meta:
   const cov = partialCantons(meta);
   if (cov && !cov.includes(canton)) return statusText('not_covered');
   return statusText('no_data');
+}
+
+/** The column's note for unit i (the real reason for a gap, or the provenance of a fallback value). */
+export function noteOf(col: Column, i: number): string | null {
+  const k = col.n?.[String(i)];
+  return k !== undefined && col.notes?.[k] ? col.notes[k] : null;
+}
+
+export const FLAG = { small_base: 1, small_count: 2, majority_election: 4, published_value: 8, provisional: 16 } as const;
+export type FlagName = keyof typeof FLAG;
+/** Flag bitmask of unit i (0 = none). Bits follow the file's flag_bits, else the contract defaults. */
+export function flagsOf(file: ColumnFile | null, col: Column, i: number): number {
+  return col.f?.[String(i)] ?? 0;
+}
+export function hasFlag(file: ColumnFile | null, flags: number, name: FlagName): boolean {
+  const bit = file?.flag_bits?.[name] ?? FLAG[name];
+  return (flags & bit) !== 0;
 }
 
 export function precisionOf(file: ColumnFile | null, col: Column, i: number, meta: MetricMeta): string {
@@ -336,8 +387,10 @@ const lvlLabel = (id: string) => levelWord(id);
 /** Why a metric cannot be shown at a level (one line), or null when it can. */
 export function unavailableReason(meta: MetricMeta, level: string): string | null {
   if (meta.levels.includes(level)) return null;
+  const real = meta.unavailable_levels?.[level];
   const where = meta.levels.filter((l) => l !== 'schweiz' && l !== 'gemeindetyp').map(lvlLabel);
   const list = where.length ? where.join(', ') : t('why.chOnly');
+  if (real) return t('why.real', { reason: real, list });
   if (meta.aggregation === 'not_aggregatable')
     return t('why.notAgg', { level: lvlLabel(level), list });
   return t('why.notPub', { level: lvlLabel(level), list });

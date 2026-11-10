@@ -18,8 +18,12 @@
     ont: (t: number) => void;
     onplay: () => void;
     children?: Snippet;
+    /** D31 station times in this build: offer station time / door to door for public transport */
+    station?: boolean;
+    ptm?: 'st' | 'dd';
+    onptm?: (m: 'st' | 'dd') => void;
   }
-  let { hubs, hub, mode, t, playing, carAvailable, onhub, onmode, ont, onplay, children }: Props = $props();
+  let { hubs, hub, mode, t, playing, carAvailable, onhub, onmode, ont, onplay, children, station = false, ptm = 'st', onptm }: Props = $props();
 </script>
 
 <div class="reach">
@@ -37,6 +41,15 @@
         title={carAvailable ? tr('common.car') : tr('rc.noCar')} onclick={() => onmode('car')}>{tr('common.car')}</button>
     </div>
   </div>
+  {#if mode === 'pt' && station}
+    <div class="row ptm">
+      <span class="caps">{tr('rc.measure')}</span>
+      <div class="seg" role="radiogroup" aria-label={tr('pt.measure')}>
+        <button type="button" role="radio" aria-checked={ptm === 'st'} onclick={() => onptm?.('st')}>{tr('pt.stS')}</button>
+        <button type="button" role="radio" aria-checked={ptm === 'dd'} onclick={() => onptm?.('dd')}>{tr('pt.ddS')}</button>
+      </div>
+    </div>
+  {/if}
   {#if mode !== 'off'}
     <div class="time">
       <button type="button" class="play" onclick={onplay} aria-label={playing ? tr('rc.pause') : tr('rc.play')}>
@@ -64,6 +77,8 @@
     background-repeat: no-repeat; background-position: right 7px center; background-size: 12px;
   }
   .seg { flex: none; }
+  .ptm { margin-top: 6px; justify-content: space-between; }
+  .ptm .seg button { padding: 2px 8px; font-size: 0.74rem; }
   .short { display: none; }
   .time { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
   .time input { flex: 1; accent-color: var(--ink); min-width: 0; height: 24px; }

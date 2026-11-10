@@ -27,7 +27,8 @@
   import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
   import { switchLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
-  import { refOf } from '../lib/places';
+  import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
+  import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachReason, type ReachKind } from '../lib/pt';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -168,7 +169,19 @@
   const reachOn = $derived(app.reach !== 'off');
   const reachMode = $derived(app.reach as 'pt' | 'car');
   const hub = $derived(hubs.find((h) => h.slug === app.hub) ?? hubs[0]);
-  const reachRef = $derived(reachOn && ld.level === 'gemeinde' ? cols.get(ld, `reach_${reachMode}_${hub.slug}`) : null);
+  /** D31: station times in this build; the PT measure on the map (station time or door to door) */
+  const station = $derived(hasStation(metas));
+  const reachKind = $derived<ReachKind>(reachMode === 'car' ? 'car' : ptKind(metas));
+  const reachRef = $derived(reachOn && ld.level === 'gemeinde' ? cols.get(ld, reachId(reachKind, hub.slug)) : null);
+  // both PT measures for the card and the ranking (station headline + door to door)
+  const stRef = $derived(reachOn && reachMode === 'pt' && station && ld.level === 'gemeinde' ? cols.get(ld, reachId('ptst', hub.slug)) : null);
+  const ddRef = $derived(reachOn && reachMode === 'pt' && station && ld.level === 'gemeinde' ? cols.get(ld, reachId('pt', hub.slug)) : null);
+  // reach_times.json: main station names, method texts and reasons for missing times (D31)
+  let rt = $state.raw<ReachTimes | null>(null);
+  $effect(() => {
+    if ((reachOn || app.filters.some((f) => f.kind === 'reach')) && !rt) loadReachTimes().then((x) => (rt = x)).catch(() => {});
+  });
+  const rtIndex = $derived(rt ? new Map(rt.units.map((u, k) => [u, k])) : undefined);
   const reachCol = $derived(reachRef?.col ?? null);
   const reachFile = $derived(reachOn ? reachNets[`${hub.slug}_${reachMode}`] : undefined);
   const reachedCount = $derived.by(() => {
@@ -445,10 +458,13 @@
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
     for (const e of evals) {
       if (e.status !== 'active' || !e.col) continue;
-      if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, t('mv.to', { mode: t(e.filter.mode === 'pt' ? 'common.pt' : 'common.car'), hub: e.hubName ?? '' }));
+      if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, t('mv.to', { mode: kindLabel(e.filter.mode, station, true), hub: e.hubName ?? '' }));
       else push(e.col.meta.id, 'Filter', e.col);
     }
-    if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, t('mv.to', { mode: t(reachMode === 'pt' ? 'common.pt' : 'common.car'), hub: hub.name }));
+    if (reachMode === 'pt' && station) {
+      if (stRef) push(stRef.meta.id, 'Reach', stRef, t('mv.to', { mode: kindLabel('ptst', true), hub: hub.name }));
+      if (ddRef) push(ddRef.meta.id, 'Reach', ddRef, t('mv.to', { mode: kindLabel('pt', true, true), hub: hub.name }));
+    } else if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, t('mv.to', { mode: kindLabel(reachKind, station), hub: hub.name }));
     return out;
   });
   const rankRows = $derived.by(() => {
@@ -467,12 +483,31 @@
     let reach = null;
     if (reachOn) {
       const label = reachMode === 'pt' ? t('rc.pt') : t('common.car');
-      if (reachRef && reachCol) {
+      const uid = ld.units[selIdx];
+      const miss = (ref: typeof reachRef, kind: ReachKind) => {
+        if (!ref) return ref === undefined ? t('status.loading') : t('mv.heldBack');
+        return reachReason(rt, kind, uid, rtIndex) ?? gapReason(ref.file, ref.col, selIdx, ref.meta, ld.canton[selIdx]);
+      };
+      if (reachMode === 'pt' && station && ld.level === 'gemeinde') {
+        // D31: station time towards the hub as the headline, door to door as the second line
+        const st = stRef?.col.v[selIdx] ?? null;
+        const dd = ddRef?.col.v[selIdx] ?? null;
+        const x = reachKind === 'ptst' ? st : dd;
+        reach = {
+          label, short: label, hub: hub.name, minutes: x, within: x !== null && x <= app.t, reason: null,
+          station: { minutes: st, from: mainStation(rt, uid, rtIndex), reason: st === null ? miss(stRef, 'ptst') : null, name: ld.name[selIdx] },
+          door: { minutes: dd, reason: dd === null ? miss(ddRef, 'pt') : null },
+          active: reachKind,
+          method: methodText(reachKind, hub.name, rt, true),
+        };
+      } else if (reachRef && reachCol) {
         const x = reachCol.v[selIdx];
         reach = {
           label, short: label, hub: hub.name, minutes: x,
-          reason: x === null ? gapReason(reachRef.file, reachCol, selIdx, reachRef.meta, ld.canton[selIdx]) : null,
+          reason: x === null ? miss(reachRef, reachKind) : null,
           within: x !== null && x <= app.t,
+          // before the D31 data, public transport is measured from the hub outwards
+          outward: reachMode === 'pt',
         };
       } else {
         const reason = ld.level !== 'gemeinde' ? t('mv.perGem') : reachRef === null ? t('mv.heldBack') : t('status.loading');
@@ -598,7 +633,8 @@
       </section>
 
       <section class="reach">
-        <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable}
+        <ReachControls {hubs} hub={hub.slug} mode={app.reach} t={app.t} playing={app.playing} {carAvailable} {station} ptm={app.ptm}
+          onptm={(m) => (app.ptm = m)}
           onhub={(slug) => { stop(); app.hub = slug; }} onmode={setReach} ont={(v) => { stop(); app.t = v; }} onplay={play}>
           {#if reachError}
             {t('mv.reachErr', { e: reachError })}
@@ -607,10 +643,10 @@
           {:else if reachFile === null}
             {t(reachMode === 'car' ? 'mv.noCarNet' : 'mv.noPtNet', { hub: hub.name })}
           {:else}
-            {#if reachedCount !== null}{t(filtered ? 'mv.reachedF' : 'mv.reached', { n: fmtNumber(reachedCount, 0), t: Math.round(app.t) })}
+            {#if reachedCount !== null}{t(filtered ? 'pt.reachedF' : 'pt.reached', { n: fmtNumber(reachedCount, 0), t: Math.round(app.t), what: kindLabel(reachKind, station, true) })}
             {:else if ld.level !== 'gemeinde'}{t('mv.reachLevel')}
             {:else}{t('mv.reachHeld')}{/if}
-            <span class="foot detail">{reachMode === 'pt' ? t('mv.ptNote', { dep: reachFile.departure ?? '', hub: hub.name }) : t('mv.carNote')}</span>
+            <span class="foot detail">{methodText(reachKind, hub.name, rt, station)} {t('pt.lines', { hub: hub.name })}</span>
           {/if}
         </ReachControls>
       </section>
@@ -620,6 +656,7 @@
       <section>
         <div class="caps lab">{t('tab.filters')}</div>
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
+          {station} method={(mode, h) => methodText(mode, h, rt, station)}
           options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaA.id) ? 'pop_total' : metaA.id}
           defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} onzoom={match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
       </section>
