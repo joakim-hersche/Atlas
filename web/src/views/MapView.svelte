@@ -849,7 +849,7 @@
       {#if !desktop && card && refA && colA}
         <div class="card-wrap">
           <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
-            source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
+            source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} compact onclose={() => (app.sel = null)}
             profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
         </div>
       {/if}
@@ -997,6 +997,7 @@
     /* zoom buttons hidden on phones (pinch); the reset button stays */
     :global(.single .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-btn)) { display: none; }
     .lvlbar { top: 8px; left: 8px; }
-    .card-wrap { top: 48px; }
+    /* phone: the card is a short strip at the bottom of the map (expands on tap, up to the level bar) */
+    .card-wrap { top: auto; bottom: 8px; right: 34px; max-height: calc(100% - 52px); display: flex; flex-direction: column; justify-content: flex-end; }
   }
 </style>

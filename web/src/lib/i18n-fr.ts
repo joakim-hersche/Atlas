@@ -114,6 +114,8 @@ export const FR: Dict = {
   'card.fromHub': '{mode} depuis {hub}',
   'card.toHub': '{mode} vers {hub}',
   'card.rank': 'Rang {r} sur {n}',
+  'card.expand': 'Afficher les détails',
+  'card.collapse': 'Moins de détails',
   'rk.tied': 'ex aequo avec {n}',
   'rk.tiedL': 'ex aequo avec {n} autres (rangs {a}–{b})',
   'cat.agglomeration': 'Agglomération',

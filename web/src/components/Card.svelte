@@ -49,9 +49,13 @@
     sourceLink?: string;
     /** D21: the value is that of a coarser area (its level) */
     regional?: string | null;
+    /** phone: a two-line strip (name, value, rank, travel time) that expands on tap, so the map stays visible */
+    compact?: boolean;
     onclose: () => void;
   }
-  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, compact = false, onclose }: Props = $props();
+  /** compact strip opened to the full card (kept while other places are selected) */
+  let expanded = $state(false);
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
@@ -63,12 +67,48 @@
   const flags = $derived(value !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);
   /** provenance note of a shown value (e.g. "published canton value; …") */
   const note = $derived(value !== null ? noteOf(col, index) : null);
+  /** strip: the travel time in one line ("Winterthur → Zürich HB 20 min") */
+  const reachLine = $derived.by(() => {
+    if (!reach) return null;
+    const st = reach.station;
+    const m = st ? st.minutes : reach.minutes;
+    const time = m !== null ? `${fmtNumber(m, 0)} min` : t('lg.noData');
+    return { text: `${reach.short} → ${reach.hub}`, time, within: m !== null && reach.within };
+  });
 </script>
 
-<div class="card" class:docked role="dialog" aria-label={name}>
+{#if compact && !expanded}
+  <div class="card strip" role="dialog" aria-label={name}>
+    <button type="button" class="sbtn" aria-expanded="false" title={t('card.expand')} onclick={() => (expanded = true)}>
+      <span class="l1"><strong>{name}</strong> <span class="sub">{sub}</span></span>
+      <span class="l2 num">
+        {#if value !== null}
+          <span class="sval">{fmtValue(value, meta)}</span>
+          <span class="yr">{fmtPeriod(col.period)}</span>
+          {#if rank}<span class="srank">· {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}</span>{/if}
+          {#if flags.length}<span class="smark">{flags.map((f) => f.split(' ')[0]).join('')}</span>{/if}
+        {:else}
+          <span class="nodata"><span class="hatch"></span>{t('p.noData')}</span>
+        {/if}
+      </span>
+      {#if reachLine}<span class="l3"><span class="rl">{reachLine.text}</span> <span class="rv" class:within={reachLine.within}>{reachLine.time}</span></span>{/if}
+      <svg class="chev" viewBox="0 0 20 12" width="16" height="10" aria-hidden="true"><path d="M2 10l8-8 8 8" /></svg>
+    </button>
+    <div class="sside">
+      <button type="button" class="close" aria-label={t('common.close')} onclick={onclose}>×</button>
+      {#if profile}<a class="prof" href={profile}>{profileLabel}&nbsp;→</a>{/if}
+    </div>
+  </div>
+{:else}
+<div class="card" class:docked class:compact role="dialog" aria-label={name}>
   <div class="top">
     <div class="ttl"><h2>{name}</h2> <span class="sub">{sub}</span></div>
     {#if profile}<a class="prof" href={profile}>{profileLabel}&nbsp;→</a>{/if}
+    {#if compact}
+      <button type="button" class="close" aria-expanded="true" aria-label={t('card.collapse')} title={t('card.collapse')} onclick={() => (expanded = false)}>
+        <svg class="chev" viewBox="0 0 20 12" width="12" height="8" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
+      </button>
+    {/if}
     <button type="button" class="close" aria-label={t('common.close')} onclick={onclose}>×</button>
   </div>
   <p class="mlabel">{ml(meta)}<Term k={glossKeyOf(meta)} /></p>
@@ -140,6 +180,7 @@
     {/if}
   </div>
 </div>
+{/if}
 
 <style>
   .card {
@@ -191,6 +232,25 @@
   @media (min-width: 900px) {
     .reach { flex-basis: 100%; justify-content: space-between; }
   }
+  /* phone strip: two or three short lines; the whole strip opens the full card */
+  .strip { display: flex; align-items: stretch; gap: 8px; padding: 6px 8px 6px 10px; }
+  .sbtn {
+    flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: baseline;
+    border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: var(--text);
+  }
+  .sbtn > span { grid-column: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sbtn .chev { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+  .l1 strong { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+  .l2 { font-size: 0.8rem; margin-top: 1px; }
+  .sval { font-weight: 700; font-size: 0.95rem; }
+  .srank { color: var(--text); }
+  .smark { margin-left: 4px; color: var(--accent); font-weight: 700; }
+  .l3 { font-size: 0.78rem; margin-top: 1px; }
+  .l3 .rv { font-size: 0.8rem; }
+  .sside { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 4px; }
+  .chev { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: square; }
+  .close .chev { display: block; margin: auto; }
+  .compact { max-height: 100%; min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; }
   @media (max-width: 899px) {
     .card { padding: 7px 10px 8px; }
     h2 { font-size: 0.98rem; }
