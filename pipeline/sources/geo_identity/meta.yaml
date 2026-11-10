@@ -1,5 +1,5 @@
 source_id: geo_identity
-title: Municipal area (swissBOUNDARIES3D) and elevation (BFS generalized boundaries G1)
+title: Municipal area and fine boundaries for zoomed-in maps (swissBOUNDARIES3D) and elevation (BFS generalized boundaries G1)
 publisher: swisstopo; BFS (Federal Statistical Office)
 url: https://data.geo.admin.ch/ch.swisstopo.swissboundaries3d/swissboundaries3d_2026-01/swissboundaries3d_2026-01_2056_5728.gpkg.zip
 url_elevation: https://data.geo.admin.ch/ch.bfs.historisierte-administrative_grenzen_g1/historisierte-administrative_grenzen_g1/historisierte-administrative_grenzen_g1_2056.gpkg
