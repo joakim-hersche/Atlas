@@ -88,7 +88,28 @@ def _area() -> pd.DataFrame:
                                      "land": "geo_area_land_ha"}, AREA_PERIODS, "native",
                f"swissBOUNDARIES3D {RELEASE}: territory of the canton outside any municipality (objektart "
                "Kantonsgebiet / Kommunanz)")
+    # review round 3 (X7): municipalities on a lake that is canton territory (Zürichsee in ZH, Thunersee,
+    # Bodensee ...) have no lake area of their own; their lake share 0 % gets a note saying why
+    shore = _lakeside_without_lake(path)
+    lake0 = (mun["metric_id"] == "geo_area_lake_ha") & mun["unit_id"].isin(shore)
+    mun.loc[lake0, "note"] = mun.loc[lake0, "unit_id"].map(shore)
     return pd.concat([mun, *nat, ps], ignore_index=True)
+
+
+def _lakeside_without_lake(path: str) -> dict[str, str]:
+    """BFS number -> note, for municipalities without lake area whose boundary touches (within 20 m) a lake
+    area that belongs to no municipality (objektart Kantonsgebiet with see_flaeche > 0)."""
+    h = pyogrio.read_dataframe(path, layer="tlm_hoheitsgebiet", columns=["icc", "objektart", "bfs_nummer", "name", "see_flaeche"])
+    lk = h[(h["icc"] == "CH") & (h["objektart"] != "Gemeindegebiet") & (h["see_flaeche"].fillna(0) > 0)]
+    g = h[(h["icc"] == "CH") & (h["objektart"] == "Gemeindegebiet") & (h["see_flaeche"].fillna(0) == 0)]
+    out = {}
+    for lake in lk.itertuples():
+        near = g[g.geometry.intersects(lake.geometry.buffer(20))]
+        name = str(lake.name).split(" (")[0]
+        for b in near["bfs_nummer"].astype(int).astype(str):
+            out[b] = (f"lake share 0 %: the municipality borders {name}, but that lake is canton territory, not divided "
+                      f"among the municipalities")
+    return out
 
 
 def _elevation() -> pd.DataFrame:

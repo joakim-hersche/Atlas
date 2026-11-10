@@ -314,7 +314,8 @@ def _moved_text(lvl: str, inc: pd.DataFrame, exc: pd.DataFrame) -> str:
 
 def run() -> str:
     meta = load_metrics().drop_duplicates("id")
-    for c in ("include_pseudo", "zero_when", "majority_election", "native_note", "prefer_native", "territory_weight"):
+    for c in ("include_pseudo", "zero_when", "majority_election", "native_note", "prefer_native", "territory_weight",
+              "note_from"):
         if c not in meta:
             meta[c] = None
     tmp = interim_path("duckdb_tmp", "x").parent
@@ -707,6 +708,14 @@ def run() -> str:
     if has_nrw:  # D37: single-seat cantons (majority election) in party shares, blocs and leaning
         print("D37 majority election:", elections.apply_majority(
             con, meta, [l for l in AGG_LEVELS if l not in ("bezirk", "kanton", "schweiz")], elections.majority_cantons()))
+    # note_from (metrics.yaml, derived): municipal rows carry the note of that base metric's row (X7: the lake
+    # share of a lakeside municipality whose lake is canton territory)
+    for r in meta.to_dict("records"):
+        if r["kind"] == "derived" and isinstance(r.get("note_from"), str):
+            con.execute(f"""UPDATE der SET note = concat_ws('; ', der.note, b.note) FROM base_all b
+                            WHERE der.metric_id = '{r["id"]}' AND b.metric_id = '{r["note_from"]}' AND b.level = 'gemeinde'
+                              AND der.level = 'gemeinde' AND der.unit_id = b.unit_id AND der.period = b.period
+                              AND b.note LIKE 'lake share%'""")
     # D16: canton / district values on today's boundaries for a period when the unit's territory was different
     # (Moutier BE -> JU 2026): say so, as the figure published at the time differs. Votes and elections have
     # their own note in the app.

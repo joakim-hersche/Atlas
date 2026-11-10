@@ -113,21 +113,21 @@ en_heat_renewable_share: {label_fr: "Part du chauffage renouvelable", unit_en: "
 
 # --- bfs_accessibility ---
 acc_population: {label_fr: "Habitants dans la grille d'accessibilité", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
-acc_dist_supermarket: {label_fr: "Distance au supermarché le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_grocery: {label_fr: "Distance au magasin d'alimentation le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_pharmacy: {label_fr: "Distance à la pharmacie la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_doctor: {label_fr: "Distance au cabinet médical le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_gp: {label_fr: "Distance au médecin généraliste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_dentist: {label_fr: "Distance au dentiste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_supermarket: {label_fr: "Distance routière moyenne des habitants au supermarché le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_grocery: {label_fr: "Distance routière moyenne des habitants au magasin d'alimentation le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_pharmacy: {label_fr: "Distance routière moyenne des habitants à la pharmacie la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_doctor: {label_fr: "Distance routière moyenne des habitants au cabinet médical le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_gp: {label_fr: "Distance routière moyenne des habitants au médecin généraliste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_dentist: {label_fr: "Distance routière moyenne des habitants au dentiste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_school_compulsory: {label_fr: "Distance à l'école obligatoire la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_school_upper_secondary: {label_fr: "Distance à l'école du degré secondaire II la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_pt_stop: {label_fr: "Distance à l'arrêt de transports publics le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_pt_stop_cat12: {label_fr: "Distance à l'arrêt de catégorie I–II le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_bank: {label_fr: "Distance à l'agence bancaire la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_restaurant: {label_fr: "Distance au restaurant ou café le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_public_admin: {label_fr: "Distance au bureau de l'administration publique le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_restaurant: {label_fr: "Distance routière moyenne des habitants au restaurant ou café le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_public_admin: {label_fr: "Distance routière moyenne des habitants au bureau de l'administration publique le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_dist_nursing_home: {label_fr: "Distance à l'EMS ou à la maison de retraite la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
-acc_dist_forest: {label_fr: "Distance à la lisière de forêt la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_forest: {label_fr: "Distance routière moyenne des habitants à la lisière de forêt la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
 acc_within500_supermarket: {label_fr: "Habitants à moins de 500 m d'un supermarché", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
 acc_within500_grocery: {label_fr: "Habitants à moins de 500 m d'un magasin d'alimentation", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
 acc_within500_pharmacy: {label_fr: "Habitants à moins de 500 m d'une pharmacie", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
@@ -790,7 +790,7 @@ geo_elev_median: {label_fr: "Altitude médiane", unit_en: "m a.s.l.", unit_de: "
 geo_elev_min: {label_fr: "Point le plus bas", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
 geo_elev_max: {label_fr: "Point culminant", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
 geo_pop_density: {label_fr: "Densité de population", unit_en: "persons per km² of land", unit_de: "Personen pro km² Landfläche", unit_fr: "personnes par km² de surface terrestre"}
-geo_lake_share: {label_fr: "Surface lacustre à l'intérieur de la limite communale (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+geo_lake_share: {label_fr: "Part lacustre de la surface", unit_en: "%", unit_de: "%", unit_fr: "%"}
 
 # --- kt_crime ---
 crime_stgb_offences: {label_fr: "Infractions au Code pénal*", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
