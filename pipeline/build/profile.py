@@ -394,13 +394,18 @@ REACH_METHODS = {
     "pt_station": {"en": "Timetable journey from the municipality's main station to the hub station, arriving "
                          "07:30–08:30 on a weekday (median, as in a journey planner: no waiting).",
                    "de": "Fahrplan-Reisezeit vom Hauptbahnhof der Gemeinde zum Zentrumsbahnhof, Ankunft "
-                         "07:30–08:30 an einem Werktag (Median, wie im Online-Fahrplan: ohne Wartezeit)."},
+                         "07:30–08:30 an einem Werktag (Median, wie im Online-Fahrplan: ohne Wartezeit).",
+                   "fr": "Temps de trajet selon l'horaire, de la gare principale de la commune à la gare du pôle, "
+                         "arrivée 07:30–08:30 un jour ouvrable (médiane, comme dans l'horaire en ligne : sans attente)."},
     "pt": {"en": "Door to door towards the hub, arriving 07:30–08:30: walk from where people live to the best stop "
                  "within 1.5 km, then the timetable journey (population-weighted median).",
            "de": "Tür zu Tür Richtung Zentrum, Ankunft 07:30–08:30: Fussweg vom Wohnort zur besten Haltestelle "
-                 "innerhalb 1,5 km, dann die Fahrplan-Reisezeit (bevölkerungsgewichteter Median)."},
+                 "innerhalb 1,5 km, dann die Fahrplan-Reisezeit (bevölkerungsgewichteter Median).",
+           "fr": "Porte à porte vers le pôle, arrivée 07:30–08:30 : marche du domicile au meilleur arrêt à moins "
+                 "de 1,5 km, puis le trajet selon l'horaire (médiane pondérée par la population)."},
     "car": {"en": "Car travel time, average weekday, from the national passenger transport model (ARE NPVM 2023).",
-            "de": "Autofahrzeit, durchschnittlicher Werktag, aus dem Nationalen Personenverkehrsmodell (ARE NPVM 2023)."},
+            "de": "Autofahrzeit, durchschnittlicher Werktag, aus dem Nationalen Personenverkehrsmodell (ARE NPVM 2023).",
+            "fr": "Temps de trajet en voiture, jour ouvrable moyen, selon le modèle national du trafic voyageurs (ARE MNTP 2023)."},
 }
 
 
@@ -419,7 +424,8 @@ def build_reach_times() -> dict:
            "service_date": idx.get("service_date"), "pt": {}, "pt_station": {}, "car": {}, "periods": {},
            "methods": REACH_METHODS, "reasons": {"pt": {}, "pt_station": {}, "car": {}}, "late_from": {},
            "late_text": {"en": "No arrival by 08:30; median over the hour from the earliest possible arrival ({t}).",
-                         "de": "Keine Ankunft bis 08:30; Median über die Stunde ab der frühestmöglichen Ankunft ({t})."}}
+                         "de": "Keine Ankunft bis 08:30; Median über die Stunde ab der frühestmöglichen Ankunft ({t}).",
+                         "fr": "Pas d'arrivée avant 08:30 ; médiane sur l'heure suivant la première arrivée possible ({t})."}}
     for h in idx["hubs"]:
         for mode, prefix in (("pt", "reach_pt_"), ("pt_station", "reach_ptst_"), ("car", "reach_car_")):
             m = src["metrics"].get(f"{prefix}{h['slug']}")

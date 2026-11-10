@@ -69,6 +69,17 @@ transport service in the 2026 timetable".
 | Bern → Zürich HB | 57 (56–60) | 76 | 56–60 |
 | Oberweningen → Zürich HB | 36 (36–36) | 39 | sensible (was 419 min before the best-stop fix) |
 
+**Long trips checked against the feed (2026-11-10).** The median is taken over arrival *minutes*, so
+a journey counts as often as the deadlines it serves (what a traveller who must be at the hub by a
+random time between 07:30 and 08:30 experiences). Example Genève Cornavin → Zürich HB on the service
+day: the feed has exactly one direct train arriving 06:00–09:00 (05:33 → 08:28, 175 min; slower than
+the usual ~2 h 40 because of the works on that date, see Limitations); arrivals 07:56–08:27 need the
+04:46 departure with a change (07:56, 190 min), so the median is 190 and P10 175. Lausanne → Zürich
+138 (journeys of 164, 142, 138 and 131 min arrive in the window), Lugano → Zürich 115, St. Gallen →
+Zürich 60, Chur → Zürich 75, Genève → Bern 113, St. Gallen → Bern 141, Lugano → Bern 206 (only one
+journey, 04:32 → 07:58, arrives by 08:30). The main station of Genève is Cornavin (8501008); no
+footpath or change-time rule adds time on these trips: the values are the feed's own journeys.
+
 **Agreement with the NPVM PT matrix** (column = zone → hub zone, population-weighted like the car
 values; 20 hubs, 40,473 pairs with a value in both, hub zones excluded):
 
