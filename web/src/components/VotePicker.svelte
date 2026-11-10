@@ -36,9 +36,10 @@
     if (open) {
       q = '';
       active = Math.max(0, list.findIndex((v) => v.id === value));
-      queueMicrotask(() => {
-        input?.focus();
-        root.querySelector('.opt[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+      // after the list has rendered: reopen where the current vote is
+      requestAnimationFrame(() => {
+        root.querySelector('.opt[aria-selected="true"]')?.scrollIntoView({ block: 'center' });
+        input?.focus({ preventScroll: true });
       });
     }
   }

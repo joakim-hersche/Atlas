@@ -59,7 +59,11 @@
     if (open) {
       q = '';
       active = Math.max(0, flat.findIndex((m) => m.id === value));
-      queueMicrotask(() => input?.focus());
+      // reopen where the current choice is, instead of at the top of the list
+      requestAnimationFrame(() => {
+        root.querySelector('.opt[aria-selected="true"]')?.scrollIntoView({ block: 'center' });
+        input?.focus({ preventScroll: true });
+      });
     }
   }
   function pick(id: string) {
