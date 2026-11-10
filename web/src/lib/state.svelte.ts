@@ -33,6 +33,8 @@ export class AppState {
   unstable = $state<'show' | 'light' | 'hide'>('show');
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
+  /** level the user picked although the shaded metric does not exist there: asked before swapping */
+  levelAsk = $state<{ level: string; metric: string; fallback: string | null } | null>(null);
   levelNote = $state<{ text: string; level: string; metric: string; prev: { level: string; metric: string; metricB: string | null; size: string | null } } | null>(null);
   /** counts state loads from the URL (initial and every hashchange), so the shell can check the new state */
   loads = $state(0);

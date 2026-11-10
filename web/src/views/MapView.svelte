@@ -31,7 +31,7 @@
   import { ReachOverlay } from '../lib/reach';
   import { app } from '../lib/state.svelte';
   import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
-  import { switchLevel } from '../lib/levels';
+  import { levelsOf, requestLevel } from '../lib/levels';
   import { profileHref, sourceHref } from '../lib/nav';
   import { loadReachTimes, refOf, type ReachTimes } from '../lib/places';
   import { hasStation, kindLabel, mainStation, methodText, ptKind, reachId, reachNote, reachReason, type ReachKind } from '../lib/pt';
@@ -843,8 +843,8 @@
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
       <div class="lvlbar">
-        <LevelSwitch value={ld.level} onchange={(l) => { stop(); switchLevel(base, l); }} />
-        <LevelNote />
+        <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
+        <LevelNote {base} />
       </div>
       {#if !desktop && card && refA && colA}
         <div class="card-wrap">

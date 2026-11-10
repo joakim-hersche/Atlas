@@ -1,6 +1,7 @@
-// Switching the spatial level (brief 4.3). When the shaded metric (or the size / second metric) does
-// not exist at the new level, the map falls back to the nearest available headline metric of the same
-// theme (else population) and says so in a one-line note, instead of showing an empty map.
+// Switching the spatial level (brief 4.3). The user's metric wins: when the shaded metric does not
+// exist at the new level, nothing changes and a one-line question offers to show that level with the
+// nearest available headline metric of the same theme (else population), or to stay. A size / second
+// metric that does not exist there is replaced with a note and "switch back".
 import { availableAt, type Base, type MetricMeta } from './data';
 import { levelName, ml, t, levelWord } from './i18n.svelte';
 import { app } from './state.svelte';
@@ -20,6 +21,38 @@ export function fallbackMetric(base: Base, cur: MetricMeta | undefined, level: s
   const pop = base.metas.get('pop_total');
   if (pop && pop.levels.includes(level)) return pop;
   return heads[0] ?? null;
+}
+
+const MAP_LEVELS = ['gemeinde', 'bezirk', 'kanton', 'grossregion', 'sprachgebiet', 'agglomeration', 'arbeitsmarktgebiet', 'stadt_land'];
+
+/** Map levels where the metric exists (for the level switch and the question text). */
+export function levelsOf(m: MetricMeta | undefined): string[] {
+  return m ? MAP_LEVELS.filter((l) => availableAt(m, l)) : MAP_LEVELS;
+}
+
+/** Level picked in the level switch: switch, or ask first when the shaded metric does not exist there. */
+export function requestLevel(base: Base, level: string): void {
+  app.levelAsk = null;
+  if (level === app.level) return;
+  const m = base.metas.get(app.metric);
+  if (m && !availableAt(m, level)) {
+    app.levelAsk = { level, metric: app.metric, fallback: fallbackMetric(base, m, level)?.id ?? null };
+    return;
+  }
+  switchLevel(base, level);
+}
+
+/** The pending question, while the metric it is about is still shaded. */
+export function currentAsk(): { level: string; metric: string; fallback: string | null } | null {
+  const a = app.levelAsk;
+  return a && a.metric === app.metric ? a : null;
+}
+
+/** Answer "show that level anyway": swap to the fallback metric and switch (with "switch back"). */
+export function confirmAsk(base: Base): void {
+  const a = app.levelAsk;
+  app.levelAsk = null;
+  if (a) switchLevel(base, a.level);
 }
 
 export function switchLevel(base: Base, level: string): void {

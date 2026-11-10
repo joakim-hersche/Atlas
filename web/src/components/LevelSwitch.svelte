@@ -7,8 +7,13 @@
   interface Props {
     value: string;
     onchange: (level: string) => void;
+    /** levels where the current metric exists; others are dimmed (still clickable: the app asks first) */
+    avail?: string[];
+    /** tooltip for a dimmed level */
+    naTitle?: (level: string) => string;
   }
-  let { value, onchange }: Props = $props();
+  let { value, onchange, avail, naTitle }: Props = $props();
+  const na = (id: string) => !!avail && !avail.includes(id);
 
   const MAIN = ['gemeinde', 'bezirk', 'kanton'];
   const more = LEVELS.filter((l) => l.geometry && !MAIN.includes(l.id));
@@ -47,7 +52,8 @@
 <div class="lvl" bind:this={root}>
   <div class="seg" role="radiogroup" aria-label={t('level.label')}>
     {#each MAIN as id}
-      <button type="button" role="radio" aria-checked={value === id} onclick={() => pick(id)}>{levelName(id)}</button>
+      <button type="button" role="radio" aria-checked={value === id} class:na={na(id)} title={na(id) && naTitle ? naTitle(id) : undefined}
+        onclick={() => pick(id)}>{levelName(id)}</button>
     {/each}
     <button type="button" class="more" aria-haspopup="menu" aria-expanded={open} aria-pressed={inMore} onclick={toggle}
       title={inMore ? levelName(value) : t('level.more')}>
@@ -58,7 +64,8 @@
   {#if open}
     <div class="menu" role="menu" bind:this={menu}>
       {#each more as l}
-        <button type="button" role="menuitemradio" aria-checked={value === l.id} onclick={() => pick(l.id)}>{levelName(l.id)}</button>
+        <button type="button" role="menuitemradio" aria-checked={value === l.id} class:na={na(l.id)}
+          title={na(l.id) && naTitle ? naTitle(l.id) : undefined} onclick={() => pick(l.id)}>{levelName(l.id)}</button>
       {/each}
       <button type="button" role="menuitemradio" aria-checked="false" disabled>{t('level.types')}</button>
     </div>
@@ -84,6 +91,8 @@
   }
   .menu button:hover:not(:disabled), .menu button:focus-visible { background: var(--panel-2); }
   .menu button[aria-checked='true'] { font-weight: 700; box-shadow: inset 3px 0 0 var(--ink); }
+  /* the shaded metric does not exist at this level */
+  .seg button.na[aria-checked='false'], .menu button.na { color: var(--faint); text-decoration: line-through; text-decoration-thickness: 1px; }
   .menu button:disabled { color: var(--faint); cursor: default; font-style: italic; }
   @media (max-width: 899px) {
     .seg button { padding: 6px 8px; font-size: 0.76rem; }

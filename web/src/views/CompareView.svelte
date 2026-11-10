@@ -15,8 +15,8 @@
   import { bareAttribution } from '../lib/export';
   import { CH_BOUNDS, UnitMap, syncCameras } from '../lib/mapview';
   import { app } from '../lib/state.svelte';
-  import { levelName, t, levelWord } from '../lib/i18n.svelte';
-  import { switchLevel } from '../lib/levels';
+  import { levelName, ml, t, levelWord } from '../lib/i18n.svelte';
+  import { levelsOf, requestLevel } from '../lib/levels';
   import { divRamp, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
@@ -241,7 +241,7 @@
 </script>
 
 <nav class="presets" aria-label={t('cv.examplesL')}>
-  <LevelSwitch value={ld.level} onchange={(l) => switchLevel(base, l)} />
+  <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => requestLevel(base, l)} />
   <span class="caps">{t('pl.try')}</span>
   {#each presets as p}
     <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{t(p.label)}</button>
@@ -251,7 +251,7 @@
   {/if}
 </nav>
 
-<LevelNote variant="bar" />
+<LevelNote variant="bar" {base} />
 {#if app.filters.length}
   <div class="fbar" role="status">
     <span class="caps">{t('tab.filters')}</span>
