@@ -70,7 +70,11 @@
   }
   let { base }: Props = $props();
 
-  type FullSource = Source & { license?: string; vintage?: string; years?: string; shipped?: boolean; status_note?: string | null };
+  /** sources.json `series_breaks`: changes of method or definition at the publisher (pipeline/series_breaks.yaml) */
+  type SourceBreak = { period: string; label_en: string; label_de?: string | null; label_fr?: string | null; metrics: string[]; evidence?: string[] | null };
+  type FullSource = Source & { license?: string; vintage?: string; years?: string; shipped?: boolean; status_note?: string | null;
+    series_breaks?: SourceBreak[] | null };
+  const breakText = (b: SourceBreak) => (app.lang === 'de' ? b.label_de : app.lang === 'fr' ? b.label_fr : b.label_en) || b.label_en;
   const all = $derived([...base.sources.values()] as FullSource[]);
   const byMetric = $derived.by(() => {
     const m = new Map<string, MetricMeta[]>();
@@ -116,6 +120,15 @@
       {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest)}</dd>{/if}
       {#if s.fetched}<dt>{t('s.fetched')}</dt><dd class="num">{s.fetched}</dd>{/if}
       {#if s.status_note}<dt>{t('s.note')}</dt><dd>{s.status_note}</dd>{/if}
+      {#if s.series_breaks?.length && s.shipped !== false}
+        <dt>{t('s.breaks')}</dt>
+        <dd><ul class="brks">
+          {#each s.series_breaks as b (b.period + b.label_en)}
+            <li><span class="num">{fmtPeriod(b.period)}</span>: {breakText(b)}
+              <span class="mp">({t('s.breakN', { n: b.metrics.length })}{#each b.evidence ?? [] as u, i (u)}{' · '}<a href={u} target="_blank" rel="noopener noreferrer">{t('s.link')}{(b.evidence?.length ?? 0) > 1 ? ` ${i + 1}` : ''} ↗</a>{/each})</span></li>
+          {/each}
+        </ul></dd>
+      {/if}
     </dl>
     <p class="row">
       {#if s.url}<a href={s.url} target="_blank" rel="noopener noreferrer">{t('s.link')} ↗</a>{/if}
@@ -187,6 +200,8 @@
   .ms { columns: 2; column-gap: 24px; margin: 6px 0 0; padding-left: 16px; }
   .ms li { break-inside: avoid; }
   .mp { color: var(--faint); font-size: var(--fs-meta); }
+  .brks { margin: 0; padding-left: 16px; }
+  .brks li { margin: 2px 0; }
   @media (max-width: 899px) {
     .wrap { padding: 12px 16px calc(32px + env(safe-area-inset-bottom)); }
     h1 { font-size: var(--fs-stat); }

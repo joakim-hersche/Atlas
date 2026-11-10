@@ -1,9 +1,11 @@
 <script lang="ts">
   // Under the year slider: values or change between two years (absolute / percent), class limits fixed
   // across years, and the small-multiples button. State lives in the URL hash through the parent.
+  // A change across a break in the series (`marks`, kind 'break') is shown with a warning naming the break.
+  import { breaksBetween } from '../lib/breaks';
   import { t } from '../lib/i18n.svelte';
   import '../lib/i18n-mapx';
-  import type { ChangeMode } from '../lib/yearcmp.svelte';
+  import type { ChangeMode, PeriodMark } from '../lib/yearcmp.svelte';
 
   interface Props {
     /** all periods of the metric at this level, oldest first */
@@ -19,8 +21,13 @@
     onmode: (m: ChangeMode) => void;
     onfixed: (v: boolean) => void;
     onmulti: () => void;
+    /** periods not comparable with their neighbours (year slider marks) */
+    marks?: Map<string, PeriodMark>;
   }
-  let { periods, to, from, mode, fixed, problem, onfrom, onmode, onfixed, onmulti }: Props = $props();
+  let { periods, to, from, mode, fixed, problem, onfrom, onmode, onfixed, onmulti, marks }: Props = $props();
+  const isBreak = (p: string) => marks?.get(p)?.kind === 'break';
+  /** breaks between the two years: the change mixes values from both sides */
+  const crossed = $derived(breaksBetween(periods, from, to, isBreak));
 
   const earlier = $derived(periods.slice(0, Math.max(0, periods.indexOf(to))));
   const changing = $derived(from !== null);
@@ -42,7 +49,7 @@
       <label class="since"><span class="caps">{t('yc.from')}</span>
         <select value={from} onchange={(e) => onfrom(e.currentTarget.value)} aria-label={t('yc.from')}>
           {#if from && !earlier.includes(from)}<option value={from}>{from}</option>{/if}
-          {#each earlier as p}<option value={p}>{p}</option>{/each}
+          {#each earlier as p}<option value={p}>{p}{isBreak(p) ? ` · ${t('yc.breakShort')}` : ''}</option>{/each}
         </select>
       </label>
       <span class="foot">→ <span class="num">{to}</span></span>
@@ -52,6 +59,12 @@
       </div>
     </div>
     <p class="foot">{problem ?? t('yc.note', { from: from ?? '', to })}{#if !problem && mode === 'pct'}{' '}{t('yc.notePct')}{/if}</p>
+    {#if !problem && crossed.length}
+      <div class="brk" role="note">
+        <p><span class="mi" aria-hidden="true"></span>{t('yc.straddle', { from: from ?? '', to, years: crossed.join(', ') })}</p>
+        <ul>{#each crossed as p (p)}<li>{t('yc.breakAt', { p, text: marks?.get(p)?.text ?? t('yc.break') })}</li>{/each}</ul>
+      </div>
+    {/if}
   {/if}
   <label class="fx" class:off={changing} title={changing ? t('ux.fixedOffWhy') : t('yc.fixedT')}>
     <input type="checkbox" checked={fixed && !changing} disabled={changing} onchange={(e) => onfixed(e.currentTarget.checked)} />
@@ -72,4 +85,9 @@
   .fx input { accent-color: var(--ink); margin: 0; width: 15px; height: 15px; }
   .fx.off { opacity: 0.5; cursor: default; }
   p.foot { margin: 0; }
+  .brk { border-left: 3px solid var(--ink); padding: 4px 0 4px 8px; font-size: var(--fs-meta); }
+  .brk p { margin: 0; display: flex; gap: 6px; align-items: baseline; font-weight: 600; }
+  .brk ul { margin: 3px 0 0; padding-left: 16px; }
+  .brk li { margin: 1px 0; }
+  .mi { flex: none; width: 0; height: 0; border: 4px solid transparent; border-bottom: 7px solid var(--ink); border-top: 0; }
 </style>

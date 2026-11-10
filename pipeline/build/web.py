@@ -6,7 +6,7 @@ data/out/web/
                              coverage, source, levels available, periods
   latest/<level>.json        columnar latest-period values of all metrics for one level
   series/<metric_id>.json    all periods for municipalities, districts and cantons (loaded on demand)
-  sources.json               per source: title, publisher, url, license, attribution, vintage
+  sources.json               per source: title, publisher, url, license, attribution, vintage, series breaks
 
 Values are rounded to the metric's decimals (+1 for shares). Gaps are explicit (decision D21):
 value null plus a status code from STATUS_CODES, and the reason in the column's notes.
@@ -25,6 +25,7 @@ import pandas as pd
 import yaml
 
 from pipeline.backbone.levels import membership
+from pipeline.build import series_breaks as sbreaks
 from pipeline.common import REFERENCE_DATE, interim_path, out_path
 from pipeline.harmonize.schema import SOURCES_DIR, load_metrics
 
@@ -515,6 +516,10 @@ def run() -> dict:
     for f in sorted(SOURCES_DIR.glob("*/meta.yaml")):
         m = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
         srcs[f.parent.name] = m
+    brk_cfg = sbreaks.load()
+    brk_err = sbreaks.validate(brk_cfg, set(meta.index), set(srcs))
+    if brk_err:
+        raise ValueError("pipeline/series_breaks.yaml: " + "; ".join(brk_err))
     include_all = os.environ.get("GB_INCLUDE_UNVERIFIED") == "1"
     review = yaml.safe_load((SOURCES_DIR.parent / "licence_review.yaml").read_text(encoding="utf-8")) or {}
     cleared = {sid: license_cleared(m) for sid, m in srcs.items()}
@@ -690,6 +695,17 @@ def run() -> dict:
     per = con.execute("""SELECT metric_id, list(DISTINCT period) AS periods,
                                 list(DISTINCT level) FILTER (WHERE status = 'ok') AS levels
                          FROM m GROUP BY 1""").df()
+    # series breaks (pipeline/series_breaks.yaml): placed on each metric's periods, plus the publisher
+    # breaks the connectors note on the values (from_note rules)
+    note_rows = []
+    for e in brk_cfg.get("breaks") or []:
+        if e.get("from_note"):
+            note_rows += con.execute("""SELECT metric_id, period, any_value(note) FROM m
+                                         WHERE note IS NOT NULL AND regexp_matches(note, ?) GROUP BY 1, 2""",
+                                     [e["from_note"]["regex"]]).fetchall()
+    brk_of, brk_rows = sbreaks.resolve(brk_cfg, meta, {r.metric_id: sorted(r.periods, key=_period_key)
+                                                       for r in per.itertuples()}, note_rows)
+    print(f"series breaks: {sum(len(v) for v in brk_of.values())} markers on {len(brk_of)} metrics")
     hl = yaml.safe_load((SOURCES_DIR.parent / "headline_metrics.yaml").read_text(encoding="utf-8")) or {}
     headline_rank = {m: i for i, m in enumerate(x for v in (hl.get("headline") or {}).values() for x in v)}
     hidden = set(hl.get("hidden") or [])
@@ -743,6 +759,9 @@ def run() -> dict:
             "n_periods": len(periods), "periods": periods if len(periods) <= 60 else periods[-60:],
             "latest": dflt, "latest_available": newest,
             "incomplete_periods": incomplete.get((r.metric_id, prim)) if prim else None,
+            # period -> {label_en, label_de, label_fr}: change of method or definition from this period on
+            "series_breaks": {p: v for p, v in sorted((brk_of.get(r.metric_id) or {}).items(), key=lambda x: _period_key(x[0]))
+                              if p in periods[-60:][1:]} or None,
             "unavailable_levels": unav or None,
             "reliability": reliability.get(r.metric_id),
             "special": special.get(r.metric_id),
@@ -772,6 +791,15 @@ def run() -> dict:
     written["featured"] = _dump({"note": "featured story maps (D38, pipeline/curation.yaml)",
                                  "maps": cur_mod.featured(cur_cfg, catalog)}, "featured.json")
     written["metrics"] = _dump(catalog, "metrics.json")
+    # series breaks per source for the Sources page (only metrics that ship and are offered in the pickers)
+    shipped_ids = {e["id"] for e in catalog if e.get("series_breaks") and not e.get("hidden")}
+    for row in src_rows:
+        rows = [{k: b.get(k) for k in ("period", "label_en", "label_de", "label_fr", "cantons", "evidence")}
+                | {"metrics": [m for m in b["metrics"] if m in shipped_ids]}
+                for b in brk_rows if b["source"] == row["source_id"]]
+        rows = [b for b in rows if b["metrics"]]
+        row["series_breaks"] = sorted(rows, key=lambda b: _period_key(b["period"])) or None
+    written["sources"] = _dump(src_rows, "sources.json")
     written["glossary"] = build_glossary()
 
     # default period per metric and level (columnar)

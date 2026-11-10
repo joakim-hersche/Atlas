@@ -2,6 +2,7 @@
 // (pooled values), and markers for periods that are not comparable with their neighbours.
 // Everything is computed from the series files that already ship; nothing is estimated.
 import { SvelteMap } from 'svelte/reactivity';
+import { breakNotes, breaksBetween, seriesBreaksOf } from './breaks';
 import { loadSeries, type Column, type MetricMeta } from './data';
 import { ml, t } from './i18n.svelte';
 import { app } from './state.svelte';
@@ -104,17 +105,17 @@ export function periodMarks(meta: MetricMeta): Map<string, PeriodMark> {
     const label = lang === 'de' ? ip.label_de : lang === 'fr' ? ip.label_fr : null;
     out.set(p, { kind: 'incomplete', text: label ?? ip.label_en ?? t('yc.incomplete') });
   }
-  const sb = (meta as { series_breaks?: Record<string, { label_en?: string; label_de?: string; label_fr?: string } | string> | string[] | null }).series_breaks;
-  if (sb) {
-    const lang = app.lang;
-    if (Array.isArray(sb)) for (const p of sb) out.set(p, { kind: 'break', text: t('yc.break') });
-    else
-      for (const [p, v] of Object.entries(sb)) {
-        const txt = typeof v === 'string' ? v : ((lang === 'de' ? v.label_de : lang === 'fr' ? v.label_fr : v.label_en) ?? v.label_en);
-        out.set(p, { kind: 'break', text: txt || t('yc.break') });
-      }
+  for (const [p, txt] of breakNotes(seriesBreaksOf(meta), app.lang)) {
+    const prev = out.get(p);
+    // a break and an incomplete round on the same period: the break is what matters for comparisons
+    out.set(p, { kind: 'break', text: prev ? `${txt ?? t('yc.break')} · ${prev.text}` : (txt ?? t('yc.break')) });
   }
   return out;
+}
+
+/** Breaks in the series that a comparison from..to straddles (periods on the new basis, oldest first). */
+export function straddled(meta: MetricMeta, periods: string[], from: string | null, to: string | null, marks = periodMarks(meta)): { p: string; text: string }[] {
+  return breaksBetween(periods, from, to, (p) => marks.get(p)?.kind === 'break').map((p) => ({ p, text: marks.get(p)!.text }));
 }
 
 // ---------------------------------------------------------------- small multiples

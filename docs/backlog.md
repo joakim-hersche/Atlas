@@ -11,7 +11,7 @@ Feature requests from persona review round 1 (`docs/review_round1.md`) that are 
 - [x] **Year comparisons** (done; URL keys `yc`, `ym`, `fx`, `smy`)
   - [x] Change between two years as a metric (economist): absolute and percent, diverging around 0.
   - [x] Fixed class breaks across years (statistician): `fx=1`, limits from all complete years pooled.
-  - [ ] Series-break markers: shown for incomplete rounds (shipped). Real method breaks (census to STATPOP, GWS heating, party mergers) need a `series_breaks` field in `metrics.json`; the frontend reads it as soon as a build ships it.
+  - [x] Series-break markers: incomplete rounds and real method breaks (`series_breaks` in `metrics.json` from `pipeline/series_breaks.yaml`: ESPOP→STATPOP 2011, vehicle registers 2018/2022/2025, new-construction cubes 2013, rents 2015/2018, social assistance 2025, education census→STATPOP+ 2017, party mergers, cantonal HRM2 switches, unemployment 2011/2012/2018, Energie Reporter steps) on the year slider, in profile sparklines and as a warning on change maps across a break. Census→STATPOP and GWS heating have no metric spanning the break (see `rejected` in the YAML).
   - [x] Small multiples of several years (statistician).
 - [x] **Reliability** (done where the data allows): the Structural Survey and rents ship `<id>_ci` half-widths, which now give the interval on the card, a rank range and the count of units whose interval crosses a class. Every other survey or modelled value gets a badge. Intervals for Arealstatistik and modelled metrics need pipeline work (see the report of this change).
 - [~] **More data** (built 2026-11-10, in the next full build; details in `docs/data_catalog.csv`)

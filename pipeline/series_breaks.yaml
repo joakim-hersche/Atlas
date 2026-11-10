@@ -1,0 +1,306 @@
+# Breaks in a metric's series: a change of method or definition at the publisher, so values before and
+# after the period are not (fully) comparable. pipeline/build/series_breaks.py validates this file and
+# pipeline/build/web.py writes it into metrics.json (`series_breaks`, docs/web_data_contract.md) and
+# sources.json. Only breaks verified against the publisher's own documentation are listed here; each
+# entry quotes it under `evidence` (url + cached file + verbatim quote; pipeline/tests/test_series_breaks.py
+# checks every quote against the cached file when it is present). Checked and not shipped: see
+# `rejected` at the end.
+#
+# Keys per break:
+#   id           unique name
+#   period       first period on the new basis: 'YYYY' or 'YYYY-MM'. It is placed on each metric's own
+#                periods: the first period whose end is on or after it ('2009-2011' for a three-year
+#                window, '1985' for '1979/85'); no marker when the metric has no period before it.
+#   metrics      metric ids, and/or
+#   source       every metric of that source (minus `exclude`)
+#   propagate    default true: derived ratios built on a listed metric (ratio:, pooled:) get the break too
+#   note_en/_de/_fr  the note shown in the app
+#   evidence     list of {url, file (glob under the repo, newest match), quote (verbatim)} or {ref, quote}
+#   cantons      optional: the break concerns only these cantons (said in the note)
+# A break may instead come from the connectors' own notes (`from_note`): every (metric, period) whose
+# municipality rows carry a note matching `regex` (group 1 = the {pct} in the templates).
+
+breaks:
+  # ------------------------------------------------------------------ population
+  - id: bilanz_espop_statpop
+    period: "2011"
+    source: bfs_bevnat_bilanz
+    note_en: "From 2011 STATPOP (population registers) replaces ESPOP; the permanent resident population now also includes persons in the asylum process resident for 12 months or more."
+    note_de: "Ab 2011 STATPOP (Personenregister) statt ESPOP; zur ständigen Wohnbevölkerung zählen neu auch Personen im Asylprozess mit mindestens 12 Monaten Aufenthalt."
+    note_fr: "Dès 2011, STATPOP (registres de personnes) remplace ESPOP ; la population résidante permanente inclut désormais les personnes dans le processus d’asile résidant depuis 12 mois ou plus."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-0102020000_201
+        file: data/raw/series_breaks/*/px-x-0102020000_201.px
+        quote: "Data source: 1981-2010 Annual Population Statistics (ESPOP), from 2011 Population and Households Statistics (STATPOP)"
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-0102020000_201
+        file: data/raw/series_breaks/*/px-x-0102020000_201.px
+        quote: "Since 01.01.2011, the reference population has also included persons in the asylum process who have resided in Switzerland for a total of at least 12 months."
+
+  # ------------------------------------------------------------------ housing
+  - id: construction_2013
+    period: "2013"
+    metrics: [con_new_dwellings, con_new_dw_sfh, con_new_dw_mfh, con_new_res_buildings, con_new_sfh_buildings]
+    note_en: "From 2013 BFS counts new buildings and dwellings per building instead of per construction project: not comparable with 1995–2012."
+    note_de: "Ab 2013 zählt das BFS neue Gebäude und Wohnungen pro Gebäude statt pro Bauprojekt: mit 1995–2012 nicht vergleichbar."
+    note_fr: "Dès 2013, l’OFS compte les nouveaux bâtiments et logements par bâtiment et non plus par projet de construction : non comparable avec 1995–2012."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-0904030000_105
+        file: data/raw/series_breaks/*/px-x-0904030000_105.px
+        quote: "Berechnung der Variablen Gebäude und Wohnungen basierend auf der Entität Gebäude anstatt des Bauprojektes. Die Daten sind nicht mehr mit den alten Cubes (1995-2012) vergleichbar."
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-0904030000_106
+        file: data/raw/series_breaks/*/px-x-0904030000_106.px
+        quote: "Die Daten sind nicht mehr mit den alten Cubes (1995-2012) vergleichbar."
+
+  - id: rents_2015_questionnaire
+    period: "2015"
+    source: bfs_rents
+    exclude: [rent_city_r3, rent_city_r3_ci, rent_city_r4, rent_city_r4_ci]
+    note_en: "Structural Survey questionnaire changed in 2015: only partly comparable with earlier years (BFS)."
+    note_de: "Fragebogen der Strukturerhebung 2015 angepasst: nur bedingt mit früheren Jahren vergleichbar (BFS)."
+    note_fr: "Questionnaire du relevé structurel modifié en 2015 : comparaison limitée avec les années précédentes (OFS)."
+    evidence:
+      - url: https://statistik.admin.ch/de/asset/36398431
+        file: data/raw/bfs_rents/*/rent_canton_chf_36398431.xlsx
+        quote: "Da der Fragebogen 2015 angepasst wurde, können die Ergebnisse nur bedingt mit den Erhebungen vor 2015 verglichen werden."
+
+  - id: rents_2018_method
+    period: "2018"
+    source: bfs_rents
+    exclude: [rent_city_r3, rent_city_r3_ci, rent_city_r4, rent_city_r4_ci]
+    note_en: "Method changes from 2018 (survey method, weighting, outlier detection): only partly comparable with earlier years (BFS)."
+    note_de: "Methodische Änderungen ab 2018 (Erhebungsmethode, Gewichtung, Ausreisser): nur bedingt mit früheren Jahren vergleichbar (BFS)."
+    note_fr: "Changements de méthode dès 2018 (méthode d’enquête, pondération, valeurs aberrantes) : comparaison limitée avec les années précédentes (OFS)."
+    evidence:
+      - url: https://statistik.admin.ch/de/asset/36398431
+        file: data/raw/bfs_rents/*/rent_canton_chf_36398431.xlsx
+        quote: "Aufgrund methodischer Änderungen ab dem Jahr 2018 im Bereich der Erhebungsmethode, der Gewichtung sowie der Detektierung von Ausreissern können die Ergebnisse nur bedingt mit den Erhebungen vor 2018 verglichen werden."
+
+  # ------------------------------------------------------------------ mobility (vehicle registers)
+  - id: vehicles_2018_location
+    period: "2018"
+    metrics: [mfz_cars, mfz_cars_private, mfz_cars_bev, mfz_cars_phev, mfz_cars_hev, mfz_cars_petrol, mfz_cars_diesel,
+              mfz_newreg_cars, mfz_newreg_bev]
+    note_en: "From 2018 vehicles are assigned to the municipality of their location address where the register has one (before: the holder’s address); vehicles of holders abroad are included."
+    note_de: "Ab 2018 Gemeindezuteilung nach der Standortadresse des Fahrzeugs, sofern erfasst (vorher Halteradresse); neu inklusive Fahrzeuge mit Halteradresse im Ausland."
+    note_fr: "Dès 2018, attribution à la commune selon l’adresse de stationnement du véhicule si elle est saisie (avant : adresse du détenteur) ; véhicules de détenteurs domiciliés à l’étranger inclus."
+    evidence:
+      - url: https://www.bfs.admin.ch/asset/en/DF_MFZ_0_COMMUNE
+        file: data/raw/bfs_sdmx/*/DF_MFZ_0_COMMUNE_1.0.0.structure.xml
+        quote: "From the reference year 2018, if the vehicle register lists a vehicle location address in addition to the holder address, the commune/canton is determined based on this vehicle location address."
+      - url: https://www.bfs.admin.ch/asset/en/DF_IVS_0_COMMUNE
+        file: data/raw/bfs_sdmx/*/DF_IVS_0_COMMUNE_1.0.0.structure.xml
+        quote: "2018 method change discontinuity:  to account for the inclusion of vehicle location data"
+
+  - id: vehicles_2022_register
+    period: "2022"
+    metrics: [mfz_cars, mfz_cars_private, mfz_cars_bev, mfz_cars_phev, mfz_cars_hev, mfz_cars_petrol, mfz_cars_diesel]
+    note_en: "2022: about 34,000 vehicles with export plates that were no longer in Switzerland were removed from the stock (register clean-up)."
+    note_de: "2022: rund 34'000 nicht mehr in der Schweiz befindliche Fahrzeuge mit Export-Kontrollschild wurden aus dem Bestand entfernt (Registerbereinigung)."
+    note_fr: "2022 : environ 34 000 véhicules munis d’une plaque d’exportation et ne se trouvant plus en Suisse ont été retirés du parc (rectification du registre)."
+    evidence:
+      - url: https://www.bfs.admin.ch/asset/en/DF_MFZ_0_COMMUNE
+        file: data/raw/bfs_sdmx/*/DF_MFZ_0_COMMUNE_1.0.0.structure.xml
+        quote: "A total of around 34,000 vehicles with export licence plates that are no longer in Switzerland were removed from the vehicle stock statistics in 2022."
+
+  - id: vehicles_2025_address
+    period: "2025"
+    metrics: [mfz_cars, mfz_cars_private, mfz_cars_bev, mfz_cars_phev, mfz_cars_hev, mfz_cars_petrol, mfz_cars_diesel,
+              mfz_newreg_cars, mfz_newreg_bev]
+    note_en: "From 2025 vehicles are assigned to municipalities by their full street address (before: postcode and locality only)."
+    note_de: "Ab 2025 Gemeindezuteilung nach der vollständigen Adresse (vorher nur nach Postleitzahl und Ortschaft)."
+    note_fr: "Dès 2025, attribution aux communes selon l’adresse complète (avant : code postal et localité seulement)."
+    evidence:
+      - url: https://www.bfs.admin.ch/asset/en/DF_MFZ_0_COMMUNE
+        file: data/raw/bfs_sdmx/*/DF_MFZ_0_COMMUNE_1.0.0.structure.xml
+        quote: "Up to and including 2024, the commune was determined solely based on postcodes and locality names."
+      - url: https://www.bfs.admin.ch/asset/en/DF_IVS_0_COMMUNE
+        file: data/raw/bfs_sdmx/*/DF_IVS_0_COMMUNE_1.0.0.structure.xml
+        quote: "2025 method change discontinuity: to account for commune determined on basis of exact address"
+
+  # ------------------------------------------------------------------ health & social
+  - id: social_assistance_2025
+    period: "2025"
+    metrics: [sh_recipients, sh_rate]
+    note_en: "Modernised social assistance statistics: 2025 is only partly comparable with earlier years (BFS: break in the series)."
+    note_de: "Modernisierte Sozialhilfestatistik: 2025 nur eingeschränkt mit den Vorjahren vergleichbar (BFS: Bruch in der Zeitreihe)."
+    note_fr: "Statistique de l’aide sociale modernisée : 2025 n’est que partiellement comparable avec les années précédentes (OFS : rupture de série)."
+    evidence:
+      - url: https://mapexplorer.bfs.admin.ch/GC_indic.php?view=map226&indic=sozialhilfequot
+        file: data/raw/bfs_social_assistance/*/indic_map226_sozialhilfequot.json
+        quote: "Aufgrund der Modernisierung der Sozialhilfestatistik sind die Ergebnisse des Jahres 2025 nur eingeschränkt mit den Vorjahren vergleichbar (Bruch in der Zeitreihe)."
+
+  # ------------------------------------------------------------------ education
+  - id: education_statpop_plus
+    period: "2017"
+    metrics: [edu_pop_25_64, edu_known_25_64, edu_compulsory_25_64, edu_upper_secondary_25_64, edu_tertiary_25_64]
+    note_en: "1990 and 2000 come from the census; from 2017 a BFS estimate from registers and surveys with missing answers imputed (STATPOP+)."
+    note_de: "1990 und 2000 aus der Volkszählung; ab 2017 BFS-Schätzung aus Registern und Erhebungen mit Imputation fehlender Angaben (STATPOP+)."
+    note_fr: "1990 et 2000 proviennent du recensement ; dès 2017, estimation de l’OFS à partir de registres et d’enquêtes, avec imputation des réponses manquantes (STATPOP+)."
+    evidence:
+      - url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.bildungsstand
+        file: data/raw/series_breaks/*/stac_ch.bfs.bildungsstand.json
+        quote: "is supplemented by a two-stage imputation model that estimates missing data"
+      - url: https://www.bfs.admin.ch/bfs/de/home/statistiken/bildung-wissenschaft/bildungsstand/bildungsstand-regionaler-ebene.html
+        file: data/raw/series_breaks/*/bfs_bildungsstand_regionaler_ebene.html
+        quote: "Mit dem neuen Produkt STATPOP+ lässt sich das Bildungsniveau der gesamten ständigen Wohnbevölkerung in der Schweiz schätzen."
+      - url: https://data.geo.admin.ch/api/stac/v1/collections/ch.bfs.bildungsstand
+        file: data/raw/bfs_education/*/bildungsstand_2000_gmde_2056.csv
+        quote: "\"BBTOT25_64_MISS\""   # unknown attainment only in the census years; IMPUTATION 0 there, ~20 % from 2017
+
+  # ------------------------------------------------------------------ politics (party mergers)
+  - id: nrw_mitte_2021
+    period: "2023"
+    metrics: [nrw_share_mitte]
+    propagate: false
+    note_en: "CVP and BDP merged into Die Mitte in 2021: up to 2019 the value is CVP + BDP."
+    note_de: "CVP und BDP fusionierten 2021 zur Mitte: bis 2019 ist der Wert CVP + BDP."
+    note_fr: "Le PDC et le PBD ont fusionné en 2021 pour former Le Centre : jusqu’en 2019, la valeur est PDC + PBD."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-1702020000_105
+        file: data/raw/series_breaks/*/px-x-1702020000_105.px
+        quote: "Im Jahr 2021 fusionierte die CVP mit der BDP unter der Bezeichnung «Die Mitte»."
+
+  - id: nrw_fdp_lps_2009
+    period: "2011"
+    metrics: [nrw_fw_fdp, nrw_share_fdp, nrw_share_right_bloc]
+    propagate: false
+    note_en: "FDP and the Liberals (LPS) merged nationally in 2009: from 2011 the Geneva and Neuchâtel liberals stand as FDP, and above canton level LPS counts under FDP."
+    note_de: "FDP und Liberale (LPS) fusionierten 2009 national: ab 2011 treten die Liberalen in Genf und Neuenburg als FDP an, oberhalb der Kantone zählt die LPS zur FDP."
+    note_fr: "Le PRD et les libéraux (PLS) ont fusionné en 2009 au niveau national : dès 2011, les libéraux de Genève et de Neuchâtel se présentent sous le PLR, et au-dessus du canton le PLS est compté avec le PLR."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-1702020000_105
+        file: data/raw/series_breaks/*/px-x-1702020000_105.px
+        quote: "2009: Fusion von FDP und LPS auf nationaler Ebene unter der Bezeichnung «FDP.Die Liberalen»."
+      - ref: "BFS cube px-x-1702020000_105: LPS '...' (no list) in GE and NE from 2011 (status not_applicable in data/interim/metrics_all.parquet); FDP GE 7.8 % (2007) -> 18.7 % (2011), NE 12.7 % -> 26.9 %"
+        quote: ""
+      - ref: "docs/decisions.md D37 rule 3; pipeline/build/elections.py ABOVE_KANTON_FROM = 2011 (BFS DAM 30887041)"
+        quote: ""
+
+  - id: nrw_fdp_lps_vd_2012
+    period: "2015"
+    metrics: [nrw_fw_fdp, nrw_share_fdp, nrw_share_right_bloc]
+    propagate: false
+    cantons: [VD]
+    note_en: "Vaud: FDP and the Liberals merged in 2012; from 2015 they stand as one FDP list."
+    note_de: "Waadt: FDP und Liberale fusionierten 2012; ab 2015 treten sie mit einer FDP-Liste an."
+    note_fr: "Vaud : le PRD et les libéraux ont fusionné en 2012 ; dès 2015, ils se présentent sur une seule liste PLR."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-1702020000_105
+        file: data/raw/series_breaks/*/px-x-1702020000_105.px
+        quote: "In der Waadt fusionierten FDP und LP im Jahr 2012"
+
+  - id: nrw_lps_2011
+    period: "2011"
+    metrics: [nrw_fw_lps, nrw_share_lps]
+    propagate: false
+    note_en: "After the 2009 merger with FDP, LPS stands only in Basel-Stadt (LDP) and, in 2011, in Vaud; above canton level it counts under FDP from 2011."
+    note_de: "Nach der Fusion mit der FDP (2009) tritt die LPS nur noch in Basel-Stadt (LDP) und 2011 in der Waadt an; oberhalb der Kantone zählt sie ab 2011 zur FDP."
+    note_fr: "Après la fusion avec le PLR (2009), le PLS ne se présente plus qu’à Bâle-Ville (LDP) et, en 2011, dans le canton de Vaud ; au-dessus du canton, il est compté avec le PLR dès 2011."
+    evidence:
+      - url: https://www.pxweb.bfs.admin.ch/DownloadFile.aspx?file=px-x-1702020000_105
+        file: data/raw/series_breaks/*/px-x-1702020000_105.px
+        quote: "Da die LP-BS Mitglied der «FDP.Die Liberalen Schweiz» ist, wird sie auf nationaler Ebene zur FDP gezählt."
+      - ref: "docs/decisions.md D37 rule 3; pipeline/build/elections.py ABOVE_KANTON_FROM = 2011"
+        quote: ""
+
+  # ------------------------------------------------------------------ public finances (HRM1 -> HRM2, per canton)
+  - id: finance_ge_hrm2
+    period: "2018"
+    metrics: [fin_net_debt_per_capita]
+    cantons: [GE]
+    note_en: "GE: accounting model changed from HRM1 to HRM2 in 2018 (financial assets revalued): not comparable with earlier years (OCSTAT)."
+    note_de: "GE: Wechsel des Rechnungsmodells von HRM1 zu HRM2 2018 (Neubewertung des Finanzvermögens): mit früheren Jahren nicht vergleichbar (OCSTAT)."
+    note_fr: "GE : passage du MCH1 au MCH2 en 2018 (réévaluation du patrimoine financier) : non comparable avec les années précédentes (OCSTAT)."
+    evidence:
+      - url: https://statistique.ge.ch/tel/domaines/18/18_02/T_18_02_2_04.xlsx
+        file: data/raw/kt_finance/*/T_18_02_2_04.xlsx
+        quote: "Ainsi, les résultats depuis 2018 ne sont pas comparables à ceux des années précédentes."
+
+  - id: finance_zh_hrm2
+    period: "2019"
+    metrics: [fin_net_debt_per_capita, fin_self_financing_ratio]
+    cantons: [ZH]
+    note_en: "ZH: accounting model changed from HRM1 to HRM2 from the 2019 accounts."
+    note_de: "ZH: Umstellung des Rechnungsmodells von HRM1 auf HRM2 ab Rechnungsjahr 2019."
+    note_fr: "ZH : passage du MCH1 au MCH2 dès les comptes 2019."
+    evidence:
+      - url: https://www.web.statistik.zh.ch/ogd/daten/zhweb.json
+        file: data/raw/series_breaks/*/zhweb.json
+        quote: "Umstellung des Rechnungsmodells von HRM1 auf HRM2 ab Rechnungsjahr 2019."
+
+  - id: finance_ti_hrm2
+    period: "2022"
+    metrics: [fin_net_debt_per_capita, fin_self_financing_ratio]
+    cantons: [TI]
+    note_en: "TI: from 2022 the indicators follow HRM2 (MCA2) definitions, up to 2021 HRM1 (MCA1)."
+    note_de: "TI: ab 2022 Kennzahlen nach HRM2 (MCA2), bis 2021 nach HRM1 (MCA1)."
+    note_fr: "TI : dès 2022, indicateurs selon le MCH2 (MCA2), jusqu’en 2021 selon le MCH1 (MCA1)."
+    evidence:
+      - url: https://www4.ti.ch/di/sel/comuni/dati-finanziari/statistica-finanziaria
+        file: data/raw/kt_finance/*/ti_2021-allegato.xls
+        quote: "i valori di questi comuni sono calcolati utilizzando i dati equivalenti o quantomeno comparabili secondo MCA1"
+      - url: https://www4.ti.ch/di/sel/comuni/dati-finanziari/statistica-finanziaria
+        file: data/raw/kt_finance/*/ti_2022-allegato.xls
+        quote: "i dati di questi comuni sono la conversione equivalente o quantomeno comparabile secondo MCA2"
+
+  # ------------------------------------------------------------------ registered unemployment (cantonal *)
+  - id: unemployment_laci_2011
+    period: "2011"
+    metrics: [unemp_registered]
+    note_en: "The 4th revision of the unemployment insurance law (LACI/AVIG) affected the number of registered unemployed in April–October 2011 (OCSTAT)."
+    note_de: "Die 4. Revision des Arbeitslosenversicherungsgesetzes (AVIG) beeinflusste die Zahl der registrierten Arbeitslosen von April bis Oktober 2011 (OCSTAT)."
+    note_fr: "La 4e révision de la loi sur l’assurance-chômage (LACI) a affecté le nombre de chômeurs inscrits d’avril à octobre 2011 (OCSTAT)."
+    evidence:
+      - url: https://statistique.ge.ch/tel/domaines/03/03_03/T_03_03_4_01.xlsx
+        file: data/raw/kt_unemployment/*/T_03_03_4_01.xlsx
+        quote: "affecte le nombre de chômeurs inscrits et arrivés en fin de droit entre les mois d'avril et octobre 2011."
+
+  - id: unemployment_ge_liasi_2012
+    period: "2012"
+    metrics: [unemp_registered]
+    cantons: [GE]
+    note_en: "GE: the new cantonal social assistance law (LIASI) of February 2012 makes some year-on-year comparisons difficult (OCSTAT)."
+    note_de: "GE: Das neue kantonale Sozialhilfegesetz (LIASI) vom Februar 2012 erschwert manche Vergleiche zwischen Jahren (OCSTAT)."
+    note_fr: "GE : l’introduction de la LIASI au 1er février 2012 rend certaines comparaisons annuelles délicates (OCSTAT)."
+    evidence:
+      - url: https://statistique.ge.ch/tel/domaines/03/03_03/T_03_03_4_01.xlsx
+        file: data/raw/kt_unemployment/*/T_03_03_4_01.xlsx
+        quote: "L’introduction au 1er février 2012 de la nouvelle loi sur l’insertion et l’aide sociale individuelle (LIASI) rend certaines comparaisons annuelles délicates."
+
+  - id: unemployment_seco_2018
+    period: "2018"
+    metrics: [unemp_registered]
+    note_en: "From March 2018 SECO splits job seekers into unemployed and not unemployed with one nationwide method (OCSTAT)."
+    note_de: "Ab März 2018 teilt das SECO Stellensuchende landesweit einheitlich in Arbeitslose und Nichtarbeitslose ein (OCSTAT)."
+    note_fr: "Dès mars 2018, la répartition des demandeurs d’emploi en chômeurs et non-chômeurs suit une méthode uniformisée au niveau national par le SECO (OCSTAT)."
+    evidence:
+      - url: https://statistique.ge.ch/tel/domaines/03/03_03/T_03_03_4_01.xlsx
+        file: data/raw/kt_unemployment/*/T_03_03_4_01.xlsx
+        quote: "Dès mars 2018, la répartition des demandeurs d'emploi en chômeurs et non-chômeurs est modifiée à la suite de l'uniformisation au niveau national de la"
+
+  # ------------------------------------------------------------------ energy (Energie Reporter, from the connector's notes)
+  - id: energie_reporter_steps
+    from_note:
+      source: bfe_energy
+      regex: "^series break at the publisher: national total ([+-]\\d+) % against the previous month"
+    note_en: "Series break at the publisher: national total {pct} % against the previous month."
+    note_de: "Bruch in der Reihe beim Herausgeber: Landestotal {pct} % gegenüber dem Vormonat."
+    note_fr: "Rupture de série chez l’éditeur : total national {pct} % par rapport au mois précédent."
+    evidence:
+      - ref: "pipeline/sources/bfe_energy/ingest.py breaks(): a step of more than 10 % in the national total against the previous month that persists (not a one-month spike); docs/decisions.md D41"
+        quote: ""
+
+# Checked and not shipped (reason). Listed here so a later round does not re-check them blindly.
+rejected:
+  census_statpop: "No metric spans both: census metrics (vz_*) end in 2000, STATPOP metrics start in 2010. The related population-definition change is shipped as bilanz_espop_statpop."
+  gws_heating_2021: "Heating and energy-source metrics (gws_heat_*, gws_share_*) start in 2021, so there is no earlier year in the series to compare with."
+  statent_2011: "STATENT metrics start in 2011; the earlier Betriebszählung is not in any series. BFS's 2017 recalculation of size classes covers all STATENT years."
+  arealstatistik_rounds: "No method break documented: BFS publishes all rounds since 1979/85 in the NOAS04 nomenclature (DF_AREA_NOAS description). The incomplete 2020/25 round is already marked (incomplete_periods)."
+  votes_coverage: "No change of coverage documented for the shipped votes (2020-09-27 to 2026-09-27) in the PxWeb cube notes or the voteinfo files."
+  udemo_2013: "BFS documents a break before reference year 2013; the shipped UDEMO series starts in 2013."
+  estv_dbst: "The connector rebuilds one definition (all taxpayers, normal + special cases) for 2003–2023; no ESTV statement of a break found in the workbooks."
+  agriculture: "BFS adjusted 1975–1990 to the farm definition in force since 1996 (cube note px-x-0702000000_104): no break."
+  finance_tax_revenue_hrm2: "ZH's catalogue states the HRM2 switch for net assets and self-financing but not for indicator 297 (tax revenue); TI's workbook labels do not cover revenue type 40. The connector's HRM1 notes stay on the values; no marker."
+  pks_population_espop: "PKS rates use the previous year-end population (ESPOP until 2010); the first PKS year on STATPOP is not stated by BFS. PKS legal changes concern single articles."
+  gueteklassen_method: "ARE's method description is on geocat.ch (not reachable from the build environment); no change stated in the STAC description."
+  bevnat_counts: "Births, marriages and divorces are counted by BEVNAT throughout; only rates on the demographic-balance population get the 2011 break (by propagation)."

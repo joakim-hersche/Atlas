@@ -19,7 +19,7 @@
   import YearTools from '../components/YearTools.svelte';
   import SmallMultiples from '../components/SmallMultiples.svelte';
   import '../lib/i18n-mapx';
-  import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues } from '../lib/yearcmp.svelte';
+  import { changeColumn, changeMeta, defaultPeriods, periodMarks, pooledSpan, pooledValues, straddled } from '../lib/yearcmp.svelte';
   import { ciSpec, crossesClass, intervals, kindOf, rankRange } from '../lib/reliability';
   import { RefLayer, loadRefData } from '../lib/reflayer';
   import VotePicker from '../components/VotePicker.svelte';
@@ -306,6 +306,10 @@
   const legendNotes = $derived.by(() => {
     const out: string[] = [];
     if (lopsided && chA) out.push(t(vdiff && vdAutoOn === voteShown ? 'ux.voteDiffAuto' : vdiff ? 'ux.voteOneSide' : 'ux.voteOneSide', { pct: `${fmtNumber(chA.value, 1)} %` }));
+    if (cmpActive && app.cmpFrom && cmpTo) {
+      const sb = straddled(metaRaw, yearPeriods, app.cmpFrom, cmpTo, periodNotes);
+      if (sb.length) out.push(t('yc.straddleShort', { years: sb.map((x) => x.p).join(', ') }));
+    }
     if (fixedOn) {
       if (pooledRef === undefined) out.push(t('yc.fixedWait'));
       else if (pooledRef) out.push(t('yc.fixedNote', { span: pooledSpan(metaRaw) }));
@@ -1296,7 +1300,7 @@
               {:else if yearEmpty}{' · '}<span class="warn">{t('mv.noYearLevel', { y: app.year ?? '' })}</span>{/if}
             </YearSlider>
             <YearTools periods={yearPeriods} to={refRaw?.col.period ?? yearPeriods[yearPeriods.length - 1]} from={app.cmpFrom} mode={app.cmpMode} fixed={app.fixed}
-              problem={cmpProblem} onfrom={(y) => (app.cmpFrom = y)} onmode={(m) => (app.cmpMode = m)} onfixed={(v) => (app.fixed = v)}
+              problem={cmpProblem} marks={periodNotes} onfrom={(y) => (app.cmpFrom = y)} onmode={(m) => (app.cmpMode = m)} onfixed={(v) => (app.fixed = v)}
               onmulti={() => (app.multi = defaultPeriods(yearPeriods))} />
           </div>
         {:else if app.year && !whyA}

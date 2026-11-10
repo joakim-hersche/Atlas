@@ -329,3 +329,23 @@ does not pick them up.
 
 `featured.json` (new): `{note, maps: [{rank, metric, level, view, story, available, label_en, label_de}]}`,
 the 15 featured story maps (journalist, round 2); `available` is true when the metric is offered at that level.
+
+## 10. Series breaks — NEW, additive
+
+`metrics.json`, per metric: `series_breaks` (object | null) = period → `{label_en, label_de, label_fr}`, e.g.
+`"bil_pop_jan": {"series_breaks": {"2011": {"label_en": "From 2011 STATPOP (population registers) replaces ESPOP; …"}}}`.
+The period is the first one on the new method or definition, so values before it are not (fully) comparable with
+it and later ones. Always one of the metric's `periods` (never the first). Source: `pipeline/series_breaks.yaml`
+(only breaks verified against the publisher, each with a quoted source; rejected candidates are listed there),
+placed and validated by `pipeline/build/series_breaks.py`. A break on a base metric also marks the ratios computed
+from it (`ratio:` / `pooled:` aggregations), e.g. the vehicle-register breaks on `mfz_cars_per_1000`; windows get the
+first window that contains a new-basis year (`sh_rate_3y`: `2023-2025`). Energie Reporter steps come from the
+connector's own value notes ("series break at the publisher", D41). Two breaks on one period are joined with " · ".
+The frontend also accepts a plain list of periods or period → text (`web/src/lib/breaks.ts`).
+
+`sources.json`, per source: `series_breaks` (list | null) of `{period, label_en, label_de, label_fr, cantons, evidence
+(publisher URLs), metrics (shipped ids with a marker)}` for the Sources page.
+
+Frontend: year-slider markers and the note for the year in view (existing), a dashed tick in the profile sparklines,
+and a warning in the change-between-two-years view (and on the change map's legend) when the two years lie on both
+sides of a break.
