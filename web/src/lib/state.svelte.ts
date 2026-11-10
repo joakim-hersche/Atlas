@@ -41,6 +41,11 @@ export class AppState {
   spatial = $state<SpatialMode>('off');
   fdr = $state(false);
   embed = $state(false);
+  cmpFrom = $state<string | null>(null);
+  cmpMode = $state<'abs' | 'pct'>('abs');
+  fixed = $state(false);
+  multi = $state<string[] | null>(null);
+  labels = $state(true);
   /** one-line note after a level switch replaced a metric that does not exist there (not in the hash);
    *  `prev` is the view before the switch, for "switch back" */
   /** level the user picked although the shaded metric does not exist there: asked before swapping */
@@ -89,6 +94,11 @@ export class AppState {
     this.spatial = v.spatial;
     this.fdr = v.fdr;
     this.embed = v.embed;
+    this.cmpFrom = v.cmpFrom;
+    this.cmpMode = v.cmpMode;
+    this.fixed = v.fixed;
+    this.multi = v.multi;
+    this.labels = v.labels;
     this.preset = v.preset;
     this.loads++;
   }
@@ -98,6 +108,7 @@ export class AppState {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
       hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, only: this.only, ptm: this.ptm, vote: this.vote, vdiff: this.vdiff, maj: this.maj, unstable: this.unstable, agg: this.agg, xcols: $state.snapshot(this.xcols) as string[], rmin: this.rmin, rflag: this.rflag, params: { ...this.params }, spatial: this.spatial, fdr: this.fdr, embed: this.embed,
+      cmpFrom: this.cmpFrom, cmpMode: this.cmpMode, fixed: this.fixed, multi: this.multi ? this.multi.slice() : null, labels: this.labels,
     };
   }
 

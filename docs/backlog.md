@@ -8,16 +8,17 @@ Feature requests from persona review round 1 (`docs/review_round1.md`) that are 
   - Public transport minus car time (mathematician).
 - [ ] **Travel-time detail:** spread over the morning (P10/median/P90) and both directions (mathematician).
 - [x] **Custom similarity:** choose metrics and weights, and show what drives each match. Consider Mahalanobis or PCA (mathematician).
-- [ ] **Year comparisons**
-  - Change between two years as a metric (economist).
-  - Fixed class breaks across years and series-break markers (statistician).
-  - Small multiples of several years (statistician).
-- [ ] **Reliability:** confidence intervals or a low-reliability badge for survey and modelled values, including rank intervals (statistician, mathematician).
+- [x] **Year comparisons** (done; URL keys `yc`, `ym`, `fx`, `smy`)
+  - [x] Change between two years as a metric (economist): absolute and percent, diverging around 0.
+  - [x] Fixed class breaks across years (statistician): `fx=1`, limits from all complete years pooled.
+  - [ ] Series-break markers: shown for incomplete rounds (shipped). Real method breaks (census to STATPOP, GWS heating, party mergers) need a `series_breaks` field in `metrics.json`; the frontend reads it as soon as a build ships it.
+  - [x] Small multiples of several years (statistician).
+- [x] **Reliability** (done where the data allows): the Structural Survey and rents ship `<id>_ci` half-widths, which now give the interval on the card, a rank range and the count of units whose interval crosses a class. Every other survey or modelled value gets a badge. Intervals for Arealstatistik and modelled metrics need pipeline work (see the report of this change).
 - [ ] **More data**
   - Median income, e.g. estimated from the ESTV income classes (economist, mathematician).
   - Noise exposure, childcare places, school locations (family).
   - Recent language data: pooled Structural Survey, municipal or MS region (journalist, geographer).
-- [ ] **Map:** reference layer with lake and city labels, more detailed boundaries on zoom, symbols by default for count metrics (geographer).
+- [ ] **Map:** [x] reference layer with lake and city labels (canvas, from shipped data); [x] circles by default for count metrics; [ ] more detailed boundaries on zoom (needs a finer geometry file; only one generalised version ships) (geographer).
 - [x] **Spatial statistics:** Moran's I, LISA cluster map, bivariate choropleth (geographer). Done: panel "Spatial patterns" on the map (`#sp=lisa`, `#sp=bi&b=<metric>`, `fdr=1`).
 - [ ] **Older boundaries:** view data on older boundaries (e.g. 2000) as well as harmonised (geographer).
 - [x] **Filtered aggregate** (done: `ag=`, web/src/lib/aggregate.ts): weighted result for the filtered set, e.g. "French-speaking CH: X % yes" (journalist).

@@ -724,3 +724,6 @@ Object.assign(FR, FR_FILTERS);
 // spatial statistics and embed mode (sp.*, em.*): defined with their English and German strings
 import { SPATIAL_FR } from './i18n-spatial';
 Object.assign(FR, SPATIAL_FR);
+// year comparisons, reliability notes, small multiples and the reference layer (map and legend)
+import { FR_MAPX } from './i18n-mapx-fr';
+Object.assign(FR, FR_MAPX);

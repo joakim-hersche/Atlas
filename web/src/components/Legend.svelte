@@ -2,6 +2,7 @@
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
   import { ml, mdesc, t as tr } from '../lib/i18n.svelte';
+  import '../lib/i18n-mapx';
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { coverageLabel, majorityCount, partialCantons, precisionText, type Column, type MetricMeta, type Source } from '../lib/data';
@@ -23,8 +24,14 @@
     unitWord?: string;
     /** the column shown (D37: single-seat-canton values kept apart, majority toggle) */
     col?: Column | null;
+    /** values that define the axis (all years pooled, when the class limits are fixed); default: v */
+    axisRef?: number[] | null;
+    /** reliability notice of a survey or modelled metric (badge and sentence) */
+    rel?: { kind: 'ci' | 'survey' | 'modelled'; text: string; extra?: string | null } | null;
+    /** further notes under the count line (fixed class limits, change maps) */
+    notes?: string[];
   }
-  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null }: Props = $props();
+  let { meta, v, period, scale, nUnits, source, method, onmethod, compact = false, unitWord = 'municipalities', col = null, axisRef = null, rel = null, notes = [] }: Props = $props();
 
   let w = $state(300);
   const vertical = $derived(!compact && w < 300);
@@ -32,8 +39,9 @@
   const PAD = 6;
 
   const s = $derived(sortedValues(v));
-  const log = $derived(wantsLog(s));
-  const dom = $derived(s.length ? axisDomain(s, log) : { lo: 0, hi: 1, clipLo: false, clipHi: false });
+  const sAxis = $derived(axisRef && axisRef.length ? axisRef : s);
+  const log = $derived(wantsLog(sAxis));
+  const dom = $derived(sAxis.length ? axisDomain(sAxis, log) : { lo: 0, hi: 1, clipLo: false, clipHi: false });
   const f = $derived(log ? Math.log10 : (x: number) => x);
   const g = $derived(log ? (x: number) => 10 ** x : (x: number) => x);
   const flo = $derived(f(dom.lo));
@@ -175,6 +183,10 @@
     <details class="def"><summary>ⓘ {tr('lg.definition')}</summary><p>{mdesc(meta)}</p></details>
   {/if}
   {#if nrw && !compact}<p class="dnote">{tr('lg.ncOnly')}</p>{/if}
+  {#each notes as n}<p class="meta nt">{n}</p>{/each}
+  {#if rel}
+    <p class="rel"><span class="rb rb-{rel.kind}">{tr(`rl.b.${rel.kind}`)}</span> {rel.text}{#if rel.extra}{' '}<span class="rx">{rel.extra}</span>{/if}</p>
+  {/if}
   <p class="foot">
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
     {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
@@ -216,6 +228,11 @@
   .def { margin: 4px 0 0; font-size: 0.74rem; }
   .def summary { cursor: pointer; color: var(--text); font-weight: 600; }
   .def p { margin: 3px 0 0; color: var(--text); line-height: 1.35; }
+  .nt { margin-top: 3px; }
+  .rel { margin: 5px 0 0; font-size: 0.74rem; line-height: 1.35; }
+  .rb { display: inline-block; padding: 0 5px; border: 1px solid var(--ink); font-size: 0.68rem; font-weight: 600; white-space: nowrap; vertical-align: 1px; }
+  .rb-ci { background: var(--ink); color: var(--ink-text); }
+  .rx { color: var(--muted); }
   .partial { color: var(--text); }
   .foot a { color: inherit; }
   .compact .head { margin-bottom: 2px; }
