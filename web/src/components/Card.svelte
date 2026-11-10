@@ -30,9 +30,13 @@
     unitWord?: string;
     /** further rows, e.g. the size metric */
     extra?: Extra[];
+    /** link to the place's profile page */
+    profile?: string;
+    profileLabel?: string;
+    sourceLink?: string;
     onclose: () => void;
   }
-  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, onclose }: Props = $props();
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
@@ -44,6 +48,7 @@
 <div class="card" class:docked role="dialog" aria-label="{name} quick card">
   <div class="top">
     <div class="ttl"><h2>{name}</h2> <span class="sub">{sub}</span></div>
+    {#if profile}<a class="prof" href={profile}>{profileLabel}&nbsp;→</a>{/if}
     <button type="button" class="close" aria-label="Close" onclick={onclose}>×</button>
   </div>
   <p class="mlabel">{meta.label_en}</p>
@@ -72,7 +77,8 @@
     <span class="tags">
       <span class="tag">{precision}</span>
       {#if cov}<span class="tag warn">partial: {cov.length} of 26 cantons</span>{/if}
-      <span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>
+      {#if sourceLink}<a class="tag src" href={sourceLink} title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</a>
+      {:else}<span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>{/if}
     </span>
     {#if reach}
       <span class="reach">
@@ -98,6 +104,11 @@
   .ttl { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
   h2 { display: inline; }
   .sub { color: var(--muted); font-size: 0.78rem; font-family: var(--font-mono); white-space: nowrap; }
+  .prof {
+    flex: none; align-self: start; font-size: 0.78rem; font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
+    text-decoration: none; white-space: nowrap;
+  }
+  a.tag { color: var(--faint); }
   .close {
     border: 1px solid var(--ink); background: none; width: 26px; height: 26px; font-size: 1.05rem; line-height: 1;
     cursor: pointer; flex: none; align-self: start; color: var(--text);
@@ -115,7 +126,7 @@
   .xv { font-weight: 600; flex: none; }
   .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--rule); }
   .tags { display: flex; flex-wrap: wrap; gap: 0; font-size: 0.72rem; color: var(--faint); }
-  .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); }
+  .tag + .tag::before { content: '·'; margin: 0 5px; color: var(--faint); display: inline-block; }
   .tag.warn { color: var(--text); }
   .reach { display: flex; gap: 8px; align-items: baseline; font-size: 0.82rem; }
   .rl { color: var(--muted); }
@@ -128,7 +139,12 @@
   @media (max-width: 899px) {
     .card { padding: 7px 10px 8px; }
     h2 { font-size: 0.98rem; }
-    .close { width: 24px; height: 24px; }
+    .prof {
+    flex: none; align-self: start; font-size: 0.78rem; font-weight: 700; color: var(--ink-text); background: var(--ink); padding: 4px 8px;
+    text-decoration: none; white-space: nowrap;
+  }
+  a.tag { color: var(--faint); }
+  .close { width: 24px; height: 24px; }
     .mlabel { display: none; }
     .val { font-size: 1.15rem; }
     .rank { flex-basis: auto; font-size: 0.78rem; margin: 0; }
