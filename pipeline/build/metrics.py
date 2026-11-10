@@ -9,6 +9,9 @@ Rules
   value only if all its municipalities have one (else status 'no_data' with n_missing > 0).
 - 'weighted_mean:<w>' uses metric <w> of the same period as weight.
 - 'not_aggregatable' stays at its native level.
+- Optional metrics.yaml key `zero_when: [<status>, ...]` on a base metric: rows with one of these
+  statuses count as 0 in sums and in ratio terms (e.g. a party that did not stand; a municipality
+  counted with a neighbour whose figures include its votes). The row itself keeps its status.
 - Derived 'ratio:<a>[+<b>...]/<c>[+...][*<factor>]' and 'change:<metric>:<years>' are computed at every
   level from that level's base values, so ratios are re-computed, never averaged.
 - Rows the sources publish at higher levels ('native') are not used for aggregation; they are kept
@@ -31,6 +34,8 @@ from pipeline.harmonize.schema import load_metrics
 AGG_LEVELS = ["bezirk", "kanton", *LEVEL_COLUMNS, "schweiz"]
 RATIO = re.compile(r"^ratio:(?P<num>[^/]+)/(?P<den>[^*]+)(?:\*(?P<f>[\d.]+))?$")
 CHANGE = re.compile(r"^change:(?P<m>[a-z0-9_]+):(?P<n>\d+)$")
+# a ratio term is usable when ok, or when its status is listed in the metric's zero_when (counts as 0)
+OK_OR_ZERO = "(status = 'ok' OR (metric_id, status) IN (SELECT (metric_id, status) FROM zw))"
 PREC_RANK = "CASE precision WHEN 'exact' THEN 0 WHEN 'survey' THEN 1 WHEN 'modelled' THEN 2 ELSE 3 END"
 PREC_NAME = "CASE MAX({r}) WHEN 0 THEN 'exact' WHEN 1 THEN 'survey' WHEN 2 THEN 'modelled' ELSE 'boundary_estimate' END"
 
@@ -59,6 +64,10 @@ def run() -> str:
     con.register("meta_df", meta[["id", "kind", "aggregation", "native_level"]].astype(str))
     con.execute("CREATE TABLE meta AS SELECT * FROM meta_df")
     obs = interim_path("observation.parquet")
+    zw = [(r["id"], st) for r in meta.to_dict("records")
+          if isinstance(r.get("zero_when"), list) for st in r["zero_when"]]
+    con.register("zw_df", pd.DataFrame(zw or [("", "")], columns=["metric_id", "status"]))
+    con.execute("CREATE TABLE zw AS SELECT * FROM zw_df")
 
     # base rows used for aggregation: municipality rows of base metrics
     con.execute(f"""
@@ -73,6 +82,14 @@ def run() -> str:
                1 AS n_units, CASE WHEN o.status = 'ok' THEN 0 ELSE 1 END AS n_missing, o.note
         FROM read_parquet('{obs}') o JOIN meta m ON o.metric_id = m.id
         WHERE m.kind = 'base' AND m.native_level <> 'gemeinde' AND o.level NOT IN ('gemeinde', 'unallocated', 'pseudo')""")
+
+    # aggregation input: zero_when statuses count as 0
+    con.execute("""
+        CREATE TABLE gem_sum AS
+        SELECT g.unit_id, g.metric_id, g.period,
+               CASE WHEN g.value IS NULL AND z.metric_id IS NOT NULL THEN 0 ELSE g.value END AS value,
+               g.precision
+        FROM gem g LEFT JOIN zw z ON g.metric_id = z.metric_id AND g.status = z.status""")
 
     parts = ["""SELECT unit_id, 'gemeinde' AS level, metric_id, period, value, status, precision, provenance,
                        1 AS n_units, CASE WHEN status = 'ok' THEN 0 ELSE 1 END AS n_missing, note FROM gem"""]
@@ -90,7 +107,7 @@ def run() -> str:
                    NULL AS note
             FROM (SELECT m.{lvl} AS u, gem.metric_id, gem.period, SUM(gem.value) AS s,
                          COUNT(gem.value) AS n_with, {PREC_NAME.format(r=PREC_RANK)} AS precision
-                  FROM gem JOIN mem m USING (unit_id)
+                  FROM gem_sum gem JOIN mem m USING (unit_id)
                   WHERE gem.metric_id IN ({_q(sums)}) AND m.{lvl} NOT IN ('nan', '<NA>', 'None')
                   GROUP BY 1, 2, 3) g JOIN n_{lvl} n ON g.u = n.u""")
         for mid, w in wmeans.items():
@@ -124,11 +141,11 @@ def run() -> str:
                        CASE WHEN GREATEST(a.p, b.p) = 0 THEN 'exact' WHEN GREATEST(a.p, b.p) = 1 THEN 'survey'
                             WHEN GREATEST(a.p, b.p) = 2 THEN 'modelled' ELSE 'boundary_estimate' END AS precision,
                        'derived' AS provenance, a.n_units, 0 AS n_missing, NULL AS note
-                FROM (SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units
-                      FROM base_all WHERE metric_id IN ({_q(num)}) AND status = 'ok'
+                FROM (SELECT unit_id, level, period, SUM(COALESCE(value, 0)) AS s, MAX({PREC_RANK}) AS p, MAX(n_units) AS n_units
+                      FROM base_all WHERE metric_id IN ({_q(num)}) AND {OK_OR_ZERO}
                       GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(num))}) a
-                JOIN (SELECT unit_id, level, period, SUM(value) AS s, MAX({PREC_RANK}) AS p
-                      FROM base_all WHERE metric_id IN ({_q(den)}) AND status = 'ok'
+                JOIN (SELECT unit_id, level, period, SUM(COALESCE(value, 0)) AS s, MAX({PREC_RANK}) AS p
+                      FROM base_all WHERE metric_id IN ({_q(den)}) AND {OK_OR_ZERO}
                       GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT metric_id) = {len(set(den))}) b
                 USING (unit_id, level, period)
                 WHERE b.s IS NOT NULL AND b.s <> 0""")

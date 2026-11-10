@@ -165,7 +165,38 @@ def _turnout() -> pd.DataFrame:
     return pd.concat([obs, _national(w, mm), _pseudo(w, mm)], ignore_index=True)
 
 
+POOLED = ("counted with another municipality in the BFS results (its votes are included there); "
+          "no separate result")
+
+
+def _pooled(obs: pd.DataFrame) -> pd.DataFrame:
+    """Municipalities without a result although others in the same canton have one for that election.
+
+    BFS counts some very small municipalities together with a neighbour (e.g. Meienried, Hellsau BE in
+    2023), so their votes are inside the neighbour's figures. They get status not_published (and
+    metrics.yaml `zero_when`), so sums and party shares of districts and cantons stay complete. A
+    canton with no municipal results at all (tacit election, canton did not exist) stays no_data.
+    """
+    gem = (obs["level"] == "gemeinde")
+    cand = gem & (obs["status"] == "no_data")
+    if not cand.any():
+        return obs
+    years = sorted(obs.loc[cand, "period"].unique())
+    kt = pd.concat([canton_at_election(int(y)).rename("kt").to_frame().assign(period=y) for y in years])
+    kt.index = kt.index.astype(str)
+    kt = kt.rename_axis("unit_id").reset_index()
+    g = obs.loc[gem, ["unit_id", "metric_id", "period", "status"]].merge(kt, on=["unit_id", "period"], how="left")
+    has = g[g["status"] == "ok"].groupby(["kt", "metric_id", "period"]).size().rename("n_ok").reset_index()
+    c = obs.loc[cand, ["unit_id", "metric_id", "period"]].reset_index().merge(kt, on=["unit_id", "period"], how="left")
+    c = c.merge(has, on=["kt", "metric_id", "period"], how="left")
+    idx = c.loc[c["n_ok"].fillna(0) > 0, "index"]
+    obs.loc[idx, "status"] = "not_published"
+    obs.loc[idx, "note"] = POOLED
+    return obs
+
+
 def observations() -> pd.DataFrame:
     obs = pd.concat([_parties(), _turnout()], ignore_index=True)
+    obs = _pooled(obs)
     obs.loc[(obs["status"] == "no_data") & obs["note"].isna(), "note"] = NO_RESULT
     return obs[OBS_COLUMNS]
