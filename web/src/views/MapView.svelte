@@ -10,11 +10,12 @@
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
+  import YearSlider from '../components/YearSlider.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
   import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData,
+    gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -58,6 +59,7 @@
   const metas = $derived(base.metas);
   const li = $derived(levelInfo(ld.level));
   const word = $derived(li.label.toLowerCase());
+  const aOne = $derived(`${/^[aeiou]/.test(li.one) ? 'an' : 'a'} ${li.one}`);
   const nUnits = $derived(ld.units.length);
 
   // ------------------------------------------------------------------ shade metric
@@ -70,15 +72,27 @@
     const s = sortedValues(colA.v);
     return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp()) : null;
   });
+  const yearPeriods = $derived(seriesPeriods(metaA, ld.level));
+  const yearEmpty = $derived(!!colA && refA?.file === null && !colA.v.some((x) => x !== null));
+  // national value: latest file, or the series row of Switzerland for a past year
   $effect(() => {
     const m = metaA;
+    const past = refA && refA.file === null ? refA.col.period : null;
     let live = true;
     chA = null;
-    loadCH(m.file).then((f) => {
-      if (!live) return;
-      const c = f?.metrics[m.id];
-      chA = c && c.v[0] !== null ? { value: c.v[0]!, period: c.period } : null;
-    });
+    if (past) {
+      loadSeries(m.id).then((s) => {
+        const k = s ? s.periods.indexOf(past) : -1;
+        const x = k >= 0 ? s!.levels.schweiz?.CH?.[k] : null;
+        if (live) chA = x !== null && x !== undefined ? { value: x, period: past } : null;
+      }).catch(() => {});
+    } else {
+      loadCH(m.file).then((f) => {
+        if (!live) return;
+        const c = f?.metrics[m.id];
+        chA = c && c.v[0] !== null ? { value: c.v[0]!, period: c.period } : null;
+      });
+    }
     return () => (live = false);
   });
 
@@ -441,10 +455,24 @@
           {:else if scaleA && colA}
             <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
               method={app.cls} onmethod={(m) => (app.cls = m)} compact={!desktop && !sheetOpen} />
+          {:else if colA && !scaleA}
+            <p class="why">No values for {colA.period} at this level.</p>
           {:else if refA === undefined}
             <p class="foot">Loading…</p>
           {/if}
         </div>
+        {#if yearPeriods.length > 1 && !whyA}
+          <div class="yr" class:extra={!app.year}>
+            <YearSlider periods={yearPeriods} value={app.year} onchange={(y) => (app.year = y)}>
+              {#if refA?.noSeries}{' · '}<span class="warn">no time series for this metric in this build; latest shown</span>
+              {:else if refA?.yearMissing}{' · '}<span class="warn">no {refA.yearMissing} value; latest shown</span>
+              {:else if yearEmpty}{' · '}<span class="warn">no value for {app.year} at this level</span>{/if}
+            </YearSlider>
+          </div>
+        {:else if app.year && !whyA}
+          <p class="foot yr">Year {app.year}: this metric has no time series {li.series ? '' : 'at this level '}— latest shown.
+            <button type="button" class="link" onclick={() => (app.year = null)}>Back to latest</button></p>
+        {/if}
       </section>
 
       <section class="extra">
@@ -530,7 +558,7 @@
         <Card name={ld.name[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)} />
       {:else}
-        <p class="foot hint">Tap or click {/^[aeiou]/.test(li.one) ? 'an' : 'a'} {li.one} for its value, rank and percentile.</p>
+        <p class="foot hint">Tap or click {aOne} for its value, rank and percentile.</p>
       {/if}
       <div class="tabs side-tabs" role="tablist" aria-label="Side panel">
         <button type="button" role="tab" aria-selected={deskTab === 'rank'} onclick={() => (app.tab = 'rank')}>Ranking</button>
@@ -566,6 +594,9 @@
   .muted { color: var(--muted); }
   .lab { margin-bottom: 6px; }
   .why { margin: 0; font-size: 0.8rem; }
+  .yr { margin-top: 10px; }
+  .warn { color: var(--text); }
+  .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: inherit; color: var(--text); }
   .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
   .row2 > .caps { flex: none; white-space: nowrap; }
   .row2 .seg button { padding: 3px 8px; font-size: 0.76rem; }
