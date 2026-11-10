@@ -33,6 +33,10 @@ CH_NOTE = "includes the single-seat (majority-election) cantons, as BFS's nation
 PARTY_PREFIX = "nrw_fw_"
 
 
+def _sql(text: str) -> str:
+    return "'" + text.replace("'", "''") + "'"
+
+
 def majority_cantons() -> dict[str, list[str]]:
     """Election year -> cantons with one seat (BFS cube 103). Fails loudly: the build must not skip D37."""
     from pipeline.sources.bfs_nrw.fetch import majority_cantons as mc
@@ -58,7 +62,7 @@ def merge_lps(con) -> int:
                    WHERE base_all.metric_id = 'nrw_fw_fdp' AND base_all.status = 'ok'
                      AND base_all.provenance = 'aggregated' AND base_all.unit_id = l.unit_id
                      AND base_all.level = l.level AND base_all.period = l.period""")
-    con.execute(f"""UPDATE base_all SET value = NULL, status = 'not_applicable', note = '{LPS_NOTE}'
+    con.execute(f"""UPDATE base_all SET value = NULL, status = 'not_applicable', note = {_sql(LPS_NOTE)}
                     WHERE metric_id = 'nrw_fw_lps' AND {above} AND {yr}""")
     return int(n)
 
@@ -79,10 +83,10 @@ def apply_majority(con, meta: pd.DataFrame, region_levels: list[str], majority: 
                      ("kanton", "SELECT kanton AS u, period FROM maj")):
         stats[lvl] = con.execute(f"""SELECT COUNT(*) FROM der d JOIN ({src}) k ON d.unit_id = k.u AND d.period = k.period
                                      WHERE d.level = '{lvl}' AND d.metric_id IN ({q}) AND d.status = 'ok'""").fetchone()[0]
-        con.execute(f"""UPDATE der SET status = 'majority_election', note = '{MAJ_NOTE}' FROM ({src}) k
+        con.execute(f"""UPDATE der SET status = 'majority_election', note = {_sql(MAJ_NOTE)} FROM ({src}) k
                         WHERE der.level = '{lvl}' AND der.metric_id IN ({q}) AND der.status = 'ok'
                           AND der.unit_id = k.u AND der.period = k.period""")
-    con.execute(f"""UPDATE der SET note = '{CH_NOTE}' WHERE level = 'schweiz' AND metric_id IN ({q})
+    con.execute(f"""UPDATE der SET note = {_sql(CH_NOTE)} WHERE level = 'schweiz' AND metric_id IN ({q})
                     AND status = 'ok' AND period IN (SELECT DISTINCT period FROM maj)""")
 
     # regions and typologies: proportional cantons only

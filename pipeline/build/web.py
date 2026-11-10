@@ -29,7 +29,10 @@ from pipeline.common import REFERENCE_DATE, interim_path, out_path
 from pipeline.harmonize.schema import SOURCES_DIR, load_metrics
 
 STATUS_CODES = {"ok": 0, "no_data": 1, "suppressed": 2, "not_published": 3, "not_covered": 4,
-                "not_applicable": 5}
+                "not_applicable": 5, "majority_election": 6}
+# statuses that count as covered when choosing the default period (D37 rule 1, generic): the party did not
+# stand / does not apply, a single-seat canton (value kept), a value suppressed for small numbers
+COVERED = ("ok", "not_applicable", "majority_election", "suppressed")
 PRECISION_CODES = {"exact": 0, "survey": 1, "modelled": 2, "boundary_estimate": 3}
 SERIES_LEVELS = ("gemeinde", "bezirk", "kanton", "schweiz")
 FLAG_BITS = {"small_base": 1, "small_count": 2, "majority_election": 4, "published_value": 8, "provisional": 16}
@@ -39,7 +42,8 @@ TYPOLOGY_COLS = {"grossregion": "REGCH", "sprachgebiet": "SPRGEB2020", "agglomer
                  "arbeitsmarktgebiet": "BAE2018", "stadt_land": "STALAN2020", "gemeindetyp": "GDETYP2020_9"}
 LEVEL_WORD = {"gemeinde": "municipality", "bezirk": "district", "kanton": "canton", "schweiz": "national"}
 # notes of ok values worth showing (fallback provenance, provisional results, reach details)
-OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published", re.I)
+OK_NOTE = re.compile(r"published|provisional|no arrival|nearest hub|computed from published|proportional-representation|"
+                     r"single-seat|counted under FDP", re.I)
 PUBLIC_TEXT = [(re.compile(r"\bPARTLY_UNVERIFIED\b"), "partly not yet confirmed"),
                (re.compile(r"\bUNVERIFIED\b"), "not yet confirmed"),
                (re.compile(r"\s*\(?brief rule 5\)?", re.I), "")]
@@ -190,7 +194,10 @@ STATUS_REASON = {"suppressed": "values suppressed (small numbers)", "not_publish
 def default_period(counts: list[tuple[str, int]], per_vote: bool = False) -> str:
     """Default ('latest') period (review round 1, defect 8): starting from the newest period, step back
     while a period has fewer than COVERAGE_MIN (95 %) of the units of the period before it.
-    counts: (period, n_ok) with n_ok > 0. Per-vote metrics: the newest vote."""
+    counts: (period, n_covered) for periods with at least one value; covered = a status in COVERED, so a
+    party that did not stand or a single-seat canton does not make an election look incomplete (D37).
+    Per-vote metrics: the newest vote. The period is chosen once per metric, on its primary level
+    (primary_level), and used at every level (D37 / all-data audit: no level silently shows an older year)."""
     c = sorted(counts, key=lambda x: _period_key(x[0]))
     if per_vote:
         return c[-1][0]
@@ -200,6 +207,17 @@ def default_period(counts: list[tuple[str, int]], per_vote: bool = False) -> str
     while i > 0 and c[i][1] < COVERAGE_MIN * c[i - 1][1]:
         i -= 1
     return c[i][0]
+
+
+LEVEL_ORDER = ["gemeinde", "bezirk", "kanton", *TYPOLOGY_COLS, "schweiz"]
+
+
+def primary_level(native: str, levels_with_values: list[str]) -> str | None:
+    """Level whose coverage decides a metric's default period: its native level if it has values there,
+    else the lowest level with values (municipality first)."""
+    if native in levels_with_values:
+        return native
+    return next((l for l in LEVEL_ORDER if l in levels_with_values), None)
 
 
 def membership_counts() -> dict:
@@ -231,9 +249,10 @@ def _reliability(mid: str, meta: pd.DataFrame, cfg: dict) -> dict | None:
     base = o.get("base") or (f[1][0] if f else None)
     if not count and not base:
         return None
-    return {"count": count, "base": base, "min_count": d.get("min_count", 20) if count else None,
-            "min_base": d.get("min_base", 1000) if base else None,
-            "years": f[2] if f else 1, "rule_en": d.get("rule_en"), "rule_de": d.get("rule_de")}
+    # per-metric thresholds and wording override the defaults (e.g. elections: valid ballots)
+    return {"count": count, "base": base, "min_count": o.get("min_count", d.get("min_count", 20)) if count else None,
+            "min_base": o.get("min_base", d.get("min_base", 1000)) if base else None,
+            "years": f[2] if f else 1, **{k: o.get(k, d.get(k)) for k in ("rule_en", "rule_de", "rule_fr")}}
 
 
 def _pooled_meta(md) -> dict | None:
@@ -318,6 +337,28 @@ def _notes_fields(notes: dict) -> dict:
     return {"notes": texts, "n": {str(i): k[t] for i, t in notes.items()}}
 
 
+def majority_metric_ids(meta: pd.DataFrame) -> set:
+    col = meta["majority_election"] if "majority_election" in meta else pd.Series(dtype=object)
+    return set(col[col.fillna(False).astype(bool)].index)
+
+
+def majority_rows(g: pd.DataFrame, lvl: str, majority: dict, meta: pd.DataFrame):
+    """(metric, unit, period) of rows in single-seat canton-years for metrics with majority_election."""
+    if not majority or lvl not in ("gemeinde", "bezirk", "kanton"):
+        return []
+    ids = majority_metric_ids(meta)
+    mem = membership()
+    kt_of = (dict(zip(mem["bfs_nr"].astype(str), mem["kanton"])) if lvl == "gemeinde" else
+             dict(zip(mem["bezirk"].astype(str), mem["kanton"])) if lvl == "bezirk" else None)
+    sub = g[g["metric_id"].isin(ids)]
+    out = []
+    for mid, u, per in zip(sub["metric_id"], sub["unit_id"], sub["period"]):
+        kt = u if kt_of is None else kt_of.get(u)
+        if kt in set(majority.get(str(per)[:4], [])):
+            out.append((mid, u, per))
+    return out
+
+
 def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, majority: dict,
                meta: pd.DataFrame) -> dict:
     """Per metric: {unit index: bitmask} (FLAG_BITS) for one level's default-period columns."""
@@ -336,16 +377,10 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
             add(mid, idx[u], FLAG_BITS["published_value"])
         if isinstance(nt, str) and "provisional" in nt:
             add(mid, idx[u], FLAG_BITS["provisional"])
-    # majority-election cantons (NRW)
-    if majority and lvl in ("gemeinde", "bezirk", "kanton"):
-        mem = membership()
-        kt_of = (dict(zip(mem["bfs_nr"].astype(str), mem["kanton"])) if lvl == "gemeinde" else
-                 dict(zip(mem["bezirk"].astype(str), mem["kanton"])) if lvl == "bezirk" else None)
-        nrw = g[g["metric_id"].str.startswith("nrw_") & (g["status"] == "ok")]
-        for mid, u, per in zip(nrw["metric_id"], nrw["unit_id"], nrw["period"]):
-            kt = u if kt_of is None else kt_of.get(u)
-            if kt in set(majority.get(str(per)[:4], [])):
-                add(mid, idx[u], FLAG_BITS["majority_election"])
+    # majority-election cantons (D37): every row of a party share / bloc / leaning metric in a single-seat
+    # canton-year, whatever its status (also "party did not stand"); turnout is not affected
+    for mid, u, per in majority_rows(g, lvl, majority, meta):
+        add(mid, idx[u], FLAG_BITS["majority_election"])
     # small numbers (D32)
     for mid, rule in reliability.items():
         gm = g[(g["metric_id"] == mid) & (g["status"] == "ok")]
@@ -464,30 +499,54 @@ def run() -> dict:
                                   "sources": excluded if not include_all else {}}, "excluded_sources.json")}
 
     # ---- per metric × level × period coverage (default-period rule F, coverage labels G)
-    cov = con.execute("""SELECT metric_id, level, period, COUNT(*) FILTER (WHERE status = 'ok') AS n_ok,
-                                COUNT(*) AS n_rows, mode(status) FILTER (WHERE status <> 'ok') AS gap_status
-                         FROM m GROUP BY 1, 2, 3""").df()
-    per_vote = cov["metric_id"].str.startswith("vote_")
+    cov_in = ", ".join(f"'{x}'" for x in COVERED)
+    cov = con.execute(f"""SELECT metric_id, level, period, COUNT(*) FILTER (WHERE status = 'ok') AS n_ok,
+                                 COUNT(*) FILTER (WHERE status IN ({cov_in})) AS n_cov,
+                                 COUNT(*) AS n_rows, mode(status) FILTER (WHERE status <> 'ok') AS gap_status
+                          FROM m GROUP BY 1, 2, 3""").df()
     cov["key"] = cov["period"].map(_period_key)
     n_units_level = pd.Series({lvl: n for lvl, n in membership_counts().items()})
-    lp_rows, incomplete, avail, gap_mode = [], {}, {}, {}
+    incomplete, avail, gap_mode, okp = {}, {}, {}, {}
     for (mid, lvl), g in cov.groupby(["metric_id", "level"], sort=False):
         g = g.sort_values("key")
         ok = g[g["n_ok"] > 0]
         if ok.empty:
             gap_mode[(mid, lvl)] = g["gap_status"].mode().iloc[0] if g["gap_status"].notna().any() else "no_data"
             continue
-        dflt = default_period(list(zip(ok["period"], ok["n_ok"])), str(mid).startswith("vote_"))
-        lp_rows.append((mid, lvl, dflt))
+        okp[(mid, lvl)] = ok
+        avail[(mid, lvl)] = ok["period"].iloc[-1]
+    # one default period per metric (D37 rule 1, generalised after the all-data audit): chosen on the
+    # metric's primary level and used at every level; a level without a value for it shows the gap
+    lp_rows, dflt_of, prim_of, before = [], {}, {}, {}
+    levels_of: dict[str, list[str]] = {}
+    for (mid, lvl) in okp:
+        levels_of.setdefault(mid, []).append(lvl)
+    for mid, lvls in levels_of.items():
+        prim = primary_level(str(meta.loc[mid, "native_level"]) if mid in meta.index else "gemeinde", lvls)
+        ok = okp[(mid, prim)]
+        dflt = default_period(list(zip(ok["period"], ok["n_cov"])), str(mid).startswith("vote_"))
+        dflt_of[mid], prim_of[mid] = dflt, prim
         newer = ok[ok["key"] > _period_key(dflt)]
         if len(newer):
-            of = int(n_units_level.get(lvl, ok["n_ok"].max()))
-            incomplete[(mid, lvl)] = {p: {"n": int(n), "of": of, "level": lvl,
-                                          "label_en": f"incomplete: {n:,} of {of:,} {UNIT_PLURAL_EN.get(lvl, 'units')}",
-                                          "label_de": f"unvollständig: {n:,} von {of:,} {UNIT_PLURAL_DE.get(lvl, 'Einheiten')}".replace(",", "'")}
-                                      for p, n in zip(newer["period"], newer["n_ok"])}
-        avail[(mid, lvl)] = ok["period"].iloc[-1]
+            of = int(n_units_level.get(prim, ok["n_ok"].max()))
+            incomplete[(mid, prim)] = {p: {"n": int(n), "of": of, "level": prim,
+                                           "label_en": f"incomplete: {n:,} of {of:,} {UNIT_PLURAL_EN.get(prim, 'units')}",
+                                           "label_de": f"unvollständig: {n:,} von {of:,} {UNIT_PLURAL_DE.get(prim, 'Einheiten')}".replace(",", "'")}
+                                       for p, n in zip(newer["period"], newer["n_ok"])}
+        for lvl in lvls:
+            lp_rows.append((mid, lvl, dflt))
+            o = okp[(mid, lvl)]
+            before[(mid, lvl)] = default_period(list(zip(o["period"], o["n_ok"])), str(mid).startswith("vote_"))
     lp = pd.DataFrame(lp_rows, columns=["metric_id", "level", "p"])
+    # audit numbers: metric × level defaults that are not the newest period with values at that level
+    n_old = sum(1 for k, v in before.items() if v != avail[k])
+    n_new = sum(1 for (mid, lvl) in before if dflt_of[mid] != avail[(mid, lvl)])
+    n_mixed_old = sum(1 for mid, lvls in levels_of.items() if len({before[(mid, l)] for l in lvls}) > 1)
+    written_stats = {"metric_levels": len(before), "default_not_newest_before": n_old, "default_not_newest_after": n_new,
+                     "metrics_with_mixed_defaults_before": n_mixed_old, "metrics_with_mixed_defaults_after": 0,
+                     "after_details": sorted(f"{mid}@{lvl}: {dflt_of[mid]} (newest there {avail[(mid, lvl)]})"
+                                             for (mid, lvl) in before if dflt_of[mid] != avail[(mid, lvl)])}
+    print("default periods:", {k: v for k, v in written_stats.items() if k != "after_details"})
     con.register("lp_df", lp)
     con.execute("CREATE TABLE lp AS SELECT * FROM lp_df")
 
@@ -522,6 +581,7 @@ def run() -> dict:
     reliability = {k: v for k, v in reliability.items() if v}
     i18n = load_i18n()
     majority = majority_by_year()
+    maj_ids = majority_metric_ids(meta)
     vote_titles = load_vote_titles()
 
     per = con.execute("""SELECT metric_id, list(DISTINCT period) AS periods,
@@ -540,8 +600,8 @@ def run() -> dict:
         md = meta.loc[r.metric_id]
         periods = sorted(r.periods, key=_period_key)
         levels = sorted(r.levels) if r.levels is not None else []
-        prim = next((l for l in all_levels if l in levels), None)
-        dflt = lp_by.get((r.metric_id, prim), periods[-1])
+        prim = prim_of.get(r.metric_id) or next((l for l in all_levels if l in levels), None)
+        dflt = dflt_of.get(r.metric_id, periods[-1])
         newest = max((avail[(r.metric_id, l)] for l in levels if (r.metric_id, l) in avail), key=_period_key,
                      default=periods[-1])
         cv_level, cv = covered.get(r.metric_id, (prim, []))
@@ -571,7 +631,9 @@ def run() -> dict:
             "unavailable_levels": unav or None,
             "reliability": reliability.get(r.metric_id),
             "pooled": _pooled_meta(md),
-            "majority_cantons": majority if str(r.metric_id).startswith("nrw_") else None,
+            "majority_cantons": majority if r.metric_id in maj_ids else None,
+            "keywords": md.get("keywords") if isinstance(md.get("keywords"), str) else None,
+            "until": int(md["until"]) if "until" in md and pd.notna(md.get("until")) else None,
             "per_vote": str(r.metric_id).startswith("vote_"),
             "vote_index": "votes/index.json" if str(r.metric_id).startswith("vote_") else None,
             "latest_title": vote_titles.get(dflt) if str(r.metric_id).startswith("vote_") else None,
