@@ -170,3 +170,5 @@ Spatial diagnostics (Moran's I, LISA, spatial lag) stay on the backlog (option C
 
 ### D35. Hosting changed: GitHub Pages from this repository (owner, 2026-11-10)
 Replaces the separate-repository plan in D33. Owner: "Do it on the current github." The built site goes to the `gh-pages` branch of Atlas: only the built site, a single commit replaced on each deploy (`make deploy`, scripts/deploy_pages.sh). Pages has to be enabled by the owner (Settings → Pages → branch gh-pages, folder /). A private repository needs a paid GitHub plan for Pages; on a free plan the repository has to be public. Before making it public: the closed PR #1 still references the old initial commit with the owner's personal email (GitHub keeps PR refs); GitHub Support can purge it.
+
+Live 2026-11-10: https://joakim-hersche.github.io/Atlas/ (GitHub Pages from `gh-pages`; first deploy took about 3½ minutes). Repository made public by the owner; `main` history rewritten so only no-reply addresses appear (merge commits of PR #2/#3).
