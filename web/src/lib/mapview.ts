@@ -30,9 +30,49 @@ function hatchImage(bg: string, line: string): ImageData {
   return g.getImageData(0, 0, c.width, c.height);
 }
 
+/** A small square map control that resets the view to the whole of Switzerland. It sits under the
+ *  zoom buttons on desktop and stays visible on phones (where the zoom buttons are hidden). */
+class ResetControl implements maplibregl.IControl {
+  private el: HTMLDivElement | null = null;
+  constructor(private onReset: () => void, private label: () => string) {}
+  onAdd() {
+    const el = document.createElement('div');
+    el.className = 'maplibregl-ctrl maplibregl-ctrl-group gb-reset';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'gb-reset-btn';
+    b.setAttribute('aria-label', this.label());
+    b.title = this.label();
+    // four corner brackets ("fit to extent")
+    b.innerHTML =
+      '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">' +
+      '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>';
+    b.addEventListener('click', () => this.onReset());
+    el.appendChild(b);
+    this.el = el;
+    return el;
+  }
+  /** re-read the label (language switch) */
+  relabel() {
+    const b = this.el?.querySelector('button');
+    if (b) {
+      b.setAttribute('aria-label', this.label());
+      b.title = this.label();
+    }
+  }
+  onRemove() {
+    this.el?.remove();
+    this.el = null;
+  }
+}
+
 export interface MapEvents {
   onSelect: (unitIndex: number | null) => void;
   onHover?: (unitIndex: number | null, point: { x: number; y: number } | null) => void;
+  /** reset button pressed: fit Switzerland (the view knows its padding) */
+  onReset?: () => void;
+  /** label of the reset button, in the UI language */
+  resetLabel?: () => string;
 }
 
 /** A proportional symbol: unit index, position and radius in px at the reference zoom. */
@@ -68,6 +108,7 @@ export class UnitMap {
   private display: Display = 'choropleth';
   private symbolsOn = false;
   private symbolStyle: 'filled' | 'hollow' = 'filled';
+  private resetCtl: ResetControl | null = null;
 
   constructor(container: HTMLElement, base: Base, ev: MapEvents, opts: { nav?: boolean } = {}) {
     this.map = new maplibregl.Map({
@@ -87,6 +128,10 @@ export class UnitMap {
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation();
     if (opts.nav !== false) this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    if (ev.onReset) {
+      this.resetCtl = new ResetControl(ev.onReset, ev.resetLabel ?? (() => 'Show all of Switzerland'));
+      this.map.addControl(this.resetCtl, 'top-right');
+    }
     this.map.addControl(
       new maplibregl.AttributionControl({ compact: true, customAttribution: 'Boundaries: BFS generalized boundaries' }),
       'bottom-right',
@@ -270,6 +315,11 @@ export class UnitMap {
   }
   setHover(i: number | null) {
     if (this.isReady) this.flag('hov', i);
+  }
+
+  /** Re-read the label of the reset button (language switch). */
+  relabel() {
+    this.resetCtl?.relabel();
   }
 
   /** Re-read the colour tokens. */

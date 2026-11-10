@@ -8,6 +8,7 @@
 import type { Method } from './classify';
 
 export type ReachMode = 'off' | 'pt' | 'car';
+export type Lang = 'en' | 'de';
 export type Display = 'choropleth' | 'symbols';
 export type CatField = 'kanton' | 'sprachgebiet' | 'gemeindetyp' | 'stadt_land' | 'agglomeration' | 'grossregion';
 export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 'stadt_land', 'agglomeration', 'grossregion'];
@@ -32,6 +33,8 @@ export interface ViewState {
   t: number;
   sel: string | null;
   tab: string | null;
+  /** UI language (English default) */
+  lang: Lang;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -43,7 +46,7 @@ export const DEFAULT_HUB = 'zuerich';
 export const DEFAULT_LEVEL = 'gemeinde';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -113,9 +116,31 @@ export function parseHash(hash: string): ViewState {
     t: t === null ? 60 : Math.max(0, Math.min(T_MAX, t)),
     sel: get('sel') ?? null,
     tab: get('tab') ?? null,
+    lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
     preset,
     params,
   };
+}
+
+/** Language chosen earlier on this device (localStorage can throw or be empty: then English). */
+export function storedLang(): Lang {
+  try {
+    return localStorage.getItem('gb-lang') === 'de' ? 'de' : 'en';
+  } catch {
+    return 'en';
+  }
+}
+export function storeLang(l: Lang): void {
+  try {
+    localStorage.setItem('gb-lang', l);
+  } catch {
+    /* private mode or blocked storage: the hash still carries it */
+  }
+}
+
+/** Route and the page's own keys: a change of these is a new history entry (Back returns). */
+export function routeKey(s: { route: string; params: Record<string, string> }): string {
+  return [s.route, s.params.id ?? '', s.params.ids ?? ''].join('|');
 }
 
 export function readHash(): ViewState {
@@ -144,6 +169,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   }
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);
+  if (s.lang !== 'en') add('lang', s.lang);
   for (const [k, v] of Object.entries(s.params)) add(k, v);
   return out.length ? '#' + out.map(([k, v]) => `${k}=${enc(v)}`).join('&') : '';
 }
@@ -151,6 +177,9 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
 export function writeHash(s: Omit<ViewState, 'preset'>): void {
   const h = serializeHash(s);
   if (h !== location.hash && !(h === '' && location.hash === '')) {
-    history.replaceState(null, '', h === '' ? location.pathname + location.search : h);
+    const url = h === '' ? location.pathname + location.search : h;
+    // a new page (route or unit) gets its own history entry; view tweaks replace the current one
+    if (routeKey(s) !== routeKey(parseHash(location.hash))) history.pushState(null, '', url);
+    else history.replaceState(null, '', url);
   }
 }

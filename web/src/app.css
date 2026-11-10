@@ -69,6 +69,8 @@ button, select, input { font: inherit; color: inherit; }
 .maplibregl-ctrl-group button { width: 26px !important; height: 26px !important; }
 .maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
 .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
+.gb-reset-btn { display: grid !important; place-items: center; color: var(--text); cursor: pointer; }
+.gb-reset-btn:hover { background: var(--panel-2) !important; }
 .maplibregl-ctrl-attrib { font-family: var(--font-sans); font-size: 10px; color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: var(--muted); }
 .maplibregl-cooperative-gesture-screen { font-family: var(--font-sans); font-size: 0.9rem; }

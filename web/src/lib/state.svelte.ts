@@ -4,7 +4,7 @@
 // from app.params, or navigate with app.go('profile', { id: '261' }).
 import type { Method } from './classify';
 import {
-  DEFAULT_HUB, DEFAULT_LEVEL, parseHash, readHash, writeHash, type Display, type Filter, type ReachMode, type ViewState,
+  DEFAULT_HUB, DEFAULT_LEVEL, parseHash, readHash, storeLang, writeHash, type Display, type Filter, type Lang, type ReachMode, type ViewState,
 } from './hash';
 
 export class AppState {
@@ -25,6 +25,11 @@ export class AppState {
   /** open tab of the side column / phone sheet */
   tab = $state<string | null>(null);
   params = $state<Record<string, string>>({});
+  lang = $state<Lang>('en');
+  /** one-line note after a level switch replaced a metric that does not exist there (not in the hash) */
+  levelNote = $state<{ text: string; level: string; metric: string } | null>(null);
+  /** fit the map to the selected unit once when the map view opens (set by 'show on map') */
+  focusSel = false;
   /** reach animation running (the hash is not written meanwhile) */
   playing = $state(false);
   /** bare '#word' preset from the initial link (consumed by the compare view) */
@@ -50,6 +55,7 @@ export class AppState {
     this.sel = v.sel;
     this.tab = v.tab;
     this.params = v.params;
+    this.lang = v.lang;
     this.preset = v.preset;
   }
 
@@ -57,7 +63,7 @@ export class AppState {
     return {
       route: this.route, level: this.level, metric: this.metric, metricB: this.metricB, size: this.size,
       display: this.display, cls: this.cls, year: this.year, filters: $state.snapshot(this.filters) as Filter[],
-      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, params: { ...this.params },
+      hub: this.hub, reach: this.reach, t: this.t, sel: this.sel, tab: this.tab, lang: this.lang, params: { ...this.params },
     };
   }
 
@@ -83,6 +89,7 @@ export function syncHash(): () => void {
   const stopEffect = $effect.root(() => {
     $effect(() => {
       const s = app.snapshot();
+      storeLang(s.lang);
       if (app.playing) return;
       clearTimeout(timer);
       timer = setTimeout(() => writeHash(s), 150);
