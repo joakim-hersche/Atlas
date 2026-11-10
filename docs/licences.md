@@ -20,9 +20,9 @@ Terms pages fetched with curl from the allowed hosts; excerpts (URL, date, quote
 | `bafu_protected_areas` (parks, biotopes) | held back | STAC 'proprietary' without licence link for parks, moors, floodplains, dry grasslands; BLN part stays cleared | – |
 | `astra_accidents` | held back | STAC licence link is only http://disclaimer.admin.ch (unreadable); ASTRA pages give legal bases, no reuse terms | – |
 | `bafu_air` | held back | No licence link; BAFU pages state "kostenloser Download" (availability, not a licence) | – |
-| `bag_premiums` | held back | priminfo: "Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar"; no terms on priminfo/BAG; opendata.swiss unreadable | – |
-| `estv_tax_burden` | held back | Calculator links only https://www.admin.ch/gov/de/start/rechtliches.html (unreadable). Old publication colophon (2012) "Abdruck – ausser für kommerzielle Nutzung – unter Angabe der Quelle gestattet" covers that PDF only | – |
-| `estv_tax_multipliers` | held back | Same calculator; ESTV Steuerfüsse xlsx carries no colophon | – |
+| `bag_premiums` | held back (re-checked 2026-11-10) | priminfo: "Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar"; no terms on priminfo/BAG; opendata.swiss unreadable. See re-check below | – |
+| `estv_tax_burden` | held back (re-checked 2026-11-10) | Calculator links only https://www.admin.ch/gov/de/start/rechtliches.html (unreadable). The quoted "Wiedergabe unter Angabe der Quelle gestattet" belongs to the DBST files, not to these exports. See re-check below | – |
+| `estv_tax_multipliers` | held back (re-checked 2026-11-10) | Same calculator; ESTV Steuerfüsse xlsx carries no colophon | – |
 | `kt_finance` | held back (mixed) | See cantonal table: LU, SO, AG, VD need permission; every metric mixes cantons | – |
 | `kt_pupils` | held back (mixed) | ZH indicators 143/147/149 are not in the ZH OGD catalogue | – |
 | `kt_unemployment` | held back (mixed) | VD needs permission (ZH 107 and GE cleared) | – |
@@ -79,6 +79,38 @@ Terms pages fetched with curl from the allowed hosts; excerpts (URL, date, quote
 
 - **ARE building zones**: 2012 municipal results are not public and 2017 unbuilt reserves may not be published per municipality — both excluded by the connector.
 - **Cantonal hazard maps** (`kt_hazards`): NE permits commercial use only with permission; GR and SG carry no licence statement on geodienste.ch.
+
+## Re-check after persona review round 1 (2026-11-10)
+
+Four reviewers asked for the tax burden and multipliers; one quoted the ESTV colophon "Wiedergabe unter Angabe der Quelle gestattet". Excerpts are in the session scratchpad `samples/licences/estv_bag_recheck_2026-11-10.txt`. The decisions are in `pipeline/licence_review.yaml` (`status: blocked` with `missing:`).
+
+**ESTV tax burden and multipliers (`estv_tax_burden`, `estv_tax_multipliers`): still held back.**
+- The quoted colophon is real, but it is in the **direct federal tax statistics** files (`estv_dbst`, sheet "Erläuterungen": "© Eidgenössische Steuerverwaltung ESTV, Oktober 2025 / Wiedergabe unter Angabe der Quelle für Nutzung gestattet."). It is not in the calculator exports or the tax burden files.
+- The calculator (swisstaxcalculator.estv.admin.ch) links only to https://www.admin.ch/gov/de/start/rechtliches.html. www.admin.ch is blocked by the session proxy (CONNECT 403), so the binding text could not be read.
+- These carry no reuse statement: https://www.estv.admin.ch/de/steuerbelastung-in-den-gemeinden, https://www.estv.admin.ch/de/steuerfuesse-abzuege-und-tarife-der-schweiz, https://www.estv.admin.ch/de/impressum-estv, the Steckbrief "Steuerbelastung in der Schweiz" (12.06.2025), the exported xlsx files, the 2018 Steuerbelastung xlsx and the Steuerfüsse 1995–2026 xlsx.
+- The only colophon in the series is in the 2012 PDF (© BFS 2013): "Abdruck – ausser für kommerzielle Nutzung – unter Angabe der Quelle gestattet". It covers that publication only.
+- **Missing:** a reuse statement for the calculator exports, either the admin.ch legal notice (needs www.admin.ch allowed for one read) or a written ESTV confirmation.
+- **Metric caveats once cleared:** keep `precision: modelled`. Values are for one standard case, reformed church member and no wealth. Multipliers are comparable within a canton only (already in the connector). The export rounds tax amounts to whole CHF, so the federal/cantonal/municipal/church split carries up to ±0.001 percentage points of rounding.
+
+**Cleared alternative (BFS OPEN-BY, ESTV as source).** BFS republishes ESTV tax burden figures under its own OPEN-BY terms:
+- *Statistik der Schweizer Städte 2026*, dataflows `DF_SSV_TAX_BRDN_*` on disseminate.stats.swiss: 180 cities, tax year 2024, five household types. https://statistik.admin.ch/de/asset/36503269 reads "Nutzungsbedingungen OPEN-BY Freie Nutzung – Quellenangabe ist Pflicht" and "Quelle(n): Eidgenössische Steuerverwaltung".
+- BFS Statatlas, estimated average tax burden by labour market region, 2010–2025: https://statistik.admin.ch/de/asset/36679820 is OPEN-BY.
+
+Both are partial (cities or regions only); they are recorded in the catalog as `bfs_ssv_tax_burden` and `bfs_atlas_tax_burden_amr`.
+
+**BAG premiums (`bag_premiums`): still held back.** priminfo says "Prämiendaten sind als Excel- und CSV-Datei unter opendata.swiss verfügbar" and links https://opendata.swiss/de/dataset/health-insurance-premiums (403). priminfo has no imprint or terms page (404), and the BAG pages link "Rechtliches" to admin.ch (403). **Missing:** the opendata.swiss licence of that dataset (one read of opendata.swiss would settle it).
+
+**Draft permission request (not sent; for the owner).** To steuerstatistik@estv.admin.ch:
+
+> Betreff: Weiterverwendung von Exporten des Steuerrechners (Steuerbelastung, Steuerfüsse)
+>
+> Guten Tag
+>
+> Ich betreibe die nichtkommerzielle, öffentlich zugängliche Website «Gemeindebank». Sie vergleicht die Schweizer Gemeinden mit offenen Daten. Ich möchte die Gesamtsteuerbelastung (Exporte «income-tax-values», Steuerjahre 2010–2026, fünf Standardfälle) und die Steuerfüsse (Export «income-tax-rates») je Gemeinde aus dem Steuerrechner der ESTV zeigen, mit der Quellenangabe «Quelle: ESTV – Steuerrechner» und einem Link.
+>
+> Darf ich diese Werte unter Angabe der Quelle wiedergeben und als Datei zum Herunterladen anbieten? Gilt dafür derselbe Vermerk wie für die Statistik der direkten Bundessteuer («Wiedergabe unter Angabe der Quelle für Nutzung gestattet»)?
+>
+> Freundliche Grüsse
 
 ## Open (licence stated by the publisher)
 
