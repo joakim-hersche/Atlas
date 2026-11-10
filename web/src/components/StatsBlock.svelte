@@ -1,5 +1,6 @@
 <script lang="ts">
   // Summary statistics of the shaded metric across municipalities, plus the selected unit.
+  import { sourceHref } from '../lib/nav';
   import { partialCantons, type MetricMeta, type Source } from '../lib/data';
   import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues } from '../lib/classify';
 
@@ -49,7 +50,7 @@
       </tbody>
     </table>
     <p class="foot">
-      {publisher} · {fmtPeriod(period)} · {meta.precision}{cov ? ` · partial: ${cov.length} of 26 cantons` : ''}{ch ? '' : ' · no national value published'}
+      <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {meta.precision}{cov ? ` · partial: ${cov.length} of 26 cantons` : ''}{ch ? '' : ' · no national value published'}
     </p>
   {/if}
 
@@ -88,4 +89,5 @@
   .sname { margin: 3px 0 0; font-size: 0.95rem; }
   .pbar { position: relative; height: 6px; margin: 8px 0 2px; background: var(--border); }
   .pbar span { position: absolute; top: -3px; width: 3px; height: 12px; background: var(--accent); transform: translateX(-1px); }
+  .foot a { color: inherit; }
 </style>
