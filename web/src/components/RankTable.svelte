@@ -4,6 +4,7 @@
   import { ml, t } from '../lib/i18n.svelte';
   import { fmtNumber, fmtPeriod } from '../lib/classify';
   import type { MetricMeta } from '../lib/data';
+  import { copyText, downloadCSV, slug, toTSV, type Cell } from '../lib/export';
 
   export interface RankColumn {
     key: string;
@@ -25,8 +26,12 @@
     onselect: (i: number) => void;
     /** zoom the map to the listed units */
     onzoom?: () => void;
+    /** unit ids (export) */
+    ids?: string[];
+    /** source name of a metric's source id (export) */
+    sourceName?: (sourceId: string) => string;
   }
-  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect, onzoom }: Props = $props();
+  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect, onzoom, ids, sourceName }: Props = $props();
 
   const PAGE = 100;
   let sortKey = $state<string | null>(null);
@@ -81,6 +86,32 @@
     }
     return out;
   });
+  // ------------------------------------------------------------------ export (D32)
+  /** all listed rows in the current order: id, name, canton, then value, period and source per column */
+  function table(): Cell[][] {
+    const head: Cell[] = ['id', t('rt.name'), t('cat.kanton')];
+    for (const c of columns) {
+      const lb = c.label ?? ml(c.meta);
+      head.push(c.meta.unit ? `${lb} [${c.meta.unit}]` : lb, `${lb} – ${t('ex.period')}`, `${lb} – ${t('ex.source')}`);
+    }
+    const out: Cell[][] = [head];
+    for (const i of sorted) {
+      const r: Cell[] = [ids?.[i] ?? '', names[i], cantons[i] || ''];
+      for (const c of columns) r.push(c.v[i] ?? null, c.period, sourceName ? sourceName(c.meta.source) : c.meta.source);
+      out.push(r);
+    }
+    return out;
+  }
+  let copied = $state<string | null>(null);
+  function csv() {
+    const k = columns.find((c) => c.key === key);
+    downloadCSV(table(), `gemeindebank-${slug(k ? (k.label ?? ml(k.meta)) : 'ranking')}.csv`);
+  }
+  async function copy() {
+    const ok = await copyText(toTSV(table()));
+    copied = ok ? t('ex.copied', { n: fmtNumber(sorted.length, 0) }) : t('ex.copyFail');
+    setTimeout(() => (copied = null), 2500);
+  }
   const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? '–' : fmtNumber(x, m.decimals));
   const arrow = (k: string) => (k === key ? (desc ? ' ↓' : ' ↑') : '');
 </script>
@@ -119,7 +150,12 @@
   {#if shown.length < sorted.length}
     <button type="button" class="more" onclick={() => (limit += 400)}>{t('rt.more', { n: fmtNumber(Math.min(400, sorted.length - shown.length), 0), of: fmtNumber(sorted.length - shown.length, 0) })}</button>
   {/if}
-  <p class="foot">{t('rt.foot', { units: unitWord })}</p>
+  <div class="ex">
+    <button type="button" onclick={csv} title={t('ex.csvT')}>{t('ex.csv')}</button>
+    <button type="button" onclick={copy} title={t('ex.copyT')}>{t('ex.copy')}</button>
+    {#if copied}<span class="ok" role="status">{copied}</span>{/if}
+  </div>
+  <p class="foot">{t('rt.foot', { units: unitWord })} {t('ex.note', { n: fmtNumber(rows.length, 0) })}</p>
 </div>
 
 <style>
@@ -147,4 +183,7 @@
   tr.sel .rowbtn { color: var(--accent); font-weight: 700; }
   .more { margin-top: 8px; width: 100%; padding: 6px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-weight: 500; }
   .foot { margin: 6px 0 0; }
+  .ex { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .ex button { border: 1px solid var(--ink); background: var(--panel); padding: 4px 10px; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: var(--text); }
+  .ok { font-size: 0.74rem; color: var(--text); }
 </style>

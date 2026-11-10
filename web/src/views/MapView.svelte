@@ -13,7 +13,10 @@
   import SizeLegend from '../components/SizeLegend.svelte';
   import YearSlider from '../components/YearSlider.svelte';
   import StatsBlock from '../components/StatsBlock.svelte';
-  import { buildScale, fmtNumber, fmtValue, isDiverging, sortedValues } from '../lib/classify';
+  import { buildScale, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
+  import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
+  import { describeFilter } from '../lib/filters';
+  import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     gapReason, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -477,6 +480,43 @@
     zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5);
   }
 
+  // ------------------------------------------------------------------ PNG export (D32)
+  let pngBusy = $state(false);
+  async function mapPNG() {
+    if (!view || !scaleA || !colA || pngBusy) return;
+    pngBusy = true;
+    try {
+      const img = await grabMap(view.map);
+      const layers = [img];
+      const rc = reachOn ? (mapEl.querySelector('canvas.reach-canvas') as HTMLCanvasElement | null) : null;
+      if (rc) layers.push(rc);
+      const legend: LegendItem[] = legendItems(scaleA, metaA);
+      if (scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
+      if (filtered) legend.push({ colour: mute(scaleA.classColours[2] ?? '#6290bb', token('--map-bg'), 0.88), label: t('ex.notMatching') });
+      const lo = scaleA.lo, hi = scaleA.hi;
+      const gradient = scaleA.method === 'continuous'
+        ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
+        : null;
+      const src = base.sources.get(metaA.source);
+      const sub = [metaA.unit, fmtPeriod(colA.period), levelName(ld.level), t(`lg.m.${app.cls}`)].filter(Boolean).join(' · ');
+      const extra: string[] = [];
+      if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
+      if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
+      const blob = await figurePNG({
+        layers, scale: img.width / Math.max(1, mapEl.clientWidth), title: ml(metaA), subtitle: [sub, ...extra].join('\n'),
+        legend: gradient ? [] : legend, gradient,
+        credits: [
+          `${t('lg.source')}: ${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
+          `${t('ex.boundaries')} · ${t('ex.made')}`,
+        ],
+        link: t('ex.view', { url: location.href }),
+      });
+      downloadBlob(blob, `gemeindebank-${slug(ml(metaA))}-${slug(colA.period)}.png`);
+    } finally {
+      pngBusy = false;
+    }
+  }
+
   // ------------------------------------------------------------------ card and tooltip
   const card = $derived.by(() => {
     if (selIdx === null || !refA || whyA) return null;
@@ -535,7 +575,8 @@
 {#snippet rankSnip()}
   {#if rankCols.length}
     <RankTable columns={rankCols} rows={rankRows} names={ld.name} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
-      sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList}
+      sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} ids={ld.units}
+      sourceName={(id) => base.sources.get(id)?.publisher.split(' (')[0] ?? id}
       onzoom={filtered && match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>
@@ -585,6 +626,9 @@
             <p class="why">No values for {colA.period} at this level.</p>
           {:else if refA === undefined}
             <p class="foot">{t('status.loading')}</p>
+          {/if}
+          {#if scaleA && colA && !whyA}
+            <p class="exrow"><button type="button" class="exb" onclick={mapPNG} disabled={pngBusy} title={t('ex.pngT')}>{pngBusy ? t('ex.pngWait') : t('ex.pngMap')}</button></p>
           {/if}
           {#if countHint}
             <p class="hintc">{t('mv.countHint', { metric: ml(metaA) })}
@@ -772,6 +816,9 @@
   .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
+  .exrow { margin: 6px 0 0; }
+  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 3px 9px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
+  .exb:disabled { opacity: 0.5; cursor: progress; }
   .hintc { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--accent); padding-left: 6px; }
   .flegend {
     position: absolute; z-index: 4; left: 10px; bottom: 26px; width: min(340px, calc(100% - 20px)); background: var(--panel);

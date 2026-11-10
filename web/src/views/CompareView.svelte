@@ -12,6 +12,7 @@
   import { loadReachIndex, loadUnits, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
   import { catOptions, combine, describeFilter, evalFilter } from '../lib/filters';
   import { hrefFor } from '../lib/nav';
+  import { bareAttribution } from '../lib/export';
   import { CH_BOUNDS, UnitMap, syncCameras } from '../lib/mapview';
   import { app } from '../lib/state.svelte';
   import { levelName, t, levelWord } from '../lib/i18n.svelte';
@@ -296,7 +297,9 @@
     {#if metaB && colA && colB && regions && !whyA && !whyB}
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
         region={regions.idx} regionNames={regions.names} {pop} names={ld.name} cantons={ld.canton}
-        hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
+        hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only}
+        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}: ${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
+        note={[levelName(ld.level), filtered ? `${t('tab.filters')}: ${filterText} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})` : ''].filter(Boolean).join(' · ')} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
       <p class="muted loading">{t('cv.needBoth')}</p>
     {:else}

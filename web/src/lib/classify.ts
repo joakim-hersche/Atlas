@@ -399,3 +399,18 @@ export function slopeParts(b: number, logX: boolean, logY: boolean): SlopeText |
   const st = stepFor(b);
   return { kind: 'lin', value: sign(b * st), step: fmtNumber(st, 0) };
 }
+
+/** Class swatches and range labels of a classed scale (as in the legend), for exports. */
+export function legendItems(scale: Scale, meta: MetricMeta | { decimals: number }): { colour: string; label: string }[] {
+  if (scale.method === 'continuous') return [];
+  const out = scale.classColours.map((c, k) => {
+    const lo = k === 0 ? scale.min : scale.breaks[k - 1];
+    const hi = k === scale.breaks.length ? scale.max : scale.breaks[k];
+    const single = scale.counts[k] > 0 && scale.classMin[k] === scale.classMax[k] ? scale.classMin[k] : null;
+    return { colour: c, lo, hi, single };
+  });
+  return out.map((c, k) => {
+    const after = k > 0 && out[k - 1].single !== null && fmtTick(c.lo, meta) === fmtTick(out[k - 1].single!, meta);
+    return { colour: c.colour, label: c.single !== null ? fmtTick(c.single, meta) : `${after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}` };
+  });
+}

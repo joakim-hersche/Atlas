@@ -8,6 +8,7 @@
     fmtNumber, fmtPeriod, fmtR, fmtTick, fmtValue, logTicks, niceTicks, pearson, slopeParts, sortedValues, spearman, wantsLog,
   } from '../lib/classify';
   import { regionColours, token } from '../lib/theme';
+  import { downloadBlob, figurePNG, slug, type LegendItem } from '../lib/export';
 
   interface Props {
     xMeta: MetricMeta;
@@ -31,10 +32,14 @@
     mask?: Uint8Array | null;
     /** true: only the matches are drawn */
     only?: boolean;
+    /** source lines for the PNG export */
+    credits?: string[];
+    /** extra subtitle line for the PNG export (filters, level) */
+    note?: string;
   }
   let {
     xMeta, yMeta, x, y, xPeriod, yPeriod, region, regionNames, pop, names, cantons, hover, sel, onhover, onselect,
-    unitWord = 'municipalities', unitOne = 'municipality', mask = null, only = false,
+    unitWord = 'municipalities', unitOne = 'municipality', mask = null, only = false, credits = [], note = '',
   }: Props = $props();
 
   let sizeByPop = $state(false);
@@ -291,6 +296,25 @@
     if (p.kind === 'pct') return tr('sc.perPct', { v: p.value, step: p.step, xu: uw(xMeta) });
     return tr('sc.per', { v: p.value, yu: uw(yMeta), step: p.step, xu: uw(xMeta) });
   });
+  let pngBusy = $state(false);
+  async function png() {
+    if (!canvas || pngBusy) return;
+    pngBusy = true;
+    try {
+      const legend: LegendItem[] = regionNames.flatMap((n, k) => (regionCount[k] ? [{ colour: cols[k], label: `${n} (${fmtNumber(regionCount[k], 0)})` }] : []));
+      if (mask && !only) legend.push({ colour: token('--border'), label: tr('sc.notMatch') });
+      const st = stats ? `n = ${fmtNumber(stats.n, 0)} · Pearson r = ${fmtR(stats.fit.r)} · Spearman ρ = ${fmtR(stats.rho)} · ${tr('sc.rw')} ${fmtR(stats.rw)} · ${tr('sc.slope')}: ${slopeText}` : '';
+      const blob = await figurePNG({
+        layers: [canvas], scale: canvas.width / Math.max(1, w),
+        title: `${ml(yMeta)} (B) × ${ml(xMeta)} (A)`,
+        subtitle: [`A: ${ml(xMeta)}${xMeta.unit ? ` (${xMeta.unit})` : ''}, ${fmtPeriod(xPeriod)}${logX ? ', log' : ''} · B: ${ml(yMeta)}${yMeta.unit ? ` (${yMeta.unit})` : ''}, ${fmtPeriod(yPeriod)}${logY ? ', log' : ''}`, st, note, tr('sc.across', { units: unitWord })].filter(Boolean).join('\n'),
+        legend, credits: [...credits, tr('ex.made')], link: tr('ex.view', { url: location.href }),
+      });
+      downloadBlob(blob, `gemeindebank-${slug(ml(yMeta))}-vs-${slug(ml(xMeta))}.png`);
+    } finally {
+      pngBusy = false;
+    }
+  }
   const fmt = (v: number | null, m: MetricMeta) => (v === null ? 'no data' : fmtValue(v, m));
 </script>
 
@@ -302,6 +326,7 @@
         <label><input type="checkbox" bind:checked={sizeByPop} /> {tr('sc.sizePop')}</label>
         <label><input type="checkbox" bind:checked={logX} /> log x</label>
         <label><input type="checkbox" bind:checked={logY} /> log y</label>
+        <button type="button" class="exb" onclick={png} disabled={pngBusy} title={tr('ex.pngT')}>{pngBusy ? tr('ex.pngWait') : 'PNG'}</button>
       </span>
     </div>
     <div class="plot" bind:clientWidth={w} bind:clientHeight={h}>
@@ -364,6 +389,8 @@
   .opts { display: flex; gap: 12px; font-size: 0.78rem; color: var(--text); }
   .opts label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
   .opts input { accent-color: var(--ink); margin: 0; }
+  .exb { border: 1px solid var(--ink); background: var(--panel); padding: 1px 8px; cursor: pointer; font-size: 0.74rem; font-weight: 600; color: var(--text); }
+  .exb:disabled { opacity: 0.5; }
   .plot { position: relative; flex: 1; min-height: 220px; }
   canvas { position: absolute; inset: 0; touch-action: pan-y; cursor: crosshair; }
   .tip {
