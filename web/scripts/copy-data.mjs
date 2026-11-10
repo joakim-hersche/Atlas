@@ -39,12 +39,17 @@ const FILES = dedupe([
   ['web/search.json', true],
   ['web/identity.json', true],
   ['web/reach_times.json', false],
+  // plain-language glossary (pipeline/i18n/glossary.yaml) and the vote picker index
+  ['web/glossary.json', false],
+  ['web/votes/index.json', false],
   ['web/history.json', true],
   ['web/neighbours.json', true],
   // every theme file of every level (D23, loaded on first use), incl. the national values
   ...latestDirs.flatMap(dirFiles),
-  // time series per metric for the year slider (loaded on demand); votes/ is not copied
+  // time series per metric for the year slider (loaded on demand)
   ...dirFiles('web/series'),
+  // one file per federal vote (vote picker, loaded on demand)
+  ...dirFiles('web/votes'),
   // reach: all hubs, both modes; car reach can be held back by the licence gate (the app handles
   // its absence)
   ['reach/zuerich_pt.json', true],

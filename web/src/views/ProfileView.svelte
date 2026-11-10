@@ -8,6 +8,10 @@
       'p.notFound': 'No place with the id “{id}”.',
       'p.population': 'Population',
       'p.area': 'Area',
+      'p.landArea': 'Land area',
+      'p.inclLakes': '{a} incl. lakes',
+      'p.noLakes': 'without lakes',
+      'p.densSub': 'per km² land area',
       'p.elevation': 'Elevation',
       'p.elevRange': 'lowest {lo} · highest {hi}',
       'p.density': 'Density',
@@ -31,7 +35,7 @@
       'p.partOf': 'Part of',
       'p.otherNames': 'Other names',
       'p.metrics': 'All metrics',
-      'p.rankNote': 'Rank 1 = highest value (lowest where lower is better). The red mark shows the percentile among all {units} with data.',
+      'p.rankNote': 'Rank 1 = highest value (lowest where lower is better). Equal values share the best rank and are marked “tied”. The red mark shows the percentile among all {units} with data; a pale band spans a tie group.',
       'p.showAll': 'All {n} metrics',
       'p.showLess': 'Headline metrics only',
       'p.moreN': '{n} more',
@@ -45,7 +49,13 @@
       'p.reachPT': 'PT',
       'p.reachCar': 'Car',
       'p.reachHub': 'Hub',
-      'p.reachNote': 'Minutes. Public transport: own routing on the national timetable, weekday morning (service date {d}), wait at the start included. Car: ARE national passenger transport model (NPVM), average weekday.',
+      'p.reachSt': 'Station',
+      'p.reachDoor': 'Door',
+      'p.fromStation': 'Public transport from {st} station towards each hub, in minutes.',
+      'p.fromStationOut': 'No station in this municipality: public transport from {st}, the nearest station, towards each hub, in minutes.',
+      'p.noStation': 'No stop in this municipality: station times are not available.',
+      'p.theHub': 'the hub',
+      'p.reachDate': 'Timetable of {d}.',
       'p.reachNone': '–',
       'p.reachNoneNote': '– = no travel time in the data for this municipality.',
       'p.reachHigher': 'Travel times are computed per municipality; open a municipality of this {one} for its times.',
@@ -54,6 +64,8 @@
       'p.similar': 'Similar places',
       'p.similarNote': 'Nearest {units} by z-scores of: {list}. Log scale for density, jobs and income; missing values skipped.',
       'p.similarNone': 'Not enough values to compare.',
+      'p.distH': 'Number = distance: 0 is identical on these metrics; two places picked at random are about 1.4 apart.',
+      'p.distT': 'Distance: root mean square of the z-score differences',
       'p.history': 'Boundary history',
       'p.historyNone': 'No mergers, splits, renames or canton or district changes since 1960.',
       'p.historyOnly': 'Boundary history is recorded for municipalities.',
@@ -72,6 +84,10 @@
       'p.notFound': 'Kein Ort mit der Kennung «{id}».',
       'p.population': 'Bevölkerung',
       'p.area': 'Fläche',
+      'p.landArea': 'Landfläche',
+      'p.inclLakes': '{a} mit Seen',
+      'p.noLakes': 'ohne Seen',
+      'p.densSub': 'Einw. pro km² Landfläche',
       'p.elevation': 'Höhe',
       'p.elevRange': 'tiefster Punkt {lo} · höchster {hi}',
       'p.density': 'Dichte',
@@ -95,7 +111,7 @@
       'p.partOf': 'Gehört zu',
       'p.otherNames': 'Weitere Namen',
       'p.metrics': 'Alle Kennzahlen',
-      'p.rankNote': 'Rang 1 = höchster Wert (tiefster, wo tiefer besser ist). Die rote Marke zeigt das Perzentil unter allen {units} mit Daten.',
+      'p.rankNote': 'Rang 1 = höchster Wert (tiefster, wo tiefer besser ist). Gleiche Werte teilen sich den besten Rang und sind als «gleichauf» markiert. Die rote Marke zeigt das Perzentil unter allen {units} mit Daten; ein heller Balken umfasst gleichauf liegende Werte.',
       'p.showAll': 'Alle {n} Kennzahlen',
       'p.showLess': 'Nur Hauptkennzahlen',
       'p.moreN': '{n} weitere',
@@ -109,7 +125,13 @@
       'p.reachPT': 'ÖV',
       'p.reachCar': 'Auto',
       'p.reachHub': 'Zentrum',
-      'p.reachNote': 'Minuten. ÖV: eigene Berechnung auf dem nationalen Fahrplan, Werktagmorgen (Fahrplantag {d}), Wartezeit am Start inbegriffen. Auto: Nationales Personenverkehrsmodell des ARE (NPVM), durchschnittlicher Werktag.',
+      'p.reachSt': 'Bahnhof',
+      'p.reachDoor': 'Tür',
+      'p.fromStation': 'ÖV ab Bahnhof {st} zu jedem Zentrum, in Minuten.',
+      'p.fromStationOut': 'Kein Bahnhof in dieser Gemeinde: ÖV ab {st}, dem nächsten Bahnhof, zu jedem Zentrum, in Minuten.',
+      'p.noStation': 'Keine Haltestelle in dieser Gemeinde: keine Bahnhofzeiten.',
+      'p.theHub': 'das Zentrum',
+      'p.reachDate': 'Fahrplan vom {d}.',
       'p.reachNone': '–',
       'p.reachNoneNote': '– = keine Reisezeit in den Daten für diese Gemeinde.',
       'p.reachHigher': 'Reisezeiten gibt es pro Gemeinde; Gemeinden dieser Einheit ({one}) öffnen.',
@@ -118,6 +140,8 @@
       'p.similar': 'Ähnliche Orte',
       'p.similarNote': 'Nächste {units} nach z-Werten von: {list}. Dichte, Arbeitsplätze und Einkommen logarithmiert; fehlende Werte übersprungen.',
       'p.similarNone': 'Zu wenige Werte für einen Vergleich.',
+      'p.distH': 'Zahl = Abstand: 0 ist auf diesen Kennzahlen identisch; zwei zufällig gewählte Orte liegen etwa 1,4 auseinander.',
+      'p.distT': 'Abstand: quadratisches Mittel der Differenzen der z-Werte',
       'p.history': 'Gebietsgeschichte',
       'p.historyNone': 'Seit 1960 keine Fusionen, Teilungen, Umbenennungen, Kantons- oder Bezirkswechsel.',
       'p.historyOnly': 'Die Gebietsgeschichte wird für Gemeinden geführt.',
@@ -148,16 +172,19 @@
   // reason, D21), neighbours, similar places, travel times to the hubs and the boundary history.
   // Data loads on demand: the level's core file (+ geography for area), other theme files when opened.
   import Locator from '../components/Locator.svelte';
+  import Term from '../components/Term.svelte';
+  import { glossKeyOf } from '../lib/glossary.svelte';
   import PctBar from '../components/PctBar.svelte';
   import Sparkline from '../components/Sparkline.svelte';
   import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
-  import { isDe, levelName, ml, t, themeName } from '../lib/i18n.svelte';
+  import { coverageLabel, loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta, type UnitRow } from '../lib/data';
+  import { historyFr, isDe, levelName, ml, t, themeName, tiedText, unitName } from '../lib/i18n.svelte';
   import { hasMap, hrefFor, profileHref, showOnMap, sourceHref } from '../lib/nav';
   import {
     hideAltNames, loadHistory, loadIdentity, loadNeighbours, loadReachTimes, loadRows, loadSearch, parseRef, refOf,
     type HistoryFile, type Identity, type NeighboursFile, type ReachTimes, type SearchIndex,
   } from '../lib/places';
+  import { methodText } from '../lib/pt';
   import { entryOf, loadPlaceLevel, similarPlaces, SIMILAR_METRICS, themeBlocks, type Entry, type PlaceLevel } from '../lib/profile';
   import { app } from '../lib/state.svelte';
 
@@ -228,7 +255,7 @@
 
   const idx = $derived(pl ? (pl.index.get(unit.id) ?? null) : null);
   const row = $derived(rows?.get(ref));
-  const name = $derived(pl && idx !== null ? pl.name[idx] : (row?.name ?? unit.id));
+  const name = $derived(placeName(unit.level, unit.id, pl && idx !== null ? pl.name[idx] : (row?.name ?? unit.id)));
   const blocks = $derived(themeBlocks(base, unit.level));
   const unitsWord = $derived(levelWord(unit.level));
 
@@ -249,8 +276,13 @@
     const out: { k: string; v: string; sub?: string }[] = [];
     const pop = val('pop_total');
     if (pop?.value != null) out.push({ k: t('p.population'), v: fmtNumber(pop.value, 0), sub: pop.period });
+    // header area: land area without lakes (contract C); the total incl. lakes as the second line
+    const land = base.metas.has('geo_area_land_ha') ? val('geo_area_land_ha') : undefined;
     const area = val('geo_area_total_ha');
-    if (area?.value != null) out.push({ k: t('p.area'), v: `${fmtNumber(area.value / 100, area.value < 1000 ? 2 : 1)} ${t('p.km2')}` });
+    const km2 = (ha: number) => `${fmtNumber(ha / 100, ha < 1000 ? 2 : 1)} ${t('p.km2')}`;
+    if (land?.value != null)
+      out.push({ k: t('p.landArea'), v: km2(land.value), sub: area?.value != null && area.value > land.value ? t('p.inclLakes', { a: km2(area.value) }) : t('p.noLakes') });
+    else if (area?.value != null) out.push({ k: t('p.area'), v: km2(area.value) });
     const el = val('geo_elev_mean');
     if (el?.value != null) {
       const lo = val('geo_elev_min')?.value;
@@ -261,7 +293,7 @@
       });
     }
     const d = val('geo_pop_density');
-    if (d?.value != null) out.push({ k: t('p.density'), v: `${fmtNumber(d.value, 0)}`, sub: isDe() ? 'Einw. pro km² Landfläche' : 'per km² land area' });
+    if (d?.value != null) out.push({ k: t('p.density'), v: `${fmtNumber(d.value, 0)}`, sub: t('p.densSub') });
     return out;
   });
 
@@ -280,7 +312,7 @@
     const add = (k: string, level: string, id: unknown) => {
       if (typeof id !== 'string' || !id) return;
       const u = rows!.get(refOf(level, id));
-      if (u) out.push({ k, ref: refOf(level, id), name: u.name });
+      if (u) out.push({ k, ref: refOf(level, id), name: unitName(u) });
     };
     if (unit.level !== 'kanton') add(t('p.canton'), 'kanton', r.kanton);
     if (unit.level === 'gemeinde') {
@@ -330,20 +362,35 @@
   const neigh = $derived.by(() => {
     const ids = neighbours?.levels[unit.level]?.[unit.id];
     if (!ids || !rows) return null;
-    return ids.map((id) => ({ ref: refOf(unit.level, id), name: rows!.get(refOf(unit.level, id))?.name ?? id, kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
+    return ids.map((id) => ({ ref: refOf(unit.level, id), name: placeName(unit.level, id, rows!.get(refOf(unit.level, id))?.name ?? id), kt: rows!.get(refOf(unit.level, id))?.kanton ?? '' }))
       .sort((a, b) => a.name.localeCompare(b.name, 'de'));
   });
   const similar = $derived(pl && idx !== null ? similarPlaces(pl, idx) : null);
+  // D31: station time towards the hub first (when the build has it), then door to door, then car
+  const hasSt = $derived(!!reach?.pt_station);
+  const reachK = $derived(reach && unit.level === 'gemeinde' ? reach.units.indexOf(unit.id) : -1);
   const reachRows = $derived.by(() => {
-    if (!reach || unit.level !== 'gemeinde') return null;
-    const k = reach.units.indexOf(unit.id);
-    if (k < 0) return null;
+    if (!reach || reachK < 0) return null;
+    const k = reachK;
     return reach.hubs
-      .map(([slug, hub]) => ({ hub, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null }))
-      .sort((a, b) => (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
+      .map(([slug, hub]) => ({
+        hub, st: reach!.pt_station?.[slug]?.[k] ?? null, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null,
+        note: reach!.notes?.pt_station?.[slug]?.[String(k)] ?? null,
+      }))
+      .sort((a, b) => (hasSt ? (a.st ?? 1e9) - (b.st ?? 1e9) : 0) || (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
+  });
+  const station = $derived(reach && reachK >= 0 ? (reach.main_station?.[reachK] ?? null) : null);
+  const reachWhy = $derived.by(() => {
+    if (!reach?.reasons || reachK < 0) return [];
+    const out: { what: string; why: string }[] = [];
+    for (const [key, what] of [['pt_station', t('pt.st')], ['pt', t(hasSt ? 'pt.dd' : 'rc.pt')], ['car', t('common.car')]] as const) {
+      const why = reach.reasons[key]?.[String(reachK)];
+      if (why) out.push({ what, why });
+    }
+    return out;
   });
   const events = $derived(unit.level === 'gemeinde' && history ? (history.units[unit.id] ?? []) : null);
-  const evType = (k: string) => (isDe() ? HISTORY_DE[k] : history?.types[k]) ?? k;
+  const evType = (k: string) => (isDe() ? HISTORY_DE[k] : app.lang === 'fr' ? historyFr(k) : history?.types[k]) ?? history?.types[k] ?? k;
   const names = (xs: [string, string][]) => xs.map(([id, n]) => `${n} (${id})`).join(', ');
 
   const publisher = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
@@ -362,10 +409,11 @@
   {@const e = entry(m)}
   <div class="mrow" class:gap={e && e.value === null}>
     <div class="ml">
-      <span class="lbl">{ml(m)}</span>
+      <span class="lbl">{ml(m)}<Term k={glossKeyOf(m)} /></span>
       <span class="tags">
         {#if e}<span class="tag">{precisionLabel(e.precision)}</span><span class="sep">·</span>{/if}
-        {#if e?.partial}<span class="tag warn">{t('p.partial', { n: e.partial.length })}</span><span class="sep">·</span>{/if}
+        {#if e?.partial}<span class="tag warn">{coverageLabel(m)}</span><span class="sep">·</span>{/if}
+        {#if e?.regional}<span class="tag warn">{t('rg.tag', { level: levelName(e.regional, false) })}</span><span class="sep">·</span>{/if}
         <a class="tag src" href={sourceHref(m.source)} title={base.sources.get(m.source)?.title ?? ''}>{publisher(m)}</a>
       </span>
     </div>
@@ -378,12 +426,13 @@
       <div class="mv nd"><span class="hatch"></span> {t('p.noData')}<span class="yr">{fmtPeriod(e.period)}</span></div>
       <div class="mr reason">{e.gap}</div><div class="ms"></div>
     {:else}
-      <div class="mv"><span class="v">{fmtValue(e.value, m)}</span><span class="yr">{fmtPeriod(e.period)}</span></div>
+      <div class="mv"><span class="v">{fmtValue(e.value, m)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span><span class="yr">{fmtPeriod(e.period)}</span>
+        {#each e.flags as f}<span class="fx">{f}</span>{/each}{#if e.note}<span class="fx">{e.note}</span>{/if}</div>
       <div class="mr">
         {#if e.rank}
-          <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}</span>
-          {#if e.rankKt}<span class="rk num muted">{t('p.rankKt', { r: fmtNumber(e.rankKt.rank, 0), n: fmtNumber(e.rankKt.n, 0), kt: pl!.canton[idx!] })}</span>{/if}
-          <PctBar pct={e.rank.pct} label="P{Math.round(e.rank.pct)}" />
+          <span class="rk num">{t('p.rankCH', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{e.partial ? ` ${t('p.withData')}` : ''}{tiedText(e.rank)}</span>
+          {#if e.rankKt}<span class="rk num muted">{t('p.rankKt', { r: fmtNumber(e.rankKt.rank, 0), n: fmtNumber(e.rankKt.n, 0), kt: pl!.canton[idx!] })}{tiedText(e.rankKt)}</span>{/if}
+          <PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />
         {/if}
       </div>
       <div class="ms"><Sparkline meta={m} level={unit.level} id={unit.id} /></div>
@@ -391,7 +440,7 @@
   </div>
 {/snippet}
 
-<div class="pg" bind:this={scroller}>
+<main class="pg" id="main" tabindex="-1" bind:this={scroller}>
   <div class="wrap">
     <nav class="crumbs">
       <a href={hrefFor('map')}>← {t('p.back')}</a>
@@ -419,7 +468,7 @@
           {#if partOf.length || row?.n_gemeinden}
             <dl class="part">
               {#each partOf as p}
-                <div><dt>{p.k}</dt><dd><a href={profileHref(p.ref)}>{p.name}</a></dd></div>
+                <div><dt>{p.k}{#if p.k === t('p.amr')}<Term k="labour_market_area" />{:else if p.k === t('p.agglo')}<Term k="agglomeration" />{/if}</dt><dd><a href={profileHref(p.ref)}>{p.name}</a></dd></div>
               {/each}
               {#if row?.n_gemeinden}<div><dt>{t('p.members')}</dt><dd class="num">{fmtNumber(row.n_gemeinden, 0)}</dd></div>{/if}
             </dl>
@@ -469,16 +518,29 @@
             {#if unit.level !== 'gemeinde'}
               <p class="foot">{t('p.reachHigher', { one: levelName(unit.level, false) })}</p>
             {:else if reachRows}
+              {#if hasSt}<p class="st">{station ? t(station[2] === false ? 'p.fromStationOut' : 'p.fromStation', { st: station[0] }) : t('p.noStation')}</p>{/if}
               <table class="reach">
-                <thead><tr><th>{t('p.reachHub')}</th><th class="n">{t('p.reachPT')}</th><th class="n">{t('p.reachCar')}</th></tr></thead>
+                <thead><tr><th>{t('p.reachHub')}</th>
+                  {#if hasSt}<th class="n" title={t('pt.st')}>{t('p.reachSt')}</th><th class="n" title={t('pt.dd')}>{t('p.reachDoor')}</th>
+                  {:else}<th class="n">{t('p.reachPT')}</th>{/if}
+                  <th class="n">{t('p.reachCar')}</th></tr></thead>
                 <tbody>
                   {#each reachRows as r}
-                    <tr><td>{r.hub}</td><td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
+                    <tr><td>{r.hub}</td>
+                      {#if hasSt}<td class="n num strong" title={r.note ?? undefined}>{r.st ?? t('p.reachNone')}{#if r.note}<sup>*</sup>{/if}</td>{/if}
+                      <td class="n num">{r.pt ?? t('p.reachNone')}</td><td class="n num">{r.car ?? t('p.reachNone')}</td></tr>
                   {/each}
                 </tbody>
               </table>
-              <p class="foot">{t('p.reachNote', { d: reach?.service_date ?? '' })}{reachRows.some((r) => r.pt === null || r.car === null) ? ' ' + t('p.reachNoneNote') : ''}
-                <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
+              <ul class="methods foot">
+                {#if hasSt}<li><strong>{t('p.reachSt')}:</strong> {methodText('ptst', t('p.theHub'), reach, true)}</li>{/if}
+                <li><strong>{hasSt ? t('p.reachDoor') : t('p.reachPT')}:</strong> {methodText('pt', t('p.theHub'), reach, hasSt)}</li>
+                <li><strong>{t('p.reachCar')}:</strong> {methodText('car', t('p.theHub'), reach, hasSt)}</li>
+                {#each reachWhy as w}<li>– {w.what}: {w.why}</li>{/each}
+                {#each reachRows.filter((r) => r.note) as r}<li>* {r.hub}: {r.note}</li>{/each}
+                {#if !reachWhy.length && reachRows.some((r) => r.pt === null || r.car === null || (hasSt && r.st === null))}<li>{t('p.reachNoneNote')}</li>{/if}
+              </ul>
+              <p class="foot">{t('p.reachDate', { d: reach?.service_date ?? '' })} <a href={sourceHref('reach_metrics')}>{t('p.sources')}</a></p>
             {:else}
               <p class="foot">…</p>
             {/if}
@@ -496,13 +558,14 @@
           <section>
             <h2>{t('p.similar')}</h2>
             {#if similar && similar.list.length && pl}
+              <p class="dh foot">{t('p.distH')}</p>
               <ol class="sim">
                 {#each similar.list as s}
-                  <li><a href={profileHref(refOf(unit.level, pl.units[s.i]))}>{pl.name[s.i]}</a>{#if pl.canton[s.i] && unit.level === 'gemeinde'}<span class="muted"> {pl.canton[s.i]}</span>{/if}
-                    <span class="d num" title="distance (RMS of z-score differences)">{fmtNumber(s.d, 2)}</span></li>
+                  <li><a href={profileHref(refOf(unit.level, pl.units[s.i]))}>{placeName(unit.level, pl.units[s.i], pl.name[s.i])}</a>{#if pl.canton[s.i] && unit.level === 'gemeinde'}<span class="muted"> {pl.canton[s.i]}</span>{/if}
+                    <span class="d num" title={t('p.distT')}>{fmtNumber(s.d, 2)}</span></li>
                 {/each}
               </ol>
-              <p class="foot">{t('p.similarNote', { units: unitsWord, list: similar.used.map((id) => ml(base.metas.get(id))).join(', ') })}</p>
+              <p class="foot">{t('p.similarNote', { units: unitsWord, list: similar.used.map((id) => ml(base.metas.get(id))).join(', ') })}<Term k="z_score_similarity" /></p>
             {:else if similar}
               <p class="foot">{t('p.similarNone')}</p>
             {/if}
@@ -539,9 +602,10 @@
       </footer>
     {/if}
   </div>
-</div>
+</main>
 
 <style>
+  .pg:focus { outline: none; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 12px 24px 40px; }
   .crumbs { font-size: 0.82rem; margin-bottom: 10px; }
@@ -592,8 +656,12 @@
   .tag.warn { color: var(--text); }
   a.tag { color: var(--faint); }
   .mv { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-  .v { font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* long units (French) wrap inside the value column instead of running into the label */
+  .v { font-weight: 700; font-size: 0.98rem; font-variant-numeric: tabular-nums; white-space: normal; text-align: right; min-width: 0; overflow-wrap: break-word; }
+  .mv { min-width: 0; }
   .yr { font-size: 0.7rem; color: var(--muted); }
+  .fl { font-size: 0.62rem; color: var(--accent); margin-left: 2px; }
+  .fx { font-size: 0.68rem; color: var(--text); text-align: right; line-height: 1.25; max-width: 16em; }
   .nd { color: var(--muted); font-size: 0.8rem; flex-direction: row; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
   .nd .yr { flex-basis: 100%; text-align: right; }
   .mr { display: flex; flex-direction: column; font-size: 0.74rem; line-height: 1.3; min-width: 0; }
@@ -609,9 +677,13 @@
   .reach th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 0; border-bottom: 1px solid var(--rule); }
   .reach td { padding: 3px 0; border-bottom: 1px solid var(--border); }
   .reach .n { text-align: right; width: 56px; }
+  .reach .strong { font-weight: 700; }
+  .st { margin: 4px 0 0; font-size: 0.8rem; }
+  .methods { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 3px; }
   .chips { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; font-size: 0.84rem; }
   .sim, .hist { list-style: none; margin: 6px 0 0; padding: 0; font-size: 0.84rem; }
   .sim li { display: flex; gap: 6px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .dh { margin: 4px 0 0; }
   .sim .d { margin-left: auto; color: var(--muted); font-size: 0.74rem; }
   .hist li { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .hd { font-weight: 700; font-size: 0.8rem; }

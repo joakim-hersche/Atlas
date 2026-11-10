@@ -100,6 +100,9 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
   const out: SearchHit[] = [];
   const digits = /^\d+$/.test(q);
   if (digits) {
+    // an exact BFS number comes first (it would otherwise be cut off behind the postal-code prefixes)
+    const u = ix.byRef.get(q);
+    if (u) out.push({ ref: u.ref, name: u.name, level: 'gemeinde', kanton: u.kanton, bfs: true });
     // postal codes: exact code first (all its municipalities, largest share first), then by prefix
     if (q.length >= 2 && q.length <= 4) {
       const codes = ix.plzKeys.filter((k) => k.startsWith(q)).slice(0, 6);
@@ -116,9 +119,7 @@ export function search(ix: SearchIndex, query: string, limit = 12, pop?: Map<str
         if (out.length >= limit) break;
       }
     }
-    const u = ix.byRef.get(q);
-    if (u) out.push({ ref: u.ref, name: u.name, level: 'gemeinde', kanton: u.kanton, bfs: true });
-    return out.slice(0, limit + 1);
+    return out.slice(0, limit);
   }
   const words = q.split(' ');
   const scored: { u: SearchUnit; s: number; via?: string }[] = [];
@@ -196,9 +197,20 @@ export interface ReachTimes {
   units: string[];
   hubs: [string, string][];
   service_date: string;
+  /** door-to-door public transport (towards the hub once the D31 data is built; hub-outward before) */
   pt: Record<string, (number | null)[]>;
   car: Record<string, (number | null)[]>;
   periods: Record<string, string>;
+  /** D31 headline: timetable time from the municipality's main station to the hub station */
+  pt_station?: Record<string, (number | null)[]>;
+  /** per unit: [station name, DIDOK number, inside the municipality] or null */
+  main_station?: ([string, number, boolean?] | null)[];
+  /** per measure, hub and unit index: how a value was obtained (e.g. no arrival by 08:30) */
+  notes?: Record<string, Record<string, Record<string, string>>>;
+  /** one-line method texts per measure and language */
+  methods?: Record<string, Record<string, string>>;
+  /** per measure: unit index -> why there is no time */
+  reasons?: Record<string, Record<string, string>>;
 }
 
 function once<T>(path: string) {

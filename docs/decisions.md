@@ -142,3 +142,31 @@ Owner: "Contrast is still an issue. I want a white background Swiss style websit
 
 ### D30. Checkpoint 4 closed: design approved (owner, 2026-11-10)
 Owner: "I am happy with the design so far." The skeleton's look (D29), the Compare mode and the phone bottom sheet (chevron handle) are the base for the full UI (brief 6.1). Build order: map features first (all hubs, size by, stacked filters, reach filter, levels, year slider, ranking table), then pages (profile, compare places, search with postal codes, sources page, German UI). The preview stays a private artifact until the owner decides on public hosting.
+
+## Phase 4 — persona review round 1 (2026-11-10)
+
+Nine persona reviewers explored the app freely; synthesis in `docs/review_round1.md`.
+
+### D31. Public-transport time shown: station time towards the hub, plus door-to-door (owner, 2026-11-10)
+Reviewers did not trust the PT times because they did not match the SBB app. The headline figure becomes the timetable journey time from the municipality's main station **towards** the hub, for morning arrivals at the hub (median over an arrival window). The second line is door-to-door, also towards the hub: from inhabited hectares, walking to the best stop within 1.5 km. The method is stated in one line in the app. The growing-lines animation can stay hub-outward.
+
+### D32. Next build after the defect fixes (owner, 2026-11-10)
+Export (CSV of ranking/filtered table, PNG of maps/charts with a source line), a vote picker (all federal votes with titles, national and cantonal results, scale centred on 50 %), small-number flags (unstable rates marked, pooled multi-year rates for births, migration and social assistance), and a French UI. All defects in `docs/review_round1.md` are fixed first, without further owner decisions.
+
+### D33. Hosting: separate public site repository (owner, 2026-11-10)
+The Atlas repository stays private. The built site is pushed to a separate public repository created by the owner and served by GitHub Pages. Work is merged into `main` via pull request first (PR #2). The initial commit was rewritten to the owner's GitHub no-reply address at the owner's request; `main` and the work branch were force-pushed.
+
+### D34. Regression panel, option B (owner, 2026-11-10)
+In the browser, OLS on municipalities (or any level):
+- Pick an outcome and 1–6 explanatory variables, with optional log transforms.
+- Controls: language region or canton fixed effects.
+- Optional population weights; option to drop values flagged as unreliable (D32).
+- Canton-clustered standard errors.
+- Coefficient table with confidence intervals and standardized coefficients; R², n, and units dropped and why.
+- A residual map ("more X than predicted"), plus CSV export.
+- Ecological-fallacy and spatial-autocorrelation caveats in plain words.
+
+Spatial diagnostics (Moran's I, LISA, spatial lag) stay on the backlog (option C).
+
+### D35. Hosting changed: GitHub Pages from this repository (owner, 2026-11-10)
+Replaces the separate-repository plan in D33. Owner: "Do it on the current github." The built site goes to the `gh-pages` branch of Atlas: only the built site, a single commit replaced on each deploy (`make deploy`, scripts/deploy_pages.sh). Pages has to be enabled by the owner (Settings → Pages → branch gh-pages, folder /). A private repository needs a paid GitHub plan for Pages; on a free plan the repository has to be public. Before making it public: the closed PR #1 still references the old initial commit with the owner's personal email (GitHub keeps PR refs); GitHub Support can purge it.

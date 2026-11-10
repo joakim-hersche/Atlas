@@ -2,10 +2,11 @@
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
   import { ml, t as tr } from '../lib/i18n.svelte';
+  import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
-  import { partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
+  import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
   import {
-    axisDomain, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
+    axisDomain, unitOf, fmtNumber, fmtPeriod, fmtTick, logTicks, METHOD_LABEL, niceTicks, quantile, sortedValues, wantsLog,
     type Method, type Scale,
   } from '../lib/classify';
 
@@ -65,25 +66,32 @@
     const edges = [dom.lo, ...scale.breaks.filter((b) => b > dom.lo && b < dom.hi), dom.hi];
     return edges.slice(0, -1).map((e, k) => ({ x: px(e), w: Math.max(0.5, px(edges[k + 1]) - px(e)), fill: scale.colourOf((e + edges[k + 1]) / 2) }));
   });
-  const classes = $derived(
+  const classes = $derived.by(() => {
+    const out = rawClasses();
+    // the class right after a single-value class starts just above that value: "> 0–6", not "0–6"
+    return out.map((c, k) => ({ ...c, after: k > 0 && out[k - 1].single !== null && fmtTick(c.lo, meta) === fmtTick(out[k - 1].single!, meta) }));
+  });
+  const rawClasses = () => (
     scale.method === 'continuous'
       ? []
       : scale.classColours.map((c, k) => ({
           c,
           lo: k === 0 ? scale.min : scale.breaks[k - 1],
           hi: k === scale.breaks.length ? scale.max : scale.breaks[k],
+          /** a class holding one value only (a block of ties, e.g. 0) is labelled with that value */
+          single: scale.counts[k] > 0 && scale.classMin[k] === scale.classMax[k] ? scale.classMin[k] : null,
           n: scale.counts[k],
-        })),
-  );
+        })));
   const nGap = $derived(nUnits - scale.n);
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
-  const unitText = $derived(meta.unit || tr('fp.value'));
+  const unitText = $derived(unitOf(meta) || tr('fp.value'));
 </script>
 
 <div class="legend" class:compact>
   <div class="head">
     <span class="unit">{unitText}<span class="per">&nbsp;· {fmtPeriod(period)}{log ? ` · ${tr('lg.log')}` : ''}</span></span>
+    <span class="mterm"><Term k={method === 'quantile' ? 'quantile' : method === 'equal' ? 'equal_intervals' : 'continuous'} /></span>
     <div class="seg" role="radiogroup" aria-label={tr('lg.class')}>
       {#each ['quantile', 'equal', 'continuous'] as const as m}
         <button type="button" role="radio" aria-checked={method === m} title={tr(`lg.m.${m}`)} onclick={() => onmethod(m)}>
@@ -105,7 +113,7 @@
           {#if b > dom.lo && b < dom.hi}<line x1={px(b)} x2={px(b)} y1="4" y2={H + 7} class="brk" />{/if}
         {/each}
       {/if}
-      {#if scale.diverging && dom.lo < 0 && dom.hi > 0}<line x1={px(0)} x2={px(0)} y1="0" y2={H + 7} class="zero" />{/if}
+      {#if scale.diverging && dom.lo < scale.centre && dom.hi > scale.centre}<line x1={px(scale.centre)} x2={px(scale.centre)} y1="0" y2={H + 7} class="zero" />{/if}
       {#if Number.isFinite(median)}
         <path d="M{px(median) - 3.5},0 h7 l-3.5,4.5 z" class="md" />
         <text x={Math.min(PAD + W - 2, Math.max(PAD + 2, px(median) + 6))} y="7" class="mdl" text-anchor={px(median) > PAD + W - 70 ? 'end' : 'start'}
@@ -123,7 +131,7 @@
       {#each classes as c}
         <div class="cls">
           <span class="sw" style="background:{c.c}"></span>
-          <span class="rng num">{fmtTick(c.lo, meta)}–{fmtTick(c.hi, meta)}</span>
+          <span class="rng num">{c.single !== null ? fmtTick(c.single, meta) : `${c.after ? '> ' : ''}${fmtTick(c.lo, meta)}–${fmtTick(c.hi, meta)}`}</span>
           <span class="cn num">{fmtNumber(c.n, 0)}</span>
         </div>
       {/each}
@@ -134,12 +142,12 @@
     <span class="num">n = {fmtNumber(scale.n, 0)}</span>
     {#if nGap > 0}<span> · <span class="hatch"></span> <span class="num">{fmtNumber(nGap, 0)}</span> {tr('lg.noData')}</span>{/if}
     {#if scale.method === 'continuous'}<span> · {tr('lg.clamped')}</span>{/if}
-    {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}</span>{/if}
-    {#if scale.diverging}<span> · {tr('lg.centred')}</span>{/if}
+    {#if dom.clipLo || dom.clipHi}<span> · {tr('lg.clipped')}<Term k="axis_clipped" /></span>{/if}
+    {#if scale.diverging}<span> · {tr('lg.centredOn', { c: fmtTick(scale.centre, meta) + (meta.unit.startsWith('%') ? '%' : '') })}</span>{/if}
   </p>
   <p class="foot">
     {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
-    {#if cov}<span class="partial"> · {tr('p.partial', { n: cov.length })}</span>{/if}
+    {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
   </p>
 </div>
 
@@ -147,7 +155,8 @@
   .legend { font-size: 0.8rem; min-width: 0; }
   .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; margin-bottom: 4px; }
   .unit { color: var(--text); font-weight: 600; min-width: 0; flex: 1 1 120px; }
-  .seg { flex: none; margin-left: auto; }
+  .seg { flex: none; }
+  .mterm { margin-left: auto; }
   .per { color: var(--muted); font-weight: 400; }
   .seg button { padding: 2px 7px; font-size: 0.72rem; }
   .plot { width: 100%; }

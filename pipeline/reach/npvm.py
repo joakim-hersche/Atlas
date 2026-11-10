@@ -49,9 +49,11 @@ def hub_zones(stations: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def extract_rows(kind: str, origins: list[int]) -> pd.DataFrame:
-    """Stream one matrix and keep the rows of the given origin zones (cached as parquet)."""
-    cache = interim_path("reach", f"npvm_{kind}_hubrows.parquet")
+def extract_rows(kind: str, origins: list[int], column: bool = False) -> pd.DataFrame:
+    """Stream one matrix and keep the rows of the given origin zones (cached as parquet).
+    column=True keeps the columns instead (all origins -> the given destination zones), with the
+    result's 'origin' holding the hub zone and 'dest' the other zone (same layout as the rows)."""
+    cache = interim_path("reach", f"npvm_{kind}_hub{'cols' if column else 'rows'}.parquet")
     if cache.exists():
         df = pd.read_parquet(cache)
         if df.origin.dtype == "int64" and set(origins) <= set(df.origin.unique()):
@@ -60,7 +62,7 @@ def extract_rows(kind: str, origins: list[int]) -> pd.DataFrame:
     inner = zipfile.ZipFile(zp).namelist()[0]
     keys = " ".join(str(o) for o in origins)
     awk = ("BEGIN{n=split(K,a,\" \");for(i=1;i<=n;i++)s[a[i]]=1} "
-           "($1 in s){print $1\",\"$2\",\"$3}")
+           + ("($2 in s){print $2\",\"$1\",\"$3}" if column else "($1 in s){print $1\",\"$2\",\"$3}"))
     proc = subprocess.run(f"unzip -p '{zp}' '{inner}' | awk -v K='{keys}' '{awk}'", shell=True,
                           capture_output=True, text=True, check=True)
     from io import StringIO
@@ -102,10 +104,11 @@ def hectares_in_zones(year: int = 2025) -> pd.DataFrame:
     return h
 
 
-def municipality_times(kind: str, stations: pd.DataFrame) -> pd.DataFrame:
-    """Population-weighted mean NPVM time from each hub zone to every reference municipality."""
+def municipality_times(kind: str, stations: pd.DataFrame, to_hub: bool = False) -> pd.DataFrame:
+    """Population-weighted mean NPVM time from each hub zone to every reference municipality
+    (to_hub=True: from every zone to the hub zone, the matrix column)."""
     hz = hub_zones(stations)
-    m = extract_rows(kind, hz.zone.tolist())
+    m = extract_rows(kind, hz.zone.tolist(), column=to_hub)
     h = hectares_in_zones().dropna(subset=["bfs_nr", "zone"])
     gem = gpd.read_file(interim_path("geo", f"units_{REFERENCE_DATE.isoformat()}.gpkg"), layer="gemeinde",
                         ignore_geometry=True)[["id"]]

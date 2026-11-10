@@ -33,7 +33,7 @@
 <style>
   .loc { display: block; width: 100%; height: auto; }
   .kt { fill: var(--panel-2); stroke: var(--ink); stroke-width: 0.5; stroke-linejoin: round; }
-  .lk { fill: var(--water); stroke: none; }
+  .lk { fill: var(--water); stroke: var(--water-line); stroke-width: 0.4; }
   .hl { fill: var(--accent); stroke: var(--accent); stroke-width: 0.4; }
   circle { fill: none; stroke: var(--accent); stroke-width: 1.6; }
 </style>

@@ -134,14 +134,7 @@ class Store:
         return self.con.execute(body.replace("{M}", f"read_parquet('{self.path}')")).df()
 
 
-def _pseudo_owner(unit_id: str, canton_by_nr: dict) -> str:
-    """Canton (or district) a pseudo-unit belongs to: '<owner>:<code>' or a vote code 9KK0/9KK2."""
-    u = str(unit_id)
-    if ":" in u:
-        return u.split(":", 1)[0]
-    if u.isdigit() and len(u) == 4 and u.startswith("9"):
-        return canton_by_nr.get(int(u[1:3]), "")
-    return ""
+from pipeline.build.metrics import pseudo_owner as _pseudo_owner  # noqa: E402
 
 
 def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame) -> pd.DataFrame:
@@ -155,6 +148,11 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
     rows = []
     for (sid, lvl, metric), nat in native.groupby(["source_id", "level", "metric_id"]):
         agg = metrics_all.rows(lvl, metric)
+        # true aggregates only: published fallbacks (provenance native) would compare with themselves
+        agg = agg[agg["provenance"] == "aggregated"]
+        md0 = meta.set_index("id").loc[metric] if metric in set(meta["id"]) else {}
+        # include_pseudo: the build already added the pseudo-units to canton/Swiss sums (E1 built in)
+        with_pseudo = bool(md0.get("include_pseudo") is True) and lvl in ("kanton", "schweiz")
         j = nat.merge(agg[["unit_id", "period", "value", "n_missing", "n_units"]], on=["unit_id", "period"],
                       suffixes=("_pub", "_agg"))
         if j.empty:
@@ -170,7 +168,7 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
                 state = _state_from_period(per, state0) if (sid in STATE_FROM_PERIOD and lvl == "kanton") else state0
                 eff = transfer_effect(gem[gem["period"] == per], state, lvl)
                 j.loc[jj.index, "explained"] = jj["unit_id"].astype(str).map(eff).fillna(0).values
-        if lvl in ("kanton", "bezirk") and len(pseudo):
+        if lvl in ("kanton", "bezirk") and len(pseudo) and not with_pseudo:
             # amounts the source assigns to a canton/district but to no municipality (E1)
             ps = pseudo[(pseudo["source_id"] == sid) & (pseudo["metric_id"] == metric)]
             if len(ps):
@@ -180,11 +178,13 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
         if lvl == "schweiz":
             # persons the source could not attribute to a municipality are in the national total
             un = obs[(obs["source_id"] == sid) & (obs["level"] == "unallocated") & (obs["metric_id"] == metric)]
+            if with_pseudo:   # the unallocated remainder is the pseudo-units, already in the aggregate
+                un = un.iloc[:0]
             j["explained"] = -j["period"].map(un.set_index("period")["value"]).fillna(0).values
             # NRW: pseudo-units (Swiss abroad, postal voting; D17) are in the national total too.
             # Other sources' pseudo rows are canton-level remainders already covered by 'unallocated'.
             ps = pseudo[(pseudo["source_id"] == sid) & (pseudo["metric_id"] == metric)]
-            if sid == "bfs_nrw" and len(ps):
+            if sid == "bfs_nrw" and len(ps) and not with_pseudo:
                 j["explained"] = j["explained"] - j["period"].map(ps.groupby("period")["value"].sum()).fillna(0).values
         j["residual"] = j["diff"] - j["explained"]
         j["rel"] = j["residual"].abs() / j["value_pub"].abs().replace(0, np.nan)

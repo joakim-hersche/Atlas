@@ -1,0 +1,125 @@
+# Plain-language glossary for the UI (persona review round 1: the casual reader did not know these words).
+# Format: <key>: {term_en, term_de, term_fr, en, de, fr}. One or two sentences each, no jargon.
+# Check: pipeline/tests/test_i18n.py.
+
+quantile:
+  term_en: "Quantile classes"
+  term_de: "Quantil-Klassen"
+  term_fr: "Classes par quantiles"
+  en: "Each colour holds the same number of places: with 5 classes, the lightest fifth, the next fifth and so on. Good for seeing the order of places, even when a few values are extreme."
+  de: "Jede Farbe enthält gleich viele Orte: bei 5 Klassen das hellste Fünftel, das nächste Fünftel und so weiter. Gut, um die Reihenfolge zu sehen, auch wenn einzelne Werte extrem sind."
+  fr: "Chaque couleur contient le même nombre de lieux : avec 5 classes, le cinquième le plus clair, le cinquième suivant, etc. Pratique pour voir le classement, même si quelques valeurs sont extrêmes."
+
+equal_intervals:
+  term_en: "Equal intervals"
+  term_de: "Gleiche Intervalle"
+  term_fr: "Intervalles égaux"
+  en: "The range from the lowest to the highest value is cut into classes of the same width. The colours show real distances between values, but a few extreme places can leave most others in one class."
+  de: "Der Bereich vom tiefsten bis zum höchsten Wert wird in gleich breite Klassen geteilt. Die Farben zeigen echte Abstände, aber wenige extreme Orte können fast alle anderen in eine Klasse drängen."
+  fr: "L'écart entre la valeur la plus basse et la plus haute est découpé en classes de même largeur. Les couleurs montrent les vrais écarts, mais quelques lieux extrêmes peuvent regrouper presque tous les autres dans une seule classe."
+
+continuous:
+  term_en: "Continuous colours"
+  term_de: "Stufenlose Farben"
+  term_fr: "Couleurs continues"
+  en: "No classes: each place gets a shade that matches its exact value on the scale. Small differences stay visible, but similar shades are hard to tell apart."
+  de: "Keine Klassen: Jeder Ort erhält genau den Farbton, der seinem Wert auf der Skala entspricht. Kleine Unterschiede bleiben sichtbar, ähnliche Töne sind aber schwer zu unterscheiden."
+  fr: "Pas de classes : chaque lieu reçoit la nuance qui correspond exactement à sa valeur sur l'échelle. Les petites différences restent visibles, mais des nuances proches sont difficiles à distinguer."
+
+p10_p90:
+  term_en: "P10 / P90"
+  term_de: "P10 / P90"
+  term_fr: "P10 / P90"
+  en: "P10 is the value below which the lowest 10 % of places lie; P90 is the value above which the highest 10 % lie. Together they show the typical range without the extremes."
+  de: "P10 ist der Wert, unter dem die tiefsten 10 % der Orte liegen; P90 der Wert, über dem die höchsten 10 % liegen. Zusammen zeigen sie die übliche Spannweite ohne die Extreme."
+  fr: "P10 est la valeur sous laquelle se trouvent les 10 % de lieux les plus bas ; P90 celle au-dessus de laquelle se trouvent les 10 % les plus hauts. Ensemble, ils montrent l'étendue habituelle sans les extrêmes."
+
+percentile:
+  term_en: "Percentile"
+  term_de: "Perzentil"
+  term_fr: "Percentile"
+  en: "The share of places with a lower value. P75 means the place is higher than about three quarters of all places with data."
+  de: "Der Anteil der Orte mit einem tieferen Wert. P75 heisst: Der Ort liegt höher als etwa drei Viertel aller Orte mit Daten."
+  fr: "La part des lieux qui ont une valeur plus basse. P75 signifie que le lieu se situe plus haut qu'environ trois quarts des lieux pour lesquels il y a des données."
+
+median:
+  term_en: "Median"
+  term_de: "Median"
+  term_fr: "Médiane"
+  en: "The middle value: half of the places are below it, half above. Unlike the average, a few very large values do not pull it up."
+  de: "Der mittlere Wert: Die Hälfte der Orte liegt darunter, die Hälfte darüber. Anders als der Durchschnitt wird er von wenigen sehr grossen Werten nicht nach oben gezogen."
+  fr: "La valeur du milieu : la moitié des lieux se situe en dessous, l'autre moitié au-dessus. Contrairement à la moyenne, quelques très grandes valeurs ne la font pas monter."
+
+axis_clipped:
+  term_en: "Axis clipped at P1/P99"
+  term_de: "Achse bei P1/P99 abgeschnitten"
+  term_fr: "Axe coupé à P1/P99"
+  en: "A few places are far out, so the axis stops at the 1st and 99th percentile instead of the minimum and maximum. Those extreme places are counted in the first or last bar, not dropped."
+  de: "Einige Orte liegen weit draussen, darum endet die Achse beim 1. und 99. Perzentil statt beim Minimum und Maximum. Diese extremen Orte werden im ersten oder letzten Balken mitgezählt, nicht weggelassen."
+  fr: "Quelques lieux sont très éloignés des autres : l'axe s'arrête donc au 1er et au 99e percentile au lieu du minimum et du maximum. Ces lieux extrêmes sont comptés dans la première ou la dernière barre, pas supprimés."
+
+z_score_similarity:
+  term_en: "z-score and similarity"
+  term_de: "z-Wert und Ähnlichkeit"
+  term_fr: "Score z et similarité"
+  en: "A z-score says how far a value is from the Swiss average, in standard deviations (0 = average, 1 = one typical step above). 'Similar places' compares z-scores over several key figures: 0 means identical, 0.50 means on average half a step apart."
+  de: "Ein z-Wert sagt, wie weit ein Wert vom Schweizer Durchschnitt entfernt ist, gemessen in Standardabweichungen (0 = Durchschnitt, 1 = eine typische Stufe darüber). «Ähnliche Orte» vergleicht die z-Werte mehrerer Kennzahlen: 0 heisst gleich, 0.50 heisst im Mittel eine halbe Stufe auseinander."
+  fr: "Un score z indique à quelle distance une valeur se trouve de la moyenne suisse, en écarts-types (0 = moyenne, 1 = un écart typique au-dessus). « Lieux similaires » compare les scores z de plusieurs indicateurs clés : 0 signifie identique, 0,50 un demi-écart en moyenne."
+
+labour_market_area:
+  term_en: "Labour market area"
+  term_de: "Arbeitsmarktregion"
+  term_fr: "Région de marché du travail"
+  en: "A group of municipalities around a centre, drawn by the Federal Statistical Office from where people live and where they work. Most people who live in the area also work there."
+  de: "Eine Gruppe von Gemeinden um ein Zentrum, vom Bundesamt für Statistik anhand von Wohn- und Arbeitsort abgegrenzt. Die meisten Menschen, die in der Region wohnen, arbeiten auch dort."
+  fr: "Un groupe de communes autour d'un centre, délimité par l'Office fédéral de la statistique d'après le lieu de domicile et le lieu de travail. La plupart des personnes qui y habitent y travaillent aussi."
+
+agglomeration:
+  term_en: "Agglomeration"
+  term_de: "Agglomeration"
+  term_fr: "Agglomération"
+  en: "A city and the surrounding municipalities that are closely tied to it, mainly through commuting, as defined by the Federal Statistical Office. It often crosses municipal and cantonal borders."
+  de: "Eine Stadt und die umliegenden Gemeinden, die vor allem durch Pendlerströme eng mit ihr verbunden sind, nach der Definition des Bundesamts für Statistik. Sie reicht oft über Gemeinde- und Kantonsgrenzen hinaus."
+  fr: "Une ville et les communes voisines qui lui sont étroitement liées, surtout par les pendulaires, selon la définition de l'Office fédéral de la statistique. Elle dépasse souvent les limites communales et cantonales."
+
+old_age_dependency_ratio:
+  term_en: "Old-age dependency ratio"
+  term_de: "Altersquotient"
+  term_fr: "Rapport de dépendance des personnes âgées"
+  en: "People aged 65 and over for every 100 people aged 20 to 64. A value of 35 means 35 older people per 100 people of working age."
+  de: "Personen ab 65 Jahren pro 100 Personen im Alter von 20 bis 64 Jahren. Ein Wert von 35 heisst: 35 ältere Menschen auf 100 Menschen im Erwerbsalter."
+  fr: "Personnes de 65 ans ou plus pour 100 personnes de 20 à 64 ans. Une valeur de 35 signifie 35 personnes âgées pour 100 personnes en âge de travailler."
+
+self_financing_ratio:
+  term_en: "Self-financing ratio"
+  term_de: "Selbstfinanzierungsgrad"
+  term_fr: "Degré d'autofinancement"
+  en: "How much of its net investment a municipality pays from its own operating surplus, in %. 100 % or more means investments are covered without new debt; below 100 % means debt rises."
+  de: "Wie viel ihrer Nettoinvestitionen eine Gemeinde aus eigenen Mitteln der laufenden Rechnung bezahlt, in %. Ab 100 % sind die Investitionen ohne neue Schulden gedeckt; darunter steigt die Verschuldung."
+  fr: "Part des investissements nets qu'une commune finance avec ses propres moyens issus du compte de résultats, en %. À partir de 100 %, les investissements sont couverts sans nouvelles dettes ; en dessous, l'endettement augmente."
+
+# Definition of special cases taken from memory of the ESTV methodology: verify the example
+# ("liable for only part of the year") against the ESTV documentation before shipping.
+normal_cases:
+  term_en: "Normal cases (ESTV)"
+  term_de: "Normalfälle (ESTV)"
+  term_fr: "Cas normaux (AFC)"
+  en: "The Federal Tax Administration splits taxpayers into normal cases and special cases. Normal cases are the usual full-year assessments; special cases (for example taxpayers liable for only part of the year) are counted separately because their incomes are not comparable."
+  de: "Die Eidgenössische Steuerverwaltung teilt die Steuerpflichtigen in Normal- und Sonderfälle. Normalfälle sind die üblichen Veranlagungen über das ganze Jahr; Sonderfälle (zum Beispiel nur während eines Teils des Jahres Steuerpflichtige) werden getrennt gezählt, weil ihre Einkommen nicht vergleichbar sind."
+  fr: "L'Administration fédérale des contributions distingue les cas normaux et les cas spéciaux. Les cas normaux sont les taxations habituelles sur toute l'année ; les cas spéciaux (par exemple les contribuables assujettis une partie de l'année seulement) sont comptés à part, car leurs revenus ne sont pas comparables."
+
+fictitious_voters:
+  term_en: "Fictitious voters"
+  term_de: "Fiktive Wählende"
+  term_fr: "Électeurs fictifs"
+  en: "In National Council elections each voter casts as many party votes as the canton has seats, so party votes cannot be compared across cantons. Dividing them by the number of seats gives 'fictitious voters', which can be added up and compared everywhere."
+  de: "Bei den Nationalratswahlen hat jede wählende Person so viele Parteistimmen, wie der Kanton Sitze hat; deshalb lassen sich Parteistimmen zwischen Kantonen nicht vergleichen. Geteilt durch die Zahl der Sitze ergeben sie «fiktive Wählende», die man überall zusammenzählen und vergleichen kann."
+  fr: "Aux élections du Conseil national, chaque électeur dispose d'autant de suffrages de parti que le canton a de sièges : les suffrages ne sont donc pas comparables d'un canton à l'autre. Divisés par le nombre de sièges, ils donnent des « électeurs fictifs », que l'on peut additionner et comparer partout."
+
+majority_election:
+  term_en: "Majority election"
+  term_de: "Majorzwahl"
+  term_fr: "Élection majoritaire"
+  en: "Cantons with only one National Council seat elect it by majority vote: people vote for a person, not a party list. Party strengths there are not comparable with list-vote cantons, and a party that did not stand did not get 0 %: it was simply not on the ballot."
+  de: "Kantone mit nur einem Nationalratssitz wählen im Majorz: Man wählt eine Person, keine Parteiliste. Parteistärken sind dort nicht mit den Proporzkantonen vergleichbar, und eine Partei, die nicht antrat, hat nicht 0 % erhalten: Sie stand gar nicht zur Wahl."
+  fr: "Les cantons qui n'ont qu'un siège au Conseil national l'attribuent au système majoritaire : on vote pour une personne et non pour une liste. La force des partis n'y est pas comparable avec les cantons à la proportionnelle, et un parti qui ne se présentait pas n'a pas obtenu 0 % : il n'était simplement pas sur le bulletin."

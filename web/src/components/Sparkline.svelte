@@ -1,7 +1,9 @@
 <script lang="ts">
   // Time-series sparkline of one unit. The metric's series file loads when the row scrolls into view;
   // no file (or no values for this unit) means no sparkline, silently.
-  import { fmtNumber } from '../lib/classify';
+  // Honest baselines: counts and shares start at 0; other metrics use their own range, and the y-range
+  // is always printed under the line, so a small change never looks like a cliff without saying so.
+  import { fmtNumber, fmtTick } from '../lib/classify';
   import { loadSeries, type MetricMeta } from '../lib/data';
 
   interface Props {
@@ -53,13 +55,15 @@
     const x0 = pts[0].year, x1 = pts[pts.length - 1].year;
     let lo = Infinity, hi = -Infinity;
     for (const q of pts) { lo = Math.min(lo, q.v); hi = Math.max(hi, q.v); }
+    if (zeroBase && lo > 0) lo = 0;
     const pad = 2;
     const sx = (y: number) => pad + ((y - x0) / (x1 - x0 || 1)) * (width - 2 * pad);
     const sy = (v: number) => (hi > lo ? pad + (1 - (v - lo) / (hi - lo)) * (height - 2 * pad) : height / 2);
     const d = pts.map((q, k) => `${k ? 'L' : 'M'}${sx(q.year).toFixed(1)} ${sy(q.v).toFixed(1)}`).join('');
     const last = pts[pts.length - 1];
-    return { d, cx: sx(last.year), cy: sy(last.v) };
+    return { d, cx: sx(last.year), cy: sy(last.v), lo, hi, base: zeroBase ? sy(0) : null };
   });
+  const zeroBase = $derived(meta.aggregation === 'sum' || meta.unit.startsWith('%'));
   const title = $derived(pts ? `${pts[0].p}: ${fmtNumber(pts[0].v, meta.decimals)} → ${pts[pts.length - 1].p}: ${fmtNumber(pts[pts.length - 1].v, meta.decimals)} (${pts.length} periods)` : '');
 </script>
 
@@ -67,13 +71,17 @@
   <span class="spark" bind:this={el} style="width:{width}px;height:{height}px">
     {#if path}
       <svg {width} {height} viewBox="0 0 {width} {height}" role="img" aria-label={title}><title>{title}</title>
+        {#if path.base !== null}<line class="zero" x1="0" x2={width} y1={path.base} y2={path.base} />{/if}
         <path d={path.d} /><circle cx={path.cx} cy={path.cy} r="2" /></svg>
+      <span class="rng num">{path.hi > path.lo ? `${fmtTick(path.lo, meta)}–${fmtTick(path.hi, meta)}` : fmtTick(path.lo, meta)}</span>
     {/if}
   </span>
 {/if}
 
 <style>
-  .spark { display: inline-block; vertical-align: middle; }
+  .spark { display: inline-flex; flex-direction: column; vertical-align: middle; height: auto !important; }
+  .rng { font-size: 9px; line-height: 1.1; color: var(--faint); white-space: nowrap; }
+  .zero { stroke: var(--border); stroke-width: 1; }
   svg { display: block; overflow: visible; }
   path { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
   circle { fill: var(--ink); }

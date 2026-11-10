@@ -4,8 +4,8 @@
 import type { ColView } from './columns.svelte';
 import { type LevelData, type MetricMeta, type UnitRow } from './data';
 import type { CatField, Filter } from './hash';
-import { sortedValues, wantsLog } from './classify';
-import { levelName, t, levelWord } from './i18n.svelte';
+import { fmtNumber, sortedValues, wantsLog } from './classify';
+import { ml, t, levelWord, unitName } from './i18n.svelte';
 
 /** Label of a categorical filter field in the UI language. */
 export const catLabel = (f: CatField): string => t(`cat.${f}`);
@@ -63,7 +63,7 @@ export function catValues(field: CatField, ld: LevelData, rows: UnitRow[] | null
 /** Options of a categorical field (from units.json), sorted for display. */
 export function catOptions(field: CatField, rows: UnitRow[] | null): CatOption[] {
   if (!rows) return [];
-  const out = rows.filter((r) => r.level === field).map((r) => ({ id: r.id, name: r.name }));
+  const out = rows.filter((r) => r.level === field).map((r) => ({ id: r.id, name: unitName(r) }));
   if (field === 'agglomeration') out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
   else out.sort((a, b) => (field === 'kanton' ? a.id.localeCompare(b.id) : Number(a.id) - Number(b.id)));
   return out;
@@ -165,4 +165,17 @@ export function combine(evals: FilterEval[], n: number): MatchResult {
     else if (missing && !other) nMissingOnly++;
   }
   return { m, n: count, nMissingOnly, active: act.length };
+}
+
+/** One short line per condition ("Population 1'000–5'000", "Canton: ZH, BE", "≤ 30 min to Bern, PT"). */
+export function describeFilter(e: FilterEval, nameOf: (field: CatField, id: string) => string): string {
+  const f = e.filter;
+  if (f.kind === 'cat') return `${catLabel(f.field)}: ${f.values.map((v) => nameOf(f.field, v)).join(', ') || '–'}`;
+  if (f.kind === 'reach') return t('f.reachDesc', { max: f.max, hub: e.hubName ?? f.hub, mode: t(f.mode === 'ptst' ? 'pt.stS' : f.mode === 'pt' ? 'common.pt' : 'common.car') });
+  const m = e.col?.meta;
+  const d = m?.decimals ?? 0;
+  const lo = f.lo === null ? '' : fmtNumber(f.lo, d);
+  const hi = f.hi === null ? '' : fmtNumber(f.hi, d);
+  const rng = f.lo !== null && f.hi !== null ? `${lo}–${hi}` : f.lo !== null ? `≥ ${lo}` : f.hi !== null ? `≤ ${hi}` : t('f.any');
+  return `${m ? ml(m) : f.metric} ${rng}`;
 }

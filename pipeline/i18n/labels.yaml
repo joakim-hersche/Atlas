@@ -1,0 +1,915 @@
+# French labels and EN/DE/FR unit strings for every metric id in pipeline/sources/*/metrics.yaml.
+# Merged into metrics.json by the web build (label_en/label_de stay in metrics.yaml).
+# Format: <metric id>: {label_fr, unit_en, unit_de, unit_fr}. BFS French terminology where it exists
+# (relevé structurel, recensement, STATENT emplois/établissements/EPT, taux d'aide sociale, ...).
+# Place names stay in their official form (brief 6.2). '# guess' marks a less certain rendering.
+# Check: pipeline/tests/test_i18n.py (every metric id has all four fields).
+
+# --- are_bauzonen ---
+bz_area_total_ha: {label_fr: "Surface des zones à bâtir", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_residential_ha: {label_fr: "Zones d'habitation", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_work_ha: {label_fr: "Zones d'activités économiques", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_mixed_ha: {label_fr: "Zones mixtes", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_centre_ha: {label_fr: "Zones centrales", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_public_ha: {label_fr: "Zones affectées à des besoins publics", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_other_ha: {label_fr: "Autres zones à bâtir", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_pt_a_ha: {label_fr: "Zones à bâtir en classe de desserte TP A", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_pt_b_ha: {label_fr: "Zones à bâtir en classe de desserte TP B", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_pt_c_ha: {label_fr: "Zones à bâtir en classe de desserte TP C", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_pt_d_ha: {label_fr: "Zones à bâtir en classe de desserte TP D", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_pt_none_ha: {label_fr: "Zones à bâtir sans classe de desserte TP", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_unbuilt_low_ha: {label_fr: "Zones à bâtir non construites (estimation basse)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_unbuilt_high_ha: {label_fr: "Zones à bâtir non construites (estimation haute)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+bz_area_per_inhabitant: {label_fr: "Surface des zones à bâtir par habitant", unit_en: "m² per resident", unit_de: "m² pro Einwohner", unit_fr: "m² par habitant"}
+bz_share_residential: {label_fr: "Part des zones d'habitation dans les zones à bâtir", unit_en: "%", unit_de: "%", unit_fr: "%"}
+bz_share_pt_good: {label_fr: "Zones à bâtir bien desservies par les TP (classe A ou B)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+bz_share_unbuilt_low: {label_fr: "Part non construite des zones à bâtir (estimation basse)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+bz_share_unbuilt_high: {label_fr: "Part non construite des zones à bâtir (estimation haute)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- are_gueteklassen ---
+gk_population: {label_fr: "Habitants dans la grille hectométrique (classes de desserte TP)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_pop_a: {label_fr: "Habitants en classe de desserte TP A", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_pop_b: {label_fr: "Habitants en classe de desserte TP B", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_pop_c: {label_fr: "Habitants en classe de desserte TP C", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_pop_d: {label_fr: "Habitants en classe de desserte TP D", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_pop_none: {label_fr: "Habitants sans classe de desserte TP", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+gk_share_a: {label_fr: "Habitants en classe de desserte TP A (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+gk_share_b: {label_fr: "Habitants en classe de desserte TP B (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+gk_share_c: {label_fr: "Habitants en classe de desserte TP C (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+gk_share_d: {label_fr: "Habitants en classe de desserte TP D (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+gk_share_none: {label_fr: "Habitants sans classe de desserte TP (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+gk_share_ab: {label_fr: "Habitants bien ou très bien desservis par les TP (classe A ou B)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+
+# --- are_zweitwohnungen ---
+zw_dwellings_total: {label_fr: "Logements (inventaire des résidences secondaires)", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+zw_primary_dwellings: {label_fr: "Résidences principales (y c. logements assimilés)", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+zw_second_homes: {label_fr: "Résidences secondaires", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+zw_subject_to_law: {label_fr: "Soumise aux règles sur les résidences secondaires (0/1)", unit_en: "0/1", unit_de: "0/1", unit_fr: "0/1"}
+zw_second_home_share: {label_fr: "Proportion de résidences secondaires", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- astra_accidents ---
+acc_injury_count: {label_fr: "Accidents de la route avec blessés", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_severe_count: {label_fr: "Accidents de la route avec blessés graves ou tués", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_fatal_count: {label_fr: "Accidents de la route mortels", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_pedestrian_count: {label_fr: "Accidents avec blessés impliquant des piétons", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_bicycle_count: {label_fr: "Accidents avec blessés impliquant des vélos", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_motorcycle_count: {label_fr: "Accidents avec blessés impliquant des motocycles", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_nonmotorway_count: {label_fr: "Accidents avec blessés hors autoroutes", unit_en: "accidents", unit_de: "Unfälle", unit_fr: "accidents"}
+acc_injury_per_1000: {label_fr: "Accidents avec blessés pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+acc_severe_per_1000: {label_fr: "Accidents graves ou mortels pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+acc_nonmotorway_per_1000: {label_fr: "Accidents avec blessés hors autoroutes pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+acc_severe_share: {label_fr: "Part des accidents graves ou mortels", unit_en: "% of injury accidents", unit_de: "% der Unfälle mit Personenschaden", unit_fr: "% des accidents avec dommages corporels"}
+
+# --- bafu_air ---
+air_hectare_residents: {label_fr: "Habitants dans la grille hectométrique", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+air_no2_pop: {label_fr: "Exposition au NO₂ (moyenne annuelle pondérée par la population)", unit_en: "µg/m³", unit_de: "µg/m³", unit_fr: "µg/m³"}
+air_no2_above_limit_residents: {label_fr: "Habitants au-dessus de la valeur limite de NO₂", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+air_pm10_pop: {label_fr: "Exposition aux PM10 (moyenne annuelle pondérée par la population)", unit_en: "µg/m³", unit_de: "µg/m³", unit_fr: "µg/m³"}
+air_pm10_above_limit_residents: {label_fr: "Habitants au-dessus de la valeur limite de PM10", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+air_pm25_pop: {label_fr: "Exposition aux PM2,5 (moyenne annuelle pondérée par la population)", unit_en: "µg/m³", unit_de: "µg/m³", unit_fr: "µg/m³"}
+air_pm25_above_limit_residents: {label_fr: "Habitants au-dessus de la valeur limite de PM2,5", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+air_no2_above_limit_share: {label_fr: "Habitants au-dessus de la valeur limite de NO₂ (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+air_pm10_above_limit_share: {label_fr: "Habitants au-dessus de la valeur limite de PM10 (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+air_pm25_above_limit_share: {label_fr: "Habitants au-dessus de la valeur limite de PM2,5 (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+
+# --- bafu_protected_areas ---
+pa_municipal_area_ha: {label_fr: "Surface communale (base de superposition)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+pa_bln_ha: {label_fr: "Surface dans des paysages IFP", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+pa_parks_ha: {label_fr: "Surface dans des parcs d'importance nationale", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+pa_biotopes_ha: {label_fr: "Surface dans les inventaires fédéraux de biotopes", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+pa_bln_share: {label_fr: "Part de la surface dans des paysages IFP", unit_en: "%", unit_de: "%", unit_fr: "%"}
+pa_parks_share: {label_fr: "Part de la surface dans des parcs d'importance nationale", unit_en: "%", unit_de: "%", unit_fr: "%"}
+pa_biotopes_share: {label_fr: "Part de la surface dans les inventaires fédéraux de biotopes", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bag_premiums ---
+kvg_mean_premium_adult: {label_fr: "Prime moyenne d'assurance maladie (adultes)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+kvg_mean_premium_young: {label_fr: "Prime moyenne d'assurance maladie (jeunes adultes)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+kvg_mean_premium_child: {label_fr: "Prime moyenne d'assurance maladie (enfants)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+kvg_std300_mean_adult: {label_fr: "Prime adulte, modèle standard, franchise de 300 CHF (moyenne des assureurs)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+kvg_std300_median_adult: {label_fr: "Prime adulte, modèle standard, franchise de 300 CHF (médiane des assureurs)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+kvg_std300_min_adult: {label_fr: "Prime adulte la plus basse, modèle standard, franchise de 300 CHF", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+
+# --- bfe_energy ---
+en_ecar_count: {label_fr: "Voitures électriques", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+en_ecar_share: {label_fr: "Part des voitures électriques", unit_en: "% of passenger cars", unit_de: "% der Personenwagen", unit_fr: "% des voitures de tourisme"}
+en_charging_spots: {label_fr: "Points de recharge publics", unit_en: "charging points", unit_de: "Ladepunkte", unit_fr: "points de recharge"}
+en_pv_installed_kwp: {label_fr: "Puissance photovoltaïque installée", unit_en: "kWp", unit_de: "kWp", unit_fr: "kWc"}
+en_pv_kwp_per_capita: {label_fr: "Puissance photovoltaïque par habitant", unit_en: "kWp per resident", unit_de: "kWp pro Einwohner", unit_fr: "kWc par habitant"}
+en_solar_potential_used: {label_fr: "Potentiel solaire exploité", unit_en: "%", unit_de: "%", unit_fr: "%"}
+en_heat_renewable_count: {label_fr: "Bâtiments chauffés aux énergies renouvelables", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+en_heat_nonrenewable_count: {label_fr: "Bâtiments chauffés aux combustibles fossiles ou à l'électricité directe", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+en_elec_consumption_mwh: {label_fr: "Consommation d'électricité", unit_en: "MWh per year", unit_de: "MWh pro Jahr", unit_fr: "MWh par an"}
+en_elec_consumption_per_capita: {label_fr: "Consommation d'électricité par habitant", unit_en: "MWh per resident and year", unit_de: "MWh pro Einwohner und Jahr", unit_fr: "MWh par habitant et par an"}
+en_renelec_production_mwh: {label_fr: "Production d'électricité renouvelable", unit_en: "MWh per year", unit_de: "MWh pro Jahr", unit_fr: "MWh par an"}
+en_renelec_hydro_mwh: {label_fr: "Production d'électricité hydraulique", unit_en: "MWh per year", unit_de: "MWh pro Jahr", unit_fr: "MWh par an"}
+en_renelec_solar_mwh: {label_fr: "Production d'électricité solaire", unit_en: "MWh per year", unit_de: "MWh pro Jahr", unit_fr: "MWh par an"}
+en_renelec_per_capita: {label_fr: "Production d'électricité renouvelable par habitant", unit_en: "MWh per resident and year", unit_de: "MWh pro Einwohner und Jahr", unit_fr: "MWh par habitant et par an"}
+en_solar_roof_potential_gwh: {label_fr: "Potentiel solaire des toits", unit_en: "GWh per year", unit_de: "GWh pro Jahr", unit_fr: "GWh par an"}
+en_solar_roof_facade_potential_gwh: {label_fr: "Potentiel solaire des toits et façades", unit_en: "GWh per year", unit_de: "GWh pro Jahr", unit_fr: "GWh par an"}
+energiestadt_label: {label_fr: "Label Cité de l'énergie", unit_en: "1 = labelled, 0 = not", unit_de: "1 = mit Label, 0 = ohne", unit_fr: "1 = labellisée, 0 = non"}  # guess (unit: guess)
+energiestadt_gold: {label_fr: "Label Cité de l'énergie Gold", unit_en: "1 = Gold, 0 = not", unit_de: "1 = Gold, 0 = nein", unit_fr: "1 = Gold, 0 = non"}
+energiestadt_score: {label_fr: "Score Cité de l'énergie", unit_en: "% of possible points", unit_de: "% der möglichen Punkte", unit_fr: "% des points possibles"}
+en_heat_renewable_share: {label_fr: "Part du chauffage renouvelable", unit_en: "% of heated buildings", unit_de: "% der beheizten Gebäude", unit_fr: "% des bâtiments chauffés"}
+
+# --- bfs_accessibility ---
+acc_population: {label_fr: "Habitants dans la grille d'accessibilité", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_dist_supermarket: {label_fr: "Distance au supermarché le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_grocery: {label_fr: "Distance au magasin d'alimentation le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_pharmacy: {label_fr: "Distance à la pharmacie la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_doctor: {label_fr: "Distance au cabinet médical le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_gp: {label_fr: "Distance au médecin généraliste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_dentist: {label_fr: "Distance au dentiste le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_school_compulsory: {label_fr: "Distance à l'école obligatoire la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_school_upper_secondary: {label_fr: "Distance à l'école du degré secondaire II la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_pt_stop: {label_fr: "Distance à l'arrêt de transports publics le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_pt_stop_cat12: {label_fr: "Distance à l'arrêt de catégorie I–II le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_bank: {label_fr: "Distance à l'agence bancaire la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_restaurant: {label_fr: "Distance au restaurant ou café le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_public_admin: {label_fr: "Distance au bureau de l'administration publique le plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_nursing_home: {label_fr: "Distance à l'EMS ou à la maison de retraite la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_dist_forest: {label_fr: "Distance à la lisière de forêt la plus proche", unit_en: "m", unit_de: "m", unit_fr: "m"}
+acc_within500_supermarket: {label_fr: "Habitants à moins de 500 m d'un supermarché", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within500_grocery: {label_fr: "Habitants à moins de 500 m d'un magasin d'alimentation", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within500_pharmacy: {label_fr: "Habitants à moins de 500 m d'une pharmacie", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within500_gp: {label_fr: "Habitants à moins de 500 m d'un médecin généraliste", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within500_school_compulsory: {label_fr: "Habitants à moins de 500 m d'une école obligatoire", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within500_pt_stop: {label_fr: "Habitants à moins de 500 m d'un arrêt de transports publics", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_supermarket: {label_fr: "Habitants à moins de 1 km d'un supermarché", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_grocery: {label_fr: "Habitants à moins de 1 km d'un magasin d'alimentation", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_pharmacy: {label_fr: "Habitants à moins de 1 km d'une pharmacie", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_gp: {label_fr: "Habitants à moins de 1 km d'un médecin généraliste", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_doctor: {label_fr: "Habitants à moins de 1 km d'un cabinet médical", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_school_compulsory: {label_fr: "Habitants à moins de 1 km d'une école obligatoire", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_within1000_pt_stop_cat12: {label_fr: "Habitants à moins de 1 km d'un arrêt de catégorie I–II", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+acc_share500_supermarket: {label_fr: "Habitants à moins de 500 m d'un supermarché (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share500_grocery: {label_fr: "Habitants à moins de 500 m d'un magasin d'alimentation (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share500_pharmacy: {label_fr: "Habitants à moins de 500 m d'une pharmacie (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share500_gp: {label_fr: "Habitants à moins de 500 m d'un médecin généraliste (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share500_school_compulsory: {label_fr: "Habitants à moins de 500 m d'une école obligatoire (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share500_pt_stop: {label_fr: "Habitants à moins de 500 m d'un arrêt de transports publics (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_supermarket: {label_fr: "Habitants à moins de 1 km d'un supermarché (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_grocery: {label_fr: "Habitants à moins de 1 km d'un magasin d'alimentation (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_pharmacy: {label_fr: "Habitants à moins de 1 km d'une pharmacie (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_gp: {label_fr: "Habitants à moins de 1 km d'un médecin généraliste (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_doctor: {label_fr: "Habitants à moins de 1 km d'un cabinet médical (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_school_compulsory: {label_fr: "Habitants à moins de 1 km d'une école obligatoire (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+acc_share1000_pt_stop_cat12: {label_fr: "Habitants à moins de 1 km d'un arrêt de catégorie I–II (part)", unit_en: "% of residents", unit_de: "% der Einwohner", unit_fr: "% des habitants"}
+
+# --- bfs_agriculture ---
+agr_farms: {label_fr: "Exploitations agricoles", unit_en: "farms", unit_de: "Betriebe", unit_fr: "exploitations"}
+agr_farms_organic: {label_fr: "Exploitations biologiques", unit_en: "farms", unit_de: "Betriebe", unit_fr: "exploitations"}
+agr_workers: {label_fr: "Main-d'œuvre agricole", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+agr_workers_fulltime: {label_fr: "Main-d'œuvre agricole à plein temps (75 % et plus)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+agr_workers_women: {label_fr: "Main-d'œuvre agricole : femmes", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+agr_workers_family: {label_fr: "Main-d'œuvre agricole : membres de la famille", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+agr_area_ha: {label_fr: "Surface agricole utile", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_area_organic_ha: {label_fr: "Surface agricole utile des exploitations biologiques", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_area_arable_ha: {label_fr: "Terres ouvertes", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_area_grassland_ha: {label_fr: "Surfaces herbagères", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_area_permanent_crops_ha: {label_fr: "Cultures pérennes (vignes, vergers …)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_cattle: {label_fr: "Bovins", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_horses: {label_fr: "Chevaux, poneys, ânes", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_sheep: {label_fr: "Moutons", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_goats: {label_fr: "Chèvres", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_pigs: {label_fr: "Porcs", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_poultry: {label_fr: "Volaille", unit_en: "head", unit_de: "Stück", unit_fr: "têtes"}  # guess (unit: guess)
+agr_share_organic_farms: {label_fr: "Part des exploitations biologiques", unit_en: "%", unit_de: "%", unit_fr: "%"}
+agr_share_organic_area: {label_fr: "Part de la surface agricole exploitée en bio", unit_en: "%", unit_de: "%", unit_fr: "%"}
+agr_area_per_farm: {label_fr: "Surface agricole par exploitation", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+agr_workers_per_1000: {label_fr: "Main-d'œuvre agricole pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+agr_share_arable: {label_fr: "Part des terres ouvertes dans la surface agricole", unit_en: "%", unit_de: "%", unit_fr: "%"}
+agr_farms_change_10y: {label_fr: "Évolution du nombre d'exploitations (10 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_arealstatistik ---
+area_total_ha: {label_fr: "Surface totale (statistique de la superficie)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_settlement_ha: {label_fr: "Surfaces d'habitat et d'infrastructure", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_agriculture_ha: {label_fr: "Surfaces agricoles", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_wooded_ha: {label_fr: "Surfaces boisées", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_unproductive_ha: {label_fr: "Surfaces improductives", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_industrial_ha: {label_fr: "Aires industrielles et artisanales", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_building_ha: {label_fr: "Aires de bâtiments", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_transport_ha: {label_fr: "Surfaces de transport", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_water_ha: {label_fr: "Lacs et cours d'eau", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_glacier_ha: {label_fr: "Glaciers et névés", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_sealed_ha: {label_fr: "Surfaces imperméabilisées", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_settlement_base_ha: {label_fr: "Surfaces d'habitat et d'infrastructure en 1979/85 (référence)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+area_share_settlement: {label_fr: "Surfaces d'habitat et d'infrastructure (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+area_share_agriculture: {label_fr: "Surfaces agricoles (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+area_share_wooded: {label_fr: "Surfaces boisées (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+area_share_unproductive: {label_fr: "Surfaces improductives (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+area_share_sealed: {label_fr: "Surfaces imperméabilisées (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+area_settlement_index: {label_fr: "Surfaces d'habitat et d'infrastructure (1979/85 = 100)", unit_en: "index", unit_de: "Index", unit_fr: "indice"}
+
+# --- bfs_bevnat_bilanz ---
+bil_pop_jan: {label_fr: "Population au 1er janvier", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_pop_dec: {label_fr: "Population au 31 décembre", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_pop_foreign_jan: {label_fr: "Étrangers au 1er janvier", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_births: {label_fr: "Naissances vivantes", unit_en: "births", unit_de: "Geburten", unit_fr: "naissances"}
+bil_deaths: {label_fr: "Décès", unit_en: "deaths", unit_de: "Todesfälle", unit_fr: "décès"}
+bil_natural_balance: {label_fr: "Accroissement naturel (naissances moins décès)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_immigration: {label_fr: "Immigration depuis l'étranger", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_emigration: {label_fr: "Émigration vers l'étranger", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_net_international: {label_fr: "Solde migratoire international", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_intercant_in: {label_fr: "Arrivées d'autres cantons", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_intercant_out: {label_fr: "Départs vers d'autres cantons", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_net_intercant: {label_fr: "Solde migratoire intercantonal", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_intracant_in: {label_fr: "Arrivées du même canton", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_intracant_out: {label_fr: "Départs à l'intérieur du canton", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_net_migration: {label_fr: "Solde migratoire (tous mouvements)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_naturalisations: {label_fr: "Naturalisations", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+bil_birth_rate: {label_fr: "Taux brut de natalité", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_death_rate: {label_fr: "Taux brut de mortalité", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_natural_rate: {label_fr: "Taux d'accroissement naturel", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_net_migration_rate: {label_fr: "Taux de solde migratoire", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_net_international_rate: {label_fr: "Taux de solde migratoire international", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_net_intercant_rate: {label_fr: "Taux de solde migratoire intercantonal", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_turnover_rate: {label_fr: "Mouvements migratoires (toutes arrivées et tous départs)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+bil_naturalisation_rate: {label_fr: "Taux de naturalisation", unit_en: "per 100 foreign residents (1 Jan)", unit_de: "pro 100 ausländische Einwohner (1. Jan.)", unit_fr: "pour 100 habitants étrangers (1er janv.)"}
+bil_net_migration_rate_3y: {label_fr: "Taux de solde migratoire (3 ans cumulés)", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+
+# --- bfs_bevnat_sdmx ---
+bevnat_marriages: {label_fr: "Mariages", unit_en: "marriages", unit_de: "Heiraten", unit_fr: "mariages"}
+bevnat_divorces: {label_fr: "Divorces", unit_en: "divorces", unit_de: "Scheidungen", unit_fr: "divorces"}
+bevnat_births: {label_fr: "Naissances vivantes", unit_en: "births", unit_de: "Geburten", unit_fr: "naissances"}
+bevnat_marriage_rate: {label_fr: "Mariages pour 1000 habitants", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+bevnat_divorce_rate: {label_fr: "Divorces pour 1000 habitants", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+bevnat_birth_rate: {label_fr: "Naissances vivantes pour 1000 habitants", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+bevnat_birth_rate_3y: {label_fr: "Naissances vivantes pour 1000 habitants (3 ans cumulés)", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+
+# --- bfs_census_1970_2000 ---
+vz_lang_total: {label_fr: "Habitants (recensement, base langues)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_de: {label_fr: "Langue principale allemand (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_fr: {label_fr: "Langue principale français (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_it: {label_fr: "Langue principale italien (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_rm: {label_fr: "Langue principale romanche (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_en: {label_fr: "Langue principale anglais (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_lang_other: {label_fr: "Autre langue principale (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_total: {label_fr: "Habitants (recensement, base religions)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_reformed: {label_fr: "Protestants (réformés) (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_catholic: {label_fr: "Catholiques romains (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_orthodox: {label_fr: "Chrétiens orthodoxes (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_other_christian: {label_fr: "Autres chrétiens (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_jewish: {label_fr: "Juifs (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_muslim: {label_fr: "Musulmans (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_other: {label_fr: "Autres religions (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_none: {label_fr: "Sans appartenance religieuse (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_rel_no_answer: {label_fr: "Religion non indiquée (recensement)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vz_hh_total: {label_fr: "Ménages, y c. collectifs (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_private: {label_fr: "Ménages privés (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_one_person: {label_fr: "Ménages d'une personne (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_couple_no_children: {label_fr: "Couples sans enfants (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_couple_children: {label_fr: "Couples avec enfants (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_single_parent: {label_fr: "Ménages monoparentaux (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_with_parents: {label_fr: "Adultes vivant avec leur(s) parent(s) (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_non_family: {label_fr: "Ménages non familiaux (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_collective: {label_fr: "Ménages collectifs (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_size_2: {label_fr: "Ménages de deux personnes (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_size_3: {label_fr: "Ménages de trois personnes (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_size_4: {label_fr: "Ménages de quatre personnes (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_hh_size_5plus: {label_fr: "Ménages de 5 personnes ou plus (recensement)", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+vz_lang_de_share: {label_fr: "Langue principale allemand (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_lang_fr_share: {label_fr: "Langue principale français (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_lang_it_share: {label_fr: "Langue principale italien (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_lang_rm_share: {label_fr: "Langue principale romanche (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_lang_en_share: {label_fr: "Langue principale anglais (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_lang_other_share: {label_fr: "Autre langue principale (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_reformed_share: {label_fr: "Protestants (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_catholic_share: {label_fr: "Catholiques romains (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_orthodox_share: {label_fr: "Chrétiens orthodoxes (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_muslim_share: {label_fr: "Musulmans (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_jewish_share: {label_fr: "Juifs (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_rel_none_share: {label_fr: "Sans appartenance religieuse (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_hh_one_person_share: {label_fr: "Ménages d'une personne (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_hh_couple_children_share: {label_fr: "Couples avec enfants (part des ménages, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_hh_couple_no_children_share: {label_fr: "Couples sans enfants (part des ménages, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_hh_single_parent_share: {label_fr: "Ménages monoparentaux (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vz_hh_size_5plus_share: {label_fr: "Ménages de 5 personnes ou plus (part, recensement)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_commuting ---
+com_employed_residents: {label_fr: "Personnes actives occupées résidantes (matrice des pendulaires)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_jobs: {label_fr: "Personnes actives occupées travaillant dans la commune", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_work_in_own: {label_fr: "Habitants travaillant dans leur commune", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_out_commuters: {label_fr: "Pendulaires sortants", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_in_commuters: {label_fr: "Pendulaires entrants", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_balance: {label_fr: "Solde des pendulaires", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_out_share: {label_fr: "Part des pendulaires sortants", unit_en: "% of employed residents", unit_de: "% der erwerbstätigen Einwohner", unit_fr: "% des actifs occupés résidants"}
+com_self_containment: {label_fr: "Habitants travaillant sur place (autonomie)", unit_en: "% of employed residents", unit_de: "% der erwerbstätigen Einwohner", unit_fr: "% des actifs occupés résidants"}
+com_in_share: {label_fr: "Part des pendulaires entrants parmi les actifs occupés sur place", unit_en: "% of persons working in the municipality", unit_de: "% der in der Gemeinde Arbeitenden", unit_fr: "% des personnes travaillant dans la commune"}
+com_job_ratio: {label_fr: "Actifs occupés sur place pour 100 actifs occupés résidants", unit_en: "per 100 employed residents", unit_de: "pro 100 erwerbstätige Einwohner", unit_fr: "pour 100 actifs occupés résidants"}
+com_leave_unit: {label_fr: "Pendulaires quittant le territoire", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+com_leave_unit_share: {label_fr: "Pendulaires quittant le territoire (part)", unit_en: "% of employed residents", unit_de: "% der erwerbstätigen Einwohner", unit_fr: "% des actifs occupés résidants"}
+
+# --- bfs_construction ---
+con_new_dwellings: {label_fr: "Logements nouvellement construits", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+con_new_dw_sfh: {label_fr: "Logements neufs dans des maisons individuelles", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+con_new_dw_mfh: {label_fr: "Logements neufs dans des maisons à plusieurs logements", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+con_new_res_buildings: {label_fr: "Bâtiments neufs avec logements", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+con_new_sfh_buildings: {label_fr: "Maisons individuelles neuves", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+con_exp_total: {label_fr: "Dépenses de construction", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_inv_total: {label_fr: "Investissements dans la construction", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_inv_new: {label_fr: "Investissements dans la construction : constructions nouvelles", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_inv_renovation: {label_fr: "Investissements dans la construction : transformations et rénovations", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_exp_maintenance: {label_fr: "Dépenses de construction : entretien", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_exp_public: {label_fr: "Dépenses de construction : maîtres d'ouvrage publics", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_exp_private: {label_fr: "Dépenses de construction : maîtres d'ouvrage privés", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_inv_residential: {label_fr: "Investissements dans la construction de logements", unit_en: "CHF 1,000", unit_de: "1'000 CHF", unit_fr: "1 000 CHF"}
+con_new_dwellings_per_1000: {label_fr: "Logements neufs pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+con_share_new_dw_mfh: {label_fr: "Part des logements neufs dans des maisons à plusieurs logements", unit_en: "%", unit_de: "%", unit_fr: "%"}
+con_inv_per_capita: {label_fr: "Investissements dans la construction par habitant", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+con_exp_per_capita: {label_fr: "Dépenses de construction par habitant", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+con_inv_residential_per_capita: {label_fr: "Investissements dans la construction de logements par habitant", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+con_share_exp_public: {label_fr: "Part publique des dépenses de construction", unit_en: "%", unit_de: "%", unit_fr: "%"}
+con_share_inv_renovation: {label_fr: "Part des rénovations dans les investissements de construction", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_crossborder ---
+xb_commuters: {label_fr: "Frontaliers (selon le lieu de travail)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+xb_per_100_jobs: {label_fr: "Frontaliers pour 100 emplois", unit_en: "per 100 jobs", unit_de: "pro 100 Beschäftigte", unit_fr: "pour 100 emplois"}
+
+# --- bfs_education ---
+edu_pop_25_64: {label_fr: "Habitants de 25 à 64 ans (base formation)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+edu_known_25_64: {label_fr: "Habitants de 25 à 64 ans dont la formation est connue", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+edu_compulsory_25_64: {label_fr: "Scolarité obligatoire seulement (25–64 ans)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+edu_upper_secondary_25_64: {label_fr: "Degré secondaire II (25–64 ans)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+edu_tertiary_25_64: {label_fr: "Degré tertiaire (25–64 ans)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+edu_imputation_share: {label_fr: "Part imputée dans le modèle de formation", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_share_compulsory: {label_fr: "Part avec scolarité obligatoire seulement (25–64 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_share_upper_secondary: {label_fr: "Part avec formation du degré secondaire II (25–64 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_share_tertiary: {label_fr: "Part avec formation du degré tertiaire (25–64 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_labb_upsec2_rate: {label_fr: "Premier diplôme du degré secondaire II jusqu'à 25 ans", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_labb_matura_rate: {label_fr: "Maturité jusqu'à 25 ans", unit_en: "%", unit_de: "%", unit_fr: "%"}
+edu_labb_upsec2_after25_rate: {label_fr: "Premier diplôme du degré secondaire II après 25 ans", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_gws ---
+gws_buildings: {label_fr: "Bâtiments à usage d'habitation", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_pre1919: {label_fr: "Bâtiments construits avant 1919", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_1919_1945: {label_fr: "Bâtiments construits de 1919 à 1945", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_1946_1980: {label_fr: "Bâtiments construits de 1946 à 1980", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_1981_2000: {label_fr: "Bâtiments construits de 1981 à 2000", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_2001_2010: {label_fr: "Bâtiments construits de 2001 à 2010", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_2011plus: {label_fr: "Bâtiments construits en 2011 ou après", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_sfh: {label_fr: "Maisons individuelles", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_mfh: {label_fr: "Maisons à plusieurs logements", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_res_mixed: {label_fr: "Bâtiments d'habitation avec usage annexe", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_bld_partly_res: {label_fr: "Bâtiments partiellement à usage d'habitation", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_heatpump: {label_fr: "Bâtiments chauffés par pompe à chaleur", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_gas: {label_fr: "Bâtiments chauffés au gaz", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_oil: {label_fr: "Bâtiments chauffés au mazout", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_wood: {label_fr: "Bâtiments chauffés au bois", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_electric: {label_fr: "Bâtiments chauffés à l'électricité", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_district: {label_fr: "Bâtiments raccordés au chauffage à distance", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_other: {label_fr: "Bâtiments chauffés par d'autres sources", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_heat_none: {label_fr: "Bâtiments sans chauffage", unit_en: "buildings", unit_de: "Gebäude", unit_fr: "bâtiments"}
+gws_dwellings: {label_fr: "Logements", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_rooms_1_2: {label_fr: "Logements de 1 à 2 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_rooms_3: {label_fr: "Logements de 3 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_rooms_4: {label_fr: "Logements de 4 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_rooms_5plus: {label_fr: "Logements de 5 pièces ou plus", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_2001plus: {label_fr: "Logements construits en 2001 ou après", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_2011plus: {label_fr: "Logements construits en 2011 ou après", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_lt60: {label_fr: "Logements de moins de 60 m²", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_60_79: {label_fr: "Logements de 60 à 79 m²", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_80_99: {label_fr: "Logements de 80 à 99 m²", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_100_119: {label_fr: "Logements de 100 à 119 m²", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_120_159: {label_fr: "Logements de 120 à 159 m²", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_dw_area_160plus: {label_fr: "Logements de 160 m² ou plus", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+gws_share_heatpump: {label_fr: "Bâtiments chauffés par pompe à chaleur (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_oil: {label_fr: "Bâtiments chauffés au mazout (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_gas: {label_fr: "Bâtiments chauffés au gaz (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_fossil: {label_fr: "Bâtiments chauffés au mazout ou au gaz (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_wood: {label_fr: "Bâtiments chauffés au bois (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_district: {label_fr: "Bâtiments raccordés au chauffage à distance (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_sfh: {label_fr: "Maisons individuelles (part des bâtiments)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_bld_pre1946: {label_fr: "Bâtiments construits avant 1946 (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_bld_2001plus: {label_fr: "Bâtiments construits en 2001 ou après (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_dw_2001plus: {label_fr: "Logements construits en 2001 ou après (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_dw_small: {label_fr: "Logements de 1 à 2 pièces (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_dw_large: {label_fr: "Logements de 5 pièces ou plus (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+gws_share_dw_lt60: {label_fr: "Logements de moins de 60 m² (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_households ---
+hh_total: {label_fr: "Ménages privés", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size1: {label_fr: "Ménages d'une personne", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size2: {label_fr: "Ménages de deux personnes", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size3: {label_fr: "Ménages de trois personnes", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size4: {label_fr: "Ménages de quatre personnes", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size5: {label_fr: "Ménages de cinq personnes", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_size6plus: {label_fr: "Ménages de 6 personnes ou plus", unit_en: "households", unit_de: "Haushalte", unit_fr: "ménages"}
+hh_persons: {label_fr: "Personnes vivant dans des ménages privés", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+hh_avg_size: {label_fr: "Taille moyenne des ménages", unit_en: "persons per household", unit_de: "Personen pro Haushalt", unit_fr: "personnes par ménage"}
+hh_share_1p: {label_fr: "Ménages d'une personne (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+hh_share_4plus: {label_fr: "Ménages de 4 personnes ou plus (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_migration ---
+mig_immigration_swiss: {label_fr: "Immigration depuis l'étranger : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_immigration_foreign: {label_fr: "Immigration depuis l'étranger : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_emigration_swiss: {label_fr: "Émigration vers l'étranger : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_emigration_foreign: {label_fr: "Émigration vers l'étranger : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intercant_in_swiss: {label_fr: "Arrivées d'autres cantons : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intercant_in_foreign: {label_fr: "Arrivées d'autres cantons : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intercant_out_swiss: {label_fr: "Départs vers d'autres cantons : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intercant_out_foreign: {label_fr: "Départs vers d'autres cantons : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intracant_in_swiss: {label_fr: "Arrivées du même canton : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intracant_in_foreign: {label_fr: "Arrivées du même canton : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intracant_out_swiss: {label_fr: "Départs à l'intérieur du canton : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_intracant_out_foreign: {label_fr: "Départs à l'intérieur du canton : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_net_intl_swiss: {label_fr: "Solde migratoire international : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_net_intl_foreign: {label_fr: "Solde migratoire international : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_net_intercant_swiss: {label_fr: "Solde migratoire intercantonal : Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_net_intercant_foreign: {label_fr: "Solde migratoire intercantonal : étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+mig_net_intl_swiss_rate: {label_fr: "Solde migratoire international des Suisses pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+mig_net_intl_foreign_rate: {label_fr: "Solde migratoire international des étrangers pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+mig_immigration_rate: {label_fr: "Immigration depuis l'étranger pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+mig_emigration_rate: {label_fr: "Émigration vers l'étranger pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+mig_share_foreign_immigrants: {label_fr: "Part des étrangers parmi les immigrants", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_naturalisation ---
+nat_total: {label_fr: "Naturalisations", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nat_women: {label_fr: "Naturalisations : femmes", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nat_eu_efta: {label_fr: "Naturalisations : anciens ressortissants UE/AELE", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nat_other_europe: {label_fr: "Naturalisations : anciens ressortissants d'autres États européens", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nat_outside_europe: {label_fr: "Naturalisations : anciens ressortissants d'États non européens", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nat_rate: {label_fr: "Naturalisations pour 100 étrangers résidants", unit_en: "per 100 foreign residents", unit_de: "pro 100 ausländische Einwohner", unit_fr: "pour 100 habitants étrangers"}
+nat_per_1000: {label_fr: "Naturalisations pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+nat_share_eu_efta: {label_fr: "Anciens ressortissants UE/AELE parmi les naturalisés", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_nrw ---
+nrw_fw_fdp: {label_fr: "Conseil national : électeurs fictifs PLR", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_mitte: {label_fr: "Conseil national : électeurs fictifs Le Centre", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_sp: {label_fr: "Conseil national : électeurs fictifs PS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_svp: {label_fr: "Conseil national : électeurs fictifs UDC", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_lps: {label_fr: "Conseil national : électeurs fictifs PLS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_evp: {label_fr: "Conseil national : électeurs fictifs PEV", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_csp: {label_fr: "Conseil national : électeurs fictifs PCS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_glp: {label_fr: "Conseil national : électeurs fictifs PVL", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_pda: {label_fr: "Conseil national : électeurs fictifs PST", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_sol: {label_fr: "Conseil national : électeurs fictifs Sol.", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_fga: {label_fr: "Conseil national : électeurs fictifs AVF", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_gruene: {label_fr: "Conseil national : électeurs fictifs Verts", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_sd: {label_fr: "Conseil national : électeurs fictifs DS", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_edu: {label_fr: "Conseil national : électeurs fictifs UDF", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_lega: {label_fr: "Conseil national : électeurs fictifs Lega", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_mcr: {label_fr: "Conseil national : électeurs fictifs MCG", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_cvp: {label_fr: "Conseil national : électeurs fictifs PDC", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_bdp: {label_fr: "Conseil national : électeurs fictifs PBD", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_ldu: {label_fr: "Conseil national : électeurs fictifs AdI", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_poch: {label_fr: "Conseil national : électeurs fictifs POCH", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_rep: {label_fr: "Conseil national : électeurs fictifs Rép.", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_psa: {label_fr: "Conseil national : électeurs fictifs PSA", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_fps: {label_fr: "Conseil national : électeurs fictifs PSL", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_sep: {label_fr: "Conseil national : électeurs fictifs Sép.", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}  # guess (party abbreviation: guess)
+nrw_fw_other: {label_fr: "Conseil national : électeurs fictifs Autres", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_fw_total: {label_fr: "Conseil national : électeurs fictifs, tous les partis", unit_en: "fictitious voters", unit_de: "fiktive Wählende", unit_fr: "électeurs fictifs"}
+nrw_eligible: {label_fr: "Électeurs inscrits (Conseil national)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+nrw_voters: {label_fr: "Votants / bulletins rentrés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_ballots_blank: {label_fr: "Bulletins blancs (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_ballots_invalid: {label_fr: "Bulletins nuls (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_ballots_valid: {label_fr: "Bulletins valables (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_ballots_unchanged: {label_fr: "Bulletins non modifiés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_ballots_changed: {label_fr: "Bulletins modifiés (Conseil national)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+nrw_share_fdp: {label_fr: "Force du parti PLR (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_mitte: {label_fr: "Force du parti Le Centre (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_sp: {label_fr: "Force du parti PS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_svp: {label_fr: "Force du parti UDC (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_lps: {label_fr: "Force du parti PLS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_evp: {label_fr: "Force du parti PEV (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_csp: {label_fr: "Force du parti PCS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_glp: {label_fr: "Force du parti PVL (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_pda: {label_fr: "Force du parti PST (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_sol: {label_fr: "Force du parti Sol. (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_fga: {label_fr: "Force du parti AVF (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_gruene: {label_fr: "Force du parti Verts (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_sd: {label_fr: "Force du parti DS (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_edu: {label_fr: "Force du parti UDF (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_lega: {label_fr: "Force du parti Lega (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_mcr: {label_fr: "Force du parti MCG (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_cvp: {label_fr: "Force du parti PDC (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_bdp: {label_fr: "Force du parti PBD (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_ldu: {label_fr: "Force du parti AdI (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_poch: {label_fr: "Force du parti POCH (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_rep: {label_fr: "Force du parti Rép. (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_psa: {label_fr: "Force du parti PSA (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_fps: {label_fr: "Force du parti PSL (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_sep: {label_fr: "Force du parti Sép. (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}  # guess (party abbreviation: guess)
+nrw_share_other: {label_fr: "Force du parti Autres (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_turnout: {label_fr: "Participation (Conseil national)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_unchanged_share: {label_fr: "Bulletins de liste non modifiés (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_left_bloc: {label_fr: "Bloc de gauche (PS + Verts)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+nrw_share_right_bloc: {label_fr: "Bloc de droite (UDC + PLR)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_rents ---
+rent_avg_chf: {label_fr: "Loyer net moyen (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_ci: {label_fr: "Loyer net moyen : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r1: {label_fr: "Loyer net moyen, logements de 1 pièce (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r1_ci: {label_fr: "Loyer net moyen, logements de 1 pièce : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r2: {label_fr: "Loyer net moyen, logements de 2 pièces (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r2_ci: {label_fr: "Loyer net moyen, logements de 2 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r3: {label_fr: "Loyer net moyen, logements de 3 pièces (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r3_ci: {label_fr: "Loyer net moyen, logements de 3 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r4: {label_fr: "Loyer net moyen, logements de 4 pièces (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r4_ci: {label_fr: "Loyer net moyen, logements de 4 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r5: {label_fr: "Loyer net moyen, logements de 5 pièces (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r5_ci: {label_fr: "Loyer net moyen, logements de 5 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_chf_r6p: {label_fr: "Loyer net moyen, logements de 6 pièces ou plus (canton)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_avg_chf_r6p_ci: {label_fr: "Loyer net moyen, logements de 6 pièces ou plus : intervalle de confiance à 95 % (canton)", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_avg_m2: {label_fr: "Loyer net moyen au m² (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_ci: {label_fr: "Loyer net moyen au m² : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r1: {label_fr: "Loyer net moyen au m², logements de 1 pièce (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r1_ci: {label_fr: "Loyer net moyen au m², logements de 1 pièce : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r2: {label_fr: "Loyer net moyen au m², logements de 2 pièces (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r2_ci: {label_fr: "Loyer net moyen au m², logements de 2 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r3: {label_fr: "Loyer net moyen au m², logements de 3 pièces (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r3_ci: {label_fr: "Loyer net moyen au m², logements de 3 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r4: {label_fr: "Loyer net moyen au m², logements de 4 pièces (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r4_ci: {label_fr: "Loyer net moyen au m², logements de 4 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r5: {label_fr: "Loyer net moyen au m², logements de 5 pièces (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r5_ci: {label_fr: "Loyer net moyen au m², logements de 5 pièces : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_avg_m2_r6p: {label_fr: "Loyer net moyen au m², logements de 6 pièces ou plus (canton)", unit_en: "CHF per m² per month", unit_de: "CHF pro m² und Monat", unit_fr: "CHF par m² et par mois"}
+rent_avg_m2_r6p_ci: {label_fr: "Loyer net moyen au m², logements de 6 pièces ou plus : intervalle de confiance à 95 % (canton)", unit_en: "± CHF per m²", unit_de: "± CHF pro m²", unit_fr: "± CHF par m²"}
+rent_city_r3: {label_fr: "Loyer net moyen, logement de 3 pièces (villes)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_city_r3_ci: {label_fr: "Loyer net moyen, logement de 3 pièces (villes) : intervalle de confiance à 95 %", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+rent_city_r4: {label_fr: "Loyer net moyen, logement de 4 pièces (villes)", unit_en: "CHF per month", unit_de: "CHF pro Monat", unit_fr: "CHF par mois"}
+rent_city_r4_ci: {label_fr: "Loyer net moyen, logement de 4 pièces (villes) : intervalle de confiance à 95 %", unit_en: "± CHF", unit_de: "± CHF", unit_fr: "± CHF"}
+
+# --- bfs_se_language_bezirk ---
+lang_se_pop: {label_fr: "Population (relevé structurel, base langues)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_pop_ci: {label_fr: "Population (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_de: {label_fr: "Langue principale allemand (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_de_ci: {label_fr: "Langue principale allemand (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_de_share_ci: {label_fr: "Part langue principale allemand (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_fr: {label_fr: "Langue principale français (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_fr_ci: {label_fr: "Langue principale français (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_fr_share_ci: {label_fr: "Part langue principale français (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_it: {label_fr: "Langue principale italien (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_it_ci: {label_fr: "Langue principale italien (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_it_share_ci: {label_fr: "Part langue principale italien (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_rm: {label_fr: "Langue principale romanche (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_rm_ci: {label_fr: "Langue principale romanche (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_rm_share_ci: {label_fr: "Part langue principale romanche (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_en: {label_fr: "Langue principale anglais (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_en_ci: {label_fr: "Langue principale anglais (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_en_share_ci: {label_fr: "Part langue principale anglais (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_other: {label_fr: "Autres langues principales (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_other_ci: {label_fr: "Autres langues principales (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_other_share_ci: {label_fr: "Part autres langues principales (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_unknown: {label_fr: "Langue principale inconnue (relevé structurel)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+lang_se_unknown_ci: {label_fr: "Langue principale inconnue (RS) : intervalle de confiance à 95 % (relatif)", unit_en: "± %", unit_de: "± %", unit_fr: "± %"}
+lang_se_unknown_share_ci: {label_fr: "Part langue principale inconnue (RS) : intervalle de confiance à 95 %", unit_en: "± pp", unit_de: "± Prozentpunkte", unit_fr: "± points de pourcentage"}
+lang_se_de_share: {label_fr: "Langue principale allemand (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+lang_se_fr_share: {label_fr: "Langue principale français (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+lang_se_it_share: {label_fr: "Langue principale italien (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+lang_se_rm_share: {label_fr: "Langue principale romanche (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+lang_se_en_share: {label_fr: "Langue principale anglais (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+lang_se_other_share: {label_fr: "Autres langues principales (part, relevé structurel)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_social_assistance ---
+sh_recipients: {label_fr: "Bénéficiaires de l'aide sociale", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+sh_rate: {label_fr: "Taux d'aide sociale", unit_en: "%", unit_de: "%", unit_fr: "%"}
+sh_rate_3y: {label_fr: "Taux d'aide sociale (3 ans cumulés)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_statent ---
+ent_workplaces: {label_fr: "Établissements", unit_en: "workplaces", unit_de: "Arbeitsstätten", unit_fr: "établissements"}
+ent_workplaces_s1: {label_fr: "Établissements (secteur primaire)", unit_en: "workplaces", unit_de: "Arbeitsstätten", unit_fr: "établissements"}
+ent_workplaces_s2: {label_fr: "Établissements (secteur secondaire)", unit_en: "workplaces", unit_de: "Arbeitsstätten", unit_fr: "établissements"}
+ent_workplaces_s3: {label_fr: "Établissements (secteur tertiaire)", unit_en: "workplaces", unit_de: "Arbeitsstätten", unit_fr: "établissements"}
+ent_jobs: {label_fr: "Emplois", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_s1: {label_fr: "Emplois (secteur primaire)", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_s2: {label_fr: "Emplois (secteur secondaire)", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_s3: {label_fr: "Emplois (secteur tertiaire)", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_fte: {label_fr: "Équivalents plein temps", unit_en: "FTE", unit_de: "VZÄ", unit_fr: "EPT"}
+ent_fte_s1: {label_fr: "Équivalents plein temps (secteur primaire)", unit_en: "FTE", unit_de: "VZÄ", unit_fr: "EPT"}
+ent_fte_s2: {label_fr: "Équivalents plein temps (secteur secondaire)", unit_en: "FTE", unit_de: "VZÄ", unit_fr: "EPT"}
+ent_fte_s3: {label_fr: "Équivalents plein temps (secteur tertiaire)", unit_en: "FTE", unit_de: "VZÄ", unit_fr: "EPT"}
+ent_jobs_women: {label_fr: "Emplois occupés par des femmes", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_retail: {label_fr: "Emplois dans le commerce de détail", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_accommodation: {label_fr: "Emplois dans l'hébergement", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_food_service: {label_fr: "Emplois dans la restauration", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_ict: {label_fr: "Emplois dans l'informatique et les services d'information", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_finance: {label_fr: "Emplois dans la finance et les assurances", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_education: {label_fr: "Emplois dans l'enseignement", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_health: {label_fr: "Emplois dans la santé", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_jobs_care_social: {label_fr: "Emplois dans l'hébergement médico-social et l'action sociale", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_share_jobs_s1: {label_fr: "Part des emplois dans le secteur primaire", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_share_jobs_s2: {label_fr: "Part des emplois dans le secteur secondaire", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_share_jobs_s3: {label_fr: "Part des emplois dans le secteur tertiaire", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_share_jobs_women: {label_fr: "Part des emplois occupés par des femmes", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_jobs_per_1000: {label_fr: "Emplois pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+ent_fte_per_job: {label_fr: "EPT par emploi", unit_en: "FTE per job", unit_de: "VZÄ pro Beschäftigten", unit_fr: "EPT par emploi"}
+ent_jobs_per_workplace: {label_fr: "Emplois par établissement", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+ent_share_jobs_accommodation_food: {label_fr: "Part des emplois dans l'hébergement et la restauration", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_share_jobs_health_social: {label_fr: "Part des emplois dans la santé et l'action sociale", unit_en: "%", unit_de: "%", unit_fr: "%"}
+ent_jobs_change_10y: {label_fr: "Évolution des emplois (10 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_statpop ---
+pop_total: {label_fr: "Population", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_male: {label_fr: "Hommes", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_female: {label_fr: "Femmes", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_swiss: {label_fr: "Suisses", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_foreign: {label_fr: "Étrangers", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_nonpermanent: {label_fr: "Population résidante non permanente", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_age_0_19: {label_fr: "0 à 19 ans", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_age_20_64: {label_fr: "20 à 64 ans", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_age_65_79: {label_fr: "65 à 79 ans", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_age_80plus: {label_fr: "80 ans ou plus", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_single: {label_fr: "Célibataires", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_married: {label_fr: "Mariés / en partenariat enregistré", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_widowed: {label_fr: "Veufs", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+pop_divorced: {label_fr: "Divorcés", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+share_foreign: {label_fr: "Étrangers (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+share_age_0_19: {label_fr: "Part des 0 à 19 ans", unit_en: "%", unit_de: "%", unit_fr: "%"}
+share_age_65plus: {label_fr: "Part des 65 ans ou plus", unit_en: "%", unit_de: "%", unit_fr: "%"}
+share_age_80plus: {label_fr: "Part des 80 ans ou plus", unit_en: "%", unit_de: "%", unit_fr: "%"}
+old_age_dependency: {label_fr: "Rapport de dépendance des personnes âgées", unit_en: "aged 65+ per 100 aged 20–64", unit_de: "65+-Jährige pro 100 20–64-Jährige", unit_fr: "65 ans et plus pour 100 personnes de 20–64 ans"}
+youth_dependency: {label_fr: "Rapport de dépendance des jeunes", unit_en: "aged 0–19 per 100 aged 20–64", unit_de: "0–19-Jährige pro 100 20–64-Jährige", unit_fr: "0–19 ans pour 100 personnes de 20–64 ans"}
+share_women: {label_fr: "Part des femmes", unit_en: "%", unit_de: "%", unit_fr: "%"}
+share_married: {label_fr: "Mariés (part de la population)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+share_divorced: {label_fr: "Divorcés (part de la population)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+pop_change_1y: {label_fr: "Évolution de la population (1 an)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+pop_change_5y: {label_fr: "Évolution de la population (5 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+pop_change_10y: {label_fr: "Évolution de la population (10 ans)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_tax_burden ---
+taxb_city_single_50k: {label_fr: "Charge fiscale : célibataire, sans enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_80k: {label_fr: "Charge fiscale : célibataire, sans enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_100k: {label_fr: "Charge fiscale : célibataire, sans enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_150k: {label_fr: "Charge fiscale : célibataire, sans enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_200k: {label_fr: "Charge fiscale : célibataire, sans enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_single_500k: {label_fr: "Charge fiscale : célibataire, sans enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_50k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_80k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_100k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_150k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_200k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married_500k: {label_fr: "Charge fiscale : marié, un revenu, sans enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_50k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_80k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_100k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_150k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_200k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_married2c_500k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_50k: {label_fr: "Charge fiscale : couple de retraités, 50 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_80k: {label_fr: "Charge fiscale : couple de retraités, 80 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_100k: {label_fr: "Charge fiscale : couple de retraités, 100 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_150k: {label_fr: "Charge fiscale : couple de retraités, 150 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_200k: {label_fr: "Charge fiscale : couple de retraités, 200 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_pensioners_500k: {label_fr: "Charge fiscale : couple de retraités, 500 000 CHF (villes)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_city_wealth_married_500k: {label_fr: "Charge de l'impôt sur la fortune : marié, sans enfants, fortune nette de 500 000 CHF (villes)", unit_en: "% of net wealth", unit_de: "% des Reinvermögens", unit_fr: "% de la fortune nette"}
+taxb_city_wealth_married_1000k: {label_fr: "Charge de l'impôt sur la fortune : marié, sans enfants, fortune nette de 1 000 000 CHF (villes)", unit_en: "% of net wealth", unit_de: "% des Reinvermögens", unit_fr: "% de la fortune nette"}
+taxb_amr_single_40k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 40 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_single_80k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 80 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_single_150k: {label_fr: "Charge fiscale moyenne : célibataire, sans enfants, 150 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_60k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 60 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_125k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 125 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+taxb_amr_married2c2i_250k: {label_fr: "Charge fiscale moyenne : marié, deux revenus (70/30), 2 enfants, 250 000 CHF (région de marché du travail)", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+
+# --- bfs_udemo ---
+udemo_active: {label_fr: "Entreprises actives", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_births: {label_fr: "Créations d'entreprises", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_closures: {label_fr: "Fermetures d'entreprises", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_jobs_active: {label_fr: "Emplois dans les entreprises actives", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+udemo_jobs_births: {label_fr: "Emplois dans les entreprises nouvellement créées", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+udemo_jobs_closures: {label_fr: "Emplois dans les entreprises fermées", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+udemo_active_s2: {label_fr: "Entreprises actives (secteur secondaire)", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_active_s3: {label_fr: "Entreprises actives (secteur tertiaire)", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_births_s2: {label_fr: "Créations d'entreprises (secteur secondaire)", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_births_s3: {label_fr: "Créations d'entreprises (secteur tertiaire)", unit_en: "enterprises", unit_de: "Unternehmen", unit_fr: "entreprises"}
+udemo_birth_rate: {label_fr: "Taux de création d'entreprises", unit_en: "% of active enterprises", unit_de: "% der aktiven Unternehmen", unit_fr: "% des entreprises actives"}
+udemo_closure_rate: {label_fr: "Taux de fermeture d'entreprises", unit_en: "% of active enterprises", unit_de: "% der aktiven Unternehmen", unit_fr: "% des entreprises actives"}
+udemo_jobs_per_enterprise: {label_fr: "Emplois par entreprise active", unit_en: "jobs", unit_de: "Beschäftigte", unit_fr: "emplois"}
+udemo_births_per_1000: {label_fr: "Créations d'entreprises pour 1000 habitants", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+
+# --- bfs_vacancy ---
+vac_dwellings: {label_fr: "Logements vacants", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_rooms_1_2: {label_fr: "Logements vacants de 1 à 2 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_rooms_3: {label_fr: "Logements vacants de 3 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_rooms_4: {label_fr: "Logements vacants de 4 pièces", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_rooms_5plus: {label_fr: "Logements vacants de 5 pièces ou plus", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_sfh: {label_fr: "Maisons individuelles vacantes", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_for_sale: {label_fr: "Logements vacants à vendre", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_for_rent: {label_fr: "Logements vacants à louer", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_new: {label_fr: "Logements neufs vacants (≤ 2 ans)", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_dwelling_stock: {label_fr: "Parc de logements (dénominateur du taux de vacance)", unit_en: "dwellings", unit_de: "Wohnungen", unit_fr: "logements"}
+vac_rate_bfs: {label_fr: "Taux de logements vacants (tel que publié par l'OFS)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vac_rate: {label_fr: "Taux de logements vacants", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vac_rate_rent: {label_fr: "Logements locatifs vacants (part du parc)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vac_share_new: {label_fr: "Logements neufs parmi les logements vacants (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_vehicles ---
+mfz_cars: {label_fr: "Voitures de tourisme", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_private: {label_fr: "Voitures de tourisme détenues par des particuliers", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_bev: {label_fr: "Voitures entièrement électriques", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_phev: {label_fr: "Voitures hybrides rechargeables", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_hev: {label_fr: "Voitures hybrides (non rechargeables)", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_petrol: {label_fr: "Voitures à essence (conventionnelles)", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_cars_diesel: {label_fr: "Voitures diesel (conventionnelles)", unit_en: "cars", unit_de: "Personenwagen", unit_fr: "voitures"}
+mfz_newreg_cars: {label_fr: "Voitures de tourisme neuves immatriculées", unit_en: "cars per year", unit_de: "Personenwagen pro Jahr", unit_fr: "voitures par an"}
+mfz_newreg_bev: {label_fr: "Voitures entièrement électriques neuves immatriculées", unit_en: "cars per year", unit_de: "Personenwagen pro Jahr", unit_fr: "voitures par an"}
+mfz_cars_per_1000: {label_fr: "Voitures de tourisme pour 1000 habitants", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+mfz_cars_private_per_1000: {label_fr: "Voitures de tourisme privées pour 1000 habitants", unit_en: "per 1,000", unit_de: "pro 1'000", unit_fr: "pour 1 000"}
+mfz_bev_share: {label_fr: "Part des voitures entièrement électriques", unit_en: "%", unit_de: "%", unit_fr: "%"}
+mfz_plugin_share: {label_fr: "Part des voitures rechargeables (BEV + PHEV)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+mfz_newreg_bev_share: {label_fr: "Part des voitures entièrement électriques parmi les voitures neuves", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- bfs_votes_gemeinde ---
+vote_eligible: {label_fr: "Électeurs inscrits (votation fédérale)", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+vote_ballots: {label_fr: "Bulletins rentrés (votation fédérale)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+vote_valid: {label_fr: "Bulletins valables (votation fédérale)", unit_en: "ballots", unit_de: "Wahlzettel", unit_fr: "bulletins"}
+vote_yes: {label_fr: "Oui", unit_en: "votes", unit_de: "Stimmen", unit_fr: "voix"}
+vote_no: {label_fr: "Non", unit_en: "votes", unit_de: "Stimmen", unit_fr: "voix"}
+vote_yes_share: {label_fr: "Part de oui", unit_en: "%", unit_de: "%", unit_fr: "%"}
+vote_turnout: {label_fr: "Participation (votation fédérale)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- estv_dbst ---
+tax_np_taxpayers: {label_fr: "Contribuables (impôt fédéral direct)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_taxpayers_no_federal_tax: {label_fr: "Contribuables sans impôt fédéral direct", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_net_income_chf: {label_fr: "Revenu net des contribuables (somme)", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+tax_np_taxable_income_chf: {label_fr: "Revenu imposable des contribuables (somme)", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+tax_np_federal_tax_chf: {label_fr: "Rendement de l'impôt fédéral direct", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+tax_np_taxpayers_normal: {label_fr: "Contribuables (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_100k_plus: {label_fr: "Contribuables avec un revenu imposable supérieur à 100 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_0: {label_fr: "Contribuables, revenu imposable 0 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_1_30k: {label_fr: "Contribuables, revenu imposable de 1 à 30 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_30_40k: {label_fr: "Contribuables, revenu imposable de 30 001 à 40 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_40_50k: {label_fr: "Contribuables, revenu imposable de 40 001 à 50 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_50_75k: {label_fr: "Contribuables, revenu imposable de 50 001 à 75 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_75_100k: {label_fr: "Contribuables, revenu imposable de 75 001 à 100 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_100_200k: {label_fr: "Contribuables, revenu imposable de 100 001 à 200 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_200_500k: {label_fr: "Contribuables, revenu imposable de 200 001 à 500 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_500k_1m: {label_fr: "Contribuables, revenu imposable de 500 001 à 1 000 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_normal_taxable_class_1m_plus: {label_fr: "Contribuables, revenu imposable supérieur à 1 000 000 CHF (cas normaux)", unit_en: "taxpayers", unit_de: "Steuerpflichtige", unit_fr: "contribuables"}
+tax_np_mean_net_income: {label_fr: "Revenu net moyen par contribuable", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+tax_np_mean_taxable_income: {label_fr: "Revenu imposable moyen par contribuable", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+tax_np_share_taxable_100k_plus: {label_fr: "Part des contribuables avec un revenu imposable supérieur à 100 000 CHF", unit_en: "%", unit_de: "%", unit_fr: "%"}
+tax_np_share_no_federal_tax: {label_fr: "Part des contribuables ne payant pas d'impôt fédéral direct", unit_en: "%", unit_de: "%", unit_fr: "%"}
+tax_np_federal_tax_per_capita: {label_fr: "Rendement de l'impôt fédéral direct par habitant", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+tax_np_federal_tax_per_taxpayer: {label_fr: "Impôt fédéral direct par contribuable", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+
+# --- estv_tax_burden ---
+tax_burden_single_80k: {label_fr: "Charge fiscale : célibataire, 80 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_80k_federal: {label_fr: "Charge fiscale (impôt fédéral direct) : célibataire, 80 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_80k_cantonal: {label_fr: "Charge fiscale (impôt cantonal) : célibataire, 80 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_80k_municipal: {label_fr: "Charge fiscale (impôt communal) : célibataire, 80 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_80k_church: {label_fr: "Charge fiscale (impôt ecclésiastique) : célibataire, 80 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_150k: {label_fr: "Charge fiscale : célibataire, 150 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_150k_federal: {label_fr: "Charge fiscale (impôt fédéral direct) : célibataire, 150 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_150k_cantonal: {label_fr: "Charge fiscale (impôt cantonal) : célibataire, 150 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_150k_municipal: {label_fr: "Charge fiscale (impôt communal) : célibataire, 150 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_single_150k_church: {label_fr: "Charge fiscale (impôt ecclésiastique) : célibataire, 150 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_100k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 100 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_100k_federal: {label_fr: "Charge fiscale (impôt fédéral direct) : marié, un revenu, 2 enfants, 100 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_100k_cantonal: {label_fr: "Charge fiscale (impôt cantonal) : marié, un revenu, 2 enfants, 100 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_100k_municipal: {label_fr: "Charge fiscale (impôt communal) : marié, un revenu, 2 enfants, 100 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_100k_church: {label_fr: "Charge fiscale (impôt ecclésiastique) : marié, un revenu, 2 enfants, 100 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_200k: {label_fr: "Charge fiscale : marié, un revenu, 2 enfants, 200 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_200k_federal: {label_fr: "Charge fiscale (impôt fédéral direct) : marié, un revenu, 2 enfants, 200 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_200k_cantonal: {label_fr: "Charge fiscale (impôt cantonal) : marié, un revenu, 2 enfants, 200 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_200k_municipal: {label_fr: "Charge fiscale (impôt communal) : marié, un revenu, 2 enfants, 200 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_married2c_200k_church: {label_fr: "Charge fiscale (impôt ecclésiastique) : marié, un revenu, 2 enfants, 200 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_pensioners_60k: {label_fr: "Charge fiscale : couple de retraités, une rente, 60 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_pensioners_60k_federal: {label_fr: "Charge fiscale (impôt fédéral direct) : couple de retraités, une rente, 60 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_pensioners_60k_cantonal: {label_fr: "Charge fiscale (impôt cantonal) : couple de retraités, une rente, 60 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_pensioners_60k_municipal: {label_fr: "Charge fiscale (impôt communal) : couple de retraités, une rente, 60 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+tax_burden_pensioners_60k_church: {label_fr: "Charge fiscale (impôt ecclésiastique) : couple de retraités, une rente, 60 000 CHF", unit_en: "% of gross income", unit_de: "% des Bruttoeinkommens", unit_fr: "% du revenu brut"}
+
+# --- estv_tax_multipliers ---
+tax_mult_cantonal_income: {label_fr: "Coefficient d'impôt cantonal (revenu)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+tax_mult_municipal_income: {label_fr: "Coefficient d'impôt communal (revenu)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+tax_mult_cantonal_wealth: {label_fr: "Coefficient d'impôt cantonal (fortune)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+tax_mult_municipal_wealth: {label_fr: "Coefficient d'impôt communal (fortune)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- geo_identity ---
+geo_area_total_ha: {label_fr: "Surface totale, lacs compris", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+geo_area_lake_ha: {label_fr: "Surface des lacs", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+geo_area_land_ha: {label_fr: "Surface terrestre (sans les lacs)", unit_en: "ha", unit_de: "ha", unit_fr: "ha"}
+geo_elev_mean: {label_fr: "Altitude moyenne", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
+geo_elev_median: {label_fr: "Altitude médiane", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
+geo_elev_min: {label_fr: "Point le plus bas", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
+geo_elev_max: {label_fr: "Point culminant", unit_en: "m a.s.l.", unit_de: "m ü. M.", unit_fr: "m d'altitude"}
+geo_pop_density: {label_fr: "Densité de population", unit_en: "persons per km² of land", unit_de: "Personen pro km² Landfläche", unit_fr: "personnes par km² de surface terrestre"}
+geo_lake_share: {label_fr: "Surface lacustre à l'intérieur de la limite communale (part)", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- kt_crime ---
+crime_stgb_offences: {label_fr: "Infractions au Code pénal*", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+crime_stgb_property: {label_fr: "Infractions contre le patrimoine (CP)*", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+crime_stgb_violent: {label_fr: "Infractions contre la vie et l'intégrité corporelle (CP)*", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+crime_burglaries: {label_fr: "Cambriolages*", unit_en: "offences", unit_de: "Straftaten", unit_fr: "infractions"}
+crime_stgb_per_1000: {label_fr: "Infractions au Code pénal pour 1000 habitants*", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+crime_property_per_1000: {label_fr: "Infractions contre le patrimoine pour 1000 habitants*", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+crime_violent_per_1000: {label_fr: "Infractions contre la vie et l'intégrité corporelle pour 1000 habitants*", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+crime_burglaries_per_1000: {label_fr: "Cambriolages pour 1000 habitants*", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+
+# --- kt_finance ---
+fin_net_debt_per_capita: {label_fr: "Dette nette par habitant*", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+fin_self_financing_ratio: {label_fr: "Degré d'autofinancement*", unit_en: "%", unit_de: "%", unit_fr: "%"}
+fin_tax_revenue_chf: {label_fr: "Recettes fiscales communales*", unit_en: "CHF", unit_de: "CHF", unit_fr: "CHF"}
+fin_tax_revenue_per_capita: {label_fr: "Recettes fiscales communales par habitant*", unit_en: "CHF per resident", unit_de: "CHF pro Einwohner", unit_fr: "CHF par habitant"}
+
+# --- kt_hazards ---
+haz_residents_high: {label_fr: "Habitants en zone de danger élevé (rouge)*", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+haz_residents_medium: {label_fr: "Habitants en zone de danger moyen (bleu)*", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+haz_residents_assessed: {label_fr: "Habitants dans le périmètre couvert par la carte des dangers*", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+haz_hectare_residents: {label_fr: "Habitants (grille hectométrique, dénominateur dangers)*", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+haz_share_high: {label_fr: "Part des habitants en zone de danger rouge*", unit_en: "%", unit_de: "%", unit_fr: "%"}
+haz_share_medium: {label_fr: "Part des habitants en zone de danger bleue*", unit_en: "%", unit_de: "%", unit_fr: "%"}
+haz_share_high_medium: {label_fr: "Part des habitants en zone de danger rouge ou bleue*", unit_en: "%", unit_de: "%", unit_fr: "%"}
+haz_share_assessed: {label_fr: "Part des habitants dans le périmètre couvert*", unit_en: "%", unit_de: "%", unit_fr: "%"}
+
+# --- kt_landprice ---
+land_price_m2: {label_fr: "Prix du terrain à bâtir en zone d'habitation*", unit_en: "CHF per m²", unit_de: "CHF pro m²", unit_fr: "CHF par m²"}
+land_price_model_m2: {label_fr: "Prix du terrain à bâtir (médiane modélisée, ZH)*", unit_en: "CHF per m²", unit_de: "CHF pro m²", unit_fr: "CHF par m²"}
+land_transactions: {label_fr: "Transactions de terrains à bâtir*", unit_en: "transactions", unit_de: "Handänderungen", unit_fr: "transactions"}
+
+# --- kt_pupils ---
+pup_compulsory: {label_fr: "Élèves de la scolarité obligatoire*", unit_en: "pupils", unit_de: "Schülerinnen und Schüler", unit_fr: "élèves"}
+pup_compulsory_per_1000: {label_fr: "Élèves de la scolarité obligatoire pour 1000 habitants*", unit_en: "per 1,000 residents", unit_de: "pro 1'000 Einwohner", unit_fr: "pour 1 000 habitants"}
+
+# --- kt_unemployment ---
+unemp_registered: {label_fr: "Chômeurs inscrits*", unit_en: "persons", unit_de: "Personen", unit_fr: "personnes"}
+unemp_per_100_20_64: {label_fr: "Chômeurs inscrits pour 100 habitants de 20 à 64 ans*", unit_en: "per 100 residents aged 20–64", unit_de: "pro 100 Einwohner von 20–64 Jahren", unit_fr: "pour 100 habitants de 20–64 ans"}
+
+# --- meteoswiss_climate ---
+clim_temp_pop: {label_fr: "Température annuelle moyenne (là où vit la population)", unit_en: "°C", unit_de: "°C", unit_fr: "°C"}
+clim_temp_area: {label_fr: "Température annuelle moyenne (tout le territoire)", unit_en: "°C", unit_de: "°C", unit_fr: "°C"}
+clim_precip_pop: {label_fr: "Précipitations annuelles (là où vit la population)", unit_en: "mm", unit_de: "mm", unit_fr: "mm"}
+clim_precip_area: {label_fr: "Précipitations annuelles (tout le territoire)", unit_en: "mm", unit_de: "mm", unit_fr: "mm"}
+clim_sunshine_pop: {label_fr: "Durée relative d'ensoleillement (là où vit la population)", unit_en: "% of maximum possible", unit_de: "% des Möglichen", unit_fr: "% du maximum possible"}  # guess (unit: guess)
+clim_sunshine_area: {label_fr: "Durée relative d'ensoleillement (tout le territoire)", unit_en: "% of maximum possible", unit_de: "% des Möglichen", unit_fr: "% du maximum possible"}  # guess (unit: guess)
+
+# --- otd_stops ---
+pt_stops_total: {label_fr: "Arrêts de transports publics", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+pt_stops_bus: {label_fr: "Arrêts de bus", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+pt_stops_tram_metro: {label_fr: "Arrêts de tram et de métro", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+pt_stops_rail: {label_fr: "Gares et haltes ferroviaires", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+pt_stops_cableway: {label_fr: "Stations de remontées mécaniques et de funiculaires", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+pt_stops_boat: {label_fr: "Débarcadères", unit_en: "stops", unit_de: "Haltestellen", unit_fr: "arrêts"}
+rail_boardings_daily: {label_fr: "Montées et descentes de train par jour", unit_en: "persons per day", unit_de: "Personen pro Tag", unit_fr: "personnes par jour"}
+rail_boardings_weekday: {label_fr: "Montées et descentes de train par jour ouvrable", unit_en: "persons per day", unit_de: "Personen pro Tag", unit_fr: "personnes par jour"}
+pt_stops_per_km2: {label_fr: "Arrêts de transports publics par km²", unit_en: "stops per km² of land", unit_de: "Haltestellen pro km² Landfläche", unit_fr: "arrêts par km² de surface terrestre"}
+pt_stops_per_1000: {label_fr: "Arrêts de transports publics pour 1000 habitants", unit_en: "stops per 1,000 residents", unit_de: "Haltestellen pro 1'000 Einwohner", unit_fr: "arrêts pour 1 000 habitants"}
+
+# --- reach_metrics ---
+reach_ptst_zuerich: {label_fr: "Temps de trajet train/TP de gare à gare vers Zürich HB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_zuerich: {label_fr: "Transports publics porte-à-porte vers Zürich HB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_zuerich: {label_fr: "Voiture vers Zürich HB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_bern: {label_fr: "Temps de trajet train/TP de gare à gare vers Bern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_bern: {label_fr: "Transports publics porte-à-porte vers Bern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_bern: {label_fr: "Voiture vers Bern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_basel: {label_fr: "Temps de trajet train/TP de gare à gare vers Basel SBB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_basel: {label_fr: "Transports publics porte-à-porte vers Basel SBB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_basel: {label_fr: "Voiture vers Basel SBB", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_geneve: {label_fr: "Temps de trajet train/TP de gare à gare vers Genève", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_geneve: {label_fr: "Transports publics porte-à-porte vers Genève", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_geneve: {label_fr: "Voiture vers Genève", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_lausanne: {label_fr: "Temps de trajet train/TP de gare à gare vers Lausanne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_lausanne: {label_fr: "Transports publics porte-à-porte vers Lausanne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_lausanne: {label_fr: "Voiture vers Lausanne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_luzern: {label_fr: "Temps de trajet train/TP de gare à gare vers Luzern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_luzern: {label_fr: "Transports publics porte-à-porte vers Luzern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_luzern: {label_fr: "Voiture vers Luzern", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_stgallen: {label_fr: "Temps de trajet train/TP de gare à gare vers St. Gallen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_stgallen: {label_fr: "Transports publics porte-à-porte vers St. Gallen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_stgallen: {label_fr: "Voiture vers St. Gallen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_winterthur: {label_fr: "Temps de trajet train/TP de gare à gare vers Winterthur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_winterthur: {label_fr: "Transports publics porte-à-porte vers Winterthur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_winterthur: {label_fr: "Voiture vers Winterthur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_lugano: {label_fr: "Temps de trajet train/TP de gare à gare vers Lugano", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_lugano: {label_fr: "Transports publics porte-à-porte vers Lugano", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_lugano: {label_fr: "Voiture vers Lugano", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_bellinzona: {label_fr: "Temps de trajet train/TP de gare à gare vers Bellinzona", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_bellinzona: {label_fr: "Transports publics porte-à-porte vers Bellinzona", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_bellinzona: {label_fr: "Voiture vers Bellinzona", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_chur: {label_fr: "Temps de trajet train/TP de gare à gare vers Chur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_chur: {label_fr: "Transports publics porte-à-porte vers Chur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_chur: {label_fr: "Voiture vers Chur", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_biel: {label_fr: "Temps de trajet train/TP de gare à gare vers Biel/Bienne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_biel: {label_fr: "Transports publics porte-à-porte vers Biel/Bienne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_biel: {label_fr: "Voiture vers Biel/Bienne", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_fribourg: {label_fr: "Temps de trajet train/TP de gare à gare vers Fribourg/Freiburg", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_fribourg: {label_fr: "Transports publics porte-à-porte vers Fribourg/Freiburg", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_fribourg: {label_fr: "Voiture vers Fribourg/Freiburg", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_sion: {label_fr: "Temps de trajet train/TP de gare à gare vers Sion", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_sion: {label_fr: "Transports publics porte-à-porte vers Sion", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_sion: {label_fr: "Voiture vers Sion", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_zug: {label_fr: "Temps de trajet train/TP de gare à gare vers Zug", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_zug: {label_fr: "Transports publics porte-à-porte vers Zug", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_zug: {label_fr: "Voiture vers Zug", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_aarau: {label_fr: "Temps de trajet train/TP de gare à gare vers Aarau", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_aarau: {label_fr: "Transports publics porte-à-porte vers Aarau", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_aarau: {label_fr: "Voiture vers Aarau", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_olten: {label_fr: "Temps de trajet train/TP de gare à gare vers Olten", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_olten: {label_fr: "Transports publics porte-à-porte vers Olten", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_olten: {label_fr: "Voiture vers Olten", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_schaffhausen: {label_fr: "Temps de trajet train/TP de gare à gare vers Schaffhausen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_schaffhausen: {label_fr: "Transports publics porte-à-porte vers Schaffhausen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_schaffhausen: {label_fr: "Voiture vers Schaffhausen", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_neuchatel: {label_fr: "Temps de trajet train/TP de gare à gare vers Neuchâtel", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_neuchatel: {label_fr: "Transports publics porte-à-porte vers Neuchâtel", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_neuchatel: {label_fr: "Voiture vers Neuchâtel", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_thun: {label_fr: "Temps de trajet train/TP de gare à gare vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_thun: {label_fr: "Transports publics porte-à-porte vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_thun: {label_fr: "Voiture vers Thun", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_ptst_nearest_hub: {label_fr: "Temps de trajet train/TP de gare à gare vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_pt_nearest_hub: {label_fr: "Transports publics porte-à-porte vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+reach_car_nearest_hub: {label_fr: "Voiture vers le pôle le plus proche", unit_en: "min", unit_de: "Min.", unit_fr: "min"}
+
+# --- wikidata_identity ---
+wiki_sitelinks: {label_fr: "Éditions linguistiques de Wikipédia", unit_en: "editions", unit_de: "Sprachversionen", unit_fr: "éditions"}  # guess (unit: guess)

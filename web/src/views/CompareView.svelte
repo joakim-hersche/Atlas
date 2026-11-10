@@ -3,16 +3,21 @@
   import { onMount, tick } from 'svelte';
   import Legend from '../components/Legend.svelte';
   import LevelSwitch from '../components/LevelSwitch.svelte';
+  import LevelNote from '../components/LevelNote.svelte';
   import MetricPicker from '../components/MetricPicker.svelte';
   import Scatter from '../components/Scatter.svelte';
-  import { buildScale, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
+  import { buildScale, divergeCentre, fmtValue, isDiverging, sortedValues, type Method } from '../lib/classify';
   import type { ColumnStore } from '../lib/columns.svelte';
-  import { levelInfo, loadUnits, unavailableReason, type Base, type LevelData, type MetricMeta } from '../lib/data';
+  import { fmtNumber } from '../lib/classify';
+  import { loadReachIndex, loadUnits, namesOf, unavailableReason, type Base, type Hub, type LevelData, type MetricMeta, type UnitRow } from '../lib/data';
+  import { catOptions, combine, describeFilter, evalFilter } from '../lib/filters';
+  import { hrefFor } from '../lib/nav';
+  import { bareAttribution } from '../lib/export';
   import { CH_BOUNDS, UnitMap, syncCameras } from '../lib/mapview';
   import { app } from '../lib/state.svelte';
   import { levelName, t, levelWord } from '../lib/i18n.svelte';
-  import { currentLevelNote, switchLevel } from '../lib/levels';
-  import { divRamp, seqRamp } from '../lib/theme';
+  import { switchLevel } from '../lib/levels';
+  import { divRamp, mute, seqRamp, token } from '../lib/theme';
 
   interface Props {
     base: Base;
@@ -40,6 +45,8 @@
     { slug: 'heatpumps-income', label: 'cv.p.heat', a: 'gws_share_heatpump', b: 'tax_np_mean_taxable_income' },
   ];
   const metas = $derived(base.metas);
+  /** unit names in the UI language */
+  const names = $derived(namesOf(ld));
   const presetsOf = (m: Map<string, MetricMeta>) =>
     PRESETS.flatMap((p) => {
       if (m.has(p.a) && m.has(p.b)) return [p];
@@ -73,6 +80,8 @@
   let hover = $state<number | null>(null);
   let hoverAt = $state<{ pane: 'a' | 'b'; x: number; y: number } | null>(null);
   let regions = $state.raw<{ idx: Int8Array; names: string[] } | null>(null);
+  let unitRows = $state.raw<UnitRow[] | null>(null);
+  let hubs = $state.raw<Hub[]>([]);
   let mapElA = $state<HTMLDivElement>();
   let mapElB = $state<HTMLDivElement>();
   let viewA: UnitMap | null = null;
@@ -91,7 +100,7 @@
   const scaleOf = (v: (number | null)[] | undefined, m: MetricMeta | undefined, method: Method) => {
     if (!v || !m) return null;
     const s = sortedValues(v);
-    return s.length ? buildScale(v, method, isDiverging(m, s), seq, div) : null;
+    return s.length ? buildScale(v, method, isDiverging(m, s), seq, div, divergeCentre(m)) : null;
   };
   const scaleA = $derived(scaleOf(colA?.v, metaA, app.cls));
   const scaleB = $derived(scaleOf(colB?.v, metaB, app.cls));
@@ -100,6 +109,24 @@
   const pop = $derived(ld.core.metrics['pop_total']?.v ?? ld.units.map(() => null));
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
   const blank = $derived(ld.units.map(() => null));
+
+  // ------------------------------------------------------------------ filters (kept from the map view)
+  $effect(() => {
+    if (app.filters.length && !unitRows) loadUnits().then((u) => (unitRows = u)).catch(() => {});
+    if (app.filters.some((f) => f.kind === 'reach') && !hubs.length) loadReachIndex().then((ix) => ix && (hubs = ix.hubs)).catch(() => {});
+  });
+  const hubName = (slug: string) => hubs.find((h) => h.slug === slug)?.name ?? slug;
+  const evals = $derived(app.filters.map((f) => evalFilter(f, { ld, rows: unitRows, metas, hubName, col: (id) => cols.get(ld, id, app.year) })));
+  const match = $derived(combine(evals, nUnits));
+  const filtered = $derived(match.active > 0);
+  const filterText = $derived(
+    evals.map((e) => describeFilter(e, (field, id) => catOptions(field, unitRows).find((o) => o.id === id)?.name ?? id)).join(' · '),
+  );
+  const dimmed = (colours: (string | null)[]) => {
+    if (!filtered) return colours;
+    const surface = token('--map-bg');
+    return colours.map((c, i) => (c && !match.m[i] ? mute(c, surface, 0.88) : c));
+  };
 
   function select(i: number | null) {
     app.sel = i === null ? null : ld.units[i];
@@ -146,7 +173,6 @@
     void app.lang;
     if (mapReadyA) { viewA!.relabel(); viewB!.relabel(); }
   });
-  const levelNote = $derived(currentLevelNote());
   $effect(() => {
     void desktop;
     if (mapReadyA) tick().then(() => requestAnimationFrame(() => fit()));
@@ -189,11 +215,11 @@
   });
   $effect(() => {
     void ld;
-    if (mapReadyA) viewA!.setColours(scaleA && !whyA ? scaleA.unitColour : blank);
+    if (mapReadyA) viewA!.setColours(scaleA && !whyA ? dimmed(scaleA.unitColour) : blank);
   });
   $effect(() => {
     void ld;
-    if (mapReadyB) viewB!.setColours(scaleB && !whyB ? scaleB.unitColour : blank);
+    if (mapReadyB) viewB!.setColours(scaleB && !whyB ? dimmed(scaleB.unitColour) : blank);
   });
   $effect(() => {
     const s = selIdx;
@@ -209,7 +235,7 @@
   const tipRows = $derived.by(() => {
     if (hover === null || !hoverAt) return null;
     const h = hover;
-    const fmt = (v: (number | null)[] | undefined, m: MetricMeta | undefined) => (v && m && v[h] !== null && v[h] !== undefined ? fmtValue(v[h]!, m) : 'no data');
+    const fmt = (v: (number | null)[] | undefined, m: MetricMeta | undefined) => (v && m && v[h] !== null && v[h] !== undefined ? fmtValue(v[h]!, m) : t('lg.noData'));
     return [{ k: 'A', v: fmt(colA?.v, metaA) }, { k: 'B', v: fmt(colB?.v, metaB) }];
   });
 </script>
@@ -220,14 +246,26 @@
   {#each presets as p}
     <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{t(p.label)}</button>
   {/each}
+  {#if metaB}
+    <a class="chip rlink" href={hrefFor('regress', { ry: metaB.id, rx: metaA.id })}>{t('cv.toRegress')}</a>
+  {/if}
 </nav>
 
-{#if levelNote}
-  <p class="lnote" role="status">{levelNote}
-    <button type="button" class="lx" aria-label={t('common.dismiss')} onclick={() => (app.levelNote = null)}>×</button></p>
+<LevelNote variant="bar" />
+{#if app.filters.length}
+  <div class="fbar" role="status">
+    <span class="caps">{t('tab.filters')}</span>
+    <span class="ftx">{#if filtered}<strong class="num">{t('fp.match', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0), units: word })}</strong>{' · '}{/if}{filterText}</span>
+    <span class="seg" role="radiogroup" aria-label={t('cv.scatterMode')}>
+      <button type="button" role="radio" aria-checked={!app.only} onclick={() => (app.only = false)}>{t('cv.highlight')}</button>
+      <button type="button" role="radio" aria-checked={app.only} onclick={() => (app.only = true)}>{t('cv.only')}</button>
+    </span>
+    <a href={hrefFor('map', {}, { tab: 'filters' })} class="fedit">{t('cv.editFilters')}</a>
+  </div>
 {/if}
 
-<main class="stage">
+<main class="stage" id="main" tabindex="-1">
+  <h1 class="sr-only">{t('nav.compare')}</h1>
   {#each [{ pane: 'a' as const, tag: 'A', meta: metaA, col: colA, scale: scaleA, why: whyA, ref: refA },
           { pane: 'b' as const, tag: 'B', meta: metaB, col: colB, scale: scaleB, why: whyB, ref: refB }] as P (P.pane)}
     <section class="pane" class:pa={P.pane === 'a'} class:pb={P.pane === 'b'}>
@@ -240,7 +278,7 @@
           {#if P.pane === 'a'}<div class="map" bind:this={mapElA}></div>{:else}<div class="map" bind:this={mapElB}></div>{/if}
           {#if hoverAt?.pane === P.pane && tipRows && hover !== null && desktop}
             <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
-              <strong>{ld.name[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !ld.name[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
+              <strong>{names[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !names[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
               {#each tipRows as r}<div class="num"><span class="k">{r.k}</span>{r.v}</div>{/each}
             </div>
           {/if}
@@ -263,8 +301,10 @@
   <section class="pane ps">
     {#if metaB && colA && colB && regions && !whyA && !whyB}
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
-        region={regions.idx} regionNames={regions.names} {pop} names={ld.name} cantons={ld.canton}
-        hover={hover} sel={selIdx} isDark={false} unitWord={word} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
+        region={regions.idx} regionNames={regions.names} {pop} names={names} cantons={ld.canton}
+        hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only}
+        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}: ${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
+        note={[levelName(ld.level), filtered ? `${t('tab.filters')}: ${filterText} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})` : ''].filter(Boolean).join(' · ')} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
       <p class="muted loading">{t('cv.needBoth')}</p>
     {:else}
@@ -285,13 +325,16 @@
   }
   .chip:hover { color: var(--accent); border-color: var(--accent); }
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
+  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: dashed; }
 
   .stage { flex: 1; min-height: 0; position: relative; }
-  .lnote {
-    flex: none; margin: 0; padding: 5px 8px 5px 16px; font-size: 0.78rem; border-bottom: 1px solid var(--rule); background: var(--panel);
-    display: flex; justify-content: space-between; gap: 8px;
+  .fbar {
+    flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 5px 16px; font-size: 0.78rem;
+    border-bottom: 1px solid var(--rule); background: var(--panel);
   }
-  .lx { border: 0; background: none; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; color: var(--text); }
+  .ftx { flex: 1 1 240px; min-width: 0; }
+  .fbar .seg button { padding: 2px 8px; font-size: 0.74rem; }
+  .fedit { color: var(--text); font-size: 0.76rem; }
   .pane { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--panel); }
   .phead { flex: none; padding: 8px; border-bottom: 1px solid var(--rule); }
   .pbody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -326,6 +369,6 @@
     .mapbox { flex: none; height: 250px; }
     .plegend { padding: 6px 10px 8px; }
     .ps { padding: 10px 10px calc(16px + env(safe-area-inset-bottom)); }
-    :global(.compare .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-reset)) { display: none; }
+    :global(.compare .maplibregl-ctrl-top-right .maplibregl-ctrl-group:not(.gb-btn)) { display: none; }
   }
 </style>

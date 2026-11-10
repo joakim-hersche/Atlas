@@ -2,9 +2,9 @@
 // (value, rank in Switzerland and in the canton, percentile, gap reason, precision), the theme layout,
 // "similar places" and a small SVG locator.
 import type { Feature, FeatureCollection, Geometry, Position } from 'geojson';
-import { rankOf } from './classify';
+import { rankOf, type RankInfo } from './classify';
 import {
-  gapReason, LEVELS, loadLevel, loadTheme, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
+  flagMarks, flagsOf, flagTexts, gapReason, regionalAt, LEVELS, loadLevel, loadTheme, noteOf, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
 } from './data';
 import { loadRows } from './places';
 
@@ -88,11 +88,7 @@ export function themeBlocks(base: Base, level: string): ThemeBlock[] {
 }
 
 // ---------------------------------------------------------------- metric entries
-export interface Rank {
-  rank: number;
-  n: number;
-  pct: number;
-}
+export type Rank = RankInfo;
 export interface Entry {
   meta: MetricMeta;
   value: number | null;
@@ -104,6 +100,12 @@ export interface Entry {
   /** reason for a missing value (D21) */
   gap: string | null;
   partial: string[] | null;
+  /** D21: the value is that of a coarser area (its level), or null */
+  regional: string | null;
+  /** flag markers (△ M ° p) and their sentences; provenance note of a shown value */
+  marks: string;
+  flags: string[];
+  note: string | null;
 }
 
 /** One metric for unit i of a level, from a latest-values file. null = the file has no column. */
@@ -127,6 +129,10 @@ export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: n
     precision: precisionOf(file, col, i, meta),
     gap: value === null ? gapReason(file, col, i, meta, pl.canton[i]) : null,
     partial: partialCantons(meta),
+    regional: regionalAt(meta, pl.level),
+    marks: value !== null ? flagMarks(file, flagsOf(file, col, i)) : '',
+    flags: value !== null ? flagTexts(file, flagsOf(file, col, i), meta) : [],
+    note: value !== null ? noteOf(col, i) : null,
   };
 }
 

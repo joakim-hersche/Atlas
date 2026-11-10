@@ -4,7 +4,7 @@
   import { ml, t } from '../lib/i18n.svelte';
   import MetricPicker from './MetricPicker.svelte';
   import RangeFilter from './RangeFilter.svelte';
-  import { fmtNumber, fmtPeriod } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
   import type { Hub, MetricMeta } from '../lib/data';
   import { catLabel, type CatOption, type FilterEval, type MatchResult } from '../lib/filters';
   import { CAT_FIELDS, T_MAX, type CatField, type Filter } from '../lib/hash';
@@ -22,8 +22,14 @@
     defaultMetric: string;
     defaultHub: string;
     onset: (filters: Filter[]) => void;
+    /** zoom the map to the matching units (shown while filters are active) */
+    onzoom?: () => void;
+    /** D31 station times in this build: the reach condition offers station time and door to door */
+    station?: boolean;
+    /** method line of a reach measure */
+    method?: (mode: 'pt' | 'ptst' | 'car', hub: string) => string;
   }
-  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset }: Props = $props();
+  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom, station = false, method }: Props = $props();
 
   const filters = $derived(evals.map((e) => e.filter));
   function update(k: number, f: Filter) {
@@ -35,7 +41,7 @@
   function add(kind: string) {
     let f: Filter;
     if (kind === 'num') f = { kind: 'num', metric: defaultMetric, lo: null, hi: null };
-    else if (kind === 'reach') f = { kind: 'reach', hub: defaultHub, mode: 'pt', max: 30 };
+    else if (kind === 'reach') f = { kind: 'reach', hub: defaultHub, mode: station ? 'ptst' : 'pt', max: 30 };
     else f = { kind: 'cat', field: kind as CatField, values: [] };
     onset([...filters, f]);
   }
@@ -60,7 +66,12 @@
     {:else}
       {t('fp.none', { n: fmtNumber(total, 0), units: unitWord })}
     {/if}
-    {#if filters.length}<button type="button" class="link" onclick={() => onset([])}>{t('fp.clear')}</button>{/if}
+    {#if filters.length}
+      <span class="acts">
+        {#if match.active && onzoom}<button type="button" class="link" onclick={onzoom}>{t('fp.zoom')}</button>{/if}
+        <button type="button" class="link" onclick={() => onset([])}>{t('fp.clear')}</button>
+      </span>
+    {/if}
   </div>
 
   {#each evals as e, k (k)}
@@ -75,7 +86,7 @@
           <RangeFilter label={ml(e.col.meta)} hideLabel min={e.domain.min} max={e.domain.max} lo={f.lo} hi={f.hi}
             log={e.domain.log} decimals={e.col.meta.decimals} onchange={(lo, hi) => update(k, { ...f, lo, hi })} />
           <p class="cf num">
-            {e.col.meta.unit || t('fp.value')} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noDataEx')}{/if}
+            {unitOf(e.col.meta) || t('fp.value')} · {fmtPeriod(e.col.col.period)} · {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noDataEx')}{/if}
           </p>
         {/if}
       {:else if f.kind === 'cat'}
@@ -93,7 +104,7 @@
         {:else if opts.length}
           {#if f.values.length}
             <div class="chips">
-              {#each f.values as id}<button type="button" class="chip" aria-pressed="true" title="Remove" onclick={() => toggle(k, id)}>{nameOf(f.field, id)} ×</button>{/each}
+              {#each f.values as id}<button type="button" class="chip" aria-pressed="true" title={t('fp.remove')} onclick={() => toggle(k, id)}>{nameOf(f.field, id)} ×</button>{/each}
             </div>
           {/if}
           {#if opts.length > 12}
@@ -106,7 +117,7 @@
             {/each}
           </div>
         {/if}
-        {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} pass</p>{/if}
+        {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} {t('fp.pass')}</p>{/if}
       {:else}
         <div class="ch">
           <span class="caps grow">{t('fp.travel')}</span>
@@ -120,7 +131,12 @@
             {#each hubs as h}<option value={h.slug}>{h.name}</option>{/each}
           </select>
           <div class="seg" role="radiogroup" aria-label={t('common.mode')}>
-            <button type="button" role="radio" aria-checked={f.mode === 'pt'} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('common.pt')}</button>
+            {#if station}
+              <button type="button" role="radio" aria-checked={f.mode === 'ptst'} title={t('pt.st')} onclick={() => update(k, { ...f, mode: 'ptst' })}>{t('pt.stS')}</button>
+              <button type="button" role="radio" aria-checked={f.mode === 'pt'} title={t('pt.dd')} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('pt.ddS')}</button>
+            {:else}
+              <button type="button" role="radio" aria-checked={f.mode === 'pt' || f.mode === 'ptst'} onclick={() => update(k, { ...f, mode: 'pt' })}>{t('common.pt')}</button>
+            {/if}
             <button type="button" role="radio" aria-checked={f.mode === 'car'} onclick={() => update(k, { ...f, mode: 'car' })}>{t('common.car')}</button>
           </div>
         </div>
@@ -131,6 +147,7 @@
             {fmtNumber(e.nPass, 0)} {t('fp.pass')}{#if e.nMissing}{' · '}<span class="hatch"></span> {fmtNumber(e.nMissing, 0)} {t('fp.noTimeEx')}{/if}
           </p>
         {/if}
+        {#if method}<p class="cf">{method(f.mode, e.hubName ?? f.hub)}</p>{/if}
       {/if}
       {#if e.note}<p class="cf note">{e.note}</p>{/if}
     </div>
@@ -152,7 +169,8 @@
   .filters { font-size: 0.82rem; }
   .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin-bottom: 8px; }
   .miss { color: var(--text); }
-  .link { margin-left: auto; border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.78rem; }
+  .acts { margin-left: auto; display: inline-flex; gap: 10px; }
+  .link { border: 0; background: none; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.78rem; }
   .cond { border-top: 1px solid var(--ink); padding: 8px 0 10px; }
   .cond.inactive .ch, .cond.inactive .chips, .cond.inactive .list { opacity: 0.6; }
   .ch { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }

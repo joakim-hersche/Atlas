@@ -4,11 +4,14 @@
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
 // Routes: 'map' (default) and 'compare'; later pages (profile, places, search, sources) add their own
-// route names and read their extra keys from `params`.
+// route names and read their extra keys from `params`. The regression panel (#v=regress) uses
+// ry, rx, rc, rw, rse, rd, rs (documented in regmodel.ts), e.g.
+//   #v=regress&ry=nrw_share_left_bloc&rx=log:tax_np_mean_taxable_income,log:geo_pop_density&rc=lang
 import type { Method } from './classify';
 
 export type ReachMode = 'off' | 'pt' | 'car';
-export type Lang = 'en' | 'de';
+export type Lang = 'en' | 'de' | 'fr';
+const LANGS: Lang[] = ['en', 'de', 'fr'];
 export type Display = 'choropleth' | 'symbols';
 export type CatField = 'kanton' | 'sprachgebiet' | 'gemeindetyp' | 'stadt_land' | 'agglomeration' | 'grossregion';
 export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 'stadt_land', 'agglomeration', 'grossregion'];
@@ -16,7 +19,8 @@ export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 
 export type Filter =
   | { kind: 'num'; metric: string; lo: number | null; hi: number | null }
   | { kind: 'cat'; field: CatField; values: string[] }
-  | { kind: 'reach'; hub: string; mode: 'pt' | 'car'; max: number };
+  /** mode 'ptst' = PT station time towards the hub (D31), 'pt' = PT door to door, 'car' */
+  | { kind: 'reach'; hub: string; mode: 'pt' | 'ptst' | 'car'; max: number };
 
 export interface ViewState {
   route: string;
@@ -35,6 +39,16 @@ export interface ViewState {
   tab: string | null;
   /** UI language (English default) */
   lang: Lang;
+  /** compare view: the scatter shows only the units matching the filters (else matches are highlighted) */
+  only: boolean;
+  /** public transport on the map: 'st' station time towards the hub (default), 'dd' door to door */
+  ptm: 'st' | 'dd';
+  /** federal vote shown by the per-vote metrics (vote id; null = the latest vote) */
+  vote: string | null;
+  /** yes share shown as the difference from the national result */
+  vdiff: boolean;
+  /** values resting on small numbers: shown, drawn lighter, or hidden (treated as gaps) */
+  unstable: 'show' | 'light' | 'hide';
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -44,9 +58,11 @@ export interface ViewState {
 export const T_MAX = 180;
 export const DEFAULT_HUB = 'zuerich';
 export const DEFAULT_LEVEL = 'gemeinde';
+/** default shade: a density, never a count as a choropleth (cartographic rule; review round 1) */
+export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -62,7 +78,7 @@ function parseFilter(raw: string): Filter | null {
   if (p[0] === 'c' && p.length === 3 && (CAT_FIELDS as string[]).includes(p[1])) {
     return { kind: 'cat', field: p[1] as CatField, values: p[2] ? p[2].split(',').filter(Boolean) : [] };
   }
-  if (p[0] === 'r' && p.length === 4 && (p[2] === 'pt' || p[2] === 'car')) {
+  if (p[0] === 'r' && p.length === 4 && (p[2] === 'pt' || p[2] === 'ptst' || p[2] === 'car')) {
     const max = numOrNull(p[3]);
     return { kind: 'reach', hub: p[1], mode: p[2], max: max === null ? 30 : Math.max(0, Math.min(T_MAX, max)) };
   }
@@ -116,7 +132,12 @@ export function parseHash(hash: string): ViewState {
     t: t === null ? 60 : Math.max(0, Math.min(T_MAX, t)),
     sel: get('sel') ?? null,
     tab: get('tab') ?? null,
-    lang: get('lang') === 'de' ? 'de' : get('lang') === 'en' ? 'en' : storedLang(),
+    lang: LANGS.includes(get('lang') as Lang) ? (get('lang') as Lang) : storedLang(),
+    only: get('only') === '1',
+    ptm: get('ptm') === 'dd' ? 'dd' : 'st',
+    vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
+    vdiff: get('vd') === '1',
+    unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
     preset,
     params,
   };
@@ -125,7 +146,8 @@ export function parseHash(hash: string): ViewState {
 /** Language chosen earlier on this device (localStorage can throw or be empty: then English). */
 export function storedLang(): Lang {
   try {
-    return localStorage.getItem('gb-lang') === 'de' ? 'de' : 'en';
+    const l = localStorage.getItem('gb-lang') as Lang | null;
+    return l && LANGS.includes(l) ? l : 'en';
   } catch {
     return 'en';
   }
@@ -161,15 +183,20 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.display === 'symbols') add('d', 'sym');
   if (s.cls !== 'quantile') add('cls', CLS_KEY[s.cls]);
   if (s.year) add('y', s.year);
+  if (s.vote) add('vote', s.vote);
+  if (s.vdiff) add('vd', '1');
+  if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
   for (const f of s.filters) add('f', filterKey(f));
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);
   if (s.reach !== 'off') {
     add('reach', s.reach);
     add('t', String(Math.round(s.t)));
+    if (s.reach === 'pt' && s.ptm === 'dd') add('ptm', 'dd');
   }
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);
   if (s.lang !== 'en') add('lang', s.lang);
+  if (s.route === 'compare' && s.only && s.filters.length) add('only', '1');
   for (const [k, v] of Object.entries(s.params)) add(k, v);
   return out.length ? '#' + out.map(([k, v]) => `${k}=${enc(v)}`).join('&') : '';
 }

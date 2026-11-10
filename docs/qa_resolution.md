@@ -239,3 +239,33 @@ Escalations for the lead (shared modules, not edited):
 | CH FDP 2011–2023 | 1.6–3.6 % | Known: from 2011 BFS counts LPS under FDP in the national total only (see `bfs_nrw/metrics.yaml` header) |
 
 None affects current (2023) municipal, district or canton values.
+
+## 2026-11-10 — Review round 1: `zero_when` needs a real value; published fallback; pseudo-units
+
+**Regression fixed (review defect 3).** `zero_when` let "party did not stand" count as 0 inside ratios,
+so majority-election cantons (UR, OW, NW, GL, AR, AI: one seat, BFS cube px-x-1702020000_103) showed
+0.0 % for parties without a list (Rehetobel left bloc 0.0 %, ranked). Rule now in
+`pipeline/build/metrics.py`: zero_when statuses count as 0 in a sum or a ratio term only next to at
+least one real (`ok`) value; a sum made only of zero_when rows is a gap with that status, and a
+derived ratio without a real numerator (or denominator) term is a gap that keeps `not_applicable` and
+the note "party did not stand". Rehetobel and AR left bloc 2023: gap; BE SVP 2023 30.87 %; CH SVP 2023
+27.93 % (official 27.9; was 28.0 without Swiss abroad). NRW metrics carry `majority_cantons` and a
+per-unit flag (web).
+
+**Votes (defect 4).** Pooled communes: a missing municipality is "counted with another municipality"
+(`not_published`, zero_when) only if the canton's municipal results plus pseudo-units equal the
+published canton result within 1 % (cantons that exchanged territory with Bern compared together).
+Real gaps (city and district of Bern on 1978-02-26) stay `no_data`, and the published canton value is
+used. National and canton sums include the pseudo-units (`include_pseudo`): CH 2026-06-14 #6870
+52.458 % = voteinfo 52.458 %, BE 50.189 % = published. The 2026-09-27 vote (not yet in the PxWeb cube,
+checked 2026-11-10) comes from the BFS DAM JSON, marked provisional.
+
+**Published fallback (defect 6).** An incomplete sum or weighted mean takes the source's published
+value for that unit (provenance `native`, note "published canton value; municipal values incomplete
+(…)"); otherwise the gap note says how many municipalities are missing and why. The additivity sweep
+now compares only `provenance = 'aggregated'` rows, and does not subtract pseudo-units or
+`unallocated` rows again for `include_pseudo` metrics.
+
+**Lakes outside municipalities (defect 5).** swissBOUNDARIES3D Kantonsgebiet/Kommunanz units and the
+Arealstatistik 9xxx units are pseudo-units added to canton and Swiss totals: BE total area 593,889 ha
+and lakes 11,854 ha = the published canton figures; CH 4,129,069 ha.

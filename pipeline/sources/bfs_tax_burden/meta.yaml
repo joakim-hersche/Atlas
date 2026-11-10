@@ -1,0 +1,15 @@
+source_id: bfs_tax_burden
+title: "Tax burden (ESTV data) as republished by BFS: 179 cities (Swiss cities statistics) and 101 labour market areas"
+publisher: "BFS (Federal Statistical Office) and Schweizerischer Städteverband (cities); data: ESTV/AFC"
+url: https://disseminate.stats.swiss/rest/data/CH1.SSV,DF_SSV_TAX_BRDN_REV_MAR_2C,2026.1.0/all
+urls:
+  cities_2024: "https://disseminate.stats.swiss/rest/data/CH1.SSV,DF_SSV_TAX_BRDN_*,2026.1.0/all (asset https://statistik.admin.ch/de/asset/36503269)"
+  cities_2023: "https://disseminate.stats.swiss/rest/data/CH1.SSV,DF_SSV_TAX_BRDN_*,2025.2/all"
+  labour_market_areas: "https://disseminate.stats.swiss/rest/data/CH1.RDISP,DF_RDISP_2,1.0.0/.EC6000I+EC6001I+EC6002I+EC6003I+EC6004I+EC6005I.. (asset https://statistik.admin.ch/de/asset/36681060)"
+license: "OPEN-BY – Freie Nutzung, Quellenangabe ist Pflicht (statistik.admin.ch assets 36503269 and 36681060, checked 2026-11-10)"
+attribution: "Source: BFS/SSV – Statistik der Schweizer Städte (data: ESTV); BFS – Indikatoren regionaler Disparitäten (data: ESTV, STATPOP)"
+vintage: "Cities: SSV municipality state (01.01.2024 for 2023, 31.12.2024 for 2024) mapped 1:1 to the reference state. Labour market areas 2018 (BAE2018), native rows"
+years: "Cities 2023–2024 (tax years); labour market areas 2010–2025"
+precision: modelled
+caveats: "Standard cases only. City flows do not state which taxes or which church are assumed (values match the ESTV total incl. federal tax in about half the cities, see metrics.yaml). Income levels kept: 50, 80, 100, 150, 200, 500 kCHF; wealth 500k and 1M."
+catalog_ids: [bfs_ssv_tax_burden, bfs_atlas_tax_burden_amr]

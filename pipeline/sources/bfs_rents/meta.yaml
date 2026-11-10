@@ -1,0 +1,16 @@
+source_id: bfs_rents
+title: "Average rents from the Structural Survey: by canton (BFS tables) and for 180 cities (Swiss cities statistics)"
+publisher: "BFS (Federal Statistical Office); cities: BFS and Schweizerischer Städteverband (Statistik der Schweizer Städte)"
+url: https://dam-api.bfs.admin.ch/hub/api/dam/assets/36398431/master
+urls:
+  canton_chf: "https://statistik.admin.ch/de/asset/36398431 (T 09.03.03.01, Durchschnittlicher Mietpreis in Franken nach Zimmerzahl und Kanton)"
+  canton_m2: "https://statistik.admin.ch/de/asset/36398447 (Durchschnittlicher Mietpreis pro m2 in Franken nach Zimmerzahl und Kanton)"
+  cities_2023: "https://disseminate.stats.swiss/rest/data/CH1.SSV,DF_SSV_BUILD_HOUSING_OC,2026.1.0/all (asset 36503090)"
+  cities_2022: "https://disseminate.stats.swiss/rest/data/CH1.SSV,DF_SSV_BUILD_HOUSING_OC,2025.2/all (asset 35367668)"
+license: "OPEN-BY – Freie Nutzung, Quellenangabe ist Pflicht (statistik.admin.ch assets 36398431 and 36503090, 'Nutzungsbedingungen OPEN-BY Freie Nutzung - Quellenangabe ist Pflicht', checked 2026-11-10)"
+attribution: "Source: BFS – Strukturerhebung (SE), Gebäude- und Wohnungsstatistik (GWS); cities: BFS/SSV – Statistik der Schweizer Städte"
+vintage: "Cantons: canton of each survey year (native rows). Cities: SSV municipality state (REGION_STATE 01.01.2024 for 2022, 06.04.2025 for 2023), mapped 1:1 to the reference state (not_aggregatable)"
+years: "Cantons 2010–2024 (2000 census and 2003 sheets not ingested: other layout); cities 2022–2023 (2021 only as xlsx edition, not ingested)"
+precision: "survey (sample); 95% CI delivered as _ci metrics"
+caveats: "Rents are averages over existing tenancies (not asking rents). Results from 2018 only partly comparable with earlier years (BFS); questionnaire change 2015. City values for small cities often rest on 50 or fewer observations (noted)."
+catalog_ids: [bfs_rents_structural_survey, bfs_ssv_city_rents]

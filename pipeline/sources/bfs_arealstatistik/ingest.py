@@ -113,4 +113,8 @@ def observations() -> pd.DataFrame:
         status="not_covered", precision="exact", provenance="source_current_state", source_id=SOURCE,
         note=NOT_COVERED)
     outside = outside[~((outside["metric_id"] == "area_settlement_base_ha") & (outside["period"] == "1979/85"))]
-    return pd.concat([obs, add[OBS_COLUMNS], outside], ignore_index=True)
+    out = pd.concat([obs, add[OBS_COLUMNS], outside], ignore_index=True)
+    # sample survey on the hectare grid (hectare sample points, see meta.yaml vintage), so not exact
+    # (review round 1, defect 8)
+    out["precision"] = "survey"
+    return out

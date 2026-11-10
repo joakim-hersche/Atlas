@@ -1,0 +1,50 @@
+# Small-number reliability rule for rates (decision D32), read by pipeline/build/web.py.
+#
+# A rate built from few events or on a small population is unstable: one birth more or less moves
+# a village's birth rate by several per mille. Each listed metric gets
+#   count: the event count (numerator)       -> flag "small count" when count < min_count
+#   base:  the population at risk (denominator, first term) -> flag "small base" when base < min_base
+# Both default to the metric's own ratio/pooled formula (numerator terms / first denominator term);
+# `count: null` switches the count rule off (balances such as net migration can be near 0 by nature).
+#
+# Thresholds and reasoning
+#   min_count 20: for a Poisson count n the relative standard error is 1/sqrt(n); below 20 events it
+#     exceeds 22 %. The same 20-event cut-off is the common rule in vital statistics for flagging
+#     rates as unreliable (e.g. the US National Center for Health Statistics). It is a flag, not
+#     suppression: the value stays visible.
+#   min_base 1000: below 1,000 residents a single event changes a per-1,000 rate by >= 1 point,
+#     the size of typical differences between municipalities; the pooled 3-year rates triple the
+#     exposure and are the recommended view for small places.
+# Pooled rates (metrics *_3y) use the sums over their three years for count and base.
+defaults:
+  min_count: 20
+  min_base: 1000
+  rule_en: "Few events or residents: fewer than 20 events or under 1,000 residents (relative standard error above ~22 %). Prefer the pooled 3-year rate."
+  rule_de: "Kleine Zahlen: weniger als 20 Ereignisse oder unter 1'000 Einwohner (relativer Standardfehler über ~22 %). Besser die gepoolte 3-Jahres-Rate verwenden."
+metrics:
+  bevnat_birth_rate: {}
+  bevnat_birth_rate_3y: {}
+  bevnat_marriage_rate: {}
+  bevnat_divorce_rate: {}
+  bil_birth_rate: {}
+  bil_death_rate: {}
+  bil_natural_rate: {count: null}
+  bil_net_migration_rate: {count: null}
+  bil_net_migration_rate_3y: {count: null}
+  bil_net_international_rate: {count: null}
+  bil_net_intercant_rate: {count: null}
+  bil_naturalisation_rate: {}
+  nat_rate: {}
+  sh_rate: {count: sh_recipients, base: pop_total}
+  sh_rate_3y: {}
+  crime_stgb_per_1000: {}
+  crime_property_per_1000: {}
+  crime_violent_per_1000: {}
+  crime_burglaries_per_1000: {}
+  acc_injury_per_1000: {}
+  acc_severe_per_1000: {}
+  acc_nonmotorway_per_1000: {}
+  con_new_dwellings_per_1000: {}
+  udemo_births_per_1000: {}
+  udemo_birth_rate: {}
+  mfz_newreg_bev_share: {}

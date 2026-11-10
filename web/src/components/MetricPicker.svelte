@@ -3,7 +3,8 @@
   // case-insensitive, German labels and ids too). Metrics that do not exist at the current level
   // (not aggregatable, or not published there) are listed but disabled, with the reason.
   import { levelName, ml, t, themeName, levelWord } from '../lib/i18n.svelte';
-  import { levelInfo, type MetricMeta } from '../lib/data';
+  import { availableAt, type MetricMeta } from '../lib/data';
+  import { fmtPeriod, unitOf } from '../lib/classify';
 
   interface Props {
     metrics: MetricMeta[];
@@ -16,7 +17,7 @@
   }
   let { metrics, value, level = 'gemeinde', tag, none, onpick }: Props = $props();
   const MAP_LEVELS = ['gemeinde', 'bezirk', 'kanton', 'grossregion', 'sprachgebiet', 'agglomeration', 'arbeitsmarktgebiet', 'stadt_land'];
-  const ok = (m: MetricMeta) => m.levels.includes(level);
+  const ok = (m: MetricMeta) => availableAt(m, level);
   function why(m: MetricMeta) {
     if (m.aggregation === 'not_aggregatable') return t('mp.notAgg');
     const at = m.levels.filter((l) => MAP_LEVELS.includes(l));
@@ -98,7 +99,7 @@
           oninput={() => (active = 0)} onkeydown={key} />
         <button type="button" class="x" aria-label={t('common.close')} onclick={() => (open = false)}>×</button>
       </div>
-      <div class="list" role="listbox" aria-label="Metrics">
+      <div class="list" role="listbox" aria-label={t('mp.choose')}>
         {#if none && !q}
           <button type="button" role="option" class="opt" aria-selected={!value} onclick={() => pick('')}>
             <span class="ol">{none}</span><span class="om">–</span>
@@ -115,7 +116,7 @@
               <button type="button" role="option" class="opt" class:active={k === active} aria-selected={m.id === value}
                 onclick={() => pick(m.id)} onpointerenter={() => (active = k)}>
                 <span class="ol">{ml(m)}</span>
-                <span class="om">{m.unit || '–'} · {m.latest}{m.coverage.startsWith('partial:') ? ' · partial' : ''}</span>
+                <span class="om">{unitOf(m) || '–'} · {fmtPeriod(m.latest)}{m.coverage.startsWith('partial:') ? ` · ${t('mp.partial')}` : ''}</span>
               </button>
             {:else}
               <div role="option" class="opt off" aria-disabled="true" aria-selected="false" title={t('mp.notFor', { level: levelWord(level) })}>
@@ -172,10 +173,11 @@
   .opt[aria-selected='true'] .ol { color: var(--accent); font-weight: 600; }
   .opt[aria-selected='true'] { box-shadow: inset 2px 0 0 var(--accent); }
   .ol { min-width: 0; }
-  .om { flex: none; color: var(--muted); font-size: 0.72rem; font-family: var(--font-mono); max-width: 45%; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* unit · period · coverage: wraps instead of being clipped */
+  .om { flex: 0 1 auto; color: var(--muted); font-size: 0.72rem; font-family: var(--font-mono); max-width: 48%; text-align: right; overflow-wrap: break-word; }
   .empty { padding: 10px; color: var(--muted); margin: 0; }
   .hint { padding: 8px 10px 0; margin: 0; }
   @media (max-width: 899px) {
-    .pop { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; width: auto; max-width: none; max-height: 72vh; }
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 72vh; }
   }
 </style>

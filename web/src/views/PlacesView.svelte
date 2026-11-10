@@ -18,7 +18,7 @@
       'pl.worst': 'worst',
       'pl.high': 'highest',
       'pl.low': 'lowest',
-      'pl.legend': 'Per row, the best and worst values are marked where a metric has a direction (higher or lower is better); otherwise the highest and lowest. Rank and percentile are within each place’s own level.',
+      'pl.legend': 'Per row, a value is marked best or worst (where higher or lower is better), otherwise highest or lowest, only when it stands at least 10 percentile points apart from all the others; small differences are not marked. Rank and percentile are within each place’s own level.',
       'pl.rank': '{r} of {n}',
     },
     {
@@ -38,7 +38,7 @@
       'pl.worst': 'schlechteste',
       'pl.high': 'höchste',
       'pl.low': 'tiefste',
-      'pl.legend': 'Pro Zeile sind der beste und der schlechteste Wert markiert, wo eine Kennzahl eine Richtung hat (höher oder tiefer ist besser); sonst der höchste und der tiefste. Rang und Perzentil gelten innerhalb der Ebene des jeweiligen Orts.',
+      'pl.legend': 'Pro Zeile wird ein Wert als bester oder schlechtester (wo höher oder tiefer besser ist), sonst als höchster oder tiefster markiert, nur wenn er mindestens 10 Perzentilpunkte von allen anderen entfernt liegt; kleine Unterschiede werden nicht markiert. Rang und Perzentil gelten innerhalb der Ebene des jeweiligen Orts.',
       'pl.rank': '{r} von {n}',
     },
   );
@@ -50,9 +50,9 @@
   // table scrolls sideways with the metric column sticky. Selection in the hash: #v=places&ids=261,kanton:GE
   import PctBar from '../components/PctBar.svelte';
   import Search from '../components/Search.svelte';
-  import { fmtNumber, fmtPeriod, fmtValue } from '../lib/classify';
-  import { loadTheme, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
-  import { levelName, ml, t, themeName } from '../lib/i18n.svelte';
+  import { fmtNumber, fmtPeriod, fmtValue, unitOf } from '../lib/classify';
+  import { loadTheme, placeName, precisionText, type Base, type ColumnFile, type MetricMeta } from '../lib/data';
+  import { levelName, ml, t, themeName, tiedText } from '../lib/i18n.svelte';
   import { profileHref, sourceHref } from '../lib/nav';
   import { parseRef, type UnitRef } from '../lib/places';
   import { entryOf, loadPlaceLevel, themeBlocks, themeOrder, type Entry, type PlaceLevel } from '../lib/profile';
@@ -109,7 +109,7 @@
   const nameOf = (u: UnitRef) => {
     const pl = pls[u.level];
     const i = idxOf(u);
-    return pl && i !== null ? pl.name[i] : u.id;
+    return pl && i !== null ? placeName(u.level, u.id, pl.name[i]) : u.id;
   };
 
   // themes: metrics available at any of the chosen levels
@@ -146,14 +146,22 @@
       return entryOf(pl, f, m, i);
     });
   }
-  /** index of the best / worst (or highest / lowest) value of a row */
+  /** A value is marked as highest / lowest (best / worst) only when it stands clearly apart from every
+   *  other value of the row: different at the displayed precision and at least MARK_GAP percentile points
+   *  away (percentiles within each place's own level). 11.1 vs 11.5 is not marked. */
+  const MARK_GAP = 10;
   function marks(m: MetricMeta, es: (Entry | null | undefined)[]): { hi: number; lo: number } | null {
-    const vals = es.map((e) => (e && e.value !== null ? e.value : null));
-    const ok = vals.filter((v): v is number => v !== null);
-    if (ok.length < 2) return null;
-    const max = Math.max(...ok), min = Math.min(...ok);
-    if (max === min) return null;
-    return { hi: vals.indexOf(max), lo: vals.indexOf(min) };
+    const pts = es.flatMap((e, k) => (e && e.value !== null ? [{ k, v: e.value, p: e.rank?.pct ?? null, d: fmtNumber(e.value, m.decimals) }] : []));
+    if (pts.length < 2) return null;
+    type P = (typeof pts)[number];
+    const apart = (a: P, b: P) =>
+      a.d !== b.d && (a.p !== null && b.p !== null ? Math.abs(a.p - b.p) >= MARK_GAP : Math.abs(a.v - b.v) >= 0.05 * Math.max(Math.abs(a.v), Math.abs(b.v)));
+    const byV = pts.slice().sort((a, b) => a.v - b.v);
+    const top = byV[byV.length - 1];
+    const bot = byV[0];
+    const hi = byV.every((x) => x === top || (x.v < top.v && apart(top, x))) ? top.k : -1;
+    const lo = byV.every((x) => x === bot || (x.v > bot.v && apart(bot, x))) ? bot.k : -1;
+    return hi < 0 && lo < 0 ? null : { hi, lo };
   }
   function markText(m: MetricMeta, kind: 'hi' | 'lo'): { text: string; good: boolean | null } {
     if (m.direction === 'higher_better') return kind === 'hi' ? { text: t('pl.best'), good: true } : { text: t('pl.worst'), good: false };
@@ -169,7 +177,7 @@
   <tr>
     <th scope="row" class="mcol">
       <span class="lbl">{ml(m)}</span>
-      <span class="tags">{m.unit ? m.unit + ' · ' : ''}{precisionText(m.precision)}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
+      <span class="tags">{m.unit ? unitOf(m) + ' · ' : ''}{precisionText(m.precision)}{' · '}<a href={sourceHref(m.source)}>{publisher(m)}</a></span>
     </th>
     {#each es as e, k}
       {@const mark = mk ? (mk.hi === k ? markText(m, 'hi') : mk.lo === k ? markText(m, 'lo') : null) : null}
@@ -184,16 +192,17 @@
           <span class="why">{e.gap} · {fmtPeriod(e.period)}</span>
         {:else}
           {#if mark}<span class="mk">{mark.text}</span>{/if}
-          <span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}</span>
-          <span class="yr">{fmtPeriod(e.period)}{#if e.rank}{' · '}{t('pl.rank', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{/if}</span>
-          {#if e.rank}<PctBar pct={e.rank.pct} label="P{Math.round(e.rank.pct)}" />{/if}
+          <span class="v num">{m.unit.startsWith('%') ? fmtValue(e.value, m) : fmtNumber(e.value, m.decimals)}{#if e.marks}<sup class="fl" title={e.flags.join('\n')}>{e.marks}</sup>{/if}</span>
+          {#each e.flags as f}<span class="why">{f}</span>{/each}
+          <span class="yr">{fmtPeriod(e.period)}{#if e.rank}{' · '}{t('pl.rank', { r: fmtNumber(e.rank.rank, 0), n: fmtNumber(e.rank.n, 0) })}{tiedText(e.rank)}{/if}</span>
+          {#if e.rank}<PctBar pct={e.rank.pct} lo={e.rank.pctLo} hi={e.rank.pctHi} label="P{Math.round(e.rank.pct)}{tiedText(e.rank, true)}" />{/if}
         {/if}
       </td>
     {/each}
   </tr>
 {/snippet}
 
-<div class="pg">
+<main class="pg" id="main" tabindex="-1">
   <div class="wrap">
     <header class="head">
       <h1>{t('pl.title')}</h1>
@@ -246,9 +255,10 @@
       </div>
     {/if}
   </div>
-</div>
+</main>
 
 <style>
+  .pg:focus { outline: none; }
   .pg { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); }
   .wrap { max-width: 1240px; margin: 0 auto; padding: 16px 24px 40px; }
   h1 { margin: 0; font-size: 2rem; letter-spacing: -0.03em; }
@@ -287,6 +297,7 @@
   td.ext { box-shadow: inset 3px 0 0 var(--border); }
   .nd { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
   .why { display: block; font-size: 0.72rem; margin-top: 2px; }
+  .fl { font-size: 0.6rem; color: var(--accent); margin-left: 2px; }
   .morer td { border-left: 0; padding: 6px 0 2px; }
   .more { border: 1px solid var(--ink); background: none; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; position: sticky; left: 0; }
   .more[aria-expanded='true'] { background: var(--ink); color: var(--ink-text); }

@@ -7,6 +7,7 @@
 #   make profile   search (names, postal codes), identity, boundary history, neighbours for the web app
 #   make web-data  copy the data files the web app reads into web/public/data/
 #   make web-app   install pinned npm deps and build the static site (web/dist/)
+#   make deploy    publish web/dist to the gh-pages branch (GitHub Pages)
 #   make test      unit tests
 # Set GB_REFRESH=1 to re-download sources; GB_REFERENCE_DATE=YYYY-MM-DD to change the target state.
 
@@ -50,6 +51,9 @@ web-data:
 
 web-app:
 	cd web && npm ci && npm run build
+
+deploy:
+	./scripts/deploy_pages.sh
 
 test:
 	uv run pytest -q pipeline/tests
