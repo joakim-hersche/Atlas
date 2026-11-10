@@ -162,7 +162,7 @@ featured:
   - {rank: 3, metric: share_age_65plus, level: gemeinde, view: quantile, story: "Ageing Ticino valleys and Jura arc against young commuter suburbs"}
   - {rank: 4, metric: share_foreign, level: gemeinde, view: quantile, story: "Border and tourism municipalities (Täsch, Paradiso, Kreuzlingen) and the big cities"}
   - {rank: 5, metric: xb_per_100_jobs, level: gemeinde, view: quantile, story: "Cross-border commuters: Ticino, Geneva, Jura and Basel; zero in central Switzerland"}
-  - {rank: 6, metric: tax_np_mean_taxable_income, level: gemeinde, view: "quantile + small-base marker", story: "Gold coasts (Lake Zurich, Lake Geneva, Schwyz) against the mountain valleys"}
+  - {rank: 6, metric: tax_np_mean_taxable_income_normal, level: gemeinde, view: "quantile + small-base marker", story: "Gold coasts (Lake Zurich, Lake Geneva, Schwyz) against the mountain valleys"}
   - {rank: 7, metric: taxb_amr_single_80k, level: arbeitsmarktgebiet, view: quantile, story: "Where the same salary is taxed least: Zug and Schwyz versus Neuchâtel and Jura"}
   - {rank: 8, metric: edu_share_tertiary, level: gemeinde, view: quantile, story: "The education gradient from university cities to rural cantons"}
   - {rank: 9, metric: vac_rate, level: bezirk, view: quantile, story: "Housing shortage: near-zero vacancies around Zurich, Zug and Geneva, surplus in the Jura arc"}
