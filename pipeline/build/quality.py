@@ -24,12 +24,42 @@ import duckdb
 
 TOL_REL = 0.005  # 0.5 % for sources with rounding/suppression
 JUMP_REL, JUMP_MIN_ABS = 0.5, 200
+# sources whose published higher-level values refer to the territory at the date in `period`
+# (e.g. federal votes: canton results on the canton territory of the vote date)
+STATE_FROM_PERIOD = {"bfs_votes_gemeinde", "bfs_nrw"}
+
+
+def _state_from_period(period: str, default: dt.date) -> dt.date:
+    p = period.split("#")[0]
+    try:
+        if len(p) >= 10:
+            return dt.date.fromisoformat(p[:10])
+        if len(p) == 4:
+            return dt.date(int(p), 10, 1)  # National Council elections take place in October
+    except ValueError:
+        pass
+    return default
 # (metric_a, metric_b, description, relative tolerance) – same quantity from different sources
 CROSS_CHECKS = [
-    ("pop_total", "bilanz_stock_end", "STATPOP population vs. demographic balance stock at 31 Dec", 0.001),
-    ("pop_total", "tax_population", "STATPOP population vs. population used in tax statistics", 0.05),
-    ("gws_dwellings_total", "vac_dwelling_stock", "GWS dwellings vs. dwelling stock in the vacancy count", 0.02),
+    ("pop_total", "bil_pop_dec", "STATPOP population vs. demographic balance stock at 31 Dec", 0.001),
+    ("hh_persons", "pop_total", "Persons in private households vs. STATPOP population (institutions explain the gap)", 0.10),
+    ("gws_dwellings", "vac_dwelling_stock", "GWS dwellings vs. dwelling stock in the vacancy count (stock = GWS of the previous year)", 0.05),
+    ("geo_area_land_ha", "area_total_ha", "Land area (swissBOUNDARIES3D, without lakes) vs. land-use statistics total area", 0.05),
 ]
+
+
+def _is_share(m: dict) -> bool:
+    """Bounded 0–100: derived ratios in % (not changes), or metrics flagged bounded_0_100."""
+    if m.get("bounded_0_100") is True:
+        return True
+    agg = str(m.get("aggregation", ""))
+    return (str(m.get("unit", "")).strip() == "%" and agg.startswith("ratio:") and "change" not in m["id"]
+            and m.get("bounded_0_100") is not False)
+
+
+def _may_be_negative(m: dict) -> bool:
+    i = m["id"]
+    return m.get("allow_negative") is True or any(k in i for k in ("net_", "_net", "balance", "change"))
 
 
 def transfer_effect(metric_rows: pd.DataFrame, source_state: dt.date, level: str) -> pd.Series:
@@ -82,9 +112,10 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
         j["diff"] = j["value_agg"] - j["value_pub"]
         j["explained"] = 0.0
         if lvl in ("kanton", "bezirk"):
-            state = dt.date.fromisoformat(nat["vintage"].iloc[0])
+            state0 = dt.date.fromisoformat(nat["vintage"].iloc[0])
             gem = metrics_all.rows("gemeinde", metric)
             for per, jj in j.groupby("period"):
+                state = _state_from_period(per, state0) if sid in STATE_FROM_PERIOD else state0
                 eff = transfer_effect(gem[gem["period"] == per], state, lvl)
                 j.loc[jj.index, "explained"] = jj["unit_id"].astype(str).map(eff).fillna(0).values
         if lvl == "schweiz":
@@ -93,11 +124,16 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
             j["explained"] = -j["period"].map(un.set_index("period")["value"]).fillna(0).values
         j["residual"] = j["diff"] - j["explained"]
         j["rel"] = j["residual"].abs() / j["value_pub"].abs().replace(0, np.nan)
-        bad = j[(j["residual"].abs() > 0.5) & ((j["rel"] > TOL_REL) | j["rel"].isna())]
+        md = meta.set_index("id").loc[metric] if metric in set(meta["id"]) else {}
+        tol = float(md.get("additivity_tolerance")) if isinstance(md.get("additivity_tolerance"), (int, float)) and md.get("additivity_tolerance") == md.get("additivity_tolerance") else TOL_REL
+        note = md.get("additivity_note") if isinstance(md.get("additivity_note"), str) else ""
+        documented = (j["residual"].abs() > 0.5) & (j["rel"] > TOL_REL) & (j["rel"] <= tol)
+        bad = j[(j["residual"].abs() > 0.5) & ((j["rel"] > tol) | j["rel"].isna())]
         rows.append({"source_id": sid, "level": lvl, "metric_id": metric, "n_compared": len(j),
                      "n_exact": int((j["diff"].abs() <= 0.5).sum()),
                      "n_explained_canton_transfer": int(((j["diff"].abs() > 0.5) & (j["residual"].abs() <= 0.5)).sum()),
                      "n_within_tol": int(((j["residual"].abs() > 0.5) & (j["rel"] <= TOL_REL)).sum()),
+                     "n_documented": int(documented.sum()), "note": note,
                      "n_fail": len(bad), "max_rel_residual": float(j["rel"].max(skipna=True) or 0),
                      "worst": bad.reindex(bad["rel"].sort_values(ascending=False).index).head(3)[
                          ["unit_id", "period", "value_pub", "value_agg", "explained"]].to_dict("records")})
@@ -105,8 +141,9 @@ def check_additivity(metrics_all: "Store", obs: pd.DataFrame, meta: pd.DataFrame
 
 
 def check_ranges(metrics_all: "Store", meta: pd.DataFrame) -> pd.DataFrame:
-    pct = meta.loc[(meta["unit"].astype(str).str.strip() == "%") & ~meta["id"].str.contains("change"), "id"].tolist()
-    counts = meta.loc[(meta["aggregation"] == "sum"), "id"].tolist()
+    recs = meta.to_dict("records")
+    pct = [m["id"] for m in recs if _is_share(m)]
+    counts = [m["id"] for m in recs if m.get("aggregation") == "sum" and not _may_be_negative(m)]
     lst = lambda ids: ", ".join("'" + i + "'" for i in ids) or "''"
     r = metrics_all.sql(f"""SELECT metric_id,
             SUM(CASE WHEN metric_id IN ({lst(pct)}) AND (value < -1e-9 OR value > 100 + 1e-9) THEN 1 ELSE 0 END) AS out_pct,
@@ -189,11 +226,17 @@ def run() -> str:
          f"{(meta['kind'] == 'derived').sum()} derived) · rows: {int(allm.sql('SELECT COUNT(*) AS n FROM {M}').n[0]):,}", ""]
     L += ["## A. Additivity — municipalities vs. published district/canton/national values", ""]
     if len(A):
-        L += ["| Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Fail | Max rel. residual |",
-              "|---|---|---|---|---|---|---|---|---|"]
+        L += [f"Summary: {len(A)} metric×level comparisons, {int((A['n_fail'] == 0).sum())} pass, "
+              f"{int((A['n_fail'] > 0).sum())} with failures.", "",
+              "| Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Documented difference | Fail | Max rel. residual |",
+              "|---|---|---|---|---|---|---|---|---|---|"]
         L += [f"| {r.source_id} | {r.level} | {r.metric_id} | {r.n_compared} | {r.n_exact} | {r.n_explained_canton_transfer} | "
-              f"{r.n_within_tol} | {'**' + str(r.n_fail) + '**' if r.n_fail else 0} | {r.max_rel_residual:.3%} |"
+              f"{r.n_within_tol} | {r.n_documented}{' ¹' if r.note else ''} | {'**' + str(r.n_fail) + '**' if r.n_fail else 0} | {r.max_rel_residual:.3%} |"
               for r in A.sort_values(["n_fail", "source_id"], ascending=[False, True]).itertuples()]
+        notes = A[A["note"].astype(bool)].drop_duplicates("metric_id")
+        if len(notes):
+            L += ["", "¹ Documented differences (from metrics.yaml `additivity_note`):", ""]
+            L += [f"- {r.metric_id}: {r.note}" for r in notes.itertuples()]
         fails = A[A["n_fail"] > 0]
         if len(fails):
             L += ["", "Worst unexplained differences:", ""]
