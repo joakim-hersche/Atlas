@@ -22,6 +22,12 @@ describe('hash defaults', () => {
     expect(d.lang).toBe('en');
     expect(DEFAULT_METRIC).toBe('geo_pop_density');
   });
+  it('unreliable small-number values are hidden by default; old links keep their mode', () => {
+    expect(d.unstable).toBe('hide');
+    expect(parseHash('#ur=s').unstable).toBe('show');
+    expect(parseHash('#ur=l').unstable).toBe('light');
+    expect(parseHash('#ur=h').unstable).toBe('hide');
+  });
   it('the default state serialises to an empty hash', () => {
     expect(serializeHash(withoutPreset(d))).toBe('');
   });

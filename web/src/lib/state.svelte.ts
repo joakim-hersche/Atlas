@@ -33,7 +33,7 @@ export class AppState {
   vdiff = $state(false);
   /** D37: single-seat cantons included in classes, ranks and statistics (off by default) */
   maj = $state(false);
-  unstable = $state<'show' | 'light' | 'hide'>('show');
+  unstable = $state<'show' | 'light' | 'hide'>('hide');
   agg = $state<string | null>(null);
   xcols = $state<string[]>([]);
   rmin = $state<number | null>(null);

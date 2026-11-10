@@ -198,7 +198,8 @@ export function parseHash(hash: string): ViewState {
     xcols: (get('xc') ?? '').split(',').filter((x) => /^[a-z0-9_]+$/i.test(x)),
     rmin: (numOrNull(get('rmin')) ?? 0) > 0 ? numOrNull(get('rmin')) : null,
     rflag: get('rmf') === '1',
-    unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
+    // unreliable small-number values are hidden by default; ur=s shows them, ur=l shows them lighter
+    unstable: get('ur') === 'l' ? 'light' : get('ur') === 's' ? 'show' : 'hide',
     spatial: get('sp') === 'lisa' ? 'lisa' : get('sp') === 'bi' ? 'bi' : 'off',
     fdr: get('fdr') === '1',
     embed: get('embed') === '1',
@@ -258,7 +259,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.maj) add('mj', '1');
   if (s.route === 'map' && s.spatial !== 'off') add('sp', s.spatial);
   if (s.route === 'map' && s.spatial === 'lisa' && s.fdr) add('fdr', '1');
-  if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
+  if (s.unstable !== 'hide') add('ur', s.unstable === 'light' ? 'l' : 's');
   if (s.cmpFrom) {
     add('yc', s.cmpFrom);
     if (s.cmpMode === 'pct') add('ym', 'p');
