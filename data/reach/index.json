@@ -1,0 +1,538 @@
+{
+ "service_date": "2026-11-17",
+ "feed": "gtfs_fp2026_20261107.zip",
+ "reverse_days": [
+  "2026-11-17",
+  "2026-11-25",
+  "2026-12-03"
+ ],
+ "hubs": [
+  {
+   "slug": "zuerich",
+   "name": "Zürich HB",
+   "didok": 8503000,
+   "nearest_set": true
+  },
+  {
+   "slug": "bern",
+   "name": "Bern",
+   "didok": 8507000,
+   "nearest_set": true
+  },
+  {
+   "slug": "basel",
+   "name": "Basel SBB",
+   "didok": 8500010,
+   "nearest_set": true
+  },
+  {
+   "slug": "geneve",
+   "name": "Genève",
+   "didok": 8501008,
+   "nearest_set": true
+  },
+  {
+   "slug": "lausanne",
+   "name": "Lausanne",
+   "didok": 8501120,
+   "nearest_set": true
+  },
+  {
+   "slug": "luzern",
+   "name": "Luzern",
+   "didok": 8505000,
+   "nearest_set": true
+  },
+  {
+   "slug": "stgallen",
+   "name": "St. Gallen",
+   "didok": 8506302,
+   "nearest_set": true
+  },
+  {
+   "slug": "winterthur",
+   "name": "Winterthur",
+   "didok": 8506000,
+   "nearest_set": true
+  },
+  {
+   "slug": "lugano",
+   "name": "Lugano",
+   "didok": 8505300,
+   "nearest_set": true
+  },
+  {
+   "slug": "bellinzona",
+   "name": "Bellinzona",
+   "didok": 8505213,
+   "nearest_set": false
+  },
+  {
+   "slug": "chur",
+   "name": "Chur",
+   "didok": 8509000,
+   "nearest_set": false
+  },
+  {
+   "slug": "biel",
+   "name": "Biel/Bienne",
+   "didok": 8504300,
+   "nearest_set": true
+  },
+  {
+   "slug": "fribourg",
+   "name": "Fribourg/Freiburg",
+   "didok": 8504100,
+   "nearest_set": false
+  },
+  {
+   "slug": "sion",
+   "name": "Sion",
+   "didok": 8501506,
+   "nearest_set": false
+  },
+  {
+   "slug": "zug",
+   "name": "Zug",
+   "didok": 8502204,
+   "nearest_set": true
+  },
+  {
+   "slug": "aarau",
+   "name": "Aarau",
+   "didok": 8502113,
+   "nearest_set": true
+  },
+  {
+   "slug": "olten",
+   "name": "Olten",
+   "didok": 8500218,
+   "nearest_set": true
+  },
+  {
+   "slug": "schaffhausen",
+   "name": "Schaffhausen",
+   "didok": 8503424,
+   "nearest_set": false
+  },
+  {
+   "slug": "neuchatel",
+   "name": "Neuchâtel",
+   "didok": 8504221,
+   "nearest_set": true
+  },
+  {
+   "slug": "thun",
+   "name": "Thun",
+   "didok": 8507100,
+   "nearest_set": false
+  },
+  {
+   "slug": "baden",
+   "name": "Baden",
+   "didok": 8503504,
+   "nearest_set": true
+  }
+ ],
+ "files": [
+  {
+   "hub": "aarau",
+   "mode": "car",
+   "file": "aarau_car.json",
+   "bytes": 587657,
+   "gzip_bytes": 201525,
+   "segments": 4310,
+   "anchors": 2088,
+   "anchor_mae_min": 2.89,
+   "anchor_p90_abs_err_min": 6.52
+  },
+  {
+   "hub": "aarau",
+   "mode": "pt",
+   "file": "aarau_pt.json",
+   "bytes": 639693,
+   "gzip_bytes": 177006,
+   "segments": 9064
+  },
+  {
+   "hub": "baden",
+   "mode": "car",
+   "file": "baden_car.json",
+   "bytes": 587879,
+   "gzip_bytes": 201171,
+   "segments": 4322,
+   "anchors": 2088,
+   "anchor_mae_min": 3.06,
+   "anchor_p90_abs_err_min": 6.68
+  },
+  {
+   "hub": "baden",
+   "mode": "pt",
+   "file": "baden_pt.json",
+   "bytes": 636692,
+   "gzip_bytes": 176298,
+   "segments": 9035
+  },
+  {
+   "hub": "basel",
+   "mode": "car",
+   "file": "basel_car.json",
+   "bytes": 590784,
+   "gzip_bytes": 202283,
+   "segments": 4348,
+   "anchors": 2088,
+   "anchor_mae_min": 2.84,
+   "anchor_p90_abs_err_min": 6.49
+  },
+  {
+   "hub": "basel",
+   "mode": "pt",
+   "file": "basel_pt.json",
+   "bytes": 611935,
+   "gzip_bytes": 170756,
+   "segments": 8821
+  },
+  {
+   "hub": "bellinzona",
+   "mode": "car",
+   "file": "bellinzona_car.json",
+   "bytes": 610284,
+   "gzip_bytes": 207328,
+   "segments": 4380,
+   "anchors": 2088,
+   "anchor_mae_min": 3.6,
+   "anchor_p90_abs_err_min": 7.89
+  },
+  {
+   "hub": "bellinzona",
+   "mode": "pt",
+   "file": "bellinzona_pt.json",
+   "bytes": 631853,
+   "gzip_bytes": 172265,
+   "segments": 8861
+  },
+  {
+   "hub": "bern",
+   "mode": "car",
+   "file": "bern_car.json",
+   "bytes": 588148,
+   "gzip_bytes": 201249,
+   "segments": 4305,
+   "anchors": 2088,
+   "anchor_mae_min": 2.72,
+   "anchor_p90_abs_err_min": 6.18
+  },
+  {
+   "hub": "bern",
+   "mode": "pt",
+   "file": "bern_pt.json",
+   "bytes": 628851,
+   "gzip_bytes": 175811,
+   "segments": 8998
+  },
+  {
+   "hub": "biel",
+   "mode": "car",
+   "file": "biel_car.json",
+   "bytes": 583890,
+   "gzip_bytes": 199628,
+   "segments": 4282,
+   "anchors": 2088,
+   "anchor_mae_min": 2.74,
+   "anchor_p90_abs_err_min": 6.27
+  },
+  {
+   "hub": "biel",
+   "mode": "pt",
+   "file": "biel_pt.json",
+   "bytes": 625699,
+   "gzip_bytes": 176535,
+   "segments": 8850
+  },
+  {
+   "hub": "chur",
+   "mode": "car",
+   "file": "chur_car.json",
+   "bytes": 596978,
+   "gzip_bytes": 202773,
+   "segments": 4373,
+   "anchors": 2088,
+   "anchor_mae_min": 3.32,
+   "anchor_p90_abs_err_min": 7.24
+  },
+  {
+   "hub": "chur",
+   "mode": "pt",
+   "file": "chur_pt.json",
+   "bytes": 623155,
+   "gzip_bytes": 170797,
+   "segments": 8819
+  },
+  {
+   "hub": "fribourg",
+   "mode": "car",
+   "file": "fribourg_car.json",
+   "bytes": 589523,
+   "gzip_bytes": 201198,
+   "segments": 4292,
+   "anchors": 2088,
+   "anchor_mae_min": 2.84,
+   "anchor_p90_abs_err_min": 6.28
+  },
+  {
+   "hub": "fribourg",
+   "mode": "pt",
+   "file": "fribourg_pt.json",
+   "bytes": 624924,
+   "gzip_bytes": 174038,
+   "segments": 8877
+  },
+  {
+   "hub": "geneve",
+   "mode": "car",
+   "file": "geneve_car.json",
+   "bytes": 608504,
+   "gzip_bytes": 206147,
+   "segments": 4295,
+   "anchors": 2088,
+   "anchor_mae_min": 3.54,
+   "anchor_p90_abs_err_min": 7.95
+  },
+  {
+   "hub": "geneve",
+   "mode": "pt",
+   "file": "geneve_pt.json",
+   "bytes": 632343,
+   "gzip_bytes": 174024,
+   "segments": 8838
+  },
+  {
+   "hub": "lausanne",
+   "mode": "car",
+   "file": "lausanne_car.json",
+   "bytes": 596222,
+   "gzip_bytes": 201897,
+   "segments": 4295,
+   "anchors": 2088,
+   "anchor_mae_min": 2.91,
+   "anchor_p90_abs_err_min": 6.61
+  },
+  {
+   "hub": "lausanne",
+   "mode": "pt",
+   "file": "lausanne_pt.json",
+   "bytes": 631507,
+   "gzip_bytes": 174932,
+   "segments": 8836
+  },
+  {
+   "hub": "lugano",
+   "mode": "car",
+   "file": "lugano_car.json",
+   "bytes": 612169,
+   "gzip_bytes": 207895,
+   "segments": 4397,
+   "anchors": 2088,
+   "anchor_mae_min": 3.74,
+   "anchor_p90_abs_err_min": 8.14
+  },
+  {
+   "hub": "lugano",
+   "mode": "pt",
+   "file": "lugano_pt.json",
+   "bytes": 631539,
+   "gzip_bytes": 172035,
+   "segments": 8792
+  },
+  {
+   "hub": "luzern",
+   "mode": "car",
+   "file": "luzern_car.json",
+   "bytes": 595606,
+   "gzip_bytes": 204620,
+   "segments": 4349,
+   "anchors": 2088,
+   "anchor_mae_min": 2.85,
+   "anchor_p90_abs_err_min": 6.22
+  },
+  {
+   "hub": "luzern",
+   "mode": "pt",
+   "file": "luzern_pt.json",
+   "bytes": 628552,
+   "gzip_bytes": 175073,
+   "segments": 8950
+  },
+  {
+   "hub": "neuchatel",
+   "mode": "car",
+   "file": "neuchatel_car.json",
+   "bytes": 586136,
+   "gzip_bytes": 199604,
+   "segments": 4307,
+   "anchors": 2088,
+   "anchor_mae_min": 2.84,
+   "anchor_p90_abs_err_min": 6.26
+  },
+  {
+   "hub": "neuchatel",
+   "mode": "pt",
+   "file": "neuchatel_pt.json",
+   "bytes": 634986,
+   "gzip_bytes": 178904,
+   "segments": 8880
+  },
+  {
+   "hub": "olten",
+   "mode": "car",
+   "file": "olten_car.json",
+   "bytes": 587881,
+   "gzip_bytes": 201865,
+   "segments": 4315,
+   "anchors": 2088,
+   "anchor_mae_min": 2.92,
+   "anchor_p90_abs_err_min": 6.59
+  },
+  {
+   "hub": "olten",
+   "mode": "pt",
+   "file": "olten_pt.json",
+   "bytes": 622185,
+   "gzip_bytes": 175099,
+   "segments": 8872
+  },
+  {
+   "hub": "schaffhausen",
+   "mode": "car",
+   "file": "schaffhausen_car.json",
+   "bytes": 592485,
+   "gzip_bytes": 202439,
+   "segments": 4351,
+   "anchors": 2088,
+   "anchor_mae_min": 3.58,
+   "anchor_p90_abs_err_min": 7.85
+  },
+  {
+   "hub": "schaffhausen",
+   "mode": "pt",
+   "file": "schaffhausen_pt.json",
+   "bytes": 641116,
+   "gzip_bytes": 177108,
+   "segments": 8995
+  },
+  {
+   "hub": "sion",
+   "mode": "car",
+   "file": "sion_car.json",
+   "bytes": 600921,
+   "gzip_bytes": 204744,
+   "segments": 4288,
+   "anchors": 2088,
+   "anchor_mae_min": 3.53,
+   "anchor_p90_abs_err_min": 7.91
+  },
+  {
+   "hub": "sion",
+   "mode": "pt",
+   "file": "sion_pt.json",
+   "bytes": 621434,
+   "gzip_bytes": 170980,
+   "segments": 8795
+  },
+  {
+   "hub": "stgallen",
+   "mode": "car",
+   "file": "stgallen_car.json",
+   "bytes": 593667,
+   "gzip_bytes": 202644,
+   "segments": 4338,
+   "anchors": 2088,
+   "anchor_mae_min": 3.31,
+   "anchor_p90_abs_err_min": 7.34
+  },
+  {
+   "hub": "stgallen",
+   "mode": "pt",
+   "file": "stgallen_pt.json",
+   "bytes": 615743,
+   "gzip_bytes": 168986,
+   "segments": 8602
+  },
+  {
+   "hub": "thun",
+   "mode": "car",
+   "file": "thun_car.json",
+   "bytes": 597031,
+   "gzip_bytes": 204711,
+   "segments": 4329,
+   "anchors": 2088,
+   "anchor_mae_min": 2.85,
+   "anchor_p90_abs_err_min": 6.33
+  },
+  {
+   "hub": "thun",
+   "mode": "pt",
+   "file": "thun_pt.json",
+   "bytes": 611730,
+   "gzip_bytes": 169304,
+   "segments": 8695
+  },
+  {
+   "hub": "winterthur",
+   "mode": "car",
+   "file": "winterthur_car.json",
+   "bytes": 591215,
+   "gzip_bytes": 202106,
+   "segments": 4345,
+   "anchors": 2088,
+   "anchor_mae_min": 3.38,
+   "anchor_p90_abs_err_min": 7.44
+  },
+  {
+   "hub": "winterthur",
+   "mode": "pt",
+   "file": "winterthur_pt.json",
+   "bytes": 618657,
+   "gzip_bytes": 170981,
+   "segments": 8648
+  },
+  {
+   "hub": "zuerich",
+   "mode": "car",
+   "file": "zuerich_car.json",
+   "bytes": 592414,
+   "gzip_bytes": 202760,
+   "segments": 4362,
+   "anchors": 2088,
+   "anchor_mae_min": 2.98,
+   "anchor_p90_abs_err_min": 6.53
+  },
+  {
+   "hub": "zuerich",
+   "mode": "pt",
+   "file": "zuerich_pt.json",
+   "bytes": 621675,
+   "gzip_bytes": 172114,
+   "segments": 8752
+  },
+  {
+   "hub": "zug",
+   "mode": "car",
+   "file": "zug_car.json",
+   "bytes": 595210,
+   "gzip_bytes": 204035,
+   "segments": 4372,
+   "anchors": 2088,
+   "anchor_mae_min": 2.94,
+   "anchor_p90_abs_err_min": 6.33
+  },
+  {
+   "hub": "zug",
+   "mode": "pt",
+   "file": "zug_pt.json",
+   "bytes": 633999,
+   "gzip_bytes": 175747,
+   "segments": 8794
+  }
+ ]
+}
