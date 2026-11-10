@@ -5,7 +5,11 @@ PERIOD A1..A5, REGION) and DF_AREA_IMPV 1.0.0 (soil sealing). Geo codes on the 2
 (codelist CL_AREA_HIER_REGION_2026_DIFF; the hectare points are re-assigned by BFS, so the series
 are on constant boundaries). The 2020/25 survey (A5) is still running: only the municipalities
 already surveyed have values; the rest get status 'not_covered'. Codes 9xxx (lake areas outside
-municipalities) and the condominium areas 2391, 5391, 5394 are only in canton/national totals.
+municipalities) and the condominium areas 2391, 5391, 5394 are only in canton/national totals:
+they are kept as level 'pseudo' rows (unit_id '<canton>:<code>', or '<canton>:<district>:<code>'
+for the condominium areas, canton/district from the codelist parents) and their national sum as
+level 'unallocated'. Checked for every period and class: canton = Σ municipalities + these units
+exactly, Switzerland = Σ cantons exactly.
 """
 from __future__ import annotations
 
@@ -44,10 +48,60 @@ def wide() -> pd.DataFrame:
     return w
 
 
+def _parents() -> dict[str, str]:
+    """Parent of every code in the REGION codelist (cached structure file)."""
+    import re
+
+    from pipeline.sources.bfs_sdmx.fetch import BASE, _get
+    p = _get(f"{BASE}/dataflow/{AG}/DF_AREA_NOAS/1.1.0", "DF_AREA_NOAS_1.1.0.structure.xml",
+             params={"references": "all"})
+    s = p.read_text(encoding="utf-8")
+    blk = s[s.index('id="CL_AREA_HIER_REGION_2026_DIFF"'):]
+    blk = blk[:blk.index("</structure:Codelist>")]
+    out = {}
+    for m in re.finditer(r'<structure:Code id="([^"]+)">(.*?)</structure:Code>', blk, re.S):
+        r = re.search(r'Ref id="([^"]+)"', m.group(2))
+        out[m.group(1)] = r.group(1) if r else None
+    return out
+
+
+def _outside_rows(w: pd.DataFrame, cols: list[str], obs: pd.DataFrame) -> pd.DataFrame:
+    """Lake areas (9xxx) and condominium areas: level 'pseudo' + national sum 'unallocated'."""
+    from pipeline.harmonize.helpers import emit
+    from pipeline.sources.bfs_sdmx.fetch import geo_level
+    par = _parents()
+
+    def up(c, lvl):
+        c = par.get(c)
+        while c and geo_level(c) != lvl:
+            c = par.get(c)
+        return c
+
+    ref_units = set(obs.loc[obs["level"] == "gemeinde", "unit_id"])
+    geo = w[GEO].astype(str)
+    is_lake = geo.str.fullmatch(r"9\d{3}")
+    is_cond = (geo.map(geo_level) == "gemeinde") & ~geo.str.lstrip("0").isin(ref_units)
+    x = w[is_lake | is_cond].copy()
+    kt = x[GEO].map(lambda c: up(c, "kanton"))
+    bz = x[GEO].map(lambda c: up(c, "bezirk"))
+    x["unit"] = [f"{k}:{int(b[2:])}:{c}" if isinstance(b, str) else f"{k}:{c}" for k, b, c in zip(kt, bz, x[GEO])]
+    ps = emit(x, {c: c for c in cols}, "PERIOD", SOURCE, level="pseudo", unit_col="unit", precision="exact",
+              provenance="native")
+    ps = ps[ps["status"] == "ok"]
+    ps["note"] = "lake area outside municipalities (9xxx) or condominium area (Kommunanz): in canton totals only"
+    nat = x.groupby("PERIOD")[cols].sum(min_count=1).reset_index().assign(unit="unallocated")
+    un = emit(nat, {c: c for c in cols}, "PERIOD", SOURCE, level="unallocated", unit_col="unit",
+              precision="exact", provenance="native")
+    un = un[un["status"] == "ok"]
+    un["note"] = "lake areas outside municipalities and condominium areas (in the Swiss total, in no municipality)"
+    return pd.concat([ps, un], ignore_index=True)
+
+
 def observations() -> pd.DataFrame:
     w = wide()
     cols = [*NOAS, "area_total_ha", "area_sealed_ha", "area_settlement_base_ha"]
     obs, _ = to_observations(w, GEO, "PERIOD", {c: c for c in cols}, SOURCE)
+    outside = _outside_rows(w, cols, obs)
     obs = obs[~((obs["metric_id"] == "area_settlement_base_ha") & (obs["period"] == "1979/85"))]
     # municipalities without a 2020/25 value yet -> explicit 'not_covered' rows
     gem = obs[obs["level"] == "gemeinde"]
@@ -58,4 +112,5 @@ def observations() -> pd.DataFrame:
         level="gemeinde", vintage=REFERENCE_DATE.isoformat(), period=LATEST, value=np.nan,
         status="not_covered", precision="exact", provenance="source_current_state", source_id=SOURCE,
         note=NOT_COVERED)
-    return pd.concat([obs, add[OBS_COLUMNS]], ignore_index=True)
+    outside = outside[~((outside["metric_id"] == "area_settlement_base_ha") & (outside["period"] == "1979/85"))]
+    return pd.concat([obs, add[OBS_COLUMNS], outside], ignore_index=True)

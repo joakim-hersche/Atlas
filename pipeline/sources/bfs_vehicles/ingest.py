@@ -7,6 +7,11 @@ Registration type '_T' (new + used imports) is published per municipality only f
 series uses N (new vehicles), which exists for every year. Geo codes are on the 2025-04-05 state.
 The flows are sparse: zero cells of the register are omitted (checked: fuel rows sum to the
 total), so an absent fuel/holder row is a 0 when the municipality is in the flow.
+From 2018 the geo codelist also has 'G_<canton>' (Gemeinde unbekannt: vehicles registered in the
+canton without a known municipality; parent 'B_<canton>', Bezirk unbekannt) and '_U' (Kanton
+unbekannt). They are in the canton / Swiss totals but in no municipality: kept as level 'pseudo'
+(unit_id '<canton>:G_<canton>') and their national sum (+ _U) as level 'unallocated'. Checked for every
+year and metric: canton = Σ municipalities + G_<canton> and Switzerland = Σ cantons + _U.
 """
 from __future__ import annotations
 
@@ -46,10 +51,29 @@ def new_registrations() -> pd.DataFrame:
                                       "mfz_newreg_bev": {"UV_RV_FUEL": "EL"}}, absent_is_zero=True)
 
 
+def _unknown_rows(w: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    """'Gemeinde unbekannt' (G_xx) as level 'pseudo', national sum of G_xx and _U as 'unallocated'."""
+    from pipeline.harmonize.helpers import emit
+    geo = w["UV_KT_BEZ_GDE"].astype(str)
+    g = w[geo.str.fullmatch(r"G_[A-Z]{2}")].copy()
+    g["unit"] = g["UV_KT_BEZ_GDE"].str[2:] + ":" + g["UV_KT_BEZ_GDE"]
+    ps = emit(g, {c: c for c in cols}, "TIME_PERIOD", SOURCE, level="pseudo", unit_col="unit",
+              precision="exact", provenance="native")
+    ps = ps[ps["status"] == "ok"]
+    ps["note"] = "BFS 'Gemeinde unbekannt': vehicles of the canton without a known municipality"
+    nat = (w[geo.str.fullmatch(r"G_[A-Z]{2}") | (geo == "_U")].groupby("TIME_PERIOD")[cols].sum(min_count=1)
+           .reset_index().assign(unit="unallocated"))
+    un = emit(nat, {c: c for c in cols}, "TIME_PERIOD", SOURCE, level="unallocated", unit_col="unit",
+              precision="exact", provenance="native")
+    un = un[un["status"] == "ok"]
+    un["note"] = "vehicles without a known municipality (G_xx) or canton (_U): in the Swiss total only"
+    return pd.concat([ps, un], ignore_index=True)
+
+
 def observations() -> pd.DataFrame:
     s, n = stock(), new_registrations()
     cols_s = [c for c in s.columns if c.startswith("mfz_") and not c.endswith("__status")]
     cols_n = [c for c in n.columns if c.startswith("mfz_") and not c.endswith("__status")]
     o1, _ = to_observations(s, "UV_KT_BEZ_GDE", "TIME_PERIOD", {c: c for c in cols_s}, SOURCE)
     o2, _ = to_observations(n, "UV_KT_BEZ_GDE", "TIME_PERIOD", {c: c for c in cols_n}, SOURCE)
-    return pd.concat([o1, o2], ignore_index=True)
+    return pd.concat([o1, o2, _unknown_rows(s, cols_s), _unknown_rows(n, cols_n)], ignore_index=True)
