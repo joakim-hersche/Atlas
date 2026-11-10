@@ -3,6 +3,9 @@
 //    &f=n:pop_total:1000:50000&f=c:kanton:ZH,BE&f=r:bern:pt:30&hub=bern&reach=pt&t=45&sel=261&tab=rank
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
+// Commute filters: f=m:<sum|max|any|near|diff>:<ptst|pt|car>:<hub,hub>:<lo>:<hi> (minutes; lib/commute.svelte.ts).
+// Filtered aggregate: ag=<metric id> (default: the shade metric). Ranking table: xc=<metric,metric> extra columns,
+// rmin=<population> minimum size, rmf=1 flag the smaller units instead of hiding them.
 // Routes: 'map' (default) and 'compare'; later pages (profile, places, search, sources) add their own
 // route names and read their extra keys from `params`. The regression panel (#v=regress) uses
 // ry, rx, rc, rw, rse, rd, rs (documented in regmodel.ts), e.g.
@@ -20,7 +23,13 @@ export type Filter =
   | { kind: 'num'; metric: string; lo: number | null; hi: number | null }
   | { kind: 'cat'; field: CatField; values: string[] }
   /** mode 'ptst' = PT station time towards the hub (D31), 'pt' = PT door to door, 'car' */
-  | { kind: 'reach'; hub: string; mode: 'pt' | 'ptst' | 'car'; max: number };
+  | { kind: 'reach'; hub: string; mode: 'pt' | 'ptst' | 'car'; max: number }
+  /** commute over several hubs (lib/commute.svelte.ts): sum / max of the times to the chosen hubs,
+   *  min over the chosen hubs ('any') or over the nearest-hub list ('near'), or PT minus car to one hub ('diff').
+   *  Times in minutes; the range is lo..hi (null = open); for 'diff' mode is the PT measure. */
+  | { kind: 'commute'; op: CommuteOp; mode: 'pt' | 'ptst' | 'car'; hubs: string[]; lo: number | null; hi: number | null };
+export type CommuteOp = 'sum' | 'max' | 'any' | 'near' | 'diff';
+export const COMMUTE_OPS: CommuteOp[] = ['sum', 'max', 'any', 'near', 'diff'];
 
 export interface ViewState {
   route: string;
@@ -51,6 +60,13 @@ export interface ViewState {
   maj: boolean;
   /** values resting on small numbers: shown, drawn lighter, or hidden (treated as gaps) */
   unstable: 'show' | 'light' | 'hide';
+  /** metric whose aggregate over the filtered set is shown next to the match count (null = the shade metric) */
+  agg: string | null;
+  /** extra ranking-table columns (metric ids) */
+  xcols: string[];
+  /** ranking table: minimum population (null = none); below it units are hidden, or only flagged when rflag */
+  rmin: number | null;
+  rflag: boolean;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -64,7 +80,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur', 'ag', 'xc', 'rmin', 'rmf']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -84,12 +100,17 @@ function parseFilter(raw: string): Filter | null {
     const max = numOrNull(p[3]);
     return { kind: 'reach', hub: p[1], mode: p[2], max: max === null ? 30 : Math.max(0, Math.min(T_MAX, max)) };
   }
+  if (p[0] === 'm' && p.length === 6 && (COMMUTE_OPS as string[]).includes(p[1]) && (p[2] === 'pt' || p[2] === 'ptst' || p[2] === 'car')) {
+    const hubs = p[3].split(',').filter((h) => /^[a-z0-9_]+$/i.test(h));
+    return { kind: 'commute', op: p[1] as CommuteOp, mode: p[2], hubs, lo: numOrNull(p[4]), hi: numOrNull(p[5]) };
+  }
   return null;
 }
 
 function filterKey(f: Filter): string {
   if (f.kind === 'num') return `n:${f.metric}:${f.lo ?? ''}:${f.hi ?? ''}`;
   if (f.kind === 'cat') return `c:${f.field}:${f.values.join(',')}`;
+  if (f.kind === 'commute') return `m:${f.op}:${f.mode}:${f.hubs.join(',')}:${f.lo ?? ''}:${f.hi ?? ''}`;
   return `r:${f.hub}:${f.mode}:${Math.round(f.max)}`;
 }
 
@@ -140,6 +161,10 @@ export function parseHash(hash: string): ViewState {
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
     vdiff: get('vd') === '1',
     maj: get('mj') === '1',
+    agg: /^[a-z0-9_]+$/i.test(get('ag') ?? '') ? get('ag')! : null,
+    xcols: (get('xc') ?? '').split(',').filter((x) => /^[a-z0-9_]+$/i.test(x)),
+    rmin: (numOrNull(get('rmin')) ?? 0) > 0 ? numOrNull(get('rmin')) : null,
+    rflag: get('rmf') === '1',
     unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
     preset,
     params,
@@ -191,6 +216,10 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.maj) add('mj', '1');
   if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
   for (const f of s.filters) add('f', filterKey(f));
+  if (s.agg) add('ag', s.agg);
+  if (s.xcols.length) add('xc', s.xcols.join(','));
+  if (s.rmin) add('rmin', String(Math.round(s.rmin)));
+  if (s.rmin && s.rflag) add('rmf', '1');
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);
   if (s.reach !== 'off') {
     add('reach', s.reach);

@@ -4,6 +4,9 @@
   import { ml, t } from '../lib/i18n.svelte';
   import MetricPicker from './MetricPicker.svelte';
   import RangeFilter from './RangeFilter.svelte';
+  import CommuteFilter from './CommuteFilter.svelte';
+  import { defaultCommute } from '../lib/commute.svelte';
+  import type { Snippet } from 'svelte';
   import { fmtNumber, fmtPeriod, unitOf } from '../lib/classify';
   import type { Hub, MetricMeta } from '../lib/data';
   import { catLabel, type CatOption, type FilterEval, type MatchResult } from '../lib/filters';
@@ -28,8 +31,10 @@
     station?: boolean;
     /** method line of a reach measure */
     method?: (mode: 'pt' | 'ptst' | 'car', hub: string) => string;
+    /** shown under the match count (the aggregate of the filtered set) */
+    extra?: Snippet;
   }
-  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom, station = false, method }: Props = $props();
+  let { evals, match, total, unitWord, level, metrics, hubs, options, defaultMetric, defaultHub, onset, onzoom, station = false, method, extra }: Props = $props();
 
   const filters = $derived(evals.map((e) => e.filter));
   function update(k: number, f: Filter) {
@@ -41,6 +46,7 @@
   function add(kind: string) {
     let f: Filter;
     if (kind === 'num') f = { kind: 'num', metric: defaultMetric, lo: null, hi: null };
+    else if (kind === 'commute') f = defaultCommute('sum', [defaultHub, ...hubs.map((h) => h.slug).filter((h) => h !== defaultHub && h !== 'baden')], station);
     else if (kind === 'reach') f = { kind: 'reach', hub: defaultHub, mode: station ? 'ptst' : 'pt', max: 30 };
     else f = { kind: 'cat', field: kind as CatField, values: [] };
     onset([...filters, f]);
@@ -73,6 +79,8 @@
       </span>
     {/if}
   </div>
+
+  {#if extra && match.active}{@render extra()}{/if}
 
   {#each evals as e, k (k)}
     {@const f = e.filter}
@@ -118,6 +126,8 @@
           </div>
         {/if}
         {#if e.status === 'active'}<p class="cf num">{fmtNumber(e.nPass, 0)} {t('fp.pass')}</p>{/if}
+      {:else if f.kind === 'commute'}
+        <CommuteFilter {e} {f} {hubs} {station} onchange={(nf) => update(k, nf)} onremove={() => remove(k)} />
       {:else}
         <div class="ch">
           <span class="caps grow">{t('fp.travel')}</span>
@@ -160,6 +170,7 @@
       <option value="num">{t('fp.range')}</option>
       {#each CAT_FIELDS as fld}<option value={fld}>{catLabel(fld)}</option>{/each}
       <option value="reach">{t('fp.reach')}</option>
+      <option value="commute">{t('fp.commute')}</option>
     </select>
   </label>
   <p class="foot">{t('fp.foot', { units: unitWord })}</p>

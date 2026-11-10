@@ -10,6 +10,9 @@
   import LevelNote from '../components/LevelNote.svelte';
   import ReachControls from '../components/ReachControls.svelte';
   import RankTable, { type RankColumn } from '../components/RankTable.svelte';
+  import RankOptions from '../components/RankOptions.svelte';
+  import AggregateLine from '../components/AggregateLine.svelte';
+  import { commuteMeta } from '../lib/commute.svelte';
   import SizeLegend from '../components/SizeLegend.svelte';
   import YearSlider from '../components/YearSlider.svelte';
   import VotePicker from '../components/VotePicker.svelte';
@@ -560,6 +563,14 @@
     if (!whyA) push(metaA.id, 'Shade', refA);
     if (sizeMeta) push(sizeMeta.id, 'Size', sizeRef);
     for (const e of evals) {
+      if (e.status === 'active' && e.values && e.filter.kind === 'commute') {
+        const cm = commuteMeta(e.filter, hubName);
+        if (!seen.has(cm.id)) {
+          seen.add(cm.id);
+          out.push({ key: cm.id, tag: 'Filter', meta: cm, label: e.label, v: e.values, period: cm.latest });
+        }
+        continue;
+      }
       if (e.status !== 'active' || !e.col) continue;
       if (e.filter.kind === 'reach') push(e.col.meta.id, 'Filter', e.col, t('mv.to', { mode: kindLabel(e.filter.mode, station, true), hub: e.hubName ?? '' }));
       else push(e.col.meta.id, 'Filter', e.col);
@@ -568,11 +579,29 @@
       if (stRef) push(stRef.meta.id, 'Reach', stRef, t('mv.to', { mode: kindLabel('ptst', true), hub: hub.name }));
       if (ddRef) push(ddRef.meta.id, 'Reach', ddRef, t('mv.to', { mode: kindLabel('pt', true, true), hub: hub.name }));
     } else if (reachRef && reachCol) push(reachRef.meta.id, 'Reach', reachRef, t('mv.to', { mode: kindLabel(reachKind, station), hub: hub.name }));
+    // columns added by hand (URL: xc=)
+    for (const id of app.xcols) {
+      const r = cols.get(ld, id, app.year);
+      if (r) push(id, 'Added', r);
+    }
     return out;
+  });
+  // minimum population of the ranking table (URL: rmin=, rmf=1): hide smaller units, or only flag them
+  const popRef = $derived(cols.get(ld, 'pop_total', app.year));
+  const belowMin = $derived.by(() => {
+    const s = new Set<number>();
+    const pv = popRef?.col.v;
+    if (!app.rmin || !pv) return s;
+    for (let i = 0; i < nUnits; i++) {
+      const p = pv[i];
+      if (match.m[i] && p !== null && p !== undefined && p < app.rmin) s.add(i);
+    }
+    return s;
   });
   const rankRows = $derived.by(() => {
     const out: number[] = [];
-    for (let i = 0; i < nUnits; i++) if (match.m[i]) out.push(i);
+    const hide = !!app.rmin && !app.rflag;
+    for (let i = 0; i < nUnits; i++) if (match.m[i] && !(hide && belowMin.has(i))) out.push(i);
     return out;
   });
   function selectFromList(i: number) {
@@ -697,7 +726,12 @@
 
 {#snippet rankSnip()}
   {#if rankCols.length}
-    <RankTable columns={rankCols} rows={rankRows} names={names} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
+    <RankOptions metrics={base.metrics} {metas} level={ld.level} xcols={app.xcols} rmin={app.rmin} rflag={app.rflag}
+      hasPop={popRef !== null} nBelow={belowMin.size} unitWord={word}
+      onadd={(id) => { if (!app.xcols.includes(id)) app.xcols = [...app.xcols, id]; }}
+      onremove={(id) => (app.xcols = app.xcols.filter((x) => x !== id))}
+      onmin={(n) => (app.rmin = n)} onflag={(f) => (app.rflag = f)} />
+    <RankTable small={app.rflag && app.rmin ? belowMin : undefined} columns={rankCols} rows={rankRows} names={names} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
       sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} ids={ld.units}
       sourceName={(id) => base.sources.get(id)?.publisher.split(' (')[0] ?? id}
       onzoom={filtered && match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
@@ -851,7 +885,13 @@
         <FilterPanel {evals} {match} total={nUnits} unitWord={word} level={ld.level} metrics={base.metrics} {hubs}
           {station} method={(mode, h) => methodText(mode, h, rt, station)}
           options={catOpts} defaultMetric={app.filters.some((f) => f.kind === 'num' && f.metric === metaRaw.id) ? 'pop_total' : metaRaw.id}
-          defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} onzoom={match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
+          defaultHub={hub.slug} onset={(fs) => (app.filters = fs)} onzoom={match.n > 0 ? () => zoomTo(matchIdx) : undefined}>
+          {#snippet extra()}
+            <AggregateLine metrics={base.metrics} {metas} level={ld.level} {nUnits} mask={match.m} nMatch={match.n}
+              metricId={app.agg ?? app.metric} getCol={(id) => cols.get(ld, id, app.year)} unitWord={word}
+              onpick={(id) => (app.agg = id === app.metric ? null : id)} />
+          {/snippet}
+        </FilterPanel>
       </section>
 
       {/if}

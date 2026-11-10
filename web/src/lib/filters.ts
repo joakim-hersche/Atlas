@@ -6,6 +6,7 @@ import { type LevelData, type MetricMeta, type UnitRow } from './data';
 import type { CatField, Filter } from './hash';
 import { fmtNumber, sortedValues, wantsLog } from './classify';
 import { ml, t, levelWord, unitName } from './i18n.svelte';
+import { commuteLabel, commuteValues, describeCommute, nearestMetricId, reachTimesData, type CommuteValues } from './commute.svelte';
 
 /** Label of a categorical filter field in the UI language. */
 export const catLabel = (f: CatField): string => t(`cat.${f}`);
@@ -31,6 +32,11 @@ export interface FilterEval {
   domain?: { min: number; max: number; log: boolean };
   /** reach conditions: hub name */
   hubName?: string;
+  /** commute conditions: the measure per unit (minutes) and its label, for the ranking table */
+  values?: (number | null)[];
+  label?: string;
+  /** commute conditions: one-line description (hub names resolved) */
+  desc?: string;
 }
 
 export interface FilterContext {
@@ -91,6 +97,38 @@ export function evalFilter(f: Filter, cx: FilterContext): FilterEval {
       }
     }
     return { ...base, status: 'active', note: null, pass, nPass };
+  }
+
+  if (f.kind === 'commute') {
+    if (cx.ld.level !== 'gemeinde') return { ...base, status: 'inactive', note: t('f.reachGem', { units: word }) };
+    let cv: CommuteValues;
+    if (f.op === 'near') {
+      // the nearest-hub time is a metric column (D39 hub list), not recomputed here
+      const id = nearestMetricId(f.mode);
+      if (!cx.metas.has(id)) return { ...base, status: 'inactive', note: t('cm.notBuild') };
+      const c = cx.col(id);
+      if (c === undefined) return { ...base, status: 'loading', note: t('f.loading') };
+      if (c === null) return { ...base, status: 'inactive', note: t('f.notPub', { units: word }) };
+      cv = { v: c.col.v, status: 'ok', note: null };
+    } else cv = commuteValues(f, cx.ld.units, reachTimesData());
+    if (cv.status !== 'ok') return { ...base, status: cv.status, note: cv.note };
+    const pass = new Uint8Array(n);
+    const miss = new Uint8Array(n);
+    let nPass = 0;
+    let nMissing = 0;
+    for (let i = 0; i < n; i++) {
+      const x = cv.v[i];
+      if (x === null || x === undefined) {
+        miss[i] = 1;
+        nMissing++;
+      } else if ((f.lo === null || x >= f.lo) && (f.hi === null || x <= f.hi)) {
+        pass[i] = 1;
+        nPass++;
+      }
+    }
+    const s = sortedValues(cv.v);
+    const domain = s.length ? { min: s[0], max: s[s.length - 1], log: false } : undefined;
+    return { filter: f, status: 'active', note: null, pass, miss, nPass, nMissing, domain, values: cv.v, label: commuteLabel(f, cx.hubName), desc: describeCommute(f, cx.hubName) };
   }
 
   let id: string;
@@ -171,6 +209,7 @@ export function combine(evals: FilterEval[], n: number): MatchResult {
 export function describeFilter(e: FilterEval, nameOf: (field: CatField, id: string) => string): string {
   const f = e.filter;
   if (f.kind === 'cat') return `${catLabel(f.field)}: ${f.values.map((v) => nameOf(f.field, v)).join(', ') || '–'}`;
+  if (f.kind === 'commute') return e.desc ?? f.op;
   if (f.kind === 'reach') return t('f.reachDesc', { max: f.max, hub: e.hubName ?? f.hub, mode: t(f.mode === 'ptst' ? 'pt.stS' : f.mode === 'pt' ? 'common.pt' : 'common.car') });
   const m = e.col?.meta;
   const d = m?.decimals ?? 0;

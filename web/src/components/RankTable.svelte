@@ -32,8 +32,10 @@
     ids?: string[];
     /** source name of a metric's source id (export) */
     sourceName?: (sourceId: string) => string;
+    /** units to flag as below the minimum population (marked ▽ and drawn lighter) */
+    small?: Set<number>;
   }
-  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect, onzoom, ids, sourceName }: Props = $props();
+  let { columns, rows, names, cantons, showCanton, sel, unitWord, onselect, onzoom, ids, sourceName, small }: Props = $props();
 
   const PAGE = 100;
   let sortKey = $state<string | null>(null);
@@ -144,9 +146,9 @@
       <tbody>
         {#each shown as i (i)}
           {@const rn = rankNo.get(i)}
-          <tr class:sel={i === sel} onclick={() => onselect(i)}>
+          <tr class:sel={i === sel} class:small={small?.has(i)} onclick={() => onselect(i)}>
             <td class="n num" title={rn?.tie ? t('rt.tie') : undefined}>{rn ? `${rn.tie ? '=' : ''}${rn.r}` : '–'}</td>
-            <td class="nm"><button type="button" class="rowbtn" onclick={(e) => { e.stopPropagation(); onselect(i); }}>{names[i]}</button>{#if showCanton && cantons[i]}<span class="kt">{cantons[i]}</span>{/if}</td>
+            <td class="nm"><button type="button" class="rowbtn" onclick={(e) => { e.stopPropagation(); onselect(i); }}>{names[i]}</button>{#if small?.has(i)}<span class="sm" title={t('rx.small')} aria-label={t('rx.small')}>▽</span>{/if}{#if showCanton && cantons[i]}<span class="kt">{cantons[i]}</span>{/if}</td>
             {#each columns as c (c.key)}<td class="v num">{fmt(c.v[i], c.meta)}{#if c.marks}{@const mk = c.marks(i)}{#if mk}<sup class="fl" title={t('fl.key')}>{mk}</sup>{/if}{/if}</td>{/each}
           </tr>
         {/each}
@@ -185,6 +187,8 @@
   .kt { color: var(--muted); font-size: 0.7rem; margin-left: 4px; }
   tbody tr { cursor: pointer; }
   tbody tr:hover { background: var(--panel-2); }
+  tr.small td { color: var(--muted); }
+  .sm { color: var(--accent); font-size: 0.62rem; margin-left: 4px; }
   tr.sel { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft); }
   tr.sel .rowbtn { color: var(--accent); font-weight: 700; }
   .more { margin-top: 8px; width: 100%; padding: 6px; border: 1px solid var(--ink); background: var(--panel); cursor: pointer; font-weight: 500; }
