@@ -261,6 +261,21 @@ def _formula(agg: str):
     return None
 
 
+# Denominators that are the same stock at two dates, averaged by the formula's factor (BFS mean population
+# = (1 January + 31 December) / 2, written 'bil_pop_jan+bil_pop_dec*2000'): their base is the mean of the
+# terms, written 'mean:<a>+<b>', so the 1,000-resident threshold means residents, not twice the residents.
+MEAN_DENOMINATORS = [["bil_pop_jan", "bil_pop_dec"]]
+
+
+def base_expr(terms: list[str]) -> str:
+    """Small-number base of a ratio: the sum of all its denominator terms ('a+b'), or 'mean:a+b' where the
+    terms are one stock at two dates (MEAN_DENOMINATORS)."""
+    terms = [t for t in terms if t]
+    if len(terms) > 1 and sorted(terms) in [sorted(m) for m in MEAN_DENOMINATORS]:
+        return "mean:" + "+".join(terms)
+    return "+".join(terms)
+
+
 NOT_COUNTS = re.compile(r"\bha\b|m²|m2|km|chf|wh\b|kw|tonne|\bt\b|%|minutes|min\b|metres|\bm\b|°|mm|index", re.I)
 
 
@@ -268,20 +283,23 @@ def _auto_rule(mid: str, meta: pd.DataFrame, cfg: dict) -> dict | None:
     """Generic small-number rule (audit round 2, M9) for a ratio not listed in reliability.yaml `metrics`:
     shares get a minimum base of `auto.share_min_base`, other ratios `auto.rate_min_base` (per-resident
     rates) or `auto.mean_min_base` (means per taxpayer, household, dwelling ...). Denominators that are
-    not counts of people or things (areas, money, energy) get no rule: those ratios are exact."""
+    not counts of people or things (areas, money, energy) get no rule: those ratios are exact.
+    The base is the whole denominator, every term (review round 3, D1: the yes share's base is yes + no
+    votes, not the yes votes alone); see base_expr for denominators that average two dates."""
     a = cfg.get("auto") or {}
     if not a or mid not in meta.index or meta.loc[mid, "kind"] != "derived":
         return None
     f = _formula(str(meta.loc[mid, "aggregation"]))
     if not f or f[2] != 1 or str(meta.loc[mid, "native_level"]) != "gemeinde":
         return None
-    den = f[1][0]
-    if den not in meta.index or NOT_COUNTS.search(str(meta.loc[den, "unit"])):
+    terms = f[1]
+    if any(t not in meta.index or NOT_COUNTS.search(str(meta.loc[t, "unit"])) for t in terms):
         return None
+    den = base_expr(terms)
     unit = str(meta.loc[mid, "unit"])
     if unit.strip().startswith("%") or "share" in unit.lower():
         kind = "share"
-    elif re.search(r"per (1[,' ]?000|100|10[,' ]?000)\b|per resident|per capita|per inhabitant", unit, re.I) or den == "pop_total":
+    elif re.search(r"per (1[,' ]?000|100|10[,' ]?000)\b|per resident|per capita|per inhabitant", unit, re.I) or terms == ["pop_total"]:
         kind = "rate"
     else:
         kind = "mean"
@@ -307,7 +325,7 @@ def _reliability(mid: str, meta: pd.DataFrame, cfg: dict) -> dict | None:
         return None
     f = _formula(str(meta.loc[mid, "aggregation"]))
     count = o["count"] if "count" in o else ("+".join(f[0]) if f else None)
-    base = o.get("base") or (f[1][0] if f else None)
+    base = o.get("base") or (base_expr(f[1]) if f else None)
     if not count and not base:
         return None
     # per-metric thresholds and wording override the defaults (e.g. elections: valid ballots)
@@ -463,8 +481,9 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
             expr, lim = rule.get(kind), rule.get(f"min_{kind}")
             if not expr or lim is None:
                 continue
-            ids = expr.split("+")
-            v = con.execute(f"""SELECT unit_id, SUM(value) AS v, COUNT(DISTINCT period) AS ny FROM m
+            mean = expr.startswith("mean:")
+            ids = expr.removeprefix("mean:").split("+")
+            v = con.execute(f"""SELECT unit_id, SUM(value) / {len(ids) if mean else 1} AS v, COUNT(DISTINCT period) AS ny FROM m
                                 WHERE level = '{lvl}' AND status = 'ok' AND metric_id IN ({", ".join("'" + i + "'" for i in ids)})
                                   AND period IN ({", ".join("'" + y + "'" for y in years)})
                                 GROUP BY 1""").df()

@@ -3,8 +3,9 @@
 # A rate built from few events or on a small population is unstable: one birth more or less moves
 # a village's birth rate by several per mille. Each listed metric gets
 #   count: the event count (numerator)       -> flag "small count" when count < min_count
-#   base:  the population at risk (denominator, first term) -> flag "small base" when base < min_base
-# Both default to the metric's own ratio/pooled formula (numerator terms / first denominator term);
+#   base:  the population at risk (denominator, all terms) -> flag "small base" when base < min_base
+# Both default to the metric's own ratio/pooled formula (numerator terms / denominator terms; a mean
+# population '(bil_pop_jan + bil_pop_dec) / 2' is compared as residents, pipeline/build/web.py base_expr);
 # `count: null` switches the count rule off (balances such as net migration can be near 0 by nature).
 #
 # Thresholds and reasoning
@@ -21,8 +22,11 @@ defaults:
   min_base: 1000
   rule_en: "Few events or residents: fewer than 20 events or under 1,000 residents (relative standard error above ~22 %). Prefer the pooled 3-year rate."
   rule_de: "Kleine Zahlen: weniger als 20 Ereignisse oder unter 1'000 Einwohner (relativer Standardfehler über ~22 %). Besser die gepoolte 3-Jahres-Rate verwenden."
+  rule_fr: "Petits nombres : moins de 20 événements ou moins de 1 000 habitants (erreur type relative supérieure à ~22 %). Utiliser de préférence le taux cumulé sur 3 ans."
 # Generic rule for every other ratio (audit round 2, M9: "small-number flag on every ratio"), on the
-# first denominator term; areas, money and energy denominators are exact and get none:
+# whole denominator (all its terms; review round 3, D1: the yes share's base is yes + no votes; a mean
+# population (1 January + 31 December) / 2 counts as residents); areas, money and energy denominators are
+# exact and get none:
 #   share: a share of fewer than 100 people/things moves by >= 1 percentage point per unit
 #     (binomial standard error up to 5 pp at n = 100).
 #   rate:  a per-resident rate or amount on fewer than 1,000 residents (as `defaults`).
@@ -47,18 +51,26 @@ auto:
 metrics:
   # More cars than residents: company, leasing and rental fleets registered at one address (e.g.
   # Appenzell 2,793 per 1,000, Montagny 1,454). Flagged 'special' and left out of classes by default.
+  # Cars are a stock, not events: a small village's rate is not a random count, so the 1,000-resident
+  # rule for event rates does not apply (review round 3, D4: it hid 651 municipalities). Flagged under
+  # 100 residents, where one car moves the rate by 10 per 1,000 or more (the share rule).
   mfz_cars_per_1000:
     count: null
+    min_base: 100
+    rule_en: "Few residents: under 100 residents, one car more or less moves the rate by 10 per 1,000 or more."
+    rule_de: "Wenige Einwohner: unter 100 Einwohnern verschiebt ein Auto mehr oder weniger die Rate um 10 pro 1'000 oder mehr."
+    rule_fr: "Peu d'habitants : moins de 100 habitants, une voiture de plus ou de moins fait varier le taux d'au moins 10 pour 1 000."
     special:
       max: 1000
       rule_en: "More cars than residents: company, leasing or rental fleets registered here."
       rule_de: "Mehr Autos als Einwohner: Firmen-, Leasing- oder Mietwagenflotten sind hier eingelöst."
       rule_fr: "Plus de voitures que d'habitants : flottes d'entreprises, de leasing ou de location immatriculées ici."
   # Median taxable income (estv_median_income): modelled from the ESTV income-class counts; with few taxpayers
-  # the classes are thin (and often suppressed), so the median is unstable. Same base as the mean taxable income.
+  # the classes are thin (and often suppressed), so the median is unstable. Same base as the normal-case mean
+  # taxable income (review round 3, D2: the median covers normal cases only).
   tax_np_median_taxable_income:
     count: null
-    base: tax_np_taxpayers
+    base: tax_np_taxpayers_normal
     min_base: 500
     rule_en: "Small base: an estimate from income classes over fewer than 500 taxpayers, unstable."
     rule_de: "Kleine Basis: eine Schätzung aus Einkommensklassen über weniger als 500 Steuerpflichtige, instabil."
