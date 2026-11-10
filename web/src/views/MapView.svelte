@@ -1205,7 +1205,8 @@
       <button type="button" class="handle" aria-expanded={sheetOpen} aria-label={sheetOpen ? t('mv.less') : t('mv.more')}
         onclick={() => (sheetOpen = !sheetOpen)} onpointerdown={(e) => (dragY = e.clientY)}
         onpointerup={(e) => { if (dragY !== null && Math.abs(e.clientY - dragY) > 24) { sheetOpen = e.clientY < dragY; e.preventDefault(); } dragY = null; }}>
-        <span class="grab" aria-hidden="true"></span>
+        <!-- owner's choice (D29 follow-up): a chevron, since the handle is a button; up = open the sheet, down = close it -->
+        <svg class="chev" class:up={!sheetOpen} viewBox="0 0 20 12" width="22" height="13" aria-hidden="true"><path d="M2 2l8 8 8-8" /></svg>
       </button>
       {#if reachOn}
         <!-- U16: reach stays at hand on a phone: Play, hub and mode, time slider -->
@@ -1618,8 +1619,10 @@
     .controls .body { min-height: 0; }
     .sheet-tabs { flex: none; padding: 0 var(--sp-3); }
     .sheet-tabs button { min-height: 44px; padding: 0 2px; }
-    .handle { display: grid; place-items: center; width: 100%; height: 24px; padding: 0; border: 0; background: none; cursor: grab; flex: none; touch-action: none; }
-    .grab { display: block; width: 36px; height: 4px; background: var(--ink); }
+    .handle { display: grid; place-items: center; width: 100%; height: 40px; padding: 0; border: 0; background: none; cursor: pointer; flex: none; touch-action: none; }
+    .handle .chev { display: block; fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: square; transition: transform 0.15s; }
+    .handle .chev.up { transform: rotate(180deg); }
+    @media (prefers-reduced-motion: reduce) { .handle .chev { transition: none; } }
     .rbar { flex: none; display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--sp-3) var(--sp-2); }
     .rplay { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--ink); background: var(--ink); color: var(--ink-text); cursor: pointer; }
     .rplay svg { fill: currentColor; }
