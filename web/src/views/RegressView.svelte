@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   import { preferNormal } from '../lib/data';
   import { colon } from '../lib/typo';
   import '../lib/i18n-r3';
@@ -386,7 +387,7 @@
     [yInfo, ...xInfos].filter((v): v is VarInfo => !!v && !!regionalAt(v.meta, ld.level)).map((v) => ({ label: ml(v.meta), level: levelName(regionalAt(v.meta, ld.level)!, false) })),
   );
   const partyVar = $derived([yInfo, ...xInfos].some((v) => !!v && !!v.meta.majority_cantons));
-  const sourceOf = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
+  const sourceOf = (m: MetricMeta) => (pubName(base.sources.get(m.source)?.publisher) || m.source);
 
   // ------------------------------------------------------------------ residuals on the map
   /** residual and fitted value per unit (null outside the sample) */

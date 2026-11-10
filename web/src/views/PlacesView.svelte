@@ -45,6 +45,7 @@
 </script>
 
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   // Compare places (brief 6.1): 2–4 units side by side with the profile's layout, one aligned row per
   // metric; per row the best/worst (direction-aware) or highest/lowest value is marked. Phones: the
   // table scrolls sideways with the metric column sticky. Selection in the hash: #v=places&ids=261,kanton:GE
@@ -183,7 +184,7 @@
     if (m.direction === 'lower_better') return kind === 'lo' ? { text: t('pl.best'), good: true } : { text: t('pl.worst'), good: false };
     return { text: kind === 'hi' ? t('pl.high') : t('pl.low'), good: null };
   }
-  const publisher = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
+  const publisher = (m: MetricMeta) => (pubName(base.sources.get(m.source)?.publisher) || m.source);
 </script>
 
 {#snippet row(m: MetricMeta)}

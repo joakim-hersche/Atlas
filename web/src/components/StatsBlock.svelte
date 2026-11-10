@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   // Summary statistics of the shaded metric across municipalities, plus the selected unit.
   import { t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
@@ -36,7 +37,7 @@
   const rank = $derived(sel === null ? null : rankOf(v, sel, meta.direction));
   const cov = $derived(partialCantons(meta));
   const f = (x: number) => fmtNumber(x, meta.decimals);
-  const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
+  const publisher = $derived(source ? pubName(source.publisher) : meta.source);
 </script>
 
 <div class="stats">

@@ -15,3 +15,8 @@ export function tx(text: string | null | undefined): string {
   if (!file && !pending) pending = getOptionalJSON<TextsFile>('web/texts.json').then((f) => (file = f)).catch(() => null);
   return translate(file, text, lang);
 }
+
+/** A source's publisher, translated, without the parenthesised detail ("Computed by ATLAS (pipeline/reach) from …" → "Berechnet von ATLAS"). */
+export function pubName(full: string | null | undefined): string {
+  return full ? tx(full).split(' (')[0] : '';
+}

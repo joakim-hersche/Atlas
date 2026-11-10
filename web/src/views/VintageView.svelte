@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   // Older boundaries (docs/older_boundaries.md): the municipality map of a past municipality state,
   // shaded only by metrics that exist on that state (native, or carried forward from an older state).
   // URL: #v=vintage&vin=2000&m=vz_lang_fr_share&y=1970&sel=<BFS number on that state>&cls=…
@@ -355,7 +356,7 @@
         {#if app.filters.length}<p class="foot fnote">{t('r3.vinFilters', { n: app.filters.length })}</p>{/if}
         {#if vm}
           <p class="prov">{provText}{#if vm.provenance === 'forward' && vm.n_estimate}{' '}{tv('vin.nEst', { n: fmtNumber(vm.n_estimate, 0) })}{/if}
-            {#if source}<a href={srcLink}>{source.publisher.split(' (')[0]}</a>{/if}</p>
+            {#if source}<a href={srcLink}>{pubName(source.publisher)}</a>{/if}</p>
         {/if}
       </section>
       <section>

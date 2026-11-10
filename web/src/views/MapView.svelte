@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   // Single map: shade metric, reach, filters, quick card and statistics.
   // Desktop: controls left, map centre, card and statistics right. Phone: map with a bottom sheet.
   import { onMount, tick } from 'svelte';
@@ -1276,7 +1277,7 @@
       onmin={(n) => (app.rmin = n)} onflag={(f) => (app.rflag = f)} />
     <RankTable small={app.rflag && app.rmin ? belowMin : undefined} columns={rankCols} rows={rankRows} names={names} cantons={ld.canton} showCanton={ld.level === 'gemeinde' || ld.level === 'bezirk'}
       sel={selIdx} unitWord={filtered ? t('mv.matching', { units: word }) : word} onselect={selectFromList} ids={ld.units}
-      sourceName={(id) => base.sources.get(id)?.publisher.split(' (')[0] ?? id}
+      sourceName={(id) => (pubName(base.sources.get(id)?.publisher) || id)}
       onzoom={filtered && match.n > 0 ? () => zoomTo(matchIdx) : undefined} />
   {:else}
     <p class="foot">{whyA ?? t('status.loading')}</p>

@@ -169,6 +169,7 @@
 </script>
 
 <script lang="ts">
+  import { pubName, tx } from '../lib/texts.svelte';
   // Profile page (brief 6.1, "don't need Google"): one place at any level. Header facts and links,
   // every metric by theme with rank, percentile, sparkline, source and precision tags (gaps with their
   // reason, D21), neighbours, similar places, travel times to the hubs and the boundary history.
@@ -406,7 +407,7 @@
     return reach.hubs
       .map(([slug, hub]) => ({
         slug, hub, st: reach!.pt_station?.[slug]?.[k] ?? null, pt: reach!.pt[slug]?.[k] ?? null, car: reach!.car[slug]?.[k] ?? null,
-        note: reach!.notes?.pt_station?.[slug]?.[String(k)] ?? null,
+        note: tx(reach!.notes?.pt_station?.[slug]?.[String(k)]) || null,
       }))
       .sort((a, b) => (hasSt ? (a.st ?? 1e9) - (b.st ?? 1e9) : 0) || (a.pt ?? 1e9) - (b.pt ?? 1e9) || (a.car ?? 1e9) - (b.car ?? 1e9));
   });
@@ -438,7 +439,7 @@
   const evType = (k: string) => (isDe() ? HISTORY_DE[k] : app.lang === 'fr' ? historyFr(k) : history?.types[k]) ?? history?.types[k] ?? k;
   const names = (xs: [string, string][]) => xs.map(([id, n]) => `${n} (${id})`).join(', ');
 
-  const publisher = (m: MetricMeta) => base.sources.get(m.source)?.publisher.split(' (')[0] ?? m.source;
+  const publisher = (m: MetricMeta) => (pubName(base.sources.get(m.source)?.publisher) || m.source);
   const precisionLabel = precisionText;
   function jump(id: string) {
     document.getElementById(id)?.scrollIntoView({ block: 'start' });

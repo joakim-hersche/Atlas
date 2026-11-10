@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   import { levelName, ml, t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
@@ -89,7 +90,7 @@
   const rank = $derived(regional ? null : rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
-  const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
+  const publisher = $derived(source ? pubName(source.publisher) : meta.source);
 
   /** flags of the value (small numbers, majority election, published value, provisional) */
   const flags = $derived(value !== null || majVal !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);

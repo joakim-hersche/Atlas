@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pubName } from '../lib/texts.svelte';
   import { colon } from '../lib/typo';
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
@@ -135,7 +136,7 @@
   });
   const nrw = $derived(meta.id.startsWith('nrw_'));
   const cov = $derived(partialCantons(meta));
-  const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
+  const publisher = $derived(source ? pubName(source.publisher) : meta.source);
   // U9: 'pp' spelled out in the legend (the first place a reader meets it)
   const unitText = $derived(meta.unit === 'pp' ? tr('ux.ppFirst') : unitOf(meta) || tr('fp.value'));
   const blocs = $derived(meta.id === 'nrw_leaning' || meta.id.startsWith('nrw_share_bloc_'));
