@@ -60,6 +60,7 @@ export class UnitMap {
   ready: Promise<void>;
   private n = 0;
   private colour: (string | null | undefined)[] = [];
+  private dim: boolean[] = [];
   private sel: number | null = null;
   private hov: number | null = null;
   private isReady = false;
@@ -185,7 +186,9 @@ export class UnitMap {
     m.setPaintProperty('sym', 'circle-color', filled
       ? ['coalesce', ['feature-state', 'fc'], token('--nodata-fill')]
       : 'rgba(0,0,0,0)');
-    m.setPaintProperty('sym', 'circle-opacity', filled ? 0.92 : 1);
+    const dim = ['boolean', ['feature-state', 'dim'], false];
+    m.setPaintProperty('sym', 'circle-opacity', filled ? (['case', dim, 0.55, 0.92] as never) : 1);
+    m.setPaintProperty('sym', 'circle-stroke-opacity', ['case', dim, filled ? 0.5 : 0.22, 1] as never);
     m.setPaintProperty('sym', 'circle-stroke-color', ['case', ['any', sel, hov], token('--sel-line'),
       filled ? (['case', ['boolean', ['feature-state', 'nd'], false], token('--nodata-line'), token('--sym-stroke')]) : token('--ink')] as never);
     m.setPaintProperty('sym', 'circle-stroke-width', ['case', sel, 2.2, hov, 1.6, filled ? 0.6 : 1] as never);
@@ -201,6 +204,7 @@ export class UnitMap {
     this.level = ld.level;
     this.n = ld.units.length;
     this.colour = new Array(this.n);
+    this.dim = new Array(this.n).fill(false);
     this.sel = null;
     this.hov = null;
     this.styleUnits();
@@ -227,22 +231,26 @@ export class UnitMap {
     // feature-state of the new features: colours and flags
     for (const s of symbols ?? []) {
       const c = this.colour[s.i];
-      this.map.setFeatureState({ source: 'sym', id: s.i }, c ? { fc: c, nd: false } : { fc: null, nd: true });
+      const dim = this.dim[s.i] ?? false;
+      this.map.setFeatureState({ source: 'sym', id: s.i }, c ? { fc: c, nd: false, dim } : { fc: null, nd: true, dim });
     }
     if (this.sel !== null) this.map.setFeatureState({ source: 'sym', id: this.sel }, { sel: true });
     this.styleSymbols();
   }
 
-  /** Fill colour per unit (null = no data, hatched). Only changed units are sent to MapLibre. */
-  setColours(colour: (string | null)[]) {
+  /** Fill colour per unit (null = no data, hatched) and dimming (filtered out, for the symbols).
+   *  Only changed units are sent to MapLibre. */
+  setColours(colour: (string | null)[], dim?: Uint8Array) {
     if (!this.isReady || colour.length !== this.n) return;
     for (let i = 0; i < this.n; i++) {
       const c = colour[i];
-      if (c !== this.colour[i]) {
-        const st = c === null ? { fc: null, nd: true } : { fc: c, nd: false };
+      const d = dim ? dim[i] === 1 : false;
+      if (c !== this.colour[i] || d !== this.dim[i]) {
+        const st = c === null ? { fc: null, nd: true, dim: d } : { fc: c, nd: false, dim: d };
         this.map.setFeatureState({ source: 'units', id: i }, st);
         if (this.symbolsOn) this.map.setFeatureState({ source: 'sym', id: i }, st);
         this.colour[i] = c;
+        this.dim[i] = d;
       }
     }
   }
