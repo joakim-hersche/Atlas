@@ -228,6 +228,7 @@
     .x { width: 32px; height: 32px; }
   }
   @media (max-width: 899px) {
-    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; max-height: 72vh; }
+    /* B4 (R4): on a phone the list is a modal sheet over the page; a scrim shows that it covers the tabs */
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; max-height: 72vh; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.32); }
   }
 </style>

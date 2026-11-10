@@ -103,11 +103,13 @@
   .vp { position: relative; min-width: 0; margin-top: 6px; }
   .btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; text-align: left; cursor: pointer; background: var(--panel); border: 1px solid var(--ink); }
   .lbl { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
-  .caps { font-size: var(--fs-cap); }
+  /* B4 (R13): the date and "provisional" line wraps instead of running out of the box */
+  .caps { font-size: var(--fs-cap); white-space: normal; overflow-wrap: anywhere; }
   .ttl { font-weight: 600; font-size: var(--fs-small); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .chev { flex: none; }
   .pop {
-    position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: max(100%, 420px); max-width: calc(100vw - 16px);
+    /* J10: as wide as the panel (wider was clipped by the side panel and scrolled it sideways) */
+    position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: 100%; min-width: 0;
     background: var(--panel); border: 1px solid var(--ink); border-top: 3px solid var(--ink); display: flex; flex-direction: column; max-height: min(480px, 72vh);
   }
   .search { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--border); }
@@ -124,6 +126,6 @@
   .empty { padding: 10px; margin: 0; color: var(--muted); }
   .hint { padding: 8px 10px 0; margin: 0; }
   @media (max-width: 899px) {
-    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 76vh; }
+    .pop { position: fixed; z-index: 75; top: calc(env(safe-area-inset-top) + 52px); left: 8px; right: 8px; width: auto; max-width: none; max-height: 76vh; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.32); }
   }
 </style>

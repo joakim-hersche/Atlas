@@ -30,6 +30,7 @@ const EN: Record<string, string> = {
   "r3.clsFixed": "fixed classes",
   "r3.majUnits": "{n} {units} in single-seat cantons (majority election), not compared",
   "r3.pngHidden": "Hatched “hidden”: values resting on small numbers (one person more or less moves them a lot), left out of the classes.",
+  "r3.cmpYours": "From your map: filter and shade metrics",
 };
 
 const DE: Record<string, string> = {
@@ -55,6 +56,7 @@ const DE: Record<string, string> = {
   "r3.clsFixed": "feste Klassen",
   "r3.majUnits": "{n} {units} in Kantonen mit einem Sitz (Majorzwahl), nicht verglichen",
   "r3.pngHidden": "Schraffiert «ausgeblendet»: Werte, die auf kleinen Zahlen beruhen (eine Person mehr oder weniger verschiebt sie stark), nicht in den Klassen.",
+  "r3.cmpYours": "Aus Ihrer Karte: Filter- und Farbkennzahlen",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -80,6 +82,7 @@ export const FR_R3: Record<string, string> = {
   "r3.clsFixed": "classes fixes",
   "r3.majUnits": "{n} {units} dans des cantons à un siège (élection majoritaire), non comparées",
   "r3.pngHidden": "Hachuré « masqué » : valeurs reposant sur de petits nombres (une personne de plus ou de moins les déplace fortement), exclues des classes.",
+  "r3.cmpYours": "De votre carte : indicateurs des filtres et de la couleur",
 };
 
 addStrings(EN, DE);

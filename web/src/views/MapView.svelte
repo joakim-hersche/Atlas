@@ -763,13 +763,13 @@
     if (desktop) return { top: 56, bottom: 24, left: 24, right: 56 };
     // phone: the level bar on top; the sheet sits below the map (it does not cover it)
     // the floating legend sits at the bottom of the map while the sheet is folded
-    return { top: 52, bottom: !sheetOpen && selIdx === null ? 100 : 12, left: 10, right: 10 };
+    return { top: 12, bottom: !sheetOpen && selIdx === null ? 100 : 12, left: 10, right: 44 };
   }
   /** the user panned or zoomed since the last fit: then a resize keeps their view */
   let userMoved = false;
   /** Zoom to a set of units (matches, a ranking row). */
   const boxes = $derived(ld.geo.features.map((f) => geomBounds(f.geometry)));
-  function zoomTo(idx: number[], maxZoom = 10.5) {
+  function zoomTo(idx: number[], maxZoom = 10.5, keepSheet = false) {
     if (!view || !idx.length) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     const byId = new Map(ld.geo.features.map((f, k) => [f.id as number, k]));
@@ -780,7 +780,7 @@
       x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
     }
     if (!Number.isFinite(x0)) return;
-    if (!desktop) sheetOpen = false;
+    if (!desktop && !keepSheet) sheetOpen = false;
     tick().then(() => {
       view!.map.resize();
       view!.fitBox([x0, y0, x1, y1], mapPadding(), { animate: true, maxZoom });
@@ -1019,10 +1019,26 @@
     for (let i = 0; i < nUnits; i++) if (match.m[i] && !(hide && belowMin.has(i))) out.push(i);
     return out;
   });
+  /** B4 (F1): on a phone a ranking row selects and zooms while the sheet stays open, so the list keeps its place */
   function selectFromList(i: number) {
-    select(i);
-    zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5);
+    choose = null;
+    app.sel = ld.units[i];
+    zoomTo([i], ld.level === 'gemeinde' ? 9.5 : 8.5, true);
   }
+  // the sheet's scroll position per tab survives folding and switching tabs (a folded body is not laid out)
+  let bodyEl = $state<HTMLDivElement>();
+  const scrollMem: Record<string, number> = {};
+  function onBodyScroll() {
+    if (!desktop && sheetOpen && bodyEl) scrollMem[phoneTab] = bodyEl.scrollTop;
+  }
+  $effect(() => {
+    const open = sheetOpen;
+    const tab = phoneTab;
+    if (desktop || !open) return;
+    tick().then(() => requestAnimationFrame(() => {
+      if (bodyEl && scrollMem[tab]) bodyEl.scrollTop = scrollMem[tab];
+    }));
+  });
 
   // ------------------------------------------------------------------ PNG export (D32)
   let pngBusy = $state(false);
@@ -1283,7 +1299,7 @@
         {/each}
       </div>
     {/if}
-    <div class="body">
+    <div class="body" bind:this={bodyEl} onscroll={onBodyScroll}>
       {#if desktop || phoneTab === 'map'}
       <section>
         <div class="row2 lab">
@@ -1442,6 +1458,13 @@
   </aside>
 
   <section class="pane">
+    {#if !desktop && !app.embed}
+      <!-- B4 (R4, E10, F1): on a phone the level control is a compact row above the map, not over its north -->
+      <div class="lvlrow">
+        <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
+        <LevelNote {base} />
+      </div>
+    {/if}
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
       {#if app.multi !== null}
@@ -1455,10 +1478,12 @@
           <button type="button" onclick={() => (app.tab = 'stats')}>{t('tab.stats')}</button>
         </div>
       {/if}
+      {#if desktop}
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
       </div>
+      {/if}
       {/if}
       {#if (!desktop || app.embed) && card && refA && colA}
         <div class="card-wrap">
@@ -1665,8 +1690,11 @@
     /* phone (D7, U16): map on top, the sheet below it. Folded, the sheet is the grab handle and the tab row
        (plus the reach bar while reach is on), so the map keeps most of the screen; opening it shrinks the map. */
     .stage { display: flex; flex-direction: column; }
-    .pane { order: 0; flex: 1 1 auto; min-height: 30%; }
-    .controls { order: 1; flex: none; border-top: var(--rule-heavy); max-height: 64%; padding-bottom: env(safe-area-inset-bottom); }
+    /* B4: the map keeps at least ~45 % of the height with the sheet open (it was a strip of ~25 %) */
+    .pane { order: 0; flex: 1 1 auto; min-height: 45%; }
+    .controls { order: 1; flex: none; border-top: var(--rule-heavy); max-height: 55%; padding-bottom: env(safe-area-inset-bottom); }
+    .lvlrow { flex: none; display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-1) var(--sp-2); background: var(--panel); border-bottom: 1px solid var(--rule); }
+    .lvlrow :global(.seg button) { padding: 4px 8px; }
     .controls:not(.open) .body { display: none; }
     .controls .body { min-height: 0; }
     .sheet-tabs { flex: none; padding: 0 var(--sp-3); }
