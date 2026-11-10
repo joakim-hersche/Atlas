@@ -118,7 +118,8 @@ the pooled-rate periods.
  "main_station_fields": ["name", "didok", "inside_municipality"],
  "reasons": {"pt": {"zuerich": {"<unit idx>": "no stop within walking distance (1.5 km) of where people live"}},  // NEW, per hub
              "pt_station": {"geneve": {"<unit idx>": "no arrival at the hub by 10:30 on the service day"}}, "car": {}},
- "notes": {"pt_station": {"geneve": {"<unit idx>": "no arrival by 08:30: median over the hour from the earliest possible arrival (08:55)"}}}}
+ "late_from": {"pt_station": {"geneve": {"<unit idx>": "08:55"}}, "pt": {...}},   // value uses the hour from this earliest arrival
+ "late_text": {"en": "No arrival by 08:30; median over the hour from the earliest possible arrival ({t}).", "de": "..."}}
 ```
 
 - **Station time** (`pt_station`, metric `reach_ptst_<hub>`): timetable journey time from the
@@ -132,7 +133,7 @@ the pooled-rate periods.
   inhabited hectare walks (straight line × 1.3, 1.2 m/s) to the best stop within 1.5 km (min over
   stops of walk + stop's median journey); population-weighted median over hectares.
 - Far hubs: where the hub cannot be reached by 08:30 at all, the hour from the earliest possible
-  arrival is used (if by 10:30) and `notes` says so; otherwise the value is null with a reason.
+  arrival is used (if by 10:30) and `late_from` gives that time; otherwise the value is null with a reason.
   About 27 % of hub–municipality pairs use this later window, 4 % have no arrival by 10:30.
 - Main station when the municipality has no stop: the station chosen the same way within 2 km of its
   population-weighted centre (`inside_municipality` false; 37 municipalities).

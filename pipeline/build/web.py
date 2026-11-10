@@ -330,8 +330,9 @@ def unit_flags(con, lvl: str, g: pd.DataFrame, idx: dict, reliability: dict, maj
     for mid, u, pv, nt, st in zip(g["metric_id"], g["unit_id"], g["provenance"], g["note"], g["status"]):
         if st != "ok":
             continue
-        if lvl != "gemeinde" and pv == "native" and str(meta.loc[mid, "aggregation"]) != "not_aggregatable" \
-                and str(meta.loc[mid, "native_level"]) == "gemeinde":
+        if lvl != "gemeinde" and ((pv == "native" and str(meta.loc[mid, "aggregation"]) != "not_aggregatable"
+                                   and str(meta.loc[mid, "native_level"]) == "gemeinde")
+                                  or (isinstance(nt, str) and nt.startswith("computed from published"))):
             add(mid, idx[u], FLAG_BITS["published_value"])
         if isinstance(nt, str) and "provisional" in nt:
             add(mid, idx[u], FLAG_BITS["provisional"])

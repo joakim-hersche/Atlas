@@ -1,34 +1,29 @@
 # Data quality report
 
-Generated 2026-11-10T12:38 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
+Generated 2026-11-10T13:03 · reference state 2026-01-01 · regenerate with `make quality`. Plan: [`validation_plan.md`](validation_plan.md).
 
-Metrics: 783 defined (572 base, 211 derived) · rows: 32,573,476
+Metrics: 815 defined (604 base, 211 derived) · rows: 32,592,480
 
 ## A. Additivity — municipalities vs. published district/canton/national values
 
-Summary: 593 metric×level comparisons, 566 pass, 27 with failures.
+Summary: 593 metric×level comparisons, 571 pass, 22 with failures.
 
 | Source | Level | Metric | Compared | Exact | Explained (transfers / unallocated) | Within 0.5% | Documented difference | Fail | Max rel. residual |
 |---|---|---|---|---|---|---|---|---|---|
-| bfs_votes_gemeinde | kanton | vote_eligible | 12761 | 11359 | 726 | 641 | 0 | **140** | 26.963% |
-| bfs_votes_gemeinde | kanton | vote_valid | 12872 | 11734 | 731 | 490 | 0 | **22** | 26.933% |
+| bfs_votes_gemeinde | kanton | vote_eligible | 12731 | 11359 | 629 | 616 | 0 | **133** | 3.701% |
 | bfs_arealstatistik | bezirk | area_total_ha | 632 | 614 | 0 | 9 | 0 | **9** | 1.777% |
 | bfs_arealstatistik | bezirk | area_water_ha | 632 | 623 | 0 | 0 | 0 | **9** | 0.590% |
 | bfs_arealstatistik | bezirk | area_wooded_ha | 632 | 619 | 0 | 4 | 0 | **9** | 8.642% |
-| bfs_votes_gemeinde | kanton | vote_ballots | 12760 | 11640 | 728 | 490 | 0 | **7** | 26.939% |
-| bfs_votes_gemeinde | kanton | vote_no | 12872 | 11752 | 753 | 465 | 0 | **7** | 22.820% |
+| bfs_votes_gemeinde | kanton | vote_valid | 12731 | 11734 | 631 | 465 | 0 | **6** | 7.078% |
 | bfs_nrw | kanton | nrw_fw_cvp | 279 | 239 | 22 | 15 | 0 | **5** | 2.348% |
 | bfs_nrw | kanton | nrw_fw_fdp | 311 | 271 | 19 | 19 | 0 | **5** | 4.372% |
 | bfs_nrw | kanton | nrw_fw_total | 357 | 325 | 19 | 11 | 0 | **5** | 3.488% |
 | bfs_arealstatistik | bezirk | area_agriculture_ha | 632 | 624 | 0 | 4 | 0 | **4** | 0.649% |
 | bfs_arealstatistik | bezirk | area_unproductive_ha | 632 | 619 | 0 | 9 | 0 | **4** | 2.764% |
-| bfs_arealstatistik | schweiz | area_total_ha | 4 | 4 | 0 | 0 | 0 | **4** | 3.146% |
-| bfs_arealstatistik | schweiz | area_unproductive_ha | 4 | 4 | 0 | 0 | 0 | **4** | 12.483% |
-| bfs_arealstatistik | schweiz | area_water_ha | 4 | 4 | 0 | 0 | 0 | **4** | 73.174% |
 | bfs_nrw | kanton | nrw_fw_sp | 303 | 262 | 18 | 22 | 0 | **4** | 5.170% |
 | bfs_nrw | schweiz | nrw_fw_fdp | 9 | 1 | 0 | 4 | 0 | **4** | 3.642% |
-| bfs_votes_gemeinde | kanton | vote_yes | 12872 | 11752 | 759 | 462 | 0 | **4** | 29.181% |
 | bfs_nrw | kanton | nrw_ballots_invalid | 357 | 325 | 28 | 1 | 0 | **3** | 2.941% |
+| bfs_votes_gemeinde | kanton | vote_no | 12731 | 11740 | 653 | 440 | 0 | **3** | 0.763% |
 | bfs_census_1970_2000 | kanton | vz_rel_other_christian | 104 | 92 | 4 | 6 | 0 | **2** | 1.747% |
 | bfs_construction | kanton | con_exp_maintenance | 806 | 9 | 738 | 57 | 0 | **2** | 2.935% |
 | bfs_nrw | kanton | nrw_fw_csp | 29 | 25 | 2 | 1 | 0 | **2** | 2.916% |
@@ -124,15 +119,18 @@ Summary: 593 metric×level comparisons, 566 pass, 27 with failures.
 | bfs_arealstatistik | kanton | area_unproductive_ha | 114 | 114 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_arealstatistik | kanton | area_water_ha | 114 | 114 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_arealstatistik | kanton | area_wooded_ha | 114 | 114 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_arealstatistik | schweiz | area_agriculture_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.002% |
-| bfs_arealstatistik | schweiz | area_building_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.014% |
+| bfs_arealstatistik | schweiz | area_agriculture_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_building_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_arealstatistik | schweiz | area_glacier_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_arealstatistik | schweiz | area_industrial_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.014% |
-| bfs_arealstatistik | schweiz | area_sealed_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.022% |
-| bfs_arealstatistik | schweiz | area_settlement_base_ha | 3 | 3 | 0 | 3 | 0 | 0 | 0.021% |
-| bfs_arealstatistik | schweiz | area_settlement_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.023% |
-| bfs_arealstatistik | schweiz | area_transport_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.005% |
-| bfs_arealstatistik | schweiz | area_wooded_ha | 4 | 4 | 0 | 4 | 0 | 0 | 0.043% |
+| bfs_arealstatistik | schweiz | area_industrial_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_sealed_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_settlement_base_ha | 3 | 3 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_settlement_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_total_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_transport_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_unproductive_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_water_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_arealstatistik | schweiz | area_wooded_ha | 4 | 4 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_bevnat_bilanz | bezirk | bil_births | 6355 | 6310 | 45 | 0 | 0 | 0 | 0.079% |
 | bfs_bevnat_bilanz | bezirk | bil_deaths | 6355 | 6310 | 45 | 0 | 0 | 0 | 0.049% |
 | bfs_bevnat_bilanz | bezirk | bil_emigration | 6355 | 6310 | 45 | 0 | 0 | 0 | 0.081% |
@@ -575,11 +573,13 @@ Summary: 593 metric×level comparisons, 566 pass, 27 with failures.
 | bfs_vehicles | schweiz | mfz_cars_private | 10 | 0 | 10 | 0 | 0 | 0 | 0.000% |
 | bfs_vehicles | schweiz | mfz_newreg_bev | 16 | 8 | 7 | 1 | 0 | 0 | 0.197% |
 | bfs_vehicles | schweiz | mfz_newreg_cars | 16 | 8 | 7 | 1 | 0 | 0 | 0.001% |
-| bfs_votes_gemeinde | bezirk | vote_ballots | 70262 | 70262 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_eligible | 70281 | 70281 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_no | 70816 | 70816 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_valid | 70816 | 70816 | 0 | 0 | 0 | 0 | 0.000% |
-| bfs_votes_gemeinde | bezirk | vote_yes | 70816 | 70816 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_ballots | 69673 | 69673 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_eligible | 69692 | 69692 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_no | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_valid | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | bezirk | vote_yes | 70195 | 70195 | 0 | 0 | 0 | 0 | 0.000% |
+| bfs_votes_gemeinde | kanton | vote_ballots | 12725 | 11640 | 631 | 465 | 0 | 0 | 0.319% |
+| bfs_votes_gemeinde | kanton | vote_yes | 12731 | 11740 | 659 | 437 | 0 | 0 | 0.299% |
 | bfs_votes_gemeinde | schweiz | vote_ballots | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
 | bfs_votes_gemeinde | schweiz | vote_eligible | 396 | 191 | 0 | 205 | 0 | 0 | 0.091% |
 | bfs_votes_gemeinde | schweiz | vote_no | 396 | 396 | 0 | 0 | 0 | 0 | 0.000% |
@@ -621,32 +621,28 @@ Worst unexplained differences:
 - bfs_arealstatistik / bezirk / area_unproductive_ha: [{'unit_id': '2101', 'period': '2004/09', 'value_pub': 1990.0, 'value_agg': 1935.0, 'explained': 0.0}, {'unit_id': '2101', 'period': '1992/97', 'value_pub': 2171.0, 'value_agg': 2112.0, 'explained': 0.0}, {'unit_id': '2101', 'period': '1979/85', 'value_pub': 2358.0, 'value_agg': 2299.0, 'explained': 0.0}]
 - bfs_arealstatistik / bezirk / area_water_ha: [{'unit_id': '2101', 'period': '2013/18', 'value_pub': 339.0, 'value_agg': 337.0, 'explained': 0.0}, {'unit_id': '2101', 'period': '2004/09', 'value_pub': 343.0, 'value_agg': 341.0, 'explained': 0.0}, {'unit_id': '2101', 'period': '1992/97', 'value_pub': 350.0, 'value_agg': 348.0, 'explained': 0.0}]
 - bfs_arealstatistik / bezirk / area_wooded_ha: [{'unit_id': '1005', 'period': '1979/85', 'value_pub': 2997.0, 'value_agg': 2738.0, 'explained': 0.0}, {'unit_id': '1005', 'period': '1992/97', 'value_pub': 3021.0, 'value_agg': 2763.0, 'explained': 0.0}, {'unit_id': '1005', 'period': '2020/25', 'value_pub': 3051.0, 'value_agg': 2793.0, 'explained': 0.0}]
-- bfs_arealstatistik / schweiz / area_total_ha: [{'unit_id': 'CH', 'period': '1992/97', 'value_pub': 4129072.0, 'value_agg': 4129072.0, 'explained': -129920.0}, {'unit_id': 'CH', 'period': '1979/85', 'value_pub': 4129072.0, 'value_agg': 4129072.0, 'explained': -129920.0}, {'unit_id': 'CH', 'period': '2013/18', 'value_pub': 4129072.0, 'value_agg': 4129072.0, 'explained': -129920.0}]
-- bfs_arealstatistik / schweiz / area_unproductive_ha: [{'unit_id': 'CH', 'period': '2013/18', 'value_pub': 1035805.0, 'value_agg': 1035805.0, 'explained': -129297.0}, {'unit_id': 'CH', 'period': '2004/09', 'value_pub': 1044306.0, 'value_agg': 1044306.0, 'explained': -129298.0}, {'unit_id': 'CH', 'period': '1992/97', 'value_pub': 1050375.0, 'value_agg': 1050375.0, 'explained': -129295.0}]
-- bfs_arealstatistik / schweiz / area_water_ha: [{'unit_id': 'CH', 'period': '1992/97', 'value_pub': 176241.0, 'value_agg': 176241.0, 'explained': -128963.0}, {'unit_id': 'CH', 'period': '1979/85', 'value_pub': 176320.0, 'value_agg': 176320.0, 'explained': -129009.0}, {'unit_id': 'CH', 'period': '2004/09', 'value_pub': 177714.0, 'value_agg': 177714.0, 'explained': -128960.0}]
 - bfs_census_1970_2000 / kanton / vz_rel_no_answer: [{'unit_id': 'FR', 'period': '1990', 'value_pub': 537.0, 'value_agg': 540.0, 'explained': 0.0}]
 - bfs_census_1970_2000 / kanton / vz_rel_other_christian: [{'unit_id': 'FR', 'period': '1980', 'value_pub': 744.0, 'value_agg': 757.0, 'explained': 0.0}, {'unit_id': 'FR', 'period': '1970', 'value_pub': 358.0, 'value_agg': 364.0, 'explained': 0.0}]
 - bfs_construction / kanton / con_exp_maintenance: [{'unit_id': 'JU', 'period': '1994', 'value_pub': 12945.0, 'value_agg': 12286.0, 'explained': -1039.0}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 10573.0, 'value_agg': 9085.0, 'explained': -1688.0}]
 - bfs_nrw / kanton / nrw_ballots_invalid: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 68.0, 'value_agg': 72.0, 'explained': 2.0}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 120.0, 'value_agg': 132.0, 'explained': 11.0}, {'unit_id': 'BE', 'period': '1987', 'value_pub': 394.0, 'value_agg': 387.0, 'explained': -5.0}]
-- bfs_nrw / kanton / nrw_fw_csp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 3028.0, 'value_agg': 2939.700017501897, 'explained': 0.0}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 1793.0, 'value_agg': 1747.0415785447506, 'explained': 0.0}]
-- bfs_nrw / kanton / nrw_fw_cvp: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 7351.0, 'value_agg': 7182.634275377565, 'explained': 4.245668978789234}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 7118.0, 'value_agg': 6972.472559877705, 'explained': 8.45936726556872}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 6450.0, 'value_agg': 6317.482561394098, 'explained': 4.905698900663455}]
-- bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255869, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.401611529561, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395095, 'explained': 576.7845709381374}]
+- bfs_nrw / kanton / nrw_fw_csp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 3028.0, 'value_agg': 2939.700017501897, 'explained': 0.0}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 1793.0, 'value_agg': 1747.0415785447508, 'explained': 0.0}]
+- bfs_nrw / kanton / nrw_fw_cvp: [{'unit_id': 'JU', 'period': '1987', 'value_pub': 7351.0, 'value_agg': 7182.634275377565, 'explained': 4.245668978789234}, {'unit_id': 'JU', 'period': '1991', 'value_pub': 7118.0, 'value_agg': 6972.472559877706, 'explained': 8.45936726556872}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 6450.0, 'value_agg': 6317.482561394099, 'explained': 4.905698900663455}]
+- bfs_nrw / kanton / nrw_fw_fdp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 7402.0, 'value_agg': 7777.886471255869, 'explained': 699.496995729353}, {'unit_id': 'JU', 'period': '1979', 'value_pub': 7350.0, 'value_agg': 7856.40161152956, 'explained': 814.7204216193905}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 7439.0, 'value_agg': 7778.200086395095, 'explained': 576.7845709381374}]
 - bfs_nrw / kanton / nrw_fw_other: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 7467.0, 'value_agg': 7137.5399986146585, 'explained': 9.295116111977606}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 3739.0, 'value_agg': 3693.379016908547, 'explained': 19.37925026715989}]
-- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.7622136599728, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999062, 'explained': -1113.659691801661}]
-- bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.41464687788, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005553, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634848, 'explained': 445.8648439036694}]
+- bfs_nrw / kanton / nrw_fw_sep: [{'unit_id': 'BE', 'period': '1987', 'value_pub': 2845.0, 'value_agg': 1982.762213659973, 'explained': -843.3221013360616}, {'unit_id': 'BE', 'period': '1995', 'value_pub': 3948.0, 'value_agg': 2813.673810999061, 'explained': -1113.659691801661}]
+- bfs_nrw / kanton / nrw_fw_sp: [{'unit_id': 'JU', 'period': '1995', 'value_pub': 6394.0, 'value_agg': 6316.414646877877, 'explained': 252.97112756021517}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 4583.0, 'value_agg': 4939.473783005552, 'explained': 549.6818222098009}, {'unit_id': 'JU', 'period': '1987', 'value_pub': 5666.0, 'value_agg': 5880.215381634847, 'explained': 445.8648439036694}]
 - bfs_nrw / kanton / nrw_fw_svp: [{'unit_id': 'JU', 'period': '1983', 'value_pub': 520.0, 'value_agg': 795.9472029858425, 'explained': 323.25424458201536}]
 - bfs_nrw / kanton / nrw_fw_total: [{'unit_id': 'JU', 'period': '1979', 'value_pub': 23784.0, 'value_agg': 27057.97368113954, 'explained': 4103.58409916491}, {'unit_id': 'JU', 'period': '1995', 'value_pub': 19762.0, 'value_agg': 21206.27255990177, 'explained': 2105.9489065535427}, {'unit_id': 'JU', 'period': '1983', 'value_pub': 25722.0, 'value_agg': 28304.02802366238, 'explained': 3436.876982299561}]
-- bfs_nrw / schweiz / nrw_fw_fdp: [{'unit_id': 'CH', 'period': '2011', 'value_pub': 368951.0, 'value_agg': 355513.4046191572, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2019', 'value_pub': 366313.0, 'value_agg': 358078.7713533748, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2023', 'value_pub': 364053.0, 'value_agg': 358241.7472642507, 'explained': -0.0}]
+- bfs_nrw / schweiz / nrw_fw_fdp: [{'unit_id': 'CH', 'period': '2011', 'value_pub': 368951.0, 'value_agg': 355513.40461915755, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2019', 'value_pub': 366313.0, 'value_agg': 358078.771353375, 'explained': -0.0}, {'unit_id': 'CH', 'period': '2023', 'value_pub': 364053.0, 'value_agg': 358241.74726425065, 'explained': -0.0}]
 - bfs_vehicles / kanton / mfz_newreg_bev: [{'unit_id': 'SG', 'period': '2025', 'value_pub': 3124.0, 'value_agg': 3124.0, 'explained': -102.0}]
-- bfs_votes_gemeinde / kanton / vote_ballots: [{'unit_id': 'BE', 'period': '1978-02-26#2800', 'value_pub': 295926.0, 'value_agg': 193185.0, 'explained': -23021.0}, {'unit_id': 'BE', 'period': '1978-12-03#2890', 'value_pub': 283323.0, 'value_agg': 252214.0, 'explained': -15694.0}, {'unit_id': 'BE', 'period': '1973-12-02#2380', 'value_pub': 207463.0, 'value_agg': 184889.0, 'explained': -15638.0}]
-- bfs_votes_gemeinde / kanton / vote_eligible: [{'unit_id': 'BE', 'period': '1978-02-26#2800', 'value_pub': 628292.0, 'value_agg': 410145.0, 'explained': -48739.0}, {'unit_id': 'BE', 'period': '1978-12-03#2890', 'value_pub': 637557.0, 'value_agg': 573456.0, 'explained': -33254.0}, {'unit_id': 'BS', 'period': '2003-05-18#5010', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}]
-- bfs_votes_gemeinde / kanton / vote_no: [{'unit_id': 'BE', 'period': '1978-02-26#2800', 'value_pub': 103397.0, 'value_agg': 74038.0, 'explained': -5764.0}, {'unit_id': 'BE', 'period': '1978-12-03#2890', 'value_pub': 84808.0, 'value_agg': 67826.0, 'explained': -13800.0}, {'unit_id': 'BE', 'period': '1973-12-02#2380', 'value_pub': 67140.0, 'value_agg': 58142.0, 'explained': -6894.0}]
-- bfs_votes_gemeinde / kanton / vote_valid: [{'unit_id': 'BE', 'period': '1978-02-26#2800', 'value_pub': 292559.0, 'value_agg': 191027.0, 'explained': -22737.0}, {'unit_id': 'TG', 'period': '1977-09-25#2702', 'value_pub': 58376.0, 'value_agg': 52671.0, 'explained': 0.0}, {'unit_id': 'SO', 'period': '1972-03-05#2272', 'value_pub': 40437.0, 'value_agg': 37575.0, 'explained': 0.0}]
-- bfs_votes_gemeinde / kanton / vote_yes: [{'unit_id': 'BE', 'period': '1978-02-26#2800', 'value_pub': 189162.0, 'value_agg': 116989.0, 'explained': -16973.0}, {'unit_id': 'BE', 'period': '1973-12-02#2380', 'value_pub': 135813.0, 'value_agg': 122746.0, 'explained': -8400.0}, {'unit_id': 'BE', 'period': '1978-12-03#2890', 'value_pub': 188737.0, 'value_agg': 175913.0, 'explained': -8023.0}]
+- bfs_votes_gemeinde / kanton / vote_eligible: [{'unit_id': 'BS', 'period': '2003-05-18#4980', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#4990', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}, {'unit_id': 'BS', 'period': '2003-05-18#5000', 'value_pub': 116680.0, 'value_agg': 112362.0, 'explained': 0.0}]
+- bfs_votes_gemeinde / kanton / vote_no: [{'unit_id': 'JU', 'period': '1995-03-12#4210', 'value_pub': 2622.0, 'value_agg': 3024.0, 'explained': 382.0}, {'unit_id': 'JU', 'period': '1995-03-12#4190', 'value_pub': 5989.0, 'value_agg': 6983.0, 'explained': 961.0}, {'unit_id': 'JU', 'period': '1996-03-10#4280', 'value_pub': 3838.0, 'value_agg': 4277.0, 'explained': 419.0}]
+- bfs_votes_gemeinde / kanton / vote_valid: [{'unit_id': 'SO', 'period': '1972-03-05#2272', 'value_pub': 40437.0, 'value_agg': 37575.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '1972-12-03#2321', 'value_pub': 3241.0, 'value_agg': 3042.0, 'explained': 0.0}, {'unit_id': 'AI', 'period': '1972-12-03#2322', 'value_pub': 3235.0, 'value_agg': 3106.0, 'explained': 0.0}]
 
 ## B. Ranges
 
 - **ent_share_jobs_accommodation_food**: 1.0 values outside 0–100 — e.g. gemeinde 6109 2018: 114.286
+- **vote_turnout**: 9.0 values outside 0–100 — e.g. arbeitsmarktgebiet 1013 1977-12-04#2760: 145.393
 
 ## C. Year-on-year jumps (> 50% and > 200 units)
 
@@ -698,7 +694,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | mig_emigration_foreign | 6 | 3 | [{'unit_id': '6253', 'year': 2012, 'prev': 183.0, 'value': 809.0, 'precision': 'exact'}, {'unit_id': '5236', 'year': 2013, 'prev': 360.0, 'value': 80.0, 'precision': 'exact'}] |
 | mfz_cars_diesel | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 1710.0, 'value': 7961.0, 'precision': 'exact'}, {'unit_id': '1702', 'year': 2018, 'prev': 7378.0, 'value': 3508.0, 'precision': 'exact'}] |
 | mfz_cars_petrol | 6 | 6 | [{'unit_id': '3101', 'year': 2018, 'prev': 3589.0, 'value': 10124.0, 'precision': 'exact'}, {'unit_id': '6240', 'year': 2011, 'prev': 4496.0, 'value': 1169.0, 'precision': 'exact'}] |
-| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4511', 'year': 1998, 'prev': 0.0, 'value': 638.0, 'precision': 'exact'}] |
+| agr_area_grassland_ha | 5 | 3 | [{'unit_id': '3961', 'year': 2011, 'prev': 382.0, 'value': 1049.0, 'precision': 'exact'}, {'unit_id': '4506', 'year': 1998, 'prev': 1011.0, 'value': 373.0, 'precision': 'exact'}] |
 | ent_jobs_retail | 5 | 5 | [{'unit_id': '540', 'year': 2017, 'prev': 121.0, 'value': 586.0, 'precision': 'exact'}, {'unit_id': '412', 'year': 2013, 'prev': 331.0, 'value': 740.0, 'precision': 'exact'}] |
 | vac_new | 5 | 3 | [{'unit_id': '3203', 'year': 2022, 'prev': 365.0, 'value': 103.0, 'precision': 'exact'}, {'unit_id': '3203', 'year': 2017, 'prev': 44.0, 'value': 283.0, 'precision': 'exact'}] |
 | ent_jobs_care_social | 5 | 5 | [{'unit_id': '6633', 'year': 2022, 'prev': 418.0, 'value': 994.0, 'precision': 'exact'}, {'unit_id': '5568', 'year': 2018, 'prev': 81.0, 'value': 331.0, 'precision': 'exact'}] |
@@ -1019,8 +1015,8 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | ent_workplaces_s1 | 14 | 2011 | 2024 | 1840 / 2110 | {'suppressed': 270} |
 | ent_workplaces_s2 | 14 | 2011 | 2024 | 1824 / 2110 | {'suppressed': 286} |
 | ent_workplaces_s3 | 14 | 2011 | 2024 | 2067 / 2110 | {'suppressed': 43} |
-| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'not_covered': 955, 'no_data': 605, 'not_applicable': 2} |
-| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'not_applicable': 72, 'no_data': 560} |
+| fin_net_debt_per_capita | 36 | 1990 | 2025 | 548 / 2110 | {'no_data': 605, 'not_applicable': 2, 'not_covered': 955} |
+| fin_self_financing_ratio | 36 | 1990 | 2025 | 778 / 2110 | {'not_covered': 700, 'no_data': 560, 'not_applicable': 72} |
 | fin_tax_revenue_chf | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | fin_tax_revenue_per_capita | 36 | 1990 | 2025 | 240 / 2110 | {'not_covered': 1610, 'no_data': 260} |
 | geo_area_lake_ha | 17 | 2010 | 2026 | 2110 / 2110 | – |
@@ -1093,7 +1089,7 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | haz_residents_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
 | haz_residents_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_residents_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
-| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'not_covered': 340, 'no_data': 119} |
+| haz_share_assessed | 1 | 2026 | 2026 | 1651 / 2110 | {'no_data': 119, 'not_covered': 340} |
 | haz_share_high | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_high_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
 | haz_share_medium | 1 | 2026 | 2026 | 1770 / 2110 | {'not_covered': 340} |
@@ -1114,9 +1110,9 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | kvg_std300_mean_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_median_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
 | kvg_std300_min_adult | 2 | 2026 | 2027 | 2110 / 2110 | – |
-| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'no_data': 192, 'not_covered': 1864, 'suppressed': 24} |
+| land_price_m2 | 52 | 1974 | 2025 | 30 / 2110 | {'not_covered': 1864, 'no_data': 192, 'suppressed': 24} |
 | land_price_model_m2 | 51 | 1974 | 2024 | 160 / 2110 | {'not_covered': 1950} |
-| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'no_data': 160, 'not_covered': 1864, 'suppressed': 24} |
+| land_transactions | 52 | 1974 | 2025 | 62 / 2110 | {'not_covered': 1864, 'no_data': 160, 'suppressed': 24} |
 | mfz_bev_share | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars | 16 | 2010 | 2025 | 2110 / 2110 | – |
 | mfz_cars_bev | 16 | 2010 | 2025 | 2110 / 2110 | – |
@@ -1388,6 +1384,32 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 | tax_np_taxpayers | 21 | 2003 | 2023 | 2110 / 2110 | – |
 | tax_np_taxpayers_no_federal_tax | 21 | 2003 | 2023 | 2109 / 2110 | {'suppressed': 1} |
 | tax_np_taxpayers_normal | 4 | 2020 | 2023 | 2110 / 2110 | – |
+| taxb_city_married2c_100k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married2c_150k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married2c_200k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married2c_500k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married2c_50k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married2c_80k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_100k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_150k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_200k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_500k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_50k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_married_80k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_100k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_150k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_200k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_500k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_50k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_pensioners_80k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_100k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_150k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_200k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_500k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_50k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_single_80k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_wealth_married_1000k | 2 | 2023 | 2024 | 179 / 2110 | – |
+| taxb_city_wealth_married_500k | 2 | 2023 | 2024 | 179 / 2110 | – |
 | udemo_active | 11 | 2013 | 2023 | 1944 / 2110 | {'suppressed': 166} |
 | udemo_active_s2 | 11 | 2013 | 2023 | 1958 / 2110 | {'suppressed': 152} |
 | udemo_active_s3 | 11 | 2013 | 2023 | 2081 / 2110 | {'suppressed': 29} |
@@ -1486,5 +1508,5 @@ Metrics marked `volatile` (lumpy series such as construction investment) are exc
 
 - STATPOP population vs. demographic balance stock at 31 Dec (2011+; 2010 is ESPOP-based in the balance): 31602 of 31650 within 0.1% — worst: [{'unit_id': '5399', 'period': '2019', 'value_a': 802.0, 'value_b': 640.0}, {'unit_id': '5399', 'period': '2016', 'value_a': 819.0, 'value_b': 655.0}, {'unit_id': '5399', 'period': '2015', 'value_a': 830.0, 'value_b': 665.0}]
 - Persons in private households vs. STATPOP population (institutions explain the gap): 29386 of 29540 within 10.0% — worst: [{'unit_id': '5407', 'period': '2012', 'value_a': 2423.0, 'value_b': 3988.0}, {'unit_id': '5407', 'period': '2015', 'value_a': 2674.0, 'value_b': 4224.0}, {'unit_id': '5407', 'period': '2013', 'value_a': 2594.0, 'value_b': 4096.0}]
-- GWS dwellings of year t vs. dwelling stock in the vacancy count of year t+1 (BFS's own denominator): 33760 of 33760 within 0.1% — worst: [{'unit_id': '1150', 'period': '2010', 'value_a': 822.0, 'value_b': 822.0}, {'unit_id': '1150', 'period': '2011', 'value_a': 819.0, 'value_b': 819.0}, {'unit_id': '1150', 'period': '2012', 'value_a': 818.0, 'value_b': 818.0}]
+- GWS dwellings of year t vs. dwelling stock in the vacancy count of year t+1 (BFS's own denominator): 33760 of 33760 within 0.1% — worst: [{'unit_id': '1', 'period': '2010', 'value_a': 856.0, 'value_b': 856.0}, {'unit_id': '1', 'period': '2011', 'value_a': 856.0, 'value_b': 856.0}, {'unit_id': '1', 'period': '2012', 'value_a': 870.0, 'value_b': 870.0}]
 - Land area (swissBOUNDARIES3D 2026, without lakes) vs. land-use statistics total area 2013/18: 2104 of 2110 within 5.0% — worst: [{'unit_id': '4651', 'period': '2026', 'value_a': 31.0, 'value_b': 35.0}, {'unit_id': '5187', 'period': '2026', 'value_a': 71.0, 'value_b': 66.0}, {'unit_id': '5206', 'period': '2026', 'value_a': 89.0, 'value_b': 83.0}]

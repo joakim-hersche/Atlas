@@ -417,7 +417,9 @@ def build_reach_times() -> dict:
     idx = json.loads(out_path("reach", "index.json").read_text(encoding="utf-8"))
     out = {"units": src["units"], "hubs": [[h["slug"], h["name"]] for h in idx["hubs"]],
            "service_date": idx.get("service_date"), "pt": {}, "pt_station": {}, "car": {}, "periods": {},
-           "methods": REACH_METHODS, "reasons": {"pt": {}, "pt_station": {}, "car": {}}, "notes": {}}
+           "methods": REACH_METHODS, "reasons": {"pt": {}, "pt_station": {}, "car": {}}, "late_from": {},
+           "late_text": {"en": "No arrival by 08:30; median over the hour from the earliest possible arrival ({t}).",
+                         "de": "Keine Ankunft bis 08:30; Median über die Stunde ab der frühestmöglichen Ankunft ({t})."}}
     for h in idx["hubs"]:
         for mode, prefix in (("pt", "reach_pt_"), ("pt_station", "reach_ptst_"), ("car", "reach_car_")):
             m = src["metrics"].get(f"{prefix}{h['slug']}")
@@ -429,8 +431,9 @@ def build_reach_times() -> dict:
             for i, k in (m.get("n") or {}).items():
                 if m["v"][int(i)] is None:
                     out["reasons"][mode].setdefault(h["slug"], {})[i] = notes[k]
-                elif "no arrival by 08:30" in notes[k]:   # value from the first hour of possible arrivals
-                    out["notes"].setdefault(mode, {}).setdefault(h["slug"], {})[i] = notes[k].split("; ", 1)[-1]
+                elif (t := re.search(r"no arrival by 08:30.*\((\d\d:\d\d)\)", notes[k])):
+                    # value from the first hour of possible arrivals: keep only its start time
+                    out["late_from"].setdefault(mode, {}).setdefault(h["slug"], {})[i] = t.group(1)
     tt = pd.read_parquet(interim_path("reach", "travel_times.parquet"))
     ms = tt[(tt["method"] == "gtfs_rcsa_mainstation") & tt["main_station"].notna()].drop_duplicates("bfs_nr")
     ms = ms.set_index(ms["bfs_nr"].astype(int).astype(str))
