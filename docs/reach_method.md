@@ -219,8 +219,14 @@ of "a random minute of the morning", not of "a random train".
   18:00" (not applicable in the metrics), a P10 or P90 needing such a departure is empty. The older `gtfs_csa_*` methods
   are unchanged and still use the cap as an upper bound (which gave Oberweningen 415 min).
 - **Runtime.** The forward scans now run on the three weekdays (two extra days per hub, about 5 s each on a free core) and the per-municipality
-  door-to-door medians use `AccessIndex` (one pass over 4.7 million hectare-stop links per vector). Full run: see the figures
-  at the end of this section.
+  door-to-door medians use `AccessIndex` (one pass over 4.7 million hectare-stop links per vector). Full run (`python -m pipeline.reach.run`, 21 hubs): 12 min wall on a shared 4-core machine (the spread adds
+  about 10 s per hub, about 3.5 min in total, of which about 5 s per hub are the two extra forward days).
+
+Sample values (P10 / median / P90, minutes; journey, then including waiting; station time, main station, towards the hub):
+Winterthur -> Zürich HB 19 / 20 / 28, with waiting 20 / 24 / 29; Bern -> Zürich HB 56 / 57 / 60, 59 / 67 / 78; Basel SBB -> Zürich HB
+53 / 53 / 69, 56 / 67 / 75; Engelberg -> Luzern 47 / 47 / 54, 53 / 65 / 83; Oberweningen -> Zürich HB 36 / 36 / 36, 39 / 51 / 62; Arosa -> Chur
+58 / 58 / 58, 64 / 88 / 107. Across all municipalities towards Zürich HB the median width of the journey range (P90 - P10) is 2 min
+and that of the range with waiting 24 min (the waiting range is what separates frequent from infrequent service).
 
 **Outputs.** `travel_times.parquet`: new columns `minutes_wait_p10`, `minutes_wait_p90`, `minutes_p10/p90` also for
 `gtfs_rcsa_popweighted`; new methods `gtfs_fcsa_mainstation`, `gtfs_fcsa_popweighted` (existing methods and values unchanged).
@@ -230,6 +236,27 @@ Station tables `data/interim/reach/pt_station_times_to_hub/<hub>.parquet` gain `
 in `reach_metrics` (nearest hub among the 15, by the measure's own median). The 210 per-hub metric ids were not created: the
 per-hub values are in the JSON files, so the map's metric list stays short (the generator would only need the pattern
 `reach_spread_<dir>_<kind>_<stat>_<hub>`).
+
+## Station time above door-to-door (check of 2026-11-11)
+
+Question: for how many pairs is the headline station time more than 10 minutes above door-to-door? Of 42,570 municipality-hub pairs
+with both values, 814 (1.9 %, 244 municipalities, 1.5 % of the residents) before and after this change (the values towards the hub did not
+change). Causes found (`pt_station_times_to_hub`, per-hectare best stops):
+1. **Late window per station** (287 of the 814, towards far hubs): a station whose earliest possible arrival at the hub is after 08:30
+   uses the hour from that arrival (`window_start_min`), each station its own. A bus stop in the same city that can only just not
+   make an earlier arrival starts its hour later and gets the faster daytime trains, while the rail station is still in the slow
+   early-morning window (Chur -> Bellinzona: station 180 min, city bus stops 135-140 min in the later window). Not a stop-choice problem;
+   it is the per-station window rule. A common window per hub (for example the hub's earliest arrival over the nearest stations)
+   would remove it but changes all far values and is an owner decision.
+2. **Door-to-door uses any stop within 1.5 km**, also stops of neighbouring municipalities and other modes; the median over hectares can sit on
+   a better-connected stop than the main station (Frauenfeld, Yverdon, Meyrin: 10-20 min).
+3. Not the stop choice: replacing the main station by the fastest competing stop (serving at least half of the best stop's residents,
+   same class) towards the nearest hub changed 145 to 783 main stations but only brought the count from 815 to 715-768; a per-hub best
+   competing stop (50 %, same class) gives 416, but it makes the station time a "best stop" instead of the main station and the name
+   shown for the municipality would then differ by hub (`reach_times.json` holds one main station per municipality). Not applied.
+Weggis (BFS 1069) towards Luzern is 45 min at the main stop (Weggis, Dorfplatz, bus) against 51 min door-to-door; towards Zürich HB 84 / 87.7 min.
+No pair above is a case of the boat pier being faster. Engelberg -> Luzern 47 / 56.4, Arosa -> Chur 58 / 66.5, Locarno -> Bellinzona
+41 / 42.1 (all station time below door-to-door).
 
 ## Public transport, hub-outward (D10) — growing lines and comparison
 **Feed and day.**

@@ -244,7 +244,7 @@ touched; the new values are in their own files, written by `pipeline/reach` (`py
   `kinds` `["pt_station","pt"]`, `window`, `service_date`, `reverse_days`, and `definitions`
   `{key: {en,de,fr}}` for the keys `to`, `from`, `journey`, `with_wait`, `pt_station`, `pt` (show these as the
   tooltip / "how is this measured" text; no new strings needed in the app).
-- `reach/<hub>_spread.json` (about 100 kB, load on demand when a hub is shown):
+- `reach/<hub>_spread.json` (about 290 kB raw, 80 kB gzipped; load on demand when a hub is shown):
   ```jsonc
   {"hub": "zuerich",
    "to":   {"pt_station": {"journey":   {"p10": [..2110..], "p50": [..], "p90": [..]},
