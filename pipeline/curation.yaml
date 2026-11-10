@@ -77,8 +77,9 @@ metrics:
 
   # ---- never a map: confidence intervals, technical denominators, quality fields ----
   re:.*_ci:
-    maps: false
-    reason: "confidence interval of a survey estimate: shown next to the value in profiles, not as a map"
+    hide: true
+    reason: "confidence interval of a survey estimate: the app shows it next to the value (reliability
+      notes), never as a map of its own"
   "lang_se_pop":
     maps: false
     reason: "technical denominator of the Structural Survey language shares"

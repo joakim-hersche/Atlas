@@ -82,6 +82,18 @@ def fmtp(p: str) -> str:
     return str(p).split("#")[0]
 
 
+# typos in the BFS register's labels (round-2 audit): corrected on output, the cached source is unchanged
+LABEL_FIXES = [(re.compile(r"agglomertation"), "agglomeration")]
+
+
+def fix_label(v):
+    if not isinstance(v, str):
+        return v
+    for rx, rep in LABEL_FIXES:
+        v = rx.sub(rep, v)
+    return v
+
+
 def build_units() -> list[dict]:
     m = membership()
     labels = json.loads(out_path("geo", "labels.json").read_text(encoding="utf-8"))
@@ -98,7 +110,7 @@ def build_units() -> list[dict]:
     for lvl, col in TYPOLOGY_COLS.items():   # official BFS labels (register levels table), H
         langs = [l for l in ("de", "fr", "it", "en") if f"{col}_{l}" in lv.columns]
         g = lv.dropna(subset=[col]).astype({col: str}).drop_duplicates(col).set_index(col)
-        names_of[lvl] = {k: {l: r[f"{col}_{l}"] for l in langs if isinstance(r[f"{col}_{l}"], str) and r[f"{col}_{l}"].strip()}
+        names_of[lvl] = {k: {l: fix_label(r[f"{col}_{l}"]) for l in langs if isinstance(r[f"{col}_{l}"], str) and r[f"{col}_{l}"].strip()}
                          for k, r in g.iterrows()}
     for lvl in ("bezirk", "kanton", "grossregion", "sprachgebiet", "agglomeration", "arbeitsmarktgebiet",
                 "stadt_land", "gemeindetyp"):
@@ -106,7 +118,7 @@ def build_units() -> list[dict]:
             continue
         name_col = f"{lvl}_name" if f"{lvl}_name" in m.columns else None
         for uid, g in m.dropna(subset=[lvl]).groupby(lvl):
-            name = g[name_col].iloc[0] if name_col else uid
+            name = fix_label(g[name_col].iloc[0]) if name_col else uid
             if lvl == "bezirk":
                 name = _district_name(uid)
             elif lvl == "kanton":

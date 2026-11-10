@@ -104,7 +104,7 @@ def test_median_suppressed_cells():
     # no total, one hidden cell: cannot be bracketed
     one = list(full)
     one[0] = float("nan")
-    assert median_from_classes(one, None) is not None
+    assert math.isnan(median_from_classes(one, None))
 
 
 @pytest.mark.parametrize("n,tol_mean", [(300, 0.025), (3000, 0.012)])
@@ -146,7 +146,7 @@ def test_median_income_real_data():
     # municipalities 2023: nearly all have an estimate, values plausible, cantons inside their municipalities' range
     g = o[(o["level"] == "gemeinde") & (o["period"] == "2023")]
     assert g["status"].eq("ok").mean() > 0.99
-    assert g["value"].between(10_000, 150_000).all() or g["value"].dropna().between(10_000, 150_000).all()
+    assert g["value"].dropna().between(10_000, 150_000).all()
     mun_total = parse.municipal_wide().query("period == '2023'")["taxpayers_normal"].sum()
     assert mun_total == pytest.approx(ch["total"], rel=0.005)  # municipalities add up to the national total
     # the 26 cantons are present for every year
@@ -269,5 +269,5 @@ def test_se_cities_real_data():
     assert g.loc["261", "lang_sec_de_share"] > 70
     assert g.loc["6621", "lang_sec_fr_share"] > 75 and g.loc["5586", "lang_sec_fr_share"] > 75
     assert g.loc["5192", "lang_sec_it_share"] > 80
-    assert (g.filter(like="_share_ci").stack() >= 0).all()
-    assert (g.filter(regex=r"_share$").stack().between(0, 100.5)).all()
+    assert (g.filter(like="_share_ci").stack().dropna() >= 0).all()
+    assert (g.filter(regex=r"_share$").stack().dropna().between(0, 100.5)).all()

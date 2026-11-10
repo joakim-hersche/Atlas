@@ -11,7 +11,7 @@ The file's explicit decisions (with reasons) override the rule: whole metrics (d
 denominators, confidence intervals), single metric × level cells, and whole levels.
 
 Enforcement in metrics.json (pipeline.build.web), using the mechanisms the frontend already reads:
-  hidden: true                 metric never offered (picker, profiles, sources list)
+  hidden: true                 metric never offered (picker, profiles, sources list); levels kept
   levels                       a hidden level is removed, so the picker, level switch and tables skip it
   unavailable_levels[level]    the reason, shown where the level is not offered
   profile_levels               all levels with values (profiles keep hidden-from-map values, labelled)
@@ -102,7 +102,9 @@ def apply(entry: dict, verdicts: dict, levels_with_values: list[str]) -> dict:
             continue
         verdict, why, _ = v
         cur[lvl] = {"v": "hide" if verdict == "hidden" else verdict, "why": why}
-        if verdict in ("hide", "hidden"):
+        # a hidden metric keeps its levels: the app never offers it, but companions (e.g. the
+        # confidence interval `<id>_ci` of a survey share) are looked up through them
+        if verdict == "hide":
             unav[lvl] = f"not offered as a map: {why}"
         else:
             keep.append(lvl)

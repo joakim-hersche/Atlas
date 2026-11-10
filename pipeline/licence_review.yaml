@@ -122,3 +122,20 @@ bfs_pks:
 bfs_pks_staedte:
   status: cleared
   evidence: "BFS DAM https://dam-api.bfs.admin.ch/hub/api/dam/assets/36455965 (je-d-19.02.01.01.04 'Strafgesetzbuch: Auswahl von Straftaten, nach Städten ab 30'000 Einwohner', 2009-2025): termsOfUse code 'OPEN-BY', abbrev 'Freie Nutzung - Quellenangabe ist Pflicht'. File footer: 'Quellen: Bundesamt für Statistik - Polizeiliche Kriminalstatistik (PKS), Statistik des jährlichen Bevölkerungsstandes (ESPOP), Statistik der Bevölkerung und der Haushalte (STATPOP), Gemeindestand 06.04.2025', '© BFS 2026'. Checked 2026-11-10; the ingest re-reads the asset terms."
+
+# --- backlog "More data", 2026-11-10 ---
+bafu_noise:
+  status: cleared
+  evidence: "STAC collections ch.bafu.laerm-strassenlaerm_tag|nacht and ch.bafu.laerm-bahnlaerm_tag|nacht (data.geo.admin.ch, updated 2026-03-19) link https://opendata.swiss/en/terms-of-use/#terms_by (open use, source must be provided), same basis as bfe_energy Energiestädte and BLN; STAC field 'proprietary' without further text. The download's Disclaimer_sonBASE21 PDF: 'sonBASE geodata may only be reproduced if the corresponding source is indicated: FOEN 2025, sonBASE - Noise Database of Switzerland 2021'; data for statistical information at national and regional level. Building coordinates: GWR (see bfs_gwr). Checked 2026-11-10."
+
+bfs_gwr:
+  status: cleared
+  evidence: "license.txt of the GWR publication (https://data.geo.admin.ch/ch.bfs.gebaeude_wohnungs_register/license.txt, also license.pdf in the public extract https://public.madd.bfs.admin.ch/ch.zip): 'Freie Nutzung. Quellenangabe ist Pflicht. Sie dürfen diesen Datensatz für nicht kommerzielle Zwecke nutzen / für kommerzielle Zwecke nutzen. Eine Quellenangabe ist Pflicht (Autor, Titel und Link zum Datensatz).' Level A data only (VGWR Art. 16). Checked 2026-11-10."
+
+estv_median_income:
+  status: cleared
+  evidence: "Same ESTV workbooks as estv_dbst; sheet 'Erläuterungen' of statistik-dbst-np-gemeinden-2023-500.xlsx, last line: 'Wiedergabe unter Angabe der Quelle für Nutzung gestattet.' (© ESTV, Oktober 2026). The median is an own estimate from the published class counts and says so in its label. Checked 2026-11-10."
+
+bfs_se_language_cities:
+  status: cleared
+  evidence: "BFS DAM asset 36491975 (su-d-40.02.01.08.31-2024, Hauptsprachen nach Städten 2020-2024 kumuliert) termsOfUse = OPEN-BY 'Open use - Must provide the source' (dam-api.bfs.admin.ch/hub/api/dam/assets/36491975), checked 2026-11-10; the other editions are the same table series."
