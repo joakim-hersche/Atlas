@@ -1,8 +1,8 @@
 <script lang="ts">
   // Shell: header (search, navigation, language), data bootstrap and hash routing. Each route is a view
   // in src/views/: 'map' (default), 'compare' (Compare metrics: two synced maps + scatter), 'profile'
-  // (one place, #v=profile&id=261 or id=kanton:ZH), 'places' (Compare places, #v=places&ids=261,351)
-  // and 'sources' (#v=sources&src=<source_id>).
+  // (one place, #v=profile&id=261 or id=kanton:ZH), 'places' (Compare places, #v=places&ids=261,351),
+  // 'regress' (regression panel, D34; keys in lib/regmodel.ts) and 'sources' (#v=sources&src=<source_id>).
   import { onMount, untrack } from 'svelte';
   import MapView from './views/MapView.svelte';
   import SourcesView from './views/SourcesView.svelte';
@@ -20,12 +20,14 @@
   let compareP: Promise<typeof import('./views/CompareView.svelte')> | undefined;
   let profileP: Promise<typeof import('./views/ProfileView.svelte')> | undefined;
   let placesP: Promise<typeof import('./views/PlacesView.svelte')> | undefined;
+  let regressP: Promise<typeof import('./views/RegressView.svelte')> | undefined;
   const compareMod = () => (compareP ??= import('./views/CompareView.svelte'));
   const profileMod = () => (profileP ??= import('./views/ProfileView.svelte'));
   const placesMod = () => (placesP ??= import('./views/PlacesView.svelte'));
+  const regressMod = () => (regressP ??= import('./views/RegressView.svelte'));
 
   const DESKTOP = '(min-width: 900px)';
-  const MAP_ROUTES = ['map', 'compare'];
+  const MAP_ROUTES = ['map', 'compare', 'regress'];
   const PAGES = ['profile', 'places', 'sources'];
 
   let base = $state.raw<Base | null>(null);
@@ -66,7 +68,7 @@
     if (b) untrack(() => sanitizeState(b));
   });
 
-  const route = $derived(PAGES.includes(app.route) ? app.route : app.route === 'compare' ? 'compare' : 'map');
+  const route = $derived(PAGES.includes(app.route) || app.route === 'compare' || app.route === 'regress' ? app.route : 'map');
   const isMap = $derived(MAP_ROUTES.includes(route));
 
   // geometry and headline values of the map level (only the map views need it; other levels on first use)
@@ -85,7 +87,7 @@
     if (app.lang === 'fr') loadFrench();
   });
 
-  const NAV = ['map', 'compare', 'places'] as const;
+  const NAV = ['map', 'compare', 'regress', 'places'] as const;
   const navLabel = (r: string) => t(`nav.${r}`);
   /** real links (open in a new tab, middle-click, shareable); the rest of the view state is kept */
   const navHref = (r: string) =>
@@ -125,7 +127,7 @@
 
 <svelte:window onpointerdown={outsideMenu} onkeydown={(e) => e.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:compare={route === 'compare'} class:single={route === 'map'} class:page={!isMap}>
+<div class="app" class:compare={route === 'compare'} class:regress={route === 'regress'} class:single={route === 'map'} class:page={!isMap}>
   <a class="skip" href="#main" onclick={skipToMain}>{t('nav.skip')}</a>
   <header class="top">
     <a class="brand" href={hrefFor('map')} title="Gemeindebank — {t('nav.map')}">
@@ -172,6 +174,8 @@
     {:else if ld}
       {#if route === 'compare'}
         {#await compareMod() then M}<M.default {base} {ld} {cols} {desktop} onrendered={rendered} />{/await}
+      {:else if route === 'regress'}
+        {#await regressMod() then M}<M.default {base} {ld} {cols} {desktop} onrendered={rendered} />{/await}
       {:else}
         <MapView {base} {ld} {cols} {desktop} onrendered={rendered} />
       {/if}

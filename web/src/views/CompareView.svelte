@@ -246,6 +246,9 @@
   {#each presets as p}
     <button type="button" class="chip" aria-pressed={activePreset === p.slug} onclick={() => applyPreset(p)}>{t(p.label)}</button>
   {/each}
+  {#if metaB}
+    <a class="chip rlink" href={hrefFor('regress', { ry: metaB.id, rx: metaA.id })}>{t('cv.toRegress')}</a>
+  {/if}
 </nav>
 
 <LevelNote variant="bar" />
@@ -322,6 +325,7 @@
   }
   .chip:hover { color: var(--accent); border-color: var(--accent); }
   .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--ink-text); }
+  .rlink { color: var(--text); text-decoration: none; margin-left: 6px; border-style: dashed; }
 
   .stage { flex: 1; min-height: 0; position: relative; }
   .fbar {

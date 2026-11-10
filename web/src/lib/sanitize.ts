@@ -2,13 +2,14 @@
 // replaced by what is actually shown, so the hash no longer carries ignored or replaced parameters
 // (unknown metric, a year the metric does not have, an unknown tab, page keys on the map ...).
 import { LEVELS, seriesPeriods, type Base } from './data';
+import { REG_KEYS } from './regmodel';
 import { DEFAULT_LEVEL, DEFAULT_METRIC } from './hash';
 import { app } from './state.svelte';
 
-const ROUTES = ['map', 'compare', 'profile', 'places', 'sources'];
+const ROUTES = ['map', 'compare', 'regress', 'profile', 'places', 'sources'];
 const TABS = ['filters', 'rank', 'stats'];
 /** page keys each route reads from params */
-const ROUTE_PARAMS: Record<string, string[]> = { map: [], compare: [], profile: ['id'], places: ['ids'], sources: ['src'] };
+const ROUTE_PARAMS: Record<string, string[]> = { map: [], compare: [], regress: REG_KEYS, profile: ['id'], places: ['ids'], sources: ['src'] };
 
 export function sanitizeState(base: Base): void {
   const M = base.metas;

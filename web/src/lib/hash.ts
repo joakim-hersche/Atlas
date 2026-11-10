@@ -4,7 +4,9 @@
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
 // Routes: 'map' (default) and 'compare'; later pages (profile, places, search, sources) add their own
-// route names and read their extra keys from `params`.
+// route names and read their extra keys from `params`. The regression panel (#v=regress) uses
+// ry, rx, rc, rw, rse, rd, rs (documented in regmodel.ts), e.g.
+//   #v=regress&ry=nrw_share_left_bloc&rx=log:tax_np_mean_taxable_income,log:geo_pop_density&rc=lang
 import type { Method } from './classify';
 
 export type ReachMode = 'off' | 'pt' | 'car';
