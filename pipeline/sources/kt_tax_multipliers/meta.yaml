@@ -1,0 +1,12 @@
+source_id: kt_tax_multipliers
+title: Municipal tax multipliers (Steuerfuss) from cantonal open data (canton Zürich so far)
+publisher: "Statistisches Amt Kanton Zürich (Amt für Statistik und Daten)"
+url: https://www.web.statistik.zh.ch/ogd/data/steuerfuesse/kanton_zuerich_stf_timeseries.csv
+license: "terms_by: NonCommercialAllowed-CommercialAllowed-ReferenceRequired (distribution licence of OGD dataset 711 in the ZH OGD catalogue, read 2026-11-10; ZH catalogue 'Freie Nutzung. Quellenangabe ist Pflicht' per opendata.swiss listing)"
+attribution: "Source: Statistisches Amt Kanton Zürich – Steuerfüsse der Zürcher Gemeinden"
+vintage: "Municipality state of each tax year, reprojected to the reference state (values kept only where 1:1)"
+years: "2012-2026 (2026 definitive, survey of 24.03.2026)"
+precision: exact
+coverage: "partial:ZH"
+caveats: "Percent of the canton's simple tax: comparable within a canton only. ZH municipalities with two multipliers (Uster, Turbenthal) have no value. Column meaning (STF_O_KIRCHE = without church tax) inferred from the data and checked on Zürich city 2026 = 119 %; the dataset documents no column names."
+catalog_ids: [kt_zh_steuerfuss]

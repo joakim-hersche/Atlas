@@ -1044,3 +1044,6 @@ tax_np_federal_tax_per_taxpayer_normal: {"label_fr": "Impôt fédéral direct pa
 # --- bfs_amr_rents ---
 rent_amr_chf_m2: {label_fr: "Loyer net moyen par m2 (région du marché du travail)", unit_en: "CHF per m2 and month", unit_de: "CHF pro m2 und Monat", unit_fr: "CHF par m2 et par mois"}
 rent_amr_chf_m2_ci: {label_fr: "Loyer net moyen par m2 (région du marché du travail) : intervalle de confiance", unit_en: "± CHF per m2 and month", unit_de: "± CHF pro m2 und Monat", unit_fr: "± CHF par m2 et par mois"}
+
+# --- kt_tax_multipliers ---
+tax_mult_muni_nat: {label_fr: "Coefficient d'impôt communal, personnes physiques (ZH, comparable au sein du canton seulement)", unit_en: "% of simple cantonal tax", unit_de: "% der einfachen Staatssteuer", unit_fr: "% de l'impôt cantonal simple"}
