@@ -293,3 +293,20 @@ def query_status_split(dbid: str, select: dict[str, list[str] | str], max_cells:
 
 
 SUPPRESSED_SYMBOLS = {"X", "x", "( )", "()"}  # BFS: suppressed for data protection / reliability
+
+
+def unallocated_rows(w: pd.DataFrame, geo_label_col: str, period_col: str, cols: list[str], source_id: str,
+                     dbid: str) -> pd.DataFrame:
+    """Rows of the cube's 'Ohne Angabe' unit (persons BFS cannot attribute to a canton or
+    municipality; in the Swiss total only) as level 'unallocated'."""
+    from pipeline.harmonize.helpers import emit
+    var = next(v for v in metadata(dbid)["variables"] if v["code"] == geo_label_col)
+    oa = [c for c, t in zip(var["values"], var["valueTexts"]) if t.strip() == "Ohne Angabe"]
+    sub = w[w[geo_label_col].isin(oa)].assign(unit="unallocated")
+    if sub.empty:
+        return pd.DataFrame()
+    e = emit(sub, {c: c for c in cols}, period_col, source_id, level="unallocated", unit_col="unit",
+             precision="exact", provenance="native")
+    e = e[e["status"] == "ok"]
+    e["note"] = "BFS 'Ohne Angabe': persons not attributable to a canton/municipality (in the Swiss total only)"
+    return e
