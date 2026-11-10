@@ -8,12 +8,13 @@
 #   make web-data  copy the data files the web app reads into web/public/data/
 #   make web-app   install pinned npm deps and build the static site (web/dist/)
 #   make deploy    publish web/dist to the gh-pages branch (GitHub Pages)
-#   make test      unit tests
+#   make release   package the open data release into data/out/release/ (needs metrics + geometry)
+#   make test      unit tests (the data-dependent ones skip when data/ is not built)
 # Set GB_REFRESH=1 to re-download sources; GB_REFERENCE_DATE=YYYY-MM-DD to change the target state.
 
 PY := uv run python
 
-.PHONY: data backbone geometry validate observations metrics quality web profile reach web-data web-app test clean-interim
+.PHONY: data backbone geometry validate observations metrics quality web profile reach web-data web-app release test clean-interim
 
 data: backbone geometry validate observations metrics quality web profile reach
 
@@ -54,6 +55,10 @@ web-app:
 
 deploy:
 	./scripts/deploy_pages.sh
+
+# observations.parquet, metrics.csv, sources.csv, boundaries.gpkg, README; licence-gated, never overwrites other outputs
+release: metrics geometry
+	$(PY) -m pipeline.release
 
 test:
 	uv run pytest -q pipeline/tests
