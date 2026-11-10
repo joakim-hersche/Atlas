@@ -115,7 +115,8 @@
       return;
     }
     if (app.route === 'vintage' && (!hit || hit.level === 'gemeinde')) {
-      vintageFind.q = { name: hit?.former?.name, bfs: hit?.former?.bfs, current: ref };
+      const vin = app.params.vin ?? '';
+      vintageFind.q = { name: hit?.former?.name, bfs: hit?.former?.vintages?.[vin] ?? hit?.former?.bfs, current: ref };
       return;
     }
     app.go('profile', { id: ref });

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { INCOME_OLD, preferNormal } from '../lib/data';
   import { colon } from '../lib/typo';
   // Compare mode: two synced maps (metric A and B) and a scatter plot with r, ρ and weighted r.
   import { onMount, tick } from 'svelte';
@@ -49,7 +50,7 @@
   /** unit names in the UI language */
   const names = $derived(namesOf(ld));
   const presetsOf = (m: Map<string, MetricMeta>) =>
-    PRESETS.flatMap((p) => {
+    PRESETS.map((p) => ({ ...p, b: preferNormal(p.b, m) })).flatMap((p) => {
       if (m.has(p.a) && m.has(p.b)) return [p];
       // left bloc not in this build: SP share vs income
       if (p.fallback && m.has(p.fallback.b) && m.has(p.b)) return [{ ...p, a: p.fallback.b, label: p.fallback.label }];
@@ -63,7 +64,8 @@
     app.sel = null;
   }
   function defaultB(a: string) {
-    return a === 'tax_np_mean_taxable_income' ? 'nrw_share_svp' : 'tax_np_mean_taxable_income';
+    const inc = preferNormal(INCOME_OLD, metas);
+    return a === inc || a === INCOME_OLD ? 'nrw_share_svp' : inc;
   }
   // bare '#compare' or '#<preset>' from a shared link
   function initPreset(b: Base) {

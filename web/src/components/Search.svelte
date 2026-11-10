@@ -181,7 +181,7 @@
                 {#if h.bfs}<span class="code num">BFS {h.ref}</span>{/if}
                 <strong>{h.name}</strong>
                 {#if h.via}<span class="via">{t('search.also')}: {h.via}</span>{/if}
-                {#if h.former}<span class="via">{t('r3.formerly')}: {h.former.name}{h.former.until ? ` (${t('r3.until', { y: h.former.until.slice(0, 4) })})` : ''}</span>{/if}
+                {#if h.former}<span class="via">{h.former.name}{h.former.until ? ` (${t('r3.until', { y: h.former.until.slice(0, 4) })})` : ''} → {h.name}</span>{/if}
                 {#if h.plz && h.plz.locality !== h.name}<span class="via">{h.plz.locality}</span>{/if}
               </span>
               <span class="hs">

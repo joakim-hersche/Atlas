@@ -55,6 +55,8 @@
 </script>
 
 <script lang="ts">
+  // R5 / E1: the sources' own texts (titles, licences, notes) in the UI language (web/texts.json)
+  import { tx } from '../lib/texts.svelte';
   // Sources page (brief 6.1): every dataset with publisher, licence, attribution, boundary vintage,
   // years and the metrics built from it; the D21 note on gaps. Source tags across the app link here
   // with #v=sources&src=<source_id> (the entry is opened and scrolled into view).
@@ -110,16 +112,16 @@
   {@const ms = byMetric.get(s.source_id) ?? []}
   {@const latest = latestOf(s.source_id)}
   <article class="src" id="src-{s.source_id}" class:target={target === s.source_id}>
-    <h3>{s.title}</h3>
+    <h3>{tx(s.title)}</h3>
     <dl>
-      <dt>{t('s.publisher')}</dt><dd>{s.publisher}</dd>
-      {#if s.license}<dt>{t('s.licence')}</dt><dd>{s.license}</dd>{/if}
-      {#if s.attribution}<dt>{t('s.attribution')}</dt><dd class="attr">{s.attribution}</dd>{/if}
-      {#if s.vintage}<dt>{t('s.vintage')}</dt><dd>{s.vintage}</dd>{/if}
-      {#if s.years}<dt>{t('s.years')}</dt><dd>{s.years}</dd>{/if}
+      <dt>{t('s.publisher')}</dt><dd>{tx(s.publisher)}</dd>
+      {#if s.license}<dt>{t('s.licence')}</dt><dd>{tx(s.license)}</dd>{/if}
+      {#if s.attribution}<dt>{t('s.attribution')}</dt><dd class="attr">{tx(s.attribution)}</dd>{/if}
+      {#if s.vintage}<dt>{t('s.vintage')}</dt><dd>{tx(s.vintage)}</dd>{/if}
+      {#if s.years}<dt>{t('s.years')}</dt><dd>{tx(String(s.years))}</dd>{/if}
       {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest)}</dd>{/if}
       {#if s.fetched}<dt>{t('s.fetched')}</dt><dd class="num">{s.fetched}</dd>{/if}
-      {#if s.status_note}<dt>{t('s.note')}</dt><dd>{s.status_note}</dd>{/if}
+      {#if s.status_note}<dt>{t('s.note')}</dt><dd>{tx(s.status_note)}</dd>{/if}
       {#if s.series_breaks?.length && s.shipped !== false}
         <dt>{t('s.breaks')}</dt>
         <dd><ul class="brks">
@@ -132,7 +134,7 @@
     </dl>
     <p class="row">
       {#if s.url}<a href={s.url} target="_blank" rel="noopener noreferrer">{t('s.link')} ↗</a>{/if}
-      {#if s.shipped === false}<span class="held">{s.status_text ? `${s.status_text}. ` : ''}{t('s.heldNote')}</span>{/if}
+      {#if s.shipped === false}<span class="held">{s.status_text ? `${tx(s.status_text)}. ` : ''}{t('s.heldNote')}</span>{/if}
     </p>
     {#if ms.length && s.shipped !== false}
       <details open={!!openIds[s.source_id]} ontoggle={(e) => (openIds = { ...openIds, [s.source_id]: e.currentTarget.open })}>

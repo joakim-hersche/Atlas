@@ -103,12 +103,16 @@ export interface SmallRule {
   years?: number | null;
 }
 
-/** Ids of the metrics a rule reads (base and count terms). */
-export function ruleTerms(rule: SmallRule | null | undefined): { base: string[]; count: string[] } {
-  // a sum is shipped as a list or as "vote_yes+vote_no"
+/** Ids of the metrics a rule reads (base and count terms). A sum is shipped as a list or as "vote_yes+vote_no";
+ *  "mean:bil_pop_jan+bil_pop_dec" is the mean of the terms (a mean population, compared as residents). */
+export function ruleTerms(rule: SmallRule | null | undefined): { base: string[]; count: string[]; baseMean?: boolean; countMean?: boolean } {
+  const mean = (x: string | string[] | null | undefined) => typeof x === 'string' && x.startsWith('mean:');
   const ids = (x: string | string[] | null | undefined) =>
-    x ? (Array.isArray(x) ? x : x.split('+')).map((id) => id.trim()).filter(Boolean) : [];
-  return { base: ids(rule?.base), count: ids(rule?.count) };
+    x ? (Array.isArray(x) ? x : x.replace(/^mean:/, '').split('+')).map((id) => id.trim()).filter(Boolean) : [];
+  const out: { base: string[]; count: string[]; baseMean?: boolean; countMean?: boolean } = { base: ids(rule?.base), count: ids(rule?.count) };
+  if (mean(rule?.base)) out.baseMean = true;
+  if (mean(rule?.count)) out.countMean = true;
+  return out;
 }
 
 /** Units whose value rests on small numbers under the metric's own rule (base below min_base or count below

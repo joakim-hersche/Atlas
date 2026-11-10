@@ -1,4 +1,5 @@
 // Data loading and the column format written by pipeline/build/web.py.
+import { tx } from './texts.svelte';
 import { feature } from 'topojson-client';
 import { SvelteMap } from 'svelte/reactivity';
 import { fixLabel, t, levelWord } from './i18n.svelte';
@@ -451,7 +452,8 @@ export function gapReason(file: ColumnFile | null, col: Column, i: number, meta:
 /** The column's note for unit i (the real reason for a gap, or the provenance of a fallback value). */
 export function noteOf(col: Column, i: number): string | null {
   const k = col.n?.[String(i)];
-  return k !== undefined && col.notes?.[k] ? col.notes[k] : null;
+  // R5 / E1: the pipeline's English note in the UI language (web/texts.json)
+  return k !== undefined && col.notes?.[k] ? tx(col.notes[k]) : null;
 }
 
 export const FLAG = { small_base: 1, small_count: 2, majority_election: 4, published_value: 8, provisional: 16, estimate: 32, special: 64 } as const;
@@ -463,6 +465,13 @@ export function flagsOf(file: ColumnFile | null, col: Column, i: number): number
 export function hasFlag(file: ColumnFile | null, flags: number, name: FlagName): boolean {
   const bit = file?.flag_bits?.[name] ?? FLAG[name];
   return (flags & bit) !== 0;
+}
+
+/** X3 / A2: the headline income metric: the normal-cases mean (same population as the median) where the build has
+ *  it, else the all-cases mean. Presets and defaults go through this. */
+export const INCOME_OLD = 'tax_np_mean_taxable_income';
+export function preferNormal(id: string, metas: Map<string, MetricMeta>): string {
+  return id === INCOME_OLD && metas.has(`${INCOME_OLD}_normal`) ? `${INCOME_OLD}_normal` : id;
 }
 
 /** Unstable small-number value (base or count below the metric's reliability rule), or a special case
@@ -537,6 +546,7 @@ export function curationReason(meta: MetricMeta, level: string): string | null {
   let s: string | null =
     per ?? (raw && typeof raw === 'object' ? ((raw as Record<string, string>)[lang] ?? (raw as Record<string, string>).en ?? null) : (raw as string | null) ?? null);
   if (!s) return null;
+  if (!per) s = tx(s);
   s = s.trim().replace(/^(not offered as a map|not available|nicht als karte angeboten|nicht verfügbar|pas proposé comme carte|non disponible)\s*[:\u202f\u00a0]*\s*/i, '');
   s = s.replace(/[.\s]+$/, '');
   return s ? s[0].toUpperCase() + s.slice(1) : null;

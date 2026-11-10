@@ -22,15 +22,16 @@ export function unstableIndices(cols: ColumnStore, ld: LevelData, meta: MetricMe
   if (!ref.file && rule) {
     const period = ref.col.period;
     const terms = ruleTerms(rule);
-    const get = (ids: string[]) => {
+    const get = (ids: string[], mean = false) => {
       const cs = ids.map((id) => cols.get(ld, id, period));
       if (cs.some((c) => c === undefined)) return undefined;
       // a term without this period (or not at this level) cannot judge it
       if (cs.some((c) => !c || c.col.period !== period)) return null;
-      return sumColumns(cs.map((c) => c!.col.v));
+      const sum = sumColumns(cs.map((c) => c!.col.v));
+      return mean && sum ? sum.map((x) => (x === null ? null : x / ids.length)) : sum;
     };
-    const base = get(terms.base);
-    const count = get(terms.count);
+    const base = get(terms.base, terms.baseMean);
+    const count = get(terms.count, terms.countMean);
     if (base !== undefined && count !== undefined) for (const i of ruleUnstable(ref.col.v, rule, base, count, meta.special?.max)) out.add(i);
   } else if (!ref.file && meta.special?.max !== undefined) {
     for (const i of ruleUnstable(ref.col.v, null, null, null, meta.special.max)) out.add(i);

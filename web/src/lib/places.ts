@@ -30,6 +30,9 @@ interface SearchFile {
   units: [string, string, string, string | null, string[], ...unknown[]][];
   plz_fields: string[];
   plz: Record<string, [string, string, number][]>;
+  /** A6: former names, one row per name and place: see former_fields */
+  former_fields?: string[];
+  former?: unknown[][];
 }
 
 /** B5 (R1): a former name of a municipality (merged away or renamed), from the search index. */
@@ -39,6 +42,8 @@ export interface FormerName {
   bfs?: string;
   /** last date or year under that name */
   until?: string;
+  /** its unit id on the older boundary states (vintage id -> unit id), where it existed then */
+  vintages?: Record<string, string | null>;
 }
 /** Former names as the build may ship them: a name, [name, until?, bfs?] or {name, bfs?, until?}. */
 type FormerRaw = string | [string, ...(string | number | null)[]] | { name: string; bfs?: string | number | null; until?: string | number | null; id?: string | number | null };
@@ -111,6 +116,27 @@ export function searchUnit(id: string, level: string, name: string, kanton: stri
   return { ref: refOf(level, id), id, level, name, kanton, alts, formers, keys, exact: [...extra].filter((k) => !keys.includes(k)) };
 }
 
+/** Former names of the build (search.json `former` rows, contract 11.4) per current municipality: each goes to the
+ *  municipality holding most of its territory. */
+export function formerRows(f: { former_fields?: string[]; former?: unknown[][] }): Map<string, FormerName[]> {
+  const out = new Map<string, FormerName[]>();
+  const fl = f.former_fields ?? [];
+  const at = (k: string) => fl.indexOf(k);
+  const [iN, iTo, iTil, iV] = [at('name'), at('to'), at('valid_to'), at('vintages')];
+  if (iN < 0 || iTo < 0) return out;
+  for (const r of f.former ?? []) {
+    const name = r[iN];
+    const to = r[iTo] as [string, number][] | null;
+    const cur = to?.[0]?.[0];
+    if (typeof name !== 'string' || !cur) continue;
+    const v = iV >= 0 ? (r[iV] as Record<string, string | null> | null) : null;
+    const until = iTil >= 0 && typeof r[iTil] === 'string' ? (r[iTil] as string) : undefined;
+    const fn: FormerName = { name, ...(until ? { until } : {}), ...(v ? { vintages: v } : {}) };
+    out.set(String(cur), [...(out.get(String(cur)) ?? []), fn]);
+  }
+  return out;
+}
+
 let searchP: Promise<SearchIndex> | null = null;
 export function loadSearch(): Promise<SearchIndex> {
   if (!searchP) {
@@ -118,11 +144,12 @@ export function loadSearch(): Promise<SearchIndex> {
       if (!f) throw new Error('search.json missing');
       // former names (B5): a column named former_names / former / formerly when the build ships one
       const fk = (f.fields ?? []).findIndex((x) => /^former(_names|ly)?$/.test(x));
+      const byCurrent = formerRows(f);
       const units: SearchUnit[] = f.units.map((row) => {
         const [id, level, name, kanton, alts] = row;
         const raw = fk >= 5 && Array.isArray(row[fk]) ? (row[fk] as FormerRaw[]) : [];
         const formers = raw.map(parseFormer).filter((x): x is FormerName => !!x && norm(x.name) !== norm(name));
-        return searchUnit(id, level, name, kanton, hideAltNames(level, id) ? [] : alts, formers);
+        return searchUnit(id, level, name, kanton, hideAltNames(level, id) ? [] : alts, [...formers, ...(byCurrent.get(id) ?? [])]);
       });
       return { units, byRef: new Map(units.map((u) => [u.ref, u])), plz: f.plz, plzKeys: Object.keys(f.plz).sort() };
     });

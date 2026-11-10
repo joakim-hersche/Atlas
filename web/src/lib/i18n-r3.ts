@@ -72,6 +72,7 @@ const EN: Record<string, string> = {
   "r3.fpInactive": "{n} condition(s) apply to municipalities only: all {total} {units} shown.",
   "r3.fpSomeInactive": "{n} condition(s) apply to municipalities only and are not used here",
   "r3.showLevel": "Show {level}",
+  "r3.hiddenSpecial": "hidden: special case: {why}",
 };
 
 const DE: Record<string, string> = {
@@ -139,6 +140,7 @@ const DE: Record<string, string> = {
   "r3.fpInactive": "{n} Bedingung(en) gelten nur für Gemeinden: alle {total} {units} gezeigt.",
   "r3.fpSomeInactive": "{n} Bedingung(en) gelten nur für Gemeinden und werden hier nicht angewandt",
   "r3.showLevel": "{level} zeigen",
+  "r3.hiddenSpecial": "ausgeblendet: Sonderfall: {why}",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -206,6 +208,7 @@ export const FR_R3: Record<string, string> = {
   "r3.fpInactive": "{n} condition(s) ne s’appliquent qu’aux communes : les {total} {units} sont affichées.",
   "r3.fpSomeInactive": "{n} condition(s) ne s’appliquent qu’aux communes et ne sont pas utilisées ici",
   "r3.showLevel": "Afficher : {level}",
+  "r3.hiddenSpecial": "masqué : cas particulier : {why}",
 };
 
 addStrings(EN, DE);

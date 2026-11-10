@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { preferNormal } from '../lib/data';
   import { colon } from '../lib/typo';
   import '../lib/i18n-r3';
   // Regression panel (D34, option B): OLS in the browser on the units of the current level.
@@ -47,7 +48,11 @@
   const REGION_NAMES = () => ['1', '2', '3', '4'].map((k) => t(`cv.r${k}`));
 
   // ------------------------------------------------------------------ model state (hash)
-  const presets = $derived(REG_PRESETS.filter((p) => [p.spec.y, ...p.spec.xs].every((v) => metas.has(v.id))));
+  // A2: the presets use the normal-cases mean income where the build has it
+  const presets = $derived(
+    REG_PRESETS.map((p) => ({ ...p, spec: { ...p.spec, xs: p.spec.xs.map((x) => ({ ...x, id: preferNormal(x.id, metas) })) } }))
+      .filter((p) => [p.spec.y, ...p.spec.xs].every((v) => metas.has(v.id))),
+  );
   const fallbackParams = () => lastParams ?? (presets[0] ? specParams(presets[0].spec) : { ry: 'pop_total' });
   // a link or the menu without a model: the last model of this session, else the first example
   $effect(() => {
@@ -73,7 +78,7 @@
   function addX() {
     if (spec.xs.length >= MAX_X) return;
     const used = new Set([spec.y.id, ...spec.xs.map((x) => x.id)]);
-    const cand = ['pop_total', 'share_foreign', 'share_age_65plus', 'tax_np_mean_taxable_income', 'geo_pop_density'].find((id) => !used.has(id) && metas.has(id));
+    const cand = ['pop_total', 'share_foreign', 'share_age_65plus', preferNormal('tax_np_mean_taxable_income', metas), 'geo_pop_density'].find((id) => !used.has(id) && metas.has(id));
     update({ xs: [...spec.xs, { id: cand ?? 'pop_total', log: cand === 'pop_total' }] });
   }
 

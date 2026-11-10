@@ -57,6 +57,8 @@ const FILES = dedupe([
   ['web/reach_times.json', false],
   // plain-language glossary (pipeline/i18n/glossary.yaml) and the vote picker index
   ['web/glossary.json', false],
+  // German and French for the pipeline's English texts (docs/web_data_contract.md 11.1), loaded in DE / FR only
+  ['web/texts.json', false],
   ['web/votes/index.json', false],
   ['web/history.json', true],
   ['web/neighbours.json', true],

@@ -4,7 +4,7 @@
 // said that the data does not support: a fact is left out when the value is missing or not unusual.
 // Wording is descriptive (larger, younger, higher), never an assessment.
 import { fmtNumber, fmtPeriod, fmtValue } from './classify';
-import type { Base, ColumnFile, MetricMeta } from './data';
+import { preferNormal, type Base, type ColumnFile, type MetricMeta } from './data';
 import { levelWord, ml, t } from './i18n.svelte';
 import type { ReachTimes } from './places';
 import type { PlaceLevel } from './profile';
@@ -123,7 +123,8 @@ export function inShort(a: { pl: PlaceLevel; idx: number; base: Base; reach: Rea
   }
 
   // up to three more figures where the place stands out (clearly above or below the middle of the units)
-  const extra = GENERIC.map((id) => statOf(pl, core, base.metas.get(id), idx))
+  const extra = GENERIC.map((id) => preferNormal(id, base.metas))
+    .map((id) => statOf(pl, fileOf(id) ?? core, base.metas.get(id), idx))
     .filter((s): s is Stat => s !== null && spread(s) >= 25)
     .sort((p, q) => spread(q) - spread(p))
     .slice(0, 3);

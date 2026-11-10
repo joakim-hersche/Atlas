@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { norm, parseFormer, parseRef, refOf, search, searchUnit, type SearchIndex, type SearchUnit } from './places';
+import { formerRows, norm, parseFormer, parseRef, refOf, search, searchUnit, type SearchIndex, type SearchUnit } from './places';
 import { shortName } from './data';
 
 // a small hand-made index in the shape of web/search.json: [id, level, name, canton, alternative names]
@@ -155,5 +155,17 @@ describe('former names (B5)', () => {
     expect(h.former?.bfs).toBe('1624');
     expect(h.via).toBeUndefined();
     expect(search(ix, 'glarus')[0].ref).toBe('1631');
+  });
+});
+
+describe('former names from search.json rows (contract 11.4)', () => {
+  it('go to the municipality holding most of the territory, with their old unit ids', () => {
+    const f = {
+      former_fields: ['name', 'hist_id', 'kanton', 'valid_from', 'valid_to', 'to', 'vintages'],
+      former: [['Obstalden', 12498, 'GL', '1887-01-01', '2010-12-31', [['1630', 1.0]], { '2010': '1624', '2000': '1624' }]],
+    };
+    const m = formerRows(f);
+    expect(m.get('1630')).toEqual([{ name: 'Obstalden', until: '2010-12-31', vintages: { '2010': '1624', '2000': '1624' } }]);
+    expect(formerRows({}).size).toBe(0);
   });
 });

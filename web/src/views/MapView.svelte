@@ -40,7 +40,7 @@
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
   import { bareAttribution, downloadBlob, figurePNG, grabMap, slug, type LegendItem } from '../lib/export';
   import { describeFilter } from '../lib/filters';
-  import { FLAG, majorityCount, majorityMask, precisionText } from '../lib/data';
+  import { FLAG, hasFlag, majorityCount, majorityMask, precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
     availableAt, flagMarks, flagsOf, isUnstable, gapReason, precisionOf, namesOf, regionalAt, placeName, shortName, loadLevel, loadFine, loadFineLines, FINE_LEVELS, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
@@ -164,10 +164,24 @@
     }
     const v = r.col.v.slice();
     const notes = [...(r.col.notes ?? []), t(cmpActive ? 'r3.hiddenChg' : 'fl.hidden', { from: app.cmpFrom ?? '', to: cmpTo ?? '' })];
+    const small = notes.length - 1;
+    // D4: a special case (car fleets) is hidden for its own reason, not as small numbers
+    const sp = metaRaw.special;
+    const lang: string = app.lang;
+    const why = sp ? ((lang === 'de' ? sp.rule_de : lang === 'fr' ? sp.rule_fr : null) ?? sp.rule_en ?? '') : '';
+    let special = -1;
     const n = { ...(r.col.n ?? {}) };
     for (const i of unstableIdx) {
       v[i] = null;
-      n[String(i)] = notes.length - 1;
+      const fl = refRaw?.col.f?.[String(i)] ?? 0;
+      const isSpecial = !cmpActive && sp && ((refRaw?.file && hasFlag(refRaw.file, fl, 'special')) || (refRaw?.col.v[i] ?? 0) > sp.max);
+      if (isSpecial) {
+        if (special < 0) {
+          notes.push(t('r3.hiddenSpecial', { why }));
+          special = notes.length - 1;
+        }
+        n[String(i)] = special;
+      } else n[String(i)] = small;
     }
     return { ...r, col: { ...r.col, v, n, notes } };
   });
