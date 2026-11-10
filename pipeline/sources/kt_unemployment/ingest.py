@@ -63,6 +63,9 @@ def ge() -> tuple[pd.DataFrame, pd.DataFrame]:
                 break
     d = pd.DataFrame(rows, columns=["name", "period", "n"]).drop_duplicates(["name", "period"])
     kt = d[d["name"].eq("Canton")].assign(unit="GE").drop(columns="name")
+    # 'Non spécifié' (commune of residence unknown) is only in the canton total -> level 'pseudo'
+    ns = d[d["name"].eq("Non spécifié")].assign(unit="GE:non_specifie").drop(columns="name")
+    kt = pd.concat([kt, ns], ignore_index=True)
     d = d[~d["name"].isin(["Canton", "Non spécifié"])]
     m = match_names(d["name"].unique(), "GE")
     miss = set(d["name"]) - set(m)
@@ -119,7 +122,13 @@ def observations() -> pd.DataFrame:
         cov[(M, kt)] = set(w["period"])
         if k is not None:
             k["period"] = k["period"].astype(int).astype(str)
-            natives.append(emit(k, {"n": M}, "period", SOURCE, level="kanton", unit_col="unit", provenance="native"))
+            natives.append(emit(k[~k["unit"].str.contains(":")], {"n": M}, "period", SOURCE, level="kanton",
+                                unit_col="unit", provenance="native"))
+            ps = k[k["unit"].str.contains(":")]
+            if len(ps):
+                e = emit(ps, {"n": M}, "period", SOURCE, level="pseudo", unit_col="unit", provenance="native")
+                e["note"] = "commune of residence not specified (in the canton total only)"
+                natives.append(e)
     obs = pd.concat(parts, ignore_index=True)
     obs = complete(obs, SOURCE, {M: {"ZH", "GE", "VD"}}, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
     nat = pd.concat(natives, ignore_index=True)

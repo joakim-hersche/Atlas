@@ -8,7 +8,8 @@
 - BS  Statistisches Amt Basel-Stadt dataset 100508 (StGB offences by Gemeinde, 2009–2025): rows
       'Total StGB', 'Total Gegen das Vermögen', 'Total Gegen Leib und Leben' for Basel, Riehen,
       Bettingen. A missing title row in a year with a 'Total StGB' row is 0 (sparse table).
-      'Gemeinde unbekannt' is only in the canton total (native kanton row).
+      'Gemeinde unbekannt' is only in the canton total (native kanton row); kept as level 'pseudo'
+      (unit_id 'BS:unbekannt') so the canton total can be reconciled.
 Cantons with PDF reports only (LU, SO, FR, GR, SZ, GE, BE, VD, ...) are out of scope here.
 Period = year the offence was registered (Ausgangsjahr).
 """
@@ -50,8 +51,10 @@ def bs() -> tuple[pd.DataFrame, pd.DataFrame]:
     for c in ("prop", "viol"):
         w.loc[has_total & w[c].isna(), c] = 0.0
     kt = w[w["gemeinde"] == "Kanton Basel-Stadt"].assign(unit="BS").rename(columns={"jahr": "period"})
+    unk = w[w["gemeinde"] == "Gemeinde unbekannt"].assign(unit="BS:unbekannt").rename(columns={"jahr": "period"})
     ids = ref_units().query("canton == 'BS'").set_index("name")["bfs_nr"].to_dict()
     w = w[w["gemeinde"].isin(ids)].assign(bfs_nr=lambda x: x["gemeinde"].map(ids))
+    kt = pd.concat([kt, unk], ignore_index=True)
     return w.rename(columns={"jahr": "period"}).drop(columns="gemeinde"), kt.drop(columns="gemeinde")
 
 
@@ -78,5 +81,9 @@ def observations() -> pd.DataFrame:
     covered = {m: {"ZH", "BS"} for m in MAP.values()}
     obs = complete(obs, SOURCE, covered, NOT_COVERED, DEFAULT_NC, covered_periods=cov)
     bkt["period"] = bkt["period"].astype(int).astype(str)
-    nat = emit(bkt, MAP, "period", SOURCE, level="kanton", unit_col="unit", provenance="native")
-    return pd.concat([obs, nat[nat["status"] == "ok"]], ignore_index=True)
+    nat = emit(bkt[bkt["unit"] == "BS"], MAP, "period", SOURCE, level="kanton", unit_col="unit", provenance="native")
+    # 'Gemeinde unbekannt' (offences without a known municipality): in the canton total only.
+    # Checked 2009–2025: canton = Basel + Riehen + Bettingen + unbekannt exactly.
+    ps = emit(bkt[bkt["unit"] != "BS"], MAP, "period", SOURCE, level="pseudo", unit_col="unit", provenance="native")
+    ps["note"] = "BS police statistics 'Gemeinde unbekannt': offences without a known municipality"
+    return pd.concat([obs, nat[nat["status"] == "ok"], ps[ps["status"] == "ok"]], ignore_index=True)
