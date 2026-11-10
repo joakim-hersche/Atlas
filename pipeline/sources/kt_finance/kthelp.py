@@ -334,3 +334,22 @@ def zh_current(ind: int, source_id: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         parts += [a, rest, b]
     gem = pd.concat(parts, ignore_index=True)
     return gem, kt
+
+
+def match_names_at(names, canton: str, year: int, extra: dict[str, int] | None = None) -> dict[str, int]:
+    """Map municipality names of one canton to BFS numbers valid around `year` (state on 31 Dec of
+    the year, then 1 Jan of the year, then 31 Dec of the following year), for sources that list
+    historical municipalities by name only. Unmatched names are left out (callers check)."""
+    mv, _ = load_backbone()
+    lk: dict[str, int] = {}
+    for day in (dt.date(year, 12, 31), dt.date(year, 1, 1), dt.date(year + 1, 12, 31)):
+        v = versions_at(mv, min(day, REFERENCE_DATE)).query("canton == @canton")
+        for n, b in zip(v["name"], v["bfs_nr"]):
+            lk.setdefault(_norm(n), int(b))
+    out = {}
+    for n in names:
+        if extra and n in extra:
+            out[n] = extra[n]
+        elif _norm(n) in lk:
+            out[n] = lk[_norm(n)]
+    return out

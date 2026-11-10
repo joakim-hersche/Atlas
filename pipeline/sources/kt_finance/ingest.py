@@ -24,6 +24,21 @@ Per canton (period = accounting year):
 - VD  Indicateurs par commune 2017–2025: degré d'autofinancement (fraction ×100). VD communes
       mix MCH1 and MCH2. Rows with 100% and no investments (proportion des investissements 0)
       are a convention for 'no net investment' -> not_applicable.
+- ZG  data.zg.ch dataset 'Gemeindefinanzen' (store/1/resource/840): Nettoschuld pro Einwohner
+      (resource 841) and Selbstfinanzierungsgrad (2151), 2014–2025, 11 Einwohnergemeinden.
+- SG  STADA2 (Fachstelle für Statistik SG) CSV export, 'Gemeindefinanzen RMSG' 2017–2025:
+      2008 Nettoschuld pro Einwohner I RMSG (Fremdkapital − passivierte Anschlussbeiträge −
+      Finanzvermögen), 2000 Selbstfinanzierungsgrad RMSG (annual), 2043 '40 Fiskalertrag [Fr.]'.
+      '***' = not computable: SFG alone -> not_applicable; all ratios '***' (accounts not
+      available in RMSG form, mostly 2017/18) -> no_data. STADA2 lists current municipalities.
+- TI  SEL Statistica finanziaria dei comuni, allegato statistico per comune (one workbook per
+      year, 2000–2024): 'Debito pubblico pro capite' / 'Debito pubblico netto I procapite',
+      'Grado di autofinanziamento' (fraction ×100; 'nd'/'non calcolato' -> not_applicable) and
+      revenue type 40 (imposte / ricavi fiscali, 1'000 fr.). MCA2 (HRM2) indicators from 2022;
+      up to 2021 MCA1 definitions (debito pubblico = capitale di terzi + finanziamenti speciali −
+      beni patrimoniali, per the report's 'Calcolo debito pubblico'), noted as HRM1. Communes are
+      named only: matched to the BFS numbers valid in that year. Rows labelled with an earlier
+      year ('Tegna (2004)': last accounts available) are skipped.
 Computed formula (LU, BL):
   Nettoschuld I = Σ accounts 20 (Fremdkapital) − Σ accounts 10 (Finanzvermögen), balance 31 Dec
   Selbstfinanzierung = Ertrag − Aufwand (ER without closing accounts 9) + 33 + 35 − 45 + 364 + 365
@@ -34,6 +49,8 @@ Checked against LUSTAT's Gemeindeprofil Luzern 2024 (Nettoschuld −5,249 Fr./Ei
 """
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -41,7 +58,7 @@ from pipeline.common import REFERENCE_DATE
 from pipeline.harmonize.helpers import emit
 from pipeline.sources.bfs_statpop_geodata.fetch import municipalities
 from pipeline.sources.kt_finance import fetch as F
-from pipeline.sources.kt_finance.kthelp import complete, match_names, to_ref
+from pipeline.sources.kt_finance.kthelp import complete, match_names, match_names_at, to_ref
 
 SOURCE = "kt_finance"
 NET, SFG, TAX = "fin_net_debt_per_capita", "fin_self_financing_ratio", "fin_tax_revenue_chf"
@@ -49,17 +66,15 @@ RULES = {"net": "not_aggregatable", "sfg": "not_aggregatable", "tax": "sum"}
 MAP = {"net": NET, "sfg": SFG, "tax": TAX}
 NA_NOTES = {SFG: "self-financing ratio not computable (net investments ≤ 0 or negative self-financing; "
                  "source shows no value)"}
-HRM1 = {"ZH": 2019, "GE": 2018}  # first HRM2 year where the published series also covers HRM1
+HRM1 = {"ZH": 2019, "GE": 2018, "TI": 2022}  # first HRM2 year where the published series also covers HRM1
 NOT_COVERED = {
-    "BE": "Bern publishes municipal finances only as PDF reports (eBericht host blocked)",
-    "SG": "St.Gallen's STADA2 database host (stada2.sg.ch) is not reachable from the pipeline",
-    "ZG": "Zug's open-data portal (data.zg.ch) is not reachable from the pipeline",
-    "AR": "Appenzell Ausserrhoden's finance statistics host (ar.ch) is not reachable from the pipeline",
-    "VS": "Valais publishes municipal finance reports only on a host not available to the pipeline (geo.vs.ch)",
-    "GL": "Glarus (3 municipalities) publishes only a PDF on an unreliable host",
+    "BE": ("Bern publishes municipal finances as PDF reports; its eBericht host (www.ebericht.be.ch) "
+           "serves an incomplete TLS certificate chain, so downloads cannot be verified"),
+    "AR": "Appenzell Ausserrhoden publishes municipal finance statistics only as PDF reports",
+    "VS": "Valais publishes municipal finance reports only as PDF (no per-municipality export found)",
+    "GL": "Glarus (3 municipalities) publishes only a PDF on a host not available to the pipeline",
     "NE": "Neuchâtel publishes the indicators only as PDF",
     "SH": "Schaffhausen publishes the indicators only as PDF",
-    "TI": "Ticino publishes the municipal finance statistics only as PDF",
     "JU": "Jura publishes no machine-readable municipal finance indicators",
     "BS": "Basel-Stadt (3 municipalities) publishes no municipal finance indicators; the city of Basel is covered by BFS city finances",
 }
@@ -225,7 +240,107 @@ def vd() -> pd.DataFrame:
                          "sfg": (v["sfg"] * 100).where(~conv), "sfg__na": conv})
 
 
-LOADERS = {"ZH": zh, "LU": lu, "BL": bl, "FR": fr, "SO": so, "AG": ag, "GR": gr, "TG": tg, "GE": ge, "VD": vd}
+def zg() -> pd.DataFrame:
+    parts = []
+    for col, res in F.ZG_RESOURCES.items():
+        d = pd.read_csv(F.zg(res))
+        val = next(c for c in d.columns if c not in ("jahr", "gemeinde", "bfscode"))
+        parts.append(pd.DataFrame({"bfs_nr": d["bfscode"].astype(int), "period": d["jahr"].astype(int),
+                                   col: pd.to_numeric(d[val], errors="coerce")}).set_index(["bfs_nr", "period"]))
+    return pd.concat(parts, axis=1).reset_index()
+
+
+def sg() -> tuple[pd.DataFrame, pd.DataFrame]:
+    d = F.sg()
+    d["col"] = d["INDIKATOR_ID"].astype(int).map(F.SG_INDICATORS)
+    d["bfs_nr"] = d["BFS_NR"].astype(int)
+    d["period"] = d["INDIKATOR_JAHR"].astype(int)
+    d["v"] = pd.to_numeric(d["INDIKATOR_VALUE"], errors="coerce")
+    star = d["INDIKATOR_VALUE"].astype(str).str.strip().eq("***")
+    w = d.pivot_table(index=["bfs_nr", "period"], columns="col", values="v", aggfunc="first")
+    s = d.assign(star=star).pivot_table(index=["bfs_nr", "period"], columns="col", values="star", aggfunc="first")
+    w = w.reindex(s.index)
+    # '***' = not computable. SFG alone '***' (net debt published) = no net investments ->
+    # not_applicable; all ratios '***' = accounts not available in RMSG form (2017/18, a few
+    # later years) -> no_data.
+    w["sfg__na"] = s["sfg"].fillna(False).astype(bool) & ~s["net"].fillna(False).astype(bool)
+    w = w.reset_index()
+    kt = w[w["bfs_nr"] == 17].drop(columns=["bfs_nr", "sfg__na"]).assign(unit="SG")
+    return w[w["bfs_nr"] != 17], kt
+
+
+TI_SKIP = re.compile(r"^(consuntivi|media|mediana|totale|\(|\[|\d|nb|mca|fonte|i dati|i valori|al beneficio|comuni |\*)", re.I)
+TI_EXTRA = {"brione s/minusio": "Brione sopra Minusio"}
+
+
+def _ti_name(raw: str, year: int) -> str | None:
+    """Clean a commune label; None for footnotes and for rows that carry an older accounting year
+    ('Tegna (2004)': last accounts available, not of this year)."""
+    n = str(raw).strip()
+    if not n or n == "nan" or TI_SKIP.match(n) or len(n) > 60:
+        return None
+    m = re.search(r"\((\d{4})\)\s*$", n)
+    if m and int(m.group(1)) != year:
+        return None
+    n = re.sub(r"\((MCA2|\d)\)|\[\*+\]|\*|\(\d{4}\)", "", n).strip()
+    return TI_EXTRA.get(n.lower(), n)
+
+
+def _ti_sheet(path, pattern: str):
+    for s in pd.ExcelFile(path).sheet_names:
+        if re.match(pattern, str(pd.read_excel(path, sheet_name=s, header=None, nrows=1).iloc[0, 0])):
+            return pd.read_excel(path, sheet_name=s, header=None)
+    return None
+
+
+def ti() -> tuple[pd.DataFrame, pd.DataFrame]:
+    rows, totals = [], []
+    for year, path in sorted(F.ti().items()):
+        ind = _ti_sheet(path, rf"Tabella \d+ Indicatori finanziari, {year}")
+        rev = _ti_sheet(path, r"Tabella \d+\w? Ricavi .*per genere.* a due cifre")
+        hdr = [str(v).replace("\n", " ").replace("-", "").lower() for v in ind.iloc[1]]
+        c_net = next(i for i, h in enumerate(hdr) if re.search(r"debito pubblico|dp netto", h) and re.search("pro ?capite|per abitante", h))
+        c_sfg = next(i for i, h in enumerate(hdr) if "grado" in h and "autofin" in h)
+        tax = {}
+        if rev is not None:
+            rh = [str(v).strip() for v in rev.iloc[1]]
+            c40 = next(i for i, h in enumerate(rh) if re.match(r"40\b", h))
+            for _, r in rev.iloc[2:].iterrows():
+                if str(r[0]).strip().upper().startswith("TOTALE") and pd.notna(pd.to_numeric(r[c40], errors="coerce")):
+                    totals.append((year, float(r[c40]) * 1000))
+                n = _ti_name(r[0], year)
+                v = pd.to_numeric(r[c40], errors="coerce")
+                if n and pd.notna(v):
+                    tax[n] = v * 1000  # 1'000 fr.
+        for _, r in ind.iloc[2:].iterrows():
+            n = _ti_name(r[0], year)
+            if not n:
+                continue
+            sfg_raw = r[c_sfg]
+            sfg = pd.to_numeric(sfg_raw, errors="coerce")
+            rows.append((n, year, pd.to_numeric(r[c_net], errors="coerce"), sfg * 100,
+                         pd.isna(sfg) and pd.notna(sfg_raw) and str(sfg_raw).strip() != "", tax.get(n, np.nan)))
+    d = pd.DataFrame(rows, columns=["name", "period", "net", "sfg", "sfg__na", "tax"])
+    # 2022: Maroggia, Melano and Rovio merged into Val Mara during the year; SEL reports the
+    # merged accounts under the three names (footnote: computed for the new commune)
+    d["name"] = d["name"].str.replace(r"^Maroggia\+Melano\+Rovio.*$", "Val Mara", regex=True)
+    parts = []
+    for y, g in d.groupby("period"):
+        m = match_names_at(g["name"].unique(), "TI", int(y))
+        miss = set(g["name"]) - set(m)
+        if miss:
+            raise ValueError(f"TI {y} names not matched: {sorted(miss)}")
+        parts.append(g.assign(bfs_nr=g["name"].map(m)))
+    out = pd.concat(parts, ignore_index=True).drop(columns="name")
+    dup = out.duplicated(["bfs_nr", "period"], keep=False)
+    if dup.any():
+        raise ValueError(f"TI duplicate municipality rows: {out[dup].head()}")
+    kt = pd.DataFrame(totals, columns=["period", "tax"]).assign(unit="TI")
+    return out, kt
+
+
+LOADERS = {"ZH": zh, "LU": lu, "BL": bl, "FR": fr, "SO": so, "AG": ag, "GR": gr, "TG": tg, "GE": ge, "VD": vd,
+           "ZG": zg, "SG": sg, "TI": ti}
 
 
 def observations() -> pd.DataFrame:
@@ -237,7 +352,7 @@ def observations() -> pd.DataFrame:
         w = w.copy()
         w["period"] = w["period"].astype(int).astype(str)
         cols = [c for c in MAP if c in w]
-        vint = REFERENCE_DATE if kt == "VD" else None  # VD back-casts on the current state; ZH rows carry src_vintage
+        vint = REFERENCE_DATE if kt in ("VD", "SG") else None  # VD, SG back-cast on the current state; ZH rows carry src_vintage
         o = to_ref(w, {c: MAP[c] for c in cols}, SOURCE, kt, rules=RULES, vintage=vint, log=log,
                    na_notes=NA_NOTES)
         if kt in HRM1:
