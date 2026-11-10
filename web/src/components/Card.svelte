@@ -241,7 +241,7 @@
   .sbtn > span { grid-column: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sbtn .chev { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
   .l1 strong { font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
-  .l2 { font-size: 0.8rem; margin-top: 1px; }
+  .sbtn > .l2 { font-size: 0.8rem; margin-top: 1px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
   .sval { font-weight: 700; font-size: 0.95rem; }
   .srank { color: var(--text); }
   .smark { margin-left: 4px; color: var(--accent); font-weight: 700; }
