@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -91,33 +93,93 @@ def build_sources() -> list[dict]:
     return out
 
 
-def run() -> dict:
-    meta = load_metrics().drop_duplicates("id").set_index("id")
-    allm = pd.read_parquet(interim_path("metrics_all.parquet"))
-    allm = allm[allm["metric_id"].isin(meta.index)]
-    written = {"units": _dump(build_units(), "units.json"), "sources": _dump(build_sources(), "sources.json")}
+def license_cleared(m: dict) -> tuple[bool, str]:
+    """Brief rule 5: only sources whose terms are stated as open are shipped by default."""
+    lic = str(m.get("license") or m.get("licence") or "")
+    st = str(m.get("license_status") or "").upper()
+    if st == "UNVERIFIED" or re.search(r"UNVERIFIED|proprietary|per publisher|unclear", lic, re.I):
+        return False, "licence to verify"
+    if re.search(r"OPEN-BY|CC.?BY|CC0|ODbL|terms_by|open use|freie nutzung|reproduction|wiedergabe", lic, re.I):
+        return True, "open"
+    return False, "licence not stated"
 
+
+def run() -> dict:
+    """Builds data/out/web from metrics_all.parquet with DuckDB (the table does not fit in memory).
+
+    Sources whose licence is not cleared are left out unless GB_INCLUDE_UNVERIFIED=1 (local preview
+    only); the excluded list is written to data/out/web/excluded_sources.json.
+    """
+    import duckdb
+    meta = load_metrics().drop_duplicates("id").set_index("id")
+    srcs = {}
+    for f in sorted(SOURCES_DIR.glob("*/meta.yaml")):
+        m = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        srcs[f.parent.name] = m
+    include_all = os.environ.get("GB_INCLUDE_UNVERIFIED") == "1"
+    review = yaml.safe_load((SOURCES_DIR.parent / "licence_review.yaml").read_text(encoding="utf-8")) or {}
+    cleared = {sid: license_cleared(m) for sid, m in srcs.items()}
+    metric_only = {}
+    for sid, r in review.items():
+        if r.get("status") == "cleared":
+            cleared[sid] = (True, "reviewed")
+            if r.get("metrics"):
+                metric_only[sid] = set(r["metrics"])
+        elif r.get("status") == "blocked":
+            cleared[sid] = (False, "blocked by review")
+    excluded = {sid: why for sid, (ok, why) in cleared.items() if not ok and (SOURCES_DIR / sid / "ingest.py").exists()}
+
+    def shippable(mid):
+        sid = meta.loc[mid, "source_id"]
+        return sid not in excluded and (sid not in metric_only or mid in metric_only[sid])
+    keep = [mid for mid in meta.index if include_all or shippable(mid)]
+    # derived metrics whose inputs come from an excluded source are dropped too
+    if not include_all:
+        def inputs_ok(mid):
+            agg = str(meta.loc[mid, "aggregation"])
+            ids = re.findall(r"[a-z][a-z0-9_]+", agg.split(":", 1)[1]) if ":" in agg else []
+            return all(i not in meta.index or shippable(i) for i in ids)
+        keep = [m for m in keep if meta.loc[m, "kind"] != "derived" or inputs_ok(m)]
+    con = duckdb.connect()
+    con.execute(f"SET memory_limit='{os.environ.get('GB_DUCKDB_MEMORY', '3GB')}'")
+    con.register("keep_df", pd.DataFrame({"metric_id": keep}))
+    src = f"read_parquet('{interim_path('metrics_all.parquet')}')"
+    con.execute(f"CREATE VIEW m AS SELECT * FROM {src} WHERE metric_id IN (SELECT metric_id FROM keep_df) "
+                "AND level NOT IN ('unallocated', 'pseudo')")
+    written = {"units": _dump(build_units(), "units.json"),
+               "sources": _dump([{**{k: v.get(k) for k in ("source_id", "title", "publisher", "url", "license",
+                                                              "attribution", "vintage", "years")},
+                                  "shipped": sid not in excluded or include_all}
+                                 for sid, v in srcs.items() if (SOURCES_DIR / sid / "ingest.py").exists()], "sources.json"),
+               "excluded": _dump({"note": "left out until their licence is cleared (brief rule 5)",
+                                  "sources": excluded if not include_all else {}}, "excluded_sources.json")}
+
+    per = con.execute("""SELECT metric_id, list(DISTINCT period) AS periods,
+                                list(DISTINCT level) FILTER (WHERE status = 'ok') AS levels
+                         FROM m GROUP BY 1""").df()
     catalog = []
-    for mid, g in allm.groupby("metric_id"):
-        md = meta.loc[mid]
-        periods = sorted(g["period"].unique(), key=_period_key)
+    for r in per.itertuples():
+        md = meta.loc[r.metric_id]
+        periods = sorted(r.periods, key=_period_key)
         catalog.append({
-            "id": mid, "theme": md["theme"], "label_en": md["label_en"], "label_de": md["label_de"],
+            "id": r.metric_id, "theme": md["theme"], "label_en": md["label_en"], "label_de": md["label_de"],
             "unit": md["unit"], "decimals": int(md["decimals"]), "direction": md["direction"],
             "aggregation": md["aggregation"], "precision": md["precision"], "coverage": md["coverage"],
-            "source": md["source_id"], "description": md.get("description") if isinstance(md.get("description"), str) else None,
-            "levels": sorted(g.loc[g["status"] == "ok", "level"].unique().tolist()),
-            "periods": periods, "latest": periods[-1],
+            "source": md["source_id"],
+            "description": md.get("description") if isinstance(md.get("description"), str) else None,
+            "levels": sorted(r.levels) if r.levels is not None else [],
+            "n_periods": len(periods), "periods": periods if len(periods) <= 60 else periods[-60:],
+            "latest": periods[-1], "per_vote": str(r.metric_id).startswith("vote_"),
         })
     written["metrics"] = _dump(catalog, "metrics.json")
 
-    # latest period per metric and level, columnar
-    for lvl, g in allm.groupby("level"):
-        if lvl in ("unallocated", "pseudo"):
-            continue
-        g = g.copy()
-        latest = g[g["status"] == "ok"].groupby("metric_id")["period"].max()
-        g = g[g["period"] == g["metric_id"].map(latest)]
+    # latest period per metric and level (columnar)
+    for lvl in [l[0] for l in con.execute("SELECT DISTINCT level FROM m").fetchall()]:
+        g = con.execute(f"""WITH lp AS (SELECT metric_id, max(period) AS p FROM m
+                                       WHERE level = '{lvl}' AND status = 'ok' GROUP BY 1)
+                            SELECT m.unit_id, m.metric_id, m.period, m.value, m.status, m.precision
+                            FROM m JOIN lp ON m.metric_id = lp.metric_id AND m.period = lp.p
+                            WHERE m.level = '{lvl}'""").df()
         ids = sorted(g["unit_id"].unique(), key=lambda x: (len(x), x))
         idx = {u: i for i, u in enumerate(ids)}
         cols = {}
@@ -125,38 +187,57 @@ def run() -> dict:
             d = int(meta.loc[mid, "decimals"]) + (1 if str(meta.loc[mid, "unit"]).strip() == "%" else 0)
             vals = [None] * len(ids)
             status, prec = {}, {}
-            for r in gm.itertuples():
-                i = idx[r.unit_id]
-                vals[i] = _round(r.value, d)
-                if r.status != "ok":
-                    status[i] = STATUS_CODES.get(r.status, 1)
-                if r.precision not in ("exact", None) and isinstance(r.precision, str):
-                    prec[i] = PRECISION_CODES.get(r.precision, 0)
+            for u, v, st, pr in zip(gm["unit_id"], gm["value"], gm["status"], gm["precision"]):
+                i = idx[u]
+                vals[i] = _round(v, d)
+                if st != "ok":
+                    status[i] = STATUS_CODES.get(st, 1)
+                if isinstance(pr, str) and pr != "exact":
+                    prec[i] = PRECISION_CODES.get(pr, 0)
             cols[mid] = {"period": gm["period"].iloc[0], "v": vals,
                          **({"s": status} if status else {}), **({"p": prec} if prec else {})}
         written[f"latest_{lvl}"] = _dump({"level": lvl, "units": ids, "metrics": cols,
                                           "status_codes": STATUS_CODES, "precision_codes": PRECISION_CODES},
                                          "latest", f"{lvl}.json")
 
-    # time series per metric
-    ser = allm[allm["level"].isin(SERIES_LEVELS)]
-    for mid, g in ser.groupby("metric_id"):
+    # time series per metric (municipality, district, canton, Switzerland); votes get one file per vote
+    lv = ", ".join(f"'{x}'" for x in SERIES_LEVELS)
+    n_series = 0
+    for (mid,) in con.execute("SELECT DISTINCT metric_id FROM m").fetchall():
+        if str(mid).startswith("vote_"):
+            continue
+        g = con.execute(f"SELECT level, unit_id, period, value FROM m WHERE metric_id = ? AND level IN ({lv})",
+                        [mid]).df()
         periods = sorted(g["period"].unique(), key=_period_key)
         if len(periods) < 2:
             continue
         pidx = {p: i for i, p in enumerate(periods)}
         d = int(meta.loc[mid, "decimals"]) + (1 if str(meta.loc[mid, "unit"]).strip() == "%" else 0)
         out = {"metric": mid, "periods": periods, "levels": {}}
-        for lvl, gl in g.groupby("level"):
+        for lvl_, gl in g.groupby("level"):
             series = {}
             for uid, gu in gl.groupby("unit_id"):
                 row = [None] * len(periods)
-                for r in gu.itertuples():
-                    row[pidx[r.period]] = _round(r.value, d)
+                for p, v in zip(gu["period"], gu["value"]):
+                    row[pidx[p]] = _round(v, d)
                 series[uid] = row
-            out["levels"][lvl] = series
+            out["levels"][lvl_] = series
         _dump(out, "series", f"{mid}.json")
-    written["series_count"] = ser["metric_id"].nunique()
+        n_series += 1
+    # votes: one file per vote with yes share and turnout for every level
+    vt = con.execute("""SELECT period, level, unit_id, metric_id, value FROM m
+                        WHERE metric_id IN ('vote_yes_share', 'vote_turnout') AND status = 'ok'""").df()
+    n_votes = 0
+    for per_, gv in vt.groupby("period"):
+        vid = per_.replace("#", "_")
+        out = {"period": per_, "levels": {}}
+        for lvl_, gl in gv.groupby("level"):
+            out["levels"][lvl_] = {mid: dict(zip(gm["unit_id"], [_round(v, 2) for v in gm["value"]]))
+                                   for mid, gm in gl.groupby("metric_id")}
+        _dump(out, "votes", f"{vid}.json")
+        n_votes += 1
+    written["series_count"], written["vote_files"] = n_series, n_votes
+    written["excluded_sources"] = len(excluded) if not include_all else 0
     return written
 
 
