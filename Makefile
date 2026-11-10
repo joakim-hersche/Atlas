@@ -8,7 +8,7 @@
 #   make web-data  copy the data files the web app reads into web/public/data/
 #   make web-app   install pinned npm deps and build the static site (web/dist/)
 #   make deploy    publish web/dist to the gh-pages branch (GitHub Pages)
-#   make release   package the open data release into data/out/release/ (needs metrics + geometry)
+#   make release   package the open data release into data/out/release/ (after make data)
 #   make test      unit tests (the data-dependent ones skip when data/ is not built)
 # Set GB_REFRESH=1 to re-download sources; GB_REFERENCE_DATE=YYYY-MM-DD to change the target state.
 
@@ -56,8 +56,8 @@ web-app:
 deploy:
 	./scripts/deploy_pages.sh
 
-# observations.parquet, metrics.csv, sources.csv, boundaries.gpkg, README; licence-gated, never overwrites other outputs
-release: metrics geometry
+# needs a finished `make data`; writes only data/out/release/ (licence-gated)
+release:
 	$(PY) -m pipeline.release
 
 test:
