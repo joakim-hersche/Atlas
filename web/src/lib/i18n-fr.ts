@@ -606,3 +606,7 @@ export const HISTORY_FR: Record<string, string> = {
   canton_change: 'changement de canton',
   renumbering: 'nouveau numéro OFS',
 };
+
+// spatial statistics and embed mode (sp.*, em.*): defined with their English and German strings
+import { SPATIAL_FR } from './i18n-spatial';
+Object.assign(FR, SPATIAL_FR);

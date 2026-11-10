@@ -1,5 +1,6 @@
 // Shareable view state in the URL hash. Full form (works within the page and in most links):
 //   #v=compare&l=bezirk&m=geo_pop_density&b=share_foreign&s=pop_total&d=sym&cls=q&y=2015
+//    &sp=lisa&fdr=1 (cluster map) | &sp=bi&b=<metric> (bivariate)  &embed=1 (compact iframe view)
 //    &f=n:pop_total:1000:50000&f=c:kanton:ZH,BE&f=r:bern:pt:30&hub=bern&reach=pt&t=45&sel=261&tab=rank
 // Every key is optional; defaults are left out. A bare single word (#compare, #density-foreigners, …)
 // is accepted too: some hosts (the Claude artifact preview) keep only that form in shared links.
@@ -13,6 +14,8 @@ export type ReachMode = 'off' | 'pt' | 'car';
 export type Lang = 'en' | 'de' | 'fr';
 const LANGS: Lang[] = ['en', 'de', 'fr'];
 export type Display = 'choropleth' | 'symbols';
+/** spatial map mode (map view): 'lisa' = cluster map, 'bi' = bivariate map of the shade metric against `b` */
+export type SpatialMode = 'off' | 'lisa' | 'bi';
 export type CatField = 'kanton' | 'sprachgebiet' | 'gemeindetyp' | 'stadt_land' | 'agglomeration' | 'grossregion';
 export const CAT_FIELDS: CatField[] = ['kanton', 'sprachgebiet', 'gemeindetyp', 'stadt_land', 'agglomeration', 'grossregion'];
 
@@ -49,6 +52,11 @@ export interface ViewState {
   vdiff: boolean;
   /** values resting on small numbers: shown, drawn lighter, or hidden (treated as gaps) */
   unstable: 'show' | 'light' | 'hide';
+  /** spatial statistics: map mode ('sp'), false discovery rate for the cluster map ('fdr') */
+  spatial: SpatialMode;
+  fdr: boolean;
+  /** compact embed mode (map, legend, attribution, link to the full view) for iframes ('embed=1') */
+  embed: boolean;
   /** preset slug from a bare '#word' hash ('' = plain '#compare') */
   preset: string | null;
   /** keys this module does not know (for pages added later) */
@@ -62,7 +70,7 @@ export const DEFAULT_LEVEL = 'gemeinde';
 export const DEFAULT_METRIC = 'geo_pop_density';
 const CLS: Record<string, Method> = { q: 'quantile', e: 'equal', c: 'continuous' };
 const CLS_KEY: Record<Method, string> = { quantile: 'q', equal: 'e', continuous: 'c' };
-const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur']);
+const KNOWN = new Set(['v', 'mode', 'l', 'm', 'b', 's', 'd', 'cls', 'y', 'f', 'pop', 'hub', 'reach', 't', 'sel', 'tab', 'lang', 'only', 'ptm', 'vote', 'vd', 'ur', 'sp', 'fdr', 'embed']);
 /** bare words that name a route rather than a compare preset */
 const ROUTE_WORDS = new Set(['map', 'single', 'compare']);
 
@@ -132,12 +140,16 @@ export function parseHash(hash: string): ViewState {
     t: t === null ? 60 : Math.max(0, Math.min(T_MAX, t)),
     sel: get('sel') ?? null,
     tab: get('tab') ?? null,
-    lang: LANGS.includes(get('lang') as Lang) ? (get('lang') as Lang) : storedLang(),
+    // an embedded frame does not read or write the visitor's stored language: English unless the link says otherwise
+    lang: LANGS.includes(get('lang') as Lang) ? (get('lang') as Lang) : get('embed') === '1' ? 'en' : storedLang(),
     only: get('only') === '1',
     ptm: get('ptm') === 'dd' ? 'dd' : 'st',
     vote: /^\d+$/.test(get('vote') ?? '') ? get('vote')! : null,
     vdiff: get('vd') === '1',
     unstable: get('ur') === 'l' ? 'light' : get('ur') === 'h' ? 'hide' : 'show',
+    spatial: get('sp') === 'lisa' ? 'lisa' : get('sp') === 'bi' ? 'bi' : 'off',
+    fdr: get('fdr') === '1',
+    embed: get('embed') === '1',
     preset,
     params,
   };
@@ -178,13 +190,16 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.route !== 'map') add('v', s.route);
   if (s.level !== DEFAULT_LEVEL) add('l', s.level);
   if (s.metric) add('m', s.metric);
-  if (s.route === 'compare' && s.metricB) add('b', s.metricB);
+  const bivariate = s.route === 'map' && s.spatial === 'bi';
+  if ((s.route === 'compare' || bivariate) && s.metricB) add('b', s.metricB);
   if (s.size) add('s', s.size);
   if (s.display === 'symbols') add('d', 'sym');
   if (s.cls !== 'quantile') add('cls', CLS_KEY[s.cls]);
   if (s.year) add('y', s.year);
   if (s.vote) add('vote', s.vote);
   if (s.vdiff) add('vd', '1');
+  if (s.route === 'map' && s.spatial !== 'off') add('sp', s.spatial);
+  if (s.route === 'map' && s.spatial === 'lisa' && s.fdr) add('fdr', '1');
   if (s.unstable !== 'show') add('ur', s.unstable === 'light' ? 'l' : 'h');
   for (const f of s.filters) add('f', filterKey(f));
   if (s.hub !== DEFAULT_HUB) add('hub', s.hub);
@@ -196,6 +211,7 @@ export function serializeHash(s: Omit<ViewState, 'preset'>): string {
   if (s.sel) add('sel', s.sel);
   if (s.tab) add('tab', s.tab);
   if (s.lang !== 'en') add('lang', s.lang);
+  if (s.embed) add('embed', '1');
   if (s.route === 'compare' && s.only && s.filters.length) add('only', '1');
   for (const [k, v] of Object.entries(s.params)) add(k, v);
   return out.length ? '#' + out.map(([k, v]) => `${k}=${enc(v)}`).join('&') : '';

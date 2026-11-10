@@ -14,6 +14,14 @@
   import YearSlider from '../components/YearSlider.svelte';
   import VotePicker from '../components/VotePicker.svelte';
   import VoteResult from '../components/VoteResult.svelte';
+  import SpatialPanel from '../components/SpatialPanel.svelte';
+  import SpatialLegend from '../components/SpatialLegend.svelte';
+  import EmbedDialog from '../components/EmbedDialog.svelte';
+  import { SpatialController } from '../lib/spatial.svelte';
+  import { bivariate, lisaClasses, spearman } from '../lib/spatial';
+  import { bivariateColours, lisaColours, BIVARIATE, LISA_COLOURS } from '../lib/spatial-colours';
+  import { viewUrl } from '../lib/embed';
+  import '../lib/i18n-spatial';
   import { loadVoteFile, loadVoteIndex, voteIdOf, type VoteIndex } from '../lib/votes';
   import StatsBlock from '../components/StatsBlock.svelte';
   import { buildScale, divergeCentre, unitOf, fmtNumber, fmtPeriod, fmtTick, fmtValue, isDiverging, legendItems, sortedValues } from '../lib/classify';
@@ -22,7 +30,7 @@
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    availableAt, flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, attachedFrom, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -124,6 +132,58 @@
     }
     return { ...r, col: { ...r.col, v, n, notes } };
   });
+  // ------------------------------------------------------------------ spatial statistics (Moran's I, clusters, bivariate)
+  let spOpen = $state(app.spatial !== 'off');
+  $effect(() => {
+    if (app.spatial !== 'off') spOpen = true;
+  });
+  const sp = new SpatialController(() => ({
+    ld, values: whyA || !refA ? null : refA.col.v, enabled: spOpen || app.spatial !== 'off', lisa: app.spatial === 'lisa',
+  }));
+  const lisaCls = $derived(app.spatial === 'lisa' && sp.lisa && sp.lisa.p.length === ld.units.length ? lisaClasses(sp.lisa, 0.05, app.fdr) : null);
+  const metaB = $derived(app.metricB ? (metas.get(app.metricB) ?? null) : null);
+  const refB = $derived(app.spatial === 'bi' && metaB && metaB.id !== metaRaw.id && availableAt(metaB, ld.level) ? cols.get(ld, metaB.id, app.year) : null);
+  const biRes = $derived(app.spatial === 'bi' && refA && !whyA && refB ? bivariate(refA.col.v, refB.col.v) : null);
+  const biRho = $derived(biRes && refA && refB ? spearman(refA.col.v, refB.col.v) : null);
+  const spatialColours = $derived(lisaCls ? lisaColours(lisaCls.code) : biRes && biRes.n > 0 ? bivariateColours(biRes.cell) : null);
+  /** the spatial legend replaces the shade legend while a spatial map mode is drawn */
+  const spatialMode = $derived<'lisa' | 'bi' | null>(lisaCls ? 'lisa' : biRes && biRes.n > 0 && metaB ? 'bi' : null);
+  function setSpatial(m: 'off' | 'lisa' | 'bi') {
+    app.spatial = m;
+    // a first bivariate map needs a second metric: offer a different one that exists at this level
+    if (m === 'bi' && (!app.metricB || !metas.get(app.metricB) || !availableAt(metas.get(app.metricB)!, ld.level))) {
+      const alt = ['pop_total', 'geo_pop_density'].map((id) => metas.get(id)).find((x) => x && x.id !== metaRaw.id && availableAt(x, ld.level));
+      app.metricB = alt?.id ?? null;
+    }
+  }
+  /** text for one unit in the spatial mode (tooltip, card) */
+  function spatialText(i: number): string | null {
+    if (lisaCls && sp.lisa) {
+      const c = lisaCls.code[i];
+      const k = c === 1 ? 'hh' : c === 2 ? 'll' : c === 3 ? 'lh' : c === 4 ? 'hl' : c === 0 ? 'ns' : null;
+      if (!k) return t('sp.lisa.none');
+      return k === 'ns' ? t('sp.lisa.ns') : `${t(`sp.lisa.${k}`)} · p = ${fmtNumber(sp.lisa.p[i], 3)}`;
+    }
+    if (biRes && metaB) {
+      const c = biRes.cell[i];
+      return c < 0 ? t('lg.noData') : `${ml(metaA)}: ${t(`sp.bi.third.${c % 3}`)} · ${ml(metaB)}: ${t(`sp.bi.third.${Math.floor(c / 3)}`)}`;
+    }
+    return null;
+  }
+  /** legend rows of the spatial map for the PNG export */
+  function spatialLegendItems(): LegendItem[] | null {
+    if (lisaCls) {
+      const c = lisaCls.counts;
+      return (['hh', 'll', 'lh', 'hl', 'ns'] as const).map((k) => ({ colour: LISA_COLOURS[k], label: `${t(`sp.lisa.${k}`)} (${fmtNumber(c[k], 0)})` }));
+    }
+    if (biRes && metaB) {
+      return [2, 1, 0].flatMap((b) => [0, 1, 2].map((a) => ({
+        colour: BIVARIATE[3 * b + a], label: `${ml(metaA)}: ${t(`sp.bi.third.${a}`)} · ${ml(metaB)}: ${t(`sp.bi.third.${b}`)} (${fmtNumber(biRes.counts[3 * b + a], 0)})`,
+      })));
+    }
+    return null;
+  }
+
   // D21: a value published for a coarser area (labour market area, canton) attached to municipalities
   const regional = $derived(whyA ? null : regionalAt(metaRaw, ld.level));
   let regionGeo = $state.raw<{ level: string; fc: import('geojson').FeatureCollection } | null>(null);
@@ -329,7 +389,7 @@
     view = new UnitMap(mapEl, base, {
       onSelect: select, onHover: (i, p) => { hover = i; hoverAt = i === null ? null : p; },
       onReset: () => fit(true), resetLabel: () => t('map.reset'),
-      onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full,
+      ...(app.embed ? {} : { onFull: () => setFull(!full), fullLabel: () => t(full ? 'map.fullExit' : 'map.full'), isFull: () => full }),
     });
     overlay = new ReachOverlay(view.map, mapEl);
     view.map.on('zoom', () => (zf = zoomScale(view!.map.getZoom())));
@@ -435,10 +495,10 @@
   const colours = $derived.by(() => {
     if (!scaleA || whyA) return ld.units.map(() => null);
     const surface = token('--map-bg');
-    const out = scaleA.unitColour.slice();
+    const out = (spatialColours ?? scaleA.unitColour).slice();
     for (let i = 0; i < out.length; i++) {
       const c = out[i];
-      if (c === null) continue;
+      if (c === null || c === undefined) continue;
       if (!match.m[i]) out[i] = mute(c, surface, 0.88);
       else if (lightSet && lightSet.has(i)) out[i] = lighten(c, 0.62);
       else if (reachCol) {
@@ -584,12 +644,13 @@
       const layers = [img];
       const rc = reachOn ? (mapEl.querySelector('canvas.reach-canvas') as HTMLCanvasElement | null) : null;
       if (rc) layers.push(rc);
-      const legend: LegendItem[] = legendItems(scaleA, metaA);
-      if (scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
+      const sLeg = spatialLegendItems();
+      const legend: LegendItem[] = sLeg ?? legendItems(scaleA, metaA);
+      if (!sLeg && scaleA.n < nUnits) legend.push({ colour: null, label: t('lg.noData') });
       if (lightSet) legend.push({ colour: lighten(scaleA.classColours[3] ?? '#356799', 0.62), label: t('fl.legendLight') });
       if (filtered) legend.push({ colour: mute(scaleA.classColours[2] ?? '#6290bb', token('--map-bg'), 0.88), label: t('ex.notMatching') });
       const lo = scaleA.lo, hi = scaleA.hi;
-      const gradient = scaleA.method === 'continuous'
+      const gradient = !sLeg && scaleA.method === 'continuous'
         ? { colours: Array.from({ length: 9 }, (_, k) => scaleA!.colourOf(lo + ((hi - lo) * k) / 8)), lo: fmtTick(lo, metaA), hi: fmtTick(hi, metaA) }
         : null;
       const src = base.sources.get(metaA.source);
@@ -598,7 +659,7 @@
       if (filtered) extra.push(`${t('tab.filters')}: ${evals.map((e) => describeFilter(e, (f, id) => catOpts(f).find((o) => o.id === id)?.name ?? id)).join('; ')} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})`);
       if (reachOn) extra.push(`${t('rc.from')} ${hub.name}: ${kindLabel(reachKind, station, true)} ≤ ${Math.round(app.t)} min. ${methodText(reachKind, hub.name, rt, station)}`);
       const blob = await figurePNG({
-        layers, scale: img.width / Math.max(1, mapEl.clientWidth), title: ml(metaA), subtitle: [sub, ...extra].join('\n'),
+        layers, scale: img.width / Math.max(1, mapEl.clientWidth), title: spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : spatialMode === 'lisa' ? t('sp.legendTitle', { metric: ml(metaA) }) : ml(metaA), subtitle: [sub, ...extra].join('\n'),
         legend: gradient ? [] : legend, gradient,
         credits: [
           `${t('lg.source')}: ${bareAttribution(src?.attribution || src?.publisher || metaA.source)} · ${fmtPeriod(colA.period)} · ${precisionText(metaA.precision)}`,
@@ -659,6 +720,8 @@
       const x = sizeRef.col.v[i];
       extra.push({ label: `${t('mv.size')}: ${ml(sizeMeta)}`, value: x === null ? t('lg.noData') : `${fmtValue(x, sizeMeta)} (${sizeRef.col.period})` });
     }
+    const stx = spatialText(i);
+    if (stx) extra.push({ label: t('sp.title'), value: stx });
     return { i, reach, sub, extra };
   });
   const tip = $derived.by(() => {
@@ -666,8 +729,17 @@
     const fmt = (x: number | null | undefined, m: MetricMeta) => (x === null || x === undefined ? t('lg.noData') : fmtValue(x, m));
     const rows = [fmt(colA.v[hover], metaA)];
     if (sizeMeta && sizeRef && sizeMeta.id !== metaA.id) rows.push(`○ ${fmt(sizeRef.col.v[hover], sizeMeta)}`);
+    const stx = spatialText(hover);
+    if (stx) rows.push(stx);
     return rows;
   });
+  // embed mode: attribution line and the link to the full view
+  const embedCredit = $derived.by(() => {
+    const ids = [metaA.source, spatialMode === 'bi' && metaB ? metaB.source : null].filter((x, k, a): x is string => !!x && a.indexOf(x) === k);
+    const srcs = ids.map((id) => bareAttribution(base.sources.get(id)?.attribution || base.sources.get(id)?.publisher || id));
+    return [`${t('lg.source')}: ${srcs.join('; ')}${colA ? ` · ${fmtPeriod(colA.period)}` : ''}`, t('ex.boundaries')].join(' · ');
+  });
+  const fullHref = $derived(app.embed ? viewUrl(false) : '');
 </script>
 
 {#snippet rankSnip()}
@@ -690,7 +762,7 @@
   {/if}
 {/snippet}
 
-<main class="stage" class:full id="main" tabindex="-1">
+<main class="stage" class:full={full || app.embed} class:embed={app.embed} id="main" tabindex="-1">
   <h1 class="sr-only">{t('mv.h1', { metric: ml(metaA), units: levelName(ld.level) })}</h1>
   <aside class="controls" class:open={sheetOpen} bind:this={panelEl} aria-label={t('mv.controls')}>
     <button type="button" class="handle" aria-expanded={sheetOpen} onclick={() => (sheetOpen = !sheetOpen)}>
@@ -730,7 +802,10 @@
           <p class="foot pl"><button type="button" class="link" onclick={() => (app.metric = pooledAlt!.id)}>{t(metaRaw.pooled ? 'fl.annual' : 'fl.pooled', { label: ml(pooledAlt) })}</button></p>
         {/if}
         <div class="legend-wrap">
-          {#if whyA}
+          {#if spatialMode}
+            <SpatialLegend mode={spatialMode} lisa={lisaCls} counts={biRes?.counts ?? null} labelA={ml(metaA)} labelB={metaB ? ml(metaB) : ''}
+              compact={!desktop && !sheetOpen} onoff={() => (app.spatial = 'off')} />
+          {:else if whyA}
             <p class="why">{whyA}</p>
           {:else if scaleA && colA}
             <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
@@ -740,7 +815,7 @@
           {:else if refA === undefined}
             <p class="foot">{t('status.loading')}</p>
           {/if}
-          {#if unstableIdx.length && !whyA}
+          {#if unstableIdx.length && !whyA && !spatialMode}
             <div class="ur">
               <span class="foot">{t('fl.n', { n: fmtNumber(unstableIdx.length, 0) })}</span>
               <div class="seg" role="radiogroup" aria-label={t('fl.show')}>
@@ -751,7 +826,8 @@
             </div>
           {/if}
           {#if scaleA && colA && !whyA}
-            <p class="exrow"><button type="button" class="exb" onclick={mapPNG} disabled={pngBusy} title={t('ex.pngT')}>{pngBusy ? t('ex.pngWait') : t('ex.pngMap')}</button></p>
+            <div class="exrow"><button type="button" class="exb" onclick={mapPNG} disabled={pngBusy} title={t('ex.pngT')}>{pngBusy ? t('ex.pngWait') : t('ex.pngMap')}</button>
+              <EmbedDialog title={spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : ml(metaA)} /></div>
           {/if}
           {#if countHint}
             <p class="hintc">{t('mv.countHint', { metric: ml(metaA) })}
@@ -771,6 +847,11 @@
           <p class="foot yr">{t(li.series ? 'mv.yearNoSeries' : 'mv.yearNoSeriesLevel', { y: app.year })}
             <button type="button" class="link" onclick={() => (app.year = null)}>{t('mv.backLatest')}</button></p>
         {/if}
+      </section>
+
+      <section class="spsec">
+        <SpatialPanel {sp} bind:open={spOpen} metrics={base.metrics} {metaA} {metaB} level={ld.level} unitWord={word} {nUnits} usable={!whyA && !!refA}
+          cls={lisaCls} bi={biRes} rho={biRho} biLoading={app.spatial === 'bi' && !!metaB && metaB.id !== metaRaw.id && refB === undefined} onmode={setSpatial} />
       </section>
 
       <section class="extra">
@@ -842,34 +923,47 @@
   <section class="pane">
     <div class="mapbox">
       <div class="map" bind:this={mapEl}></div>
+      {#if !app.embed}
       <div class="lvlbar">
         <LevelSwitch value={ld.level} avail={levelsOf(metaA)} naTitle={(l) => t('level.na', { metric: ml(metaA), level: levelWord(l) })} onchange={(l) => { stop(); requestLevel(base, l); }} />
         <LevelNote {base} />
       </div>
-      {#if !desktop && card && refA && colA}
+      {/if}
+      {#if (!desktop || app.embed) && card && refA && colA}
         <div class="card-wrap">
           <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
             source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} compact onclose={() => (app.sel = null)}
             profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
         </div>
       {/if}
-      {#if full && scaleA && colA && !whyA}
+      {#if (full || app.embed) && scaleA && colA && !whyA}
         <div class="flegend">
-          <div class="fl-t">{ml(metaA)}</div>
-          <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
-            method={app.cls} onmethod={(m) => (app.cls = m)} compact />
+          {#if spatialMode}
+            <div class="fl-t">{spatialMode === 'bi' && metaB ? t('sp.legendBi', { a: ml(metaA), b: ml(metaB) }) : t('sp.legendTitle', { metric: ml(metaA) })}</div>
+            <SpatialLegend mode={spatialMode} lisa={lisaCls} counts={biRes?.counts ?? null} labelA={ml(metaA)} labelB={metaB ? ml(metaB) : ''} compact />
+          {:else}
+            <div class="fl-t">{ml(metaA)}</div>
+            <Legend meta={metaA} v={colA.v} period={colA.period} scale={scaleA} {nUnits} unitWord={word} source={base.sources.get(metaA.source)}
+              method={app.cls} onmethod={(m) => (app.cls = m)} compact />
+          {/if}
         </div>
       {/if}
-      {#if tip && hover !== null && hoverAt && desktop}
+      {#if tip && hover !== null && hoverAt && (desktop || app.embed)}
         <div class="maptip" style="left:{hoverAt.x}px; top:{hoverAt.y}px">
           <strong>{names[hover]}</strong>{#if ld.canton[hover] && ld.level !== 'kanton' && !names[hover].includes('(')}&nbsp;<span class="muted">{ld.canton[hover]}</span>{/if}
           {#each tip as r}<div class="num">{r}</div>{/each}
         </div>
       {/if}
     </div>
+    {#if app.embed}
+      <div class="embed-foot">
+        <span class="credit">{embedCredit}</span>
+        <a class="open" href={fullHref} target="_blank" rel="noopener">{t('em.open')} ↗</a>
+      </div>
+    {/if}
   </section>
 
-  {#if desktop}
+  {#if desktop && !app.embed}
     <aside class="side" aria-label={t('tab.stats')}>
       {#if card && refA && colA}
         <div class="caps lab">{t('mv.selected', { one })}</div>
@@ -940,7 +1034,7 @@
   .badge { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; background: var(--ink); color: var(--ink-text); font-size: 0.66rem; }
   .hint { margin: 0; }
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
-  .exrow { margin: 6px 0 0; }
+  .exrow { margin: 6px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
   .vd { margin-top: 6px; }
   .regn { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--ink); padding-left: 6px; }
   .ur { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin-top: 6px; }
@@ -956,6 +1050,14 @@
   }
   .fl-t { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; }
   .stage:focus { outline: none; }
+  .spsec { padding: 10px 0; }
+  .embed-foot {
+    flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 10px; background: var(--panel);
+    border-top: 1px solid var(--rule); font-size: 0.7rem; color: var(--faint); min-height: 26px;
+  }
+  .embed-foot .credit { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .embed-foot .open { flex: none; color: var(--text); font-weight: 700; font-size: 0.76rem; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+  .stage.embed .flegend { bottom: 10px; width: min(280px, calc(100% - 20px)); }
   /* full-screen map: header and panels hidden, the map fills the viewport */
   :global(html.mapfull .app > header.top) { display: none; }
   .stage.full { display: block; }

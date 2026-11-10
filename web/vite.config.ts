@@ -9,6 +9,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     target: 'es2022',
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 1300,
   },
 });
