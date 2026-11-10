@@ -121,6 +121,12 @@ exact:
 
 patterns:
   # ---- counts of missing municipalities (pipeline/build/metrics.py) --------------------------------------
+  - {en: '1 of ([\d,]+) municipalities without a value: (.+)', de: '1 von {1|n} Gemeinden ohne Wert: {2|l}', fr: '1 commune sur {1|n} sans valeur : {2|l}'}
+  - {en: '1 suppressed \(small numbers\)', de: '1 unterdrückt (kleine Zahlen)', fr: '1 masquée (petits nombres)'}
+  - {en: '1 not published', de: '1 nicht veröffentlicht', fr: '1 non publiée'}
+  - {en: '1 not covered', de: '1 nicht erfasst', fr: '1 non couverte'}
+  - {en: '1 no row in the source', de: '1 ohne Zeile in der Quelle', fr: '1 absente de la source'}
+  - {en: 'estimate: 1 of ([\d,]+) municipalities suppressed for small numbers \(([\d.]+) % of residents\) are not included', de: 'Schätzung: 1 von {1|n} Gemeinden, wegen kleiner Zahlen unterdrückt ({2|n} % der Einwohner), ist nicht enthalten', fr: 'estimation : 1 commune sur {1|n}, masquée pour petits nombres ({2|n} % des habitants), n''est pas comprise'}
   - {en: '([\d,]+) of ([\d,]+) municipalities without a value: (.+)', de: '{1|n} von {2|n} Gemeinden ohne Wert: {3|l}', fr: '{1|n} communes sur {2|n} sans valeur : {3|l}'}
   - {en: '([\d,]+) suppressed \(small numbers\)', de: '{1|n} unterdrückt (kleine Zahlen)', fr: '{1|n} masquées (petits nombres)'}
   - {en: '([\d,]+) not published', de: '{1|n} nicht veröffentlicht', fr: '{1|n} non publiées'}
@@ -155,10 +161,10 @@ patterns:
   - {en: 'computed on today''s boundaries: mean of the municipal values weighted by residents', de: 'auf dem heutigen Gebietsstand berechnet: Mittel der Gemeindewerte, gewichtet mit den Einwohnern', fr: 'calculé sur le territoire actuel : moyenne des valeurs communales pondérée par les habitants'}
   - {en: 'on today''s boundaries: (.+), so it differs from the figure published for the canton at the time', de: 'auf dem heutigen Gebietsstand: {1|t}; deshalb weicht der Wert von der damals für den Kanton veröffentlichten Zahl ab', fr: 'sur le territoire actuel : {1|t} ; la valeur diffère donc du chiffre publié à l''époque pour le canton'}
   - {en: 'on today''s boundaries: (.+), so it differs from the figure published for the district at the time', de: 'auf dem heutigen Gebietsstand: {1|t}; deshalb weicht der Wert von der damals für den Bezirk veröffentlichten Zahl ab', fr: 'sur le territoire actuel : {1|t} ; la valeur diffère donc du chiffre publié à l''époque pour le district'}
-  - {en: 'includes (.+) \(then canton ([A-Z]{2})\)', de: 'mit {1} (damals Kanton {2})', fr: 'avec {1} (alors canton {2})'}
-  - {en: 'without (.+) \(now canton ([A-Z]{2})\)', de: 'ohne {1} (heute Kanton {2})', fr: 'sans {1} (aujourd''hui canton {2})'}
-  - {en: 'includes (.+) \(then in another district\)', de: 'mit {1} (damals in einem anderen Bezirk)', fr: 'avec {1} (alors dans un autre district)'}
-  - {en: 'without (.+) \(now in another district\)', de: 'ohne {1} (heute in einem anderen Bezirk)', fr: 'sans {1} (aujourd''hui dans un autre district)'}
+  - {en: 'includes ((?:(?!; ).)+) \(then canton ([A-Z]{2})\)', de: 'mit {1} (damals Kanton {2})', fr: 'avec {1} (alors canton {2})'}
+  - {en: 'without ((?:(?!; ).)+) \(now canton ([A-Z]{2})\)', de: 'ohne {1} (heute Kanton {2})', fr: 'sans {1} (aujourd''hui canton {2})'}
+  - {en: 'includes ((?:(?!; ).)+) \(then in another district\)', de: 'mit {1} (damals in einem anderen Bezirk)', fr: 'avec {1} (alors dans un autre district)'}
+  - {en: 'without ((?:(?!; ).)+) \(now in another district\)', de: 'ohne {1} (heute in einem anderen Bezirk)', fr: 'sans {1} (aujourd''hui dans un autre district)'}
   - {en: 'includes ([\d,]+) municipalities then in another district', de: 'mit {1|n} Gemeinden, die damals in einem anderen Bezirk lagen', fr: 'avec {1|n} communes alors situées dans un autre district'}
   - {en: 'without ([\d,]+) municipalities now in another district', de: 'ohne {1|n} Gemeinden, die heute in einem anderen Bezirk liegen', fr: 'sans {1|n} communes aujourd''hui situées dans un autre district'}
   - {en: 'includes ([\d,]+) municipalities then in another canton', de: 'mit {1|n} Gemeinden, die damals in einem anderen Kanton lagen', fr: 'avec {1|n} communes alors situées dans un autre canton'}
@@ -185,8 +191,8 @@ patterns:
   - {en: 'not published by ([A-Z]{2}) \(data protection: fewer than (\d+) transactions\)', de: 'von {1} nicht veröffentlicht (Datenschutz: weniger als {2} Handänderungen)', fr: 'non publié par {1} (protection des données : moins de {2} transactions)'}
   - {en: 'not published by ([A-Z]{2}) \(fewer than (\d+) relevant transactions\)', de: 'von {1} nicht veröffentlicht (weniger als {2} massgebende Handänderungen)', fr: 'non publié par {1} (moins de {2} transactions déterminantes)'}
   # ---- reach (pipeline/reach, pipeline/build/profile.py) ---------------------------------------------------
-  - {en: 'from (.+) \((bus|boat|tram|metro|cableway|funicular)\), not a rail station', de: 'ab {1} ({2|t}), kein Bahnhof', fr: 'depuis {1} ({2|t}), pas une gare ferroviaire'}
-  - {en: 'nearest hub: (.+)', de: 'nächstes Zentrum: {1}', fr: 'pôle le plus proche : {1}'}
+  - {en: 'from ((?:(?!; ).)+) \((bus|boat|tram|metro|cableway|funicular)\), not a rail station', de: 'ab {1} ({2|t}), kein Bahnhof', fr: 'depuis {1} ({2|t}), pas une gare ferroviaire'}
+  - {en: 'nearest hub: ((?:(?!; ).)+)', de: 'nächstes Zentrum: {1}', fr: 'pôle le plus proche : {1}'}
   - {en: 'no arrival by (\d\d:\d\d): median over the hour from the earliest possible arrival \((\d\d:\d\d)\)', de: 'keine Ankunft bis {1}: Median über die Stunde ab der frühestmöglichen Ankunft ({2})', fr: 'pas d''arrivée avant {1} : médiane sur l''heure qui suit la première arrivée possible ({2})'}
   - {en: 'GTFS timetable (\d{4}), from the main station, arrivals at the hub (\d\d:\d\d)–(\d\d:\d\d) \(median journey time, median of three weekdays\)', de: 'GTFS-Fahrplan {1}, ab dem Hauptbahnhof der Gemeinde, Ankunft im Zentrum {2}–{3} (Median der Reisezeit, Median von drei Werktagen)', fr: 'horaire GTFS {1}, depuis la gare principale, arrivées au pôle de {2} à {3} (temps de trajet médian, médiane de trois jours ouvrables)'}
   - {en: 'GTFS timetable (\d{4}), door to door, arrivals at the hub (\d\d:\d\d)–(\d\d:\d\d) \(population-weighted median, median of three weekdays\)', de: 'GTFS-Fahrplan {1}, Tür zu Tür, Ankunft im Zentrum {2}–{3} (bevölkerungsgewichteter Median, Median von drei Werktagen)', fr: 'horaire GTFS {1}, porte-à-porte, arrivées au pôle de {2} à {3} (médiane pondérée par la population, médiane de trois jours ouvrables)'}
@@ -207,3 +213,4 @@ patterns:
   - {en: 'complete \(([\d,]+) of ([\d,]+) units, ([\d.]+) % of residents\)', de: 'vollständig ({1|n} von {2|n} Einheiten, {3|n} % der Einwohner)', fr: 'complet ({1|n} unités sur {2|n}, {3|n} % des habitants)'}
   - {en: 'almost every municipality has none \(([\d,]+) of ([\d,]+) have any\)', de: 'fast keine Gemeinde hat welche ({1|n} von {2|n} haben welche)', fr: 'presque aucune commune n''en a ({1|n} sur {2|n} en ont)'}
   - {en: 'offered only at: (.+)', de: 'nur angeboten für: {1}', fr: 'proposé seulement pour : {1}'}
+  - {en: 'lake share 0 %: the municipality borders ((?:(?!; ).)+), but that lake is canton territory, not divided among the municipalities', de: 'Seeanteil 0 %: die Gemeinde grenzt an den {1}, doch dieser See ist Kantonsgebiet und nicht unter den Gemeinden aufgeteilt', fr: 'part lacustre 0 % : la commune borde le {1}, mais ce lac est territoire cantonal, non réparti entre les communes'}

@@ -84,6 +84,8 @@ def decide(mid: str, level: str, n: int, n_units: int, pop_share: float, cfg: di
         return "hide", lvl_rule.get("reason", "level not offered as a map"), "file"
     if v != "hide" and m.get("note"):
         return "note", m["note"], "file"
+    if v == "hide" and m.get("note"):          # a hidden map still says what the metric covers
+        return v, f"{why}; {m['note']}", "rule"
     return v, why, "rule"
 
 

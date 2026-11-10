@@ -11,7 +11,8 @@ English. This step ships their translations as keyed messages, so no data file c
 Translating one text (translate() below is the reference the frontend mirrors):
   1. the whole text in `exact`, else the first pattern whose `en` regex matches the whole text;
   2. otherwise the text is split at "; " into segments and each segment is translated the same way
-     (a run of segments that together match an entry is taken as one); segments without a match stay English;
+     (the longest run of segments that together match an entry is taken as one); segments without a match stay
+     English; the translated parts are joined with "; " (French: " ; ");
   3. a template inserts the regex groups: {1} as is, {1|n} with the language's number format (1,234.5 ->
      1'234.5 / 1 234,5), {1|t} translated recursively (a nested note), {1|l} as a ", " list translated item by item.
 Place names, station and hub names, party abbreviations and dates stay as they are.
@@ -36,6 +37,7 @@ I18N = Path(__file__).resolve().parents[1] / "i18n"
 LANGS = ("de", "fr")
 NUMBERS = {"de": {"group": "'", "decimal": "."}, "fr": {"group": " ", "decimal": ","}}
 NUM = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+\.\d+|\d+")
+JOIN = {"fr": " ; "}   # parts of a note are joined with "; " (French typography: " ; ")
 PLACEHOLDER = re.compile(r"\{(\d+)(?:\|([ntl]))?\}")
 
 
@@ -125,7 +127,7 @@ def translate(s: str, lang: str, tx: dict, strict: bool = False) -> str | None:
             i += 1
     if missing and strict:
         return None
-    return "; ".join(out)
+    return JOIN.get(lang, "; ").join(out)
 
 
 def untranslated_parts(s: str, lang: str, tx: dict) -> list[str]:
