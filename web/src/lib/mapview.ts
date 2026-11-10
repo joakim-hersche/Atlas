@@ -217,6 +217,8 @@ export class UnitMap {
       paint: { 'line-color': token('--water-line'), 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 10, 1.1] },
     });
     m.addLayer({ id: 'unit-line', type: 'line', source: 'units', paint: { 'line-color': token('--gem-line') } });
+    m.addSource('regions', { type: 'geojson', data: EMPTY, tolerance: 0.25 });
+    m.addLayer({ id: 'region-line', type: 'line', source: 'regions', paint: { 'line-color': token('--ink'), 'line-width': 0.8, 'line-opacity': 0.7 } });
     m.addLayer({
       id: 'kt-line', type: 'line', source: 'kt',
       paint: { 'line-color': token('--kt-line'), 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 10, 1.6], 'line-opacity': 0.85 },
@@ -269,6 +271,14 @@ export class UnitMap {
     m.setPaintProperty('sym', 'circle-stroke-color', ['case', ['any', sel, hov], token('--sel-line'),
       filled ? (['case', ['boolean', ['feature-state', 'nd'], false], token('--nodata-line'), token('--sym-stroke')]) : token('--ink')] as never);
     m.setPaintProperty('sym', 'circle-stroke-width', ['case', sel, 2.2, hov, 1.6, filled ? 0.6 : 1] as never);
+  }
+
+  /** Regional values (D21): municipal borders hidden, the outlines of the native regions drawn instead.
+   *  null = normal municipal borders. */
+  setRegions(fc: FeatureCollection | null) {
+    if (!this.isReady) return;
+    (this.map.getSource('regions') as maplibregl.GeoJSONSource).setData(fc ?? EMPTY);
+    this.map.setLayoutProperty('unit-line', 'visibility', fc ? 'none' : 'visible');
   }
 
   /** Show another spatial level (geometry with feature id = unit index). */

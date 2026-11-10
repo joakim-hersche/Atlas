@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ml, t, tiedText } from '../lib/i18n.svelte';
+  import { levelName, ml, t, tiedText } from '../lib/i18n.svelte';
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
   import { flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
@@ -47,15 +47,18 @@
     profile?: string;
     profileLabel?: string;
     sourceLink?: string;
+    /** D21: the value is that of a coarser area (its level) */
+    regional?: string | null;
     onclose: () => void;
   }
-  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, onclose }: Props = $props();
+  let { name, canton, sub, meta, file, col, index, source, reach, docked = false, unitWord = 'municipalities', extra = [], profile, profileLabel = 'Profile', sourceLink, regional = null, onclose }: Props = $props();
 
   const value = $derived(col.v[index]);
   const rank = $derived(rankOf(col.v, index, meta.direction));
   const precision = $derived(precisionText(precisionOf(file, col, index, meta)));
   const cov = $derived(partialCantons(meta));
   const publisher = $derived(source ? source.publisher.split(' (')[0] : meta.source);
+
   /** flags of the value (small numbers, majority election, published value, provisional) */
   const flags = $derived(value !== null ? flagTexts(file, flagsOf(file, col, index), meta) : []);
   /** provenance note of a shown value (e.g. "published canton value; …") */
@@ -96,6 +99,7 @@
     <span class="tags">
       <span class="tag">{precision}</span>
       {#if cov}<span class="tag warn">{t('p.partial', { n: cov.length })}</span>{/if}
+      {#if regional}<span class="tag warn">{t('rg.tag', { level: levelName(regional, false) })}</span>{/if}
       {#if sourceLink}<a class="tag src" href={sourceLink} title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</a>
       {:else}<span class="tag src" title={source?.attribution ?? ''}>{publisher} {fmtPeriod(col.period)}</span>{/if}
     </span>

@@ -333,6 +333,8 @@ const EN: Dict = {
   "yr.latest": "Latest",
   "yr.year": "Year",
   "gl.more": "Explain",
+  "rg.note": "Regional value: each municipality shows the value of its {level} (published only for that area); municipal borders are not drawn.",
+  "rg.tag": "value of the {level}",
 };
 
 const DE: Dict = {
@@ -658,6 +660,8 @@ const DE: Dict = {
   "yr.latest": "Neuestes",
   "yr.year": "Jahr",
   "gl.more": "Erklärung",
+  "rg.note": "Regionaler Wert: Jede Gemeinde zeigt den Wert ihres Gebiets ({level}), nur für dieses publiziert; Gemeindegrenzen werden nicht gezeichnet.",
+  "rg.tag": "Wert des Gebiets ({level})",
 };
 
 /** Add strings from a page module (keeps each page's strings next to it). French lives in i18n-fr.ts. */

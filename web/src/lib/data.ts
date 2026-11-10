@@ -51,6 +51,8 @@ export interface MetricMeta {
   vote_index?: string | null;
   /** per-vote metrics: title of the latest vote */
   latest_title?: Record<string, string> | null;
+  /** level at which the source publishes the values (e.g. 'arbeitsmarktgebiet' for regional tax burdens) */
+  native_level?: string | null;
 }
 
 export interface Column {
@@ -447,6 +449,13 @@ export function unavailableReason(meta: MetricMeta, level: string): string | nul
   if (meta.aggregation === 'not_aggregatable')
     return t('why.notAgg', { level: lvlLabel(level), list });
   return t('why.notPub', { level: lvlLabel(level), list });
+}
+
+/** The coarser level whose value a unit carries (D21: a regional value attached to municipalities), or null. */
+export function regionalAt(meta: MetricMeta, level: string): string | null {
+  const nat = meta.native_level;
+  if (!nat || nat === level || level !== 'gemeinde') return null;
+  return LEVELS.some((l) => l.id === nat) ? nat : null;
 }
 
 /** Periods of a metric that the year slider can show at a level (series files exist for some levels only). */

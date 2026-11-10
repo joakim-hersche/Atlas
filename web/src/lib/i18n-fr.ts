@@ -327,6 +327,8 @@ export const FR: Dict = {
   'yr.latest': 'Plus récent',
   'yr.year': 'Année',
   'gl.more': 'Explication',
+  'rg.note': 'Valeur régionale\u00a0: chaque commune affiche la valeur de son territoire ({level}), publiée seulement pour celui-ci\u00a0; les limites communales ne sont pas dessinées.',
+  'rg.tag': 'valeur du territoire ({level})',
 
   // profile page
   'p.back': 'Carte',
@@ -419,7 +421,7 @@ export const FR: Dict = {
   // sources page
   's.title': 'Sources et licences',
   's.intro': 'L’application utilise {n} jeux de données. {h} autres sont retenus jusqu’à confirmation de leurs conditions d’utilisation. Chaque nombre de l’application provient d’un des jeux de données ci-dessous.',
-  's.noDate': `«${n}Dernière période${n}» est l’année (ou la date de votation) la plus récente affichée pour chaque jeu de données. Les dates de téléchargement sont indiquées lorsqu’elles sont connues.`,
+  's.noDate': `«${n}Dernière période${n}» est l’année (ou la date de votation) la plus récente affichée pour chaque jeu de données. «${n}Téléchargé le${n}» est la date de la copie utilisée pour construire l’application.`,
   's.gaps': 'Comment les lacunes sont signalées',
   's.gap1': `Une valeur manquante n’est jamais vide ni nulle${n}: la carte la hachure et la fiche ou le profil en indique la raison — non publié à ce niveau, masqué (petits nombres), non couvert par ce canton, sans objet ou pas de données pour cette année.`,
   's.gap2': `Les indicateurs marqués * ne couvrent qu’une partie des cantons${n}; ils indiquent «${n}partiel${n}: N cantons sur 26${n}», et les rangs ne comptent que les unités avec données.`,
@@ -435,6 +437,7 @@ export const FR: Dict = {
   's.years': 'Années',
   's.latest': 'Dernière période',
   's.fetched': 'Téléchargé le',
+  's.note': 'Remarque',
   's.metrics': '{n} indicateurs',
   's.link': 'Page de la source',
   's.filter': 'Filtrer les sources',

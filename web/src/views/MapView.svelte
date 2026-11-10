@@ -22,7 +22,7 @@
   import { precisionText } from '../lib/data';
   import type { ColumnStore } from '../lib/columns.svelte';
   import {
-    flagMarks, flagsOf, isUnstable, gapReason, namesOf, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
+    flagMarks, flagsOf, isUnstable, gapReason, namesOf, regionalAt, loadLevel, levelInfo, loadCH, loadReach, loadReachIndex, loadSeries, loadUnits, seriesPeriods, unavailableReason, type Base, type Hub, type LevelData,
     type MetricMeta, type ReachFile, type UnitRow, type Column, type ColumnFile,
   } from '../lib/data';
   import { catOptions, combine, evalFilter } from '../lib/filters';
@@ -124,6 +124,18 @@
     }
     return { ...r, col: { ...r.col, v, n, notes } };
   });
+  // D21: a value published for a coarser area (labour market area, canton) attached to municipalities
+  const regional = $derived(whyA ? null : regionalAt(metaRaw, ld.level));
+  let regionGeo = $state.raw<{ level: string; fc: import('geojson').FeatureCollection } | null>(null);
+  $effect(() => {
+    const r = regional;
+    if (r && regionGeo?.level !== r) loadLevel(r).then((d) => (regionGeo = { level: r, fc: d.geo })).catch(() => {});
+  });
+  $effect(() => {
+    const fc = regional && regionGeo?.level === regional ? regionGeo.fc : null;
+    void ld;
+    if (mapReady) view!.setRegions(fc);
+  });
   // pooled multi-year rate of this annual metric, or the annual metric of this pooled one
   const pooledAlt = $derived(
     metaRaw.pooled ? metas.get(metaRaw.pooled.of) ?? null : (base.metrics.find((m) => m.pooled?.of === metaRaw.id && m.levels.includes(ld.level)) ?? null),
@@ -135,6 +147,13 @@
     return s.length ? buildScale(colA.v, app.cls, isDiverging(metaA, s), seqRamp(), divRamp(), divergeCentre(metaA)) : null;
   });
   const yearPeriods = $derived(seriesPeriods(metaRaw, ld.level));
+  /** the period shown is newer than the default and incomplete (contract F): its coverage label */
+  const incomplete = $derived.by(() => {
+    const ip = refA ? metaRaw.incomplete_periods?.[refA.col.period] : undefined;
+    if (!ip) return null;
+    const l = app.lang === 'de' ? ip.label_de : app.lang === 'fr' ? ip.label_fr : null;
+    return l ?? ip.label_en ?? `${fmtNumber(ip.n, 0)} / ${fmtNumber(ip.of, 0)}`;
+  });
   /** a count (sum) as a choropleth favours large units: suggest circles */
   const countHint = $derived(metaA.aggregation === 'sum' && app.display === 'choropleth' && app.size !== metaA.id && !whyA);
   function countAsSymbols() {
@@ -701,6 +720,7 @@
           </div>
         {/if}
         {#if refRaw?.voteMissing}<p class="foot">{t('vt.missing')}</p>{/if}
+        {#if regional}<p class="regn">{t('rg.note', { level: levelName(regional, false) })}</p>{/if}
         {#if pooledAlt && !whyA}
           <p class="foot pl"><button type="button" class="link" onclick={() => (app.metric = pooledAlt!.id)}>{t(metaRaw.pooled ? 'fl.annual' : 'fl.pooled', { label: ml(pooledAlt) })}</button></p>
         {/if}
@@ -739,6 +759,7 @@
               {#if refA?.noSeries}{' · '}<span class="warn">{t('mv.noSeries')}</span>
               {:else if refA?.yearMissing}{' · '}<span class="warn">{t('mv.noYearVal', { y: refA.yearMissing })}</span>
               {:else if yearEmpty}{' · '}<span class="warn">{t('mv.noYearLevel', { y: app.year ?? '' })}</span>{/if}
+              {#if incomplete}{' · '}<span class="warn">{incomplete}</span>{/if}
             </YearSlider>
           </div>
         {:else if app.year && !whyA}
@@ -824,7 +845,7 @@
         <div class="card-wrap">
           <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
             source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} onclose={() => (app.sel = null)}
-            profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
+            profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
         </div>
       {/if}
       {#if full && scaleA && colA && !whyA}
@@ -849,7 +870,7 @@
         <div class="caps lab">{t('mv.selected', { one })}</div>
         <Card name={names[card.i]} canton={ld.canton[card.i]} sub={card.sub} meta={metaA} file={refA.file} col={colA} index={card.i}
           source={base.sources.get(metaA.source)} reach={card.reach} unitWord={word} extra={card.extra} docked onclose={() => (app.sel = null)}
-          profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} />
+          profile={profileHref(refOf(ld.level, ld.units[card.i]))} profileLabel={t('card.profile')} sourceLink={sourceHref(metaA.source)} {regional} />
       {:else}
         <p class="foot hint">{t('mv.hint')}</p>
       {/if}
@@ -916,6 +937,7 @@
   .card-wrap { position: absolute; z-index: 6; top: 8px; left: 8px; right: 8px; max-width: 440px; margin: 0 auto; }
   .exrow { margin: 6px 0 0; }
   .vd { margin-top: 6px; }
+  .regn { margin: 6px 0 0; font-size: 0.76rem; border-left: 3px solid var(--ink); padding-left: 6px; }
   .ur { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin-top: 6px; }
   .ur .seg button { padding: 2px 7px; font-size: 0.72rem; }
   .pl { margin: 4px 0 0; }

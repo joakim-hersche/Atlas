@@ -408,6 +408,7 @@
       <span class="tags">
         {#if e}<span class="tag">{precisionLabel(e.precision)}</span><span class="sep">·</span>{/if}
         {#if e?.partial}<span class="tag warn">{t('p.partial', { n: e.partial.length })}</span><span class="sep">·</span>{/if}
+        {#if e?.regional}<span class="tag warn">{t('rg.tag', { level: levelName(e.regional, false) })}</span><span class="sep">·</span>{/if}
         <a class="tag src" href={sourceHref(m.source)} title={base.sources.get(m.source)?.title ?? ''}>{publisher(m)}</a>
       </span>
     </div>

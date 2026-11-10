@@ -20,21 +20,26 @@
   const g = $derived(k ? gloss(k) : null);
   const open = $derived(openId === id);
   let root = $state<HTMLSpanElement>();
-  /** open toward the left when the ⓘ sits in the right half of the screen */
-  let flip = $state(false);
+  /** fixed position of the popover (escapes scrolling panels that would clip it) */
+  let pos = $state({ top: 0, left: 0 });
+  function place() {
+    const r = root!.getBoundingClientRect();
+    const w = Math.min(280, window.innerWidth - 16);
+    pos = { top: Math.min(r.bottom + 4, window.innerHeight - 140), left: Math.max(8, Math.min(r.left - 8, window.innerWidth - w - 8)) };
+  }
   function outside(e: PointerEvent) {
     if (open && root && !root.contains(e.target as Node)) openId = null;
   }
 </script>
 
-<svelte:window onpointerdown={outside} onkeydown={(e) => open && e.key === 'Escape' && (openId = null)} />
+<svelte:window onscroll={() => (openId = null)} onresize={() => (openId = null)} onpointerdown={outside} onkeydown={(e) => open && e.key === 'Escape' && (openId = null)} />
 
 {#if g}
   <span class="term" bind:this={root}>
     <button type="button" class="i" aria-expanded={open} aria-controls={id} aria-label="{t('gl.more')}: {g.term}"
-      onclick={(e) => { e.stopPropagation(); flip = (root?.getBoundingClientRect().left ?? 0) > window.innerWidth / 2; openId = open ? null : id; }}>i</button>
+      onclick={(e) => { e.stopPropagation(); place(); openId = open ? null : id; }}>i</button>
     {#if open}
-      <span class="pop" class:flip id={id} role="note"><strong>{g.term}</strong> {g.text}</span>
+      <span class="pop" id={id} role="note" style="top:{pos.top}px; left:{pos.left}px"><strong>{g.term}</strong> {g.text}</span>
     {/if}
   </span>
 {/if}
@@ -47,10 +52,9 @@
   }
   .i[aria-expanded='true'] { background: var(--ink); color: var(--ink-text); }
   .pop {
-    position: absolute; z-index: 80; top: calc(100% + 4px); left: -8px; width: min(280px, 80vw); background: var(--panel); color: var(--text);
+    position: fixed; z-index: 90; width: min(280px, calc(100vw - 16px)); background: var(--panel); color: var(--text);
     border: 1px solid var(--ink); border-top: 3px solid var(--ink); padding: 7px 9px; font-size: 0.78rem; font-weight: 400; line-height: 1.4;
     text-transform: none; letter-spacing: 0; white-space: normal; text-align: left; font-style: normal;
   }
-  .pop.flip { left: auto; right: -8px; }
   .pop strong { display: block; margin-bottom: 2px; }
 </style>

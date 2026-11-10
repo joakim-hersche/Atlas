@@ -4,7 +4,7 @@
     {
       's.title': 'Sources and licences',
       's.intro': 'The app uses {n} datasets. {h} more are held back until their terms of use are confirmed. Every number in the app comes from one of the datasets below.',
-      's.noDate': '“Latest period” is the most recent year (or vote date) shown from each dataset. Download dates are not listed yet.',
+      's.noDate': '“Latest period” is the most recent year (or vote date) shown from each dataset; “Downloaded” is the date of the copy the app was built from.',
       's.gaps': 'How gaps are shown',
       's.gap1': 'A missing value is never blank and never zero: the map hatches it and the card or profile states why — not published at this level, suppressed (small numbers), not covered by this canton, not applicable, or no data for this year.',
       's.gap2': 'Metrics marked * cover some cantons only; they show “partial: N of 26 cantons”, and ranks count only the units with data.',
@@ -19,6 +19,8 @@
       's.vintage': 'Boundaries as of',
       's.years': 'Years',
       's.latest': 'Latest period',
+      's.fetched': 'Downloaded',
+      's.note': 'Note',
       's.metrics': '{n} metrics',
       's.link': 'Source page',
       's.filter': 'Filter sources',
@@ -27,7 +29,7 @@
     {
       's.title': 'Quellen und Lizenzen',
       's.intro': 'Die App verwendet {n} Datensätze. {h} weitere sind zurückgestellt, bis ihre Nutzungsbedingungen bestätigt sind. Jede Zahl in der App stammt aus einem der folgenden Datensätze.',
-      's.noDate': '«Letzte Periode» ist das jüngste Jahr (oder Abstimmungsdatum), das aus einem Datensatz gezeigt wird. Downloaddaten sind noch nicht aufgeführt.',
+      's.noDate': '«Letzte Periode» ist das jüngste Jahr (oder Abstimmungsdatum), das aus einem Datensatz gezeigt wird; «Heruntergeladen» ist das Datum der Kopie, aus der die App gebaut wurde.',
       's.gaps': 'Wie Lücken gezeigt werden',
       's.gap1': 'Ein fehlender Wert ist nie leer und nie null: Die Karte schraffiert ihn, und Karte oder Profil nennen den Grund — auf dieser Ebene nicht publiziert, unterdrückt (kleine Zahlen), von diesem Kanton nicht erfasst, nicht anwendbar oder keine Daten für dieses Jahr.',
       's.gap2': 'Mit * markierte Kennzahlen decken nur einen Teil der Kantone ab; sie zeigen «teilweise: N von 26 Kantonen», und Ränge zählen nur Einheiten mit Daten.',
@@ -42,6 +44,8 @@
       's.vintage': 'Gebietsstand',
       's.years': 'Jahre',
       's.latest': 'Letzte Periode',
+      's.fetched': 'Heruntergeladen',
+      's.note': 'Hinweis',
       's.metrics': '{n} Kennzahlen',
       's.link': 'Quellseite',
       's.filter': 'Quellen filtern',
@@ -66,7 +70,7 @@
   }
   let { base }: Props = $props();
 
-  type FullSource = Source & { license?: string; vintage?: string; years?: string; shipped?: boolean };
+  type FullSource = Source & { license?: string; vintage?: string; years?: string; shipped?: boolean; status_note?: string | null };
   const all = $derived([...base.sources.values()] as FullSource[]);
   const byMetric = $derived.by(() => {
     const m = new Map<string, MetricMeta[]>();
@@ -109,11 +113,13 @@
       {#if s.attribution}<dt>{t('s.attribution')}</dt><dd class="attr">{s.attribution}</dd>{/if}
       {#if s.vintage}<dt>{t('s.vintage')}</dt><dd>{s.vintage}</dd>{/if}
       {#if s.years}<dt>{t('s.years')}</dt><dd>{s.years}</dd>{/if}
-      {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest)}</dd>{/if}
+      {#if latest && s.shipped !== false}<dt>{t('s.latest')}</dt><dd class="num">{fmtPeriod(latest, true)}</dd>{/if}
+      {#if s.fetched}<dt>{t('s.fetched')}</dt><dd class="num">{s.fetched}</dd>{/if}
+      {#if s.status_note}<dt>{t('s.note')}</dt><dd>{s.status_note}</dd>{/if}
     </dl>
     <p class="row">
       {#if s.url}<a href={s.url} target="_blank" rel="noopener noreferrer">{t('s.link')} ↗</a>{/if}
-      {#if s.shipped === false}<span class="held">{t('s.heldNote')}</span>{/if}
+      {#if s.shipped === false}<span class="held">{s.status_text ? `${s.status_text}. ` : ''}{t('s.heldNote')}</span>{/if}
     </p>
     {#if ms.length && s.shipped !== false}
       <details open={!!openIds[s.source_id]} ontoggle={(e) => (openIds = { ...openIds, [s.source_id]: e.currentTarget.open })}>

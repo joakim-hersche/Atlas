@@ -289,7 +289,8 @@
   const uw = (m: MetricMeta) => (m.unit.startsWith('%') ? tr('sc.pp') : unitOf(m) || tr('fp.value'));
   const slopeText = $derived.by(() => {
     if (!stats) return '–';
-    const p = slopeParts(stats.fit.slope, logX, logY);
+    // shares: a step of at most 10 percentage points ("per 10 pp", not "per 100 pp")
+    const p = slopeParts(stats.fit.slope, logX, logY, xMeta.unit.startsWith('%') ? 10 : Infinity);
     if (!p) return '–';
     if (p.kind === 'elast') return tr('sc.elast', { v: p.value });
     if (p.kind === 'tenfold') return tr('sc.perTen', { v: p.value, yu: uw(yMeta) });

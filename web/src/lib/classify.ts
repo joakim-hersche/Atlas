@@ -422,10 +422,10 @@ export interface SlopeText {
 }
 /** The least-squares slope in words-ready parts: a power-of-ten step of A chosen so the change in B has
  *  1–3 significant digits ("+5.94 per 10'000 CHF"), on log axes per tenfold A or as % change of B. */
-export function slopeParts(b: number, logX: boolean, logY: boolean): SlopeText | null {
+export function slopeParts(b: number, logX: boolean, logY: boolean, maxStep = Infinity): SlopeText | null {
   if (!Number.isFinite(b)) return null;
   const sign = (v: number) => (v > 0 ? '+' : '') + fmtSig(v);
-  const stepFor = (a: number) => (a === 0 || Math.abs(a) >= 1 ? 1 : 10 ** Math.ceil(-Math.log10(Math.abs(a))));
+  const stepFor = (a: number) => Math.min(maxStep, a === 0 || Math.abs(a) >= 1 ? 1 : 10 ** Math.ceil(-Math.log10(Math.abs(a))));
   if (logX && logY) return { kind: 'elast', value: fmtSig(b), step: '' };
   if (logX) return { kind: 'tenfold', value: sign(b), step: '' };
   if (logY) {

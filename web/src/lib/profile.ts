@@ -4,7 +4,7 @@
 import type { Feature, FeatureCollection, Geometry, Position } from 'geojson';
 import { rankOf, type RankInfo } from './classify';
 import {
-  flagMarks, flagsOf, flagTexts, gapReason, LEVELS, loadLevel, loadTheme, noteOf, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
+  flagMarks, flagsOf, flagTexts, gapReason, regionalAt, LEVELS, loadLevel, loadTheme, noteOf, partialCantons, precisionOf, type Base, type ColumnFile, type MetricMeta,
 } from './data';
 import { loadRows } from './places';
 
@@ -100,6 +100,8 @@ export interface Entry {
   /** reason for a missing value (D21) */
   gap: string | null;
   partial: string[] | null;
+  /** D21: the value is that of a coarser area (its level), or null */
+  regional: string | null;
   /** flag markers (△ M ° p) and their sentences; provenance note of a shown value */
   marks: string;
   flags: string[];
@@ -127,6 +129,7 @@ export function entryOf(pl: PlaceLevel, file: ColumnFile, meta: MetricMeta, i: n
     precision: precisionOf(file, col, i, meta),
     gap: value === null ? gapReason(file, col, i, meta, pl.canton[i]) : null,
     partial: partialCantons(meta),
+    regional: regionalAt(meta, pl.level),
     marks: value !== null ? flagMarks(file, flagsOf(file, col, i)) : '',
     flags: value !== null ? flagTexts(file, flagsOf(file, col, i), meta) : [],
     note: value !== null ? noteOf(col, i) : null,
