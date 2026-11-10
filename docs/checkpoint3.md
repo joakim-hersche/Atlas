@@ -1,6 +1,6 @@
 # Checkpoint 3 — Data ready for the frontend
 
-Status: **ready for owner review** (2026-11-10). Brief §5: present the quality report, the metric count per theme and level, and sample reach outputs for two hubs; agree on gaps before building the frontend.
+Status: **closed** (2026-11-10) — decisions D22–D28 in [`decisions.md`](decisions.md). Brief §5: present the quality report, the metric count per theme and level, and sample reach outputs for two hubs; agree on gaps before building the frontend.
 
 ## In one paragraph
 

@@ -110,3 +110,17 @@ Candidate hosts from `cantonal_sources.md` are requested in one batch; the sweep
 
 - **Car reach without OpenStreetMap:** OSM can't be downloaded from the build environment. PT reach uses our own connection-scan routing on the national GTFS; car times come from ARE NPVM 2023 (D11); drawings use swisstopo roads. Validation in `reach_method.md`.
 - **Licence gate:** the web build ships only sources whose terms are cleared (`pipeline/licence_review.yaml`); 12 sources wait for verification (Checkpoint 3, question 1).
+
+## Checkpoint 3 — data review (2026-11-10, closed)
+
+Owner: "No emails. Go with your recommendation." Options from `checkpoint3.md`:
+
+- **D22 Licences:** allow the official terms pages (geo.admin.ch, swisstopo, ESTV and the federal offices) for one verification pass; then clear or block each held-back source with evidence in `pipeline/licence_review.yaml`.
+- **D23 Initial payload:** the latest values are split into a small core file (headline metrics) plus one file per theme, loaded on first use.
+- **D24 Metric curation:** about 60 headline metrics are shown first per theme; all others stay available under "all metrics" and in search. The headline list is proposed in `headline_metrics.md` for owner review.
+- **D25 No national data requests:** no emails to BFS/SECO. Crime, pupils and unemployment stay as partial `*` cantonal coverage.
+- **D26 Additional cantonal hosts:** allowed (data.zg.ch, stada2.sg.ch, daten.statistik.zh.ch, www.ebericht.be.ch and the others found by the sweep).
+- **D27 Phase 4 stack:** TypeScript + Vite + MapLibre GL + Svelte; static hosting on GitHub Pages. The data is built in a working environment and published as a build artifact; a monthly job checks the sources rather than running the full rebuild.
+- **D28 Births:** BEVNAT (1969+) is the births, marriages and divorces series. The demographic balance keeps migration and natural change; its births metric is hidden from the picker.
+
+**Checkpoint 3 closed: 2026-11-10.** Phase 4 (web app) starts with the Checkpoint 4 skeleton.
