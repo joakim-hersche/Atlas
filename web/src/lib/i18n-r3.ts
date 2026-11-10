@@ -61,6 +61,17 @@ const EN: Record<string, string> = {
   "r3.introBi": "The map combines {a} and {b} per place; Moran’s I below measures how alike neighbouring {units} are in {a}.",
   "r3.lisaMethod": "Method: the neighbours count equally (row-standardised weights: their mean); conditional permutation (the place’s own value stays, its neighbours’ values are drawn from the other places); the test is one-sided, in the direction of the pattern observed.",
   "r3.words1": "In words",
+  "r3.ofMatch": "of {n} match",
+  "r3.rangeT": "The slider runs from the lowest to the highest value of the data; typed bounds may lie beyond it.",
+  "r3.logScale": "log scale",
+  "r3.min": "Min",
+  "r3.max": "Max",
+  "r3.noMap": "No map at any level: this metric is shown on the profiles only.",
+  "r3.noMapWhy": "No map at any level: {reason}. The values are shown on the profiles.",
+  "r3.levelAuto": "{metric} has no map for {from}: showing {to}.",
+  "r3.fpInactive": "{n} condition(s) apply to municipalities only: all {total} {units} shown.",
+  "r3.fpSomeInactive": "{n} condition(s) apply to municipalities only and are not used here",
+  "r3.showLevel": "Show {level}",
 };
 
 const DE: Record<string, string> = {
@@ -117,6 +128,17 @@ const DE: Record<string, string> = {
   "r3.introBi": "Die Karte kombiniert {a} und {b} je Ort; Morans I unten misst, wie ähnlich sich benachbarte {units} bei {a} sind.",
   "r3.lisaMethod": "Methode: Die Nachbarn zählen gleich (zeilenstandardisierte Gewichte: ihr Mittel); bedingte Permutation (der eigene Wert bleibt, die Werte der Nachbarn werden aus den übrigen Orten gezogen); der Test ist einseitig, in Richtung des beobachteten Musters.",
   "r3.words1": "In Worten",
+  "r3.ofMatch": "von {n} passen",
+  "r3.rangeT": "Der Schieber reicht vom tiefsten zum höchsten Wert der Daten; eingetippte Grenzen dürfen darüber hinausgehen.",
+  "r3.logScale": "log. Skala",
+  "r3.min": "Min.",
+  "r3.max": "Max.",
+  "r3.noMap": "Auf keiner Ebene als Karte: Diese Kennzahl erscheint nur in den Profilen.",
+  "r3.noMapWhy": "Auf keiner Ebene als Karte: {reason}. Die Werte erscheinen in den Profilen.",
+  "r3.levelAuto": "{metric} hat keine Karte für {from}: Anzeige {to}.",
+  "r3.fpInactive": "{n} Bedingung(en) gelten nur für Gemeinden: alle {total} {units} gezeigt.",
+  "r3.fpSomeInactive": "{n} Bedingung(en) gelten nur für Gemeinden und werden hier nicht angewandt",
+  "r3.showLevel": "{level} zeigen",
 };
 
 export const FR_R3: Record<string, string> = {
@@ -173,6 +195,17 @@ export const FR_R3: Record<string, string> = {
   "r3.introBi": "La carte combine {a} et {b} pour chaque lieu ; le I de Moran ci-dessous mesure la ressemblance des {units} voisines pour {a}.",
   "r3.lisaMethod": "Méthode : les voisins comptent autant (poids standardisés par ligne : leur moyenne) ; permutation conditionnelle (la valeur du lieu reste, celles des voisins sont tirées parmi les autres lieux) ; le test est unilatéral, dans le sens du motif observé.",
   "r3.words1": "En mots",
+  "r3.ofMatch": "sur {n} correspondent",
+  "r3.rangeT": "Le curseur va de la plus petite à la plus grande valeur des données ; les bornes saisies peuvent les dépasser.",
+  "r3.logScale": "échelle log.",
+  "r3.min": "Min.",
+  "r3.max": "Max.",
+  "r3.noMap": "Pas de carte, à aucun niveau : cet indicateur figure seulement dans les fiches.",
+  "r3.noMapWhy": "Pas de carte, à aucun niveau : {reason}. Les valeurs figurent dans les fiches.",
+  "r3.levelAuto": "{metric} n’a pas de carte pour les {from} : affichage des {to}.",
+  "r3.fpInactive": "{n} condition(s) ne s’appliquent qu’aux communes : les {total} {units} sont affichées.",
+  "r3.fpSomeInactive": "{n} condition(s) ne s’appliquent qu’aux communes et ne sont pas utilisées ici",
+  "r3.showLevel": "Afficher : {level}",
 };
 
 addStrings(EN, DE);

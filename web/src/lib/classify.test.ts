@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildScale, divergeCentre, isDiverging, N_CLASSES, quantile, rankOf, sortedValues, rangeText } from './classify';
+import { buildScale, divergeCentre, isDiverging, N_CLASSES, quantile, rankOf, sortedValues, rangeText, higherThan } from './classify';
 import { divRamp, seqRamp } from './theme';
 import type { MetricMeta } from './data';
 
@@ -194,5 +194,16 @@ describe('class range labels', () => {
     expect(rangeText('10', '20')).toBe('10–20');
     expect(rangeText('−14.5', '−6.5')).toBe('−14.5\u2009–\u2009−6.5');
     expect(rangeText('−1.1', '0')).toBe('−1.1\u2009–\u20090');
+  });
+});
+
+describe('tie wording (D5)', () => {
+  it('"higher than" counts only strictly lower values: a zero tied with many is not higher than them', () => {
+    const v = [0, 0, 0, 0, 0, 5, 10, 20, 30, 40];
+    const r = rankOf(v, 0, 'higher_better')!;
+    expect(higherThan(r)).toBe(0);
+    expect(r.tied).toBe(4);
+    const top = rankOf(v, 9, 'higher_better')!;
+    expect(Math.round(higherThan(top))).toBe(100);
   });
 });

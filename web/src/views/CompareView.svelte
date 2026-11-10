@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { colon } from '../lib/typo';
   // Compare mode: two synced maps (metric A and B) and a scatter plot with r, ρ and weighted r.
   import { onMount, tick } from 'svelte';
   import Legend from '../components/Legend.svelte';
@@ -311,7 +312,7 @@
       <Scatter xMeta={metaA} yMeta={metaB} x={colA.v} y={colB.v} xPeriod={colA.period} yPeriod={colB.period}
         region={regions.idx} regionNames={regions.names} {pop} names={names} cantons={ld.canton}
         hover={hover} sel={selIdx} unitWord={word} mask={filtered ? match.m : null} only={app.only}
-        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}: ${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
+        credits={[metaA, metaB].map((m, k) => `${k ? 'B' : 'A'} – ${t('lg.source')}${colon()}${bareAttribution(base.sources.get(m.source)?.attribution || base.sources.get(m.source)?.publisher || m.source)}`)}
         note={[levelName(ld.level), filtered ? `${t('tab.filters')}: ${filterText} (${t('mv.nMatch', { n: fmtNumber(match.n, 0), total: fmtNumber(nUnits, 0) })})` : ''].filter(Boolean).join(' · ')} unitOne={levelName(ld.level, false)} onhover={(i) => { hover = i; hoverAt = null; }} onselect={select} />
     {:else if whyA || whyB}
       <p class="muted loading">{t('cv.needBoth')}</p>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { colon } from '../lib/typo';
   import '../lib/i18n-r3';
   // Regression panel (D34, option B): OLS in the browser on the units of the current level.
   // Outcome and 1–6 explanatory variables (optional log10), language-region or canton controls,
@@ -557,7 +558,7 @@
       const vars = [yInfo, ...(xInfos as VarInfo[])];
       const credits = [...new Set(vars.map((v) => v.meta.source))].map((s) => {
         const src = base.sources.get(s);
-        return `${t('lg.source')}: ${bareAttribution(src?.attribution || src?.publisher || s)}`;
+        return `${t('lg.source')}${colon()}${bareAttribution(src?.attribution || src?.publisher || s)}`;
       });
       const blob = await figurePNG({
         layers: [img], scale: img.width / Math.max(1, mapEl!.clientWidth),

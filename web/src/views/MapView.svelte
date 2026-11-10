@@ -519,6 +519,16 @@
       autoSym = null;
     }
     app.metric = id;
+    // C5: a metric picked that has no map at this level: switch to a level where it has one (with "switch back")
+    if (m && !availableAt(m, ld.level)) {
+      const lv = levelsOf(m)[0];
+      if (lv) {
+        const prev = { level: ld.level, metric: metaRaw.id, metricB: app.metricB, size: app.size };
+        app.setLevel(lv);
+        app.levelNote = { text: t('r3.levelAuto', { metric: ml(m), from: levelWord(ld.level), to: levelName(lv) }), level: lv, metric: id, prev };
+        return;
+      }
+    }
     if (isCount && !keepChoro && (app.display === 'choropleth' || autoSym)) {
       app.size = id;
       app.display = 'symbols';
@@ -651,8 +661,10 @@
   // ------------------------------------------------------------------ selection
   const selIdx = $derived(app.sel !== null ? (ld.index.get(app.sel) ?? null) : null);
   // a selection or hub from a link that does not exist here is dropped (the hash follows)
+  // C6: only once the level asked for is loaded (Back to "municipality 261 selected" arrives while the district
+  // map is still shown; dropping the selection then would lose that history entry)
   $effect(() => {
-    if (app.sel !== null && !ld.index.has(app.sel)) {
+    if (app.sel !== null && ld.level === app.level && !ld.index.has(app.sel)) {
       replaceNext();
       app.sel = null;
     }
@@ -1224,7 +1236,7 @@
   const embedCredit = $derived.by(() => {
     const ids = [metaA.source, spatialMode === 'bi' && metaB ? metaB.source : null].filter((x, k, a): x is string => !!x && a.indexOf(x) === k);
     const srcs = ids.map((id) => bareAttribution(base.sources.get(id)?.attribution || base.sources.get(id)?.publisher || id));
-    return [`${t('lg.source')}: ${srcs.join('; ')}${colA ? ` · ${fmtPeriod(colA.period)}` : ''}`, t('ex.boundaries')].join(' · ');
+    return [`${t('lg.source')}${colon()}${srcs.join('; ')}${colA ? ` · ${fmtPeriod(colA.period)}` : ''}`, t('ex.boundaries')].join(' · ');
   });
   const fullHref = $derived(app.embed ? viewUrl(false) : '');
 </script>
@@ -1500,6 +1512,11 @@
           <button type="button" class="cx" aria-label={t('common.close')} onclick={() => (choose = null)}>×</button>
         </div>
       {/if}
+      {#if whyA && mapReady && !app.embed}
+        <!-- C5: why the map is empty, on the map itself -->
+        <div class="mapwhy" role="status"><p>{whyA}</p>
+          {#if levelsOf(metaRaw)[0]}<button type="button" class="btn-primary" onclick={() => { stop(); requestLevel(base, levelsOf(metaRaw)[0]); }}>{t('r3.showLevel', { level: levelName(levelsOf(metaRaw)[0]) })}</button>{/if}</div>
+      {/if}
       {#if filtered && match.n === 0 && mapReady}
         <div class="zero" role="status">
           <p>{t('ux.zero')}</p>
@@ -1593,6 +1610,12 @@
   }
   .choose .kt { font-weight: 400; color: var(--text-2); font-size: var(--fs-meta); }
   .choose .cx { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border: 0; background: none; font-size: var(--fs-lead); cursor: pointer; color: var(--text); }
+  .mapwhy {
+    position: absolute; z-index: 5; left: 50%; top: 45%; transform: translate(-50%, -50%); max-width: min(420px, calc(100% - 32px));
+    padding: var(--sp-3) var(--sp-4); background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy);
+  }
+  .mapwhy button { margin-top: var(--sp-3); }
+  .mapwhy p { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
   .zero {
     position: absolute; z-index: 6; left: 50%; top: 40%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
     padding: var(--sp-4) var(--sp-6); background: var(--panel); border: var(--rule-edge); border-top: var(--rule-heavy); max-width: calc(100% - 32px); text-align: center;

@@ -332,6 +332,10 @@ export function rankOf(v: (number | null)[], i: number, direction: MetricMeta['d
   return { rank, rankTo, n, tied: equal - 1, pct, pctLo: pctAt(below), pctHi: pctAt(below + equal - 1) };
 }
 
+/** D5: "higher than P % of the units" counts the units with a strictly lower value, so a value tied with many
+ *  others (a block of zeros) is not said to be higher than the ones it equals: the bottom of the tie group. */
+export const higherThan = (r: RankInfo): number => r.pctLo;
+
 // ---------------------------------------------------------------- ticks
 export function niceStep(span: number, target: number): number {
   const raw = span / Math.max(1, target);

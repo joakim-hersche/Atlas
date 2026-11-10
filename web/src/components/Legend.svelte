@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { colon } from '../lib/typo';
   // Legend as a distribution: histogram of the metric across municipalities, bars in their class
   // colour, class breaks marked, median tick, and a class row with range and count per class.
   import { ml, mdesc, t as tr } from '../lib/i18n.svelte';
@@ -223,7 +224,7 @@
     <p class="rel"><span class="rb rb-{rel.kind}">{tr(`rl.b.${rel.kind}`)}</span> {rel.text}{#if rel.extra}{' '}<span class="rx">{rel.extra}</span>{/if}</p>
   {/if}
   <p class="foot">
-    {tr('lg.source')}: <a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
+    {tr('lg.source')}{colon()}<a href={sourceHref(meta.source)}>{publisher}</a> · {fmtPeriod(period)} · {precisionText(meta.precision)}{cov ? '' : ` · ${tr('lg.national')}`}
     {#if cov}<span class="partial"> · {coverageLabel(meta)}</span>{/if}
   </p>
   {/if}

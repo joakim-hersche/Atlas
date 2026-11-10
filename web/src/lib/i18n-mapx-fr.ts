@@ -57,5 +57,5 @@ export const FR_MAPX: Record<string, string> = {
   'rl.crossOne': `L’intervalle atteint une autre classe${n}: la couleur est incertaine.`,
   'sym.auto': `{metric} est un effectif${n}: affiché en cercles, car un aplat favoriserait les grandes unités.`,
   'sym.back': 'Colorier plutôt',
-  'lb.toggle': 'Noms de villes et de lacs',
+  'lb.toggle': 'Noms de lieux (villes et lacs)',
 };

@@ -61,6 +61,7 @@
   let search = $state<Record<number, string>>({});
   const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const short = (o: CatOption[]) => o.length > 0 && o.every((x) => x.name.length <= 14);
+  const nInactive = $derived(evals.filter((e) => e.status === 'inactive').length);
   const nameOf = (field: CatField, id: string) => options(field).find((o) => o.id === id)?.name ?? id;
 </script>
 
@@ -70,9 +71,13 @@
       <span class="num">{t('fp.match', { n: fmtNumber(match.n, 0), total: fmtNumber(total, 0), units: unitWord })}</span>
       {#if match.active > 1}{t('fp.all', { n: match.active })}{/if}
       {#if match.nMissingOnly}<span class="miss">· <span class="hatch"></span> <span class="num">{fmtNumber(match.nMissingOnly, 0)}</span> {t('fp.excluded')}</span>{/if}
+    {:else if nInactive}
+      <!-- C7: conditions that cannot apply at this level (travel times, commute) are not "no conditions" -->
+      {t('r3.fpInactive', { n: nInactive, total: fmtNumber(total, 0), units: unitWord })}
     {:else}
       {t('fp.none', { n: fmtNumber(total, 0), units: unitWord })}
     {/if}
+    {#if match.active && nInactive}<span class="miss">· {t('r3.fpSomeInactive', { n: nInactive })}</span>{/if}
     {#if filters.length}
       <span class="acts">
         {#if match.active && onzoom}<button type="button" class="link" onclick={onzoom}>{t('fp.zoom')}</button>{/if}

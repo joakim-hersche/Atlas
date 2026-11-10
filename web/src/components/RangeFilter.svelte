@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '../lib/i18n-r3';
   // Dual-range slider with typed min/max inputs. Log scale for skewed positive metrics (population
   // spans 4 orders of magnitude), linear otherwise. lo/hi are null when that side is unbounded.
   import { t } from '../lib/i18n.svelte';
@@ -73,8 +74,10 @@
       else set(lo, null);
       return;
     }
-    if (which === 'lo') set(v <= min ? null : Math.min(v, hi ?? max), hi);
-    else set(lo, v >= max ? null : Math.max(v, lo ?? min));
+    // F12: a typed bound is kept as typed (500 stays 500 even when the highest value is 195); the slider shows it
+    // at its end. Only the slider's own ends mean "no bound".
+    if (which === 'lo') set(hi !== null ? Math.min(v, hi) : v, hi);
+    else set(lo, lo !== null ? Math.max(v, lo) : v);
   }
   const active = $derived(lo !== null || hi !== null);
   const ph = (x: number) => fmtNumber(x, Math.abs(x) >= 100 ? 0 : decimals);
@@ -84,7 +87,7 @@
   {#if !hideLabel || count !== null}
     <div class="head">
       {#if !hideLabel}<span class="label">{label}</span>{/if}
-      {#if count !== null}<span class="count" aria-live="polite"><strong>{fmtNumber(count, 0)}</strong> of {fmtNumber(total, 0)} match</span>{/if}
+      {#if count !== null}<span class="count" aria-live="polite"><strong>{fmtNumber(count, 0)}</strong> {t('r3.ofMatch', { n: fmtNumber(total, 0) })}</span>{/if}
     </div>
   {/if}
   <div class="slider" style="--a:{(loPos / STEPS) * 100}%; --b:{(hiPos / STEPS) * 100}%">
@@ -94,12 +97,14 @@
     <input type="range" class="dual" min="0" max={STEPS} value={hiPos} aria-label="{label} maximum"
       oninput={(e) => setHiPos(+e.currentTarget.value)} />
   </div>
+  <!-- F12: the slider runs over the data range; its ends and scale are labelled -->
+  <div class="ends num" title={t('r3.rangeT')}><span>{ph(min)}</span>{#if useLog}<span class="sc">{t('r3.logScale')}</span>{/if}<span>{ph(max)}</span></div>
   <div class="inputs">
-    <label>Min
+    <label>{t('r3.min')}
       <input type="text" inputmode="decimal" placeholder={ph(min)} value={lo === null ? '' : String(lo)}
         onchange={(e) => typed('lo', e.currentTarget.value)} />
     </label>
-    <label>Max
+    <label>{t('r3.max')}
       <input type="text" inputmode="decimal" placeholder={ph(max)} value={hi === null ? '' : String(hi)}
         onchange={(e) => typed('hi', e.currentTarget.value)} />
     </label>
@@ -108,6 +113,8 @@
 </div>
 
 <style>
+  .ends { display: flex; justify-content: space-between; gap: 6px; margin-top: -2px; font-size: var(--fs-cap); color: var(--text-2); }
+  .ends .sc { font-style: italic; }
   .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .label { font-size: var(--fs-cap); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); }
   .count { color: var(--muted); font-size: var(--fs-small); font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: auto; }

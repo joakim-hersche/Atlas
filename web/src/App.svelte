@@ -9,6 +9,7 @@
   import SourcesView from './views/SourcesView.svelte';
   import Search from './components/Search.svelte';
   import type { SearchHit } from './lib/places';
+  import type { Lang } from './lib/hash';
   import { vintageFind } from './lib/vintage-strings.svelte';
   import ShareButton from './components/ShareButton.svelte';
   import Locator from './components/Locator.svelte';
@@ -174,9 +175,15 @@
         {@render langSwitch()}
       {:else}
         <ShareButton variant="icon" />
+        <!-- B8 (R8): the language stays in reach on a phone, not only inside the menu -->
+        <label class="plang"><span class="sr-only">{t('nav.lang')}</span>
+          <select value={app.lang} onchange={(e) => (app.lang = e.currentTarget.value as Lang)}>
+            <option value="en" lang="en">EN</option><option value="de" lang="de">DE</option><option value="fr" lang="fr">FR</option>
+          </select>
+        </label>
         <div class="menu" bind:this={menuEl}>
           <button type="button" class="menubtn" aria-haspopup="true" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
-            <span>{current ? navLabel(current) : t('nav.menu')}</span>
+            <span class="ml">{current ? navLabel(current) : t('nav.menu')}</span>
             <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
           </button>
           {#if menuOpen}
@@ -315,6 +322,11 @@
     .mark { width: 16px; height: 16px; }
     .mark::before { left: 6.5px; top: 3px; height: 10px; }
     .mark::after { left: 3px; top: 6.5px; width: 10px; }
-    .right { gap: 6px; }
+    .right { gap: 6px; min-width: 0; }
+    .plang select {
+      height: 34px; padding: 0 4px; border: 1px solid var(--ink); background: var(--panel); color: var(--text); font-size: var(--fs-small);
+      font-weight: 600; border-radius: 0; -webkit-appearance: none; appearance: none; text-align: center; width: 40px;
+    }
+    .menubtn .ml { max-width: 7.5em; overflow: hidden; text-overflow: ellipsis; }
   }
 </style>

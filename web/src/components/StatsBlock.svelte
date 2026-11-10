@@ -4,7 +4,7 @@
   import Term from './Term.svelte';
   import { sourceHref } from '../lib/nav';
   import { coverageLabel, partialCantons, precisionText, type MetricMeta, type Source } from '../lib/data';
-  import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues, unitOf } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, mean, quantile, rankOf, sortedValues, unitOf, higherThan } from '../lib/classify';
 
   interface Props {
     meta: MetricMeta;
@@ -72,7 +72,7 @@
           <tbody>
             <tr><th>{t('st.value')}</th><td class="num strong">{f(v[sel]!)}</td></tr>
             <tr><th>{t('st.rank')}</th><td class="num">{fmtNumber(rank.rank, 0)} <span class="muted">{t('st.of', { n: fmtNumber(rank.n, 0) })}{tiedText(rank, true)}, {meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')}</span></td></tr>
-            <tr><th>{t('st.pct')}<Term k="percentile" /></th><td class="num" title="P{fmtNumber(Math.round(rank.pct), 0)}">{t('ux.pctPlain', { p: fmtNumber(Math.round(rank.pct), 0), units: unitWord })}</td></tr>
+            <tr><th>{t('st.pct')}<Term k="percentile" /></th><td class="num" title="P{fmtNumber(Math.round(higherThan(rank)), 0)}">{t('ux.pctPlain', { p: fmtNumber(Math.round(higherThan(rank)), 0), units: unitWord })}</td></tr>
           </tbody>
         </table>
         <div class="pbar" aria-hidden="true">{#if rank.tied > 0}<i style="left:{rank.pctLo}%; width:{rank.pctHi - rank.pctLo}%"></i>{/if}<span style="left:{rank.pct}%"></span></div>

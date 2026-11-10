@@ -3,7 +3,7 @@
   import Term from './Term.svelte';
   import { glossKeyOf } from '../lib/glossary.svelte';
   import { coverageLabel, majorityValue, flagTexts, flagsOf, gapReason, noteOf, partialCantons, precisionOf, precisionText, type Column, type ColumnFile, type MetricMeta, type Source } from '../lib/data';
-  import { fmtNumber, fmtPeriod, fmtSig, fmtValue, rankOf } from '../lib/classify';
+  import { fmtNumber, fmtPeriod, fmtSig, fmtValue, higherThan, rankOf } from '../lib/classify';
   import '../lib/i18n-mapx';
   import type { RankRange } from '../lib/reliability';
 
@@ -161,7 +161,7 @@
         <span class="rank">
           {t('card.rank', { r: fmtNumber(rank.rank, 0), n: fmtNumber(rank.n, 0) })}{tiedText(rank)}
           <span class="muted">({meta.direction === 'lower_better' ? t('card.oneLowest') : t('card.oneHighest')})</span>
-          · <span title={t('ux.pctT', { p: Math.round(rank.pct), units: unitWord })}>{t('ux.pctPlain', { p: Math.round(rank.pct), units: unitWord })}</span><Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}</span>
+          · <span title={t('ux.pctT', { p: Math.round(higherThan(rank)), units: unitWord })}>{t('ux.pctPlain', { p: Math.round(higherThan(rank)), units: unitWord })}</span><Term k="percentile" /><span class="long">{cov ? ` · ${t('card.amongData', { units: unitWord })}` : ''}</span>
         </span>
       {/if}
     </div>

@@ -29,6 +29,12 @@
     const n = Number(raw.replace(/['’\s]/g, ''));
     onmin(raw.trim() !== '' && Number.isFinite(n) && n > 0 ? Math.round(n) : null);
   }
+  // J5: the field applies while typing (after a short pause), not only on Enter or leaving it
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  function typed(raw: string) {
+    clearTimeout(timer);
+    timer = setTimeout(() => setMin(raw), 400);
+  }
 </script>
 
 <div class="ropt">
@@ -44,7 +50,7 @@
   <div class="min">
     <label class="lab" for="rx-min">{t('rx.min')}</label>
     <input id="rx-min" class="num" type="text" inputmode="numeric" autocomplete="off" placeholder={t('rx.minPh')} disabled={!hasPop}
-      value={rmin ?? ''} onchange={(ev) => setMin(ev.currentTarget.value)} onkeydown={(ev) => { if (ev.key === 'Enter') setMin(ev.currentTarget.value); }} />
+      value={rmin ?? ''} oninput={(ev) => typed(ev.currentTarget.value)} onchange={(ev) => { clearTimeout(timer); setMin(ev.currentTarget.value); }} onkeydown={(ev) => { if (ev.key === 'Enter') setMin(ev.currentTarget.value); }} />
     <div class="seg" role="radiogroup" aria-label={t('rx.min')}>
       <button type="button" role="radio" aria-checked={!rflag} disabled={!hasPop} onclick={() => onflag(false)}>{t('rx.hide')}</button>
       <button type="button" role="radio" aria-checked={rflag} disabled={!hasPop} onclick={() => onflag(true)}>{t('rx.flag')}</button>

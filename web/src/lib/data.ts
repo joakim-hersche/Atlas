@@ -527,11 +527,28 @@ export interface ColRef {
 const lvlLabel = (id: string) => levelWord(id);
 
 /** Why a metric cannot be shown at a level (one line), or null when it can. */
+/** The build's reason why a metric has no map at a level, in the UI language when the build ships one
+ *  (`unavailable_levels` as text or {en, de, fr}, or `unavailable_levels_de` / `_fr`), cleaned for the sentence it
+ *  goes into: no leading "not offered as a map:" (the sentence says that already), no final full stop. */
+export function curationReason(meta: MetricMeta, level: string): string | null {
+  const raw = meta.unavailable_levels?.[level] as unknown;
+  const lang: string = app.lang;
+  const per = (meta as unknown as Record<string, Record<string, string> | null | undefined>)[`unavailable_levels_${lang}`]?.[level];
+  let s: string | null =
+    per ?? (raw && typeof raw === 'object' ? ((raw as Record<string, string>)[lang] ?? (raw as Record<string, string>).en ?? null) : (raw as string | null) ?? null);
+  if (!s) return null;
+  s = s.trim().replace(/^(not offered as a map|not available|nicht als karte angeboten|nicht verfügbar|pas proposé comme carte|non disponible)\s*[:\u202f\u00a0]*\s*/i, '');
+  s = s.replace(/[.\s]+$/, '');
+  return s ? s[0].toUpperCase() + s.slice(1) : null;
+}
+
 export function unavailableReason(meta: MetricMeta, level: string): string | null {
   if (availableAt(meta, level)) return null;
-  const real = meta.unavailable_levels?.[level];
+  const real = curationReason(meta, level);
   const where = meta.levels.filter((l) => l !== 'schweiz' && l !== 'gemeindetyp').map(lvlLabel);
-  const list = where.length ? where.join(', ') : t('why.chOnly');
+  // C5: a metric with no map at any level says so (it is on the profiles), not "Available for: Switzerland only"
+  if (!where.length) return real ? t('r3.noMapWhy', { reason: real }) : t('r3.noMap');
+  const list = where.join(', ');
   if (real) return t('why.real', { reason: real, list });
   if (meta.aggregation === 'not_aggregatable')
     return t('why.notAgg', { level: lvlLabel(level), list });
