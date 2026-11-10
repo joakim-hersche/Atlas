@@ -12,8 +12,11 @@ The median including the initial wait is kept in `minutes_incl_wait`.
 Two municipality values (method column):
   gtfs_csa_station    earliest arrival at any station inside the municipality (reference-state
                       polygon, point-in-polygon), no access/egress walk
-  gtfs_csa_popweighted each populated STATPOP 2025 hectare uses its nearest served station within
-                      1.5 km straight line, plus walk = d * 1.3 / 1.2 m/s; municipality value =
+  gtfs_csa_popweighted each populated STATPOP 2025 hectare uses the best served station within
+                      1.5 km straight line: min over those stations of (station median journey time
+                      + walk = d * 1.3 / 1.2 m/s). (Until 2026-11-10 the nearest station was used,
+                      which let a sparse bus stop beat a nearby rail station: Oberweningen 419 min.)
+                      Municipality value =
                       population-weighted median over hectares of the hectare's median journey time.
                       Municipalities where no populated hectare has a station within 1.5 km get
                       status 'no PT within walking distance' and no number.
@@ -67,22 +70,40 @@ def weighted_median(v: np.ndarray, w: np.ndarray) -> float:
 
 
 def access_links(stations: pd.DataFrame) -> pd.DataFrame:
-    """Nearest station within 1.5 km for every populated hectare, among stations with at least one
-    connection departing or arriving 06:30-18:00 on the service day (a stop served only in the
-    evening would otherwise capture the hectare)."""
-    cache = interim_path("reach", "hectare_access.parquet")
+    """Every served station within 1.5 km of every populated hectare (one row per pair; hectares with
+    none keep one row with idx NaN). Served = at least one connection departing or arriving
+    06:30-18:00 on the service day (a stop served only in the evening is not a usable access)."""
+    cache = interim_path("reach", "hectare_access_all.parquet")
     if cache.exists():
         return pd.read_parquet(cache)
     h = hectares_in_zones()
     hp = gpd.GeoDataFrame(h[["RELI"]], geometry=gpd.points_from_xy(h.x, h.y), crs=2056)
     served = stations[stations.served_in_window]
     sp = gpd.GeoDataFrame(served[["idx"]], geometry=gpd.points_from_xy(served.x, served.y), crs=2056)
-    j = gpd.sjoin_nearest(hp, sp, how="left", max_distance=ACCESS_RADIUS, distance_col="dist")
-    j = j.drop_duplicates("RELI")
-    a = h.merge(j[["RELI", "idx", "dist"]], on="RELI", how="left")
+    j = gpd.sjoin(hp, sp, how="left", predicate="dwithin", distance=ACCESS_RADIUS)
+    j = j[["RELI", "idx"]].merge(served[["idx", "x", "y"]], on="idx", how="left")
+    a = h.merge(j, on="RELI", how="left", suffixes=("", "_st"))
+    a["dist"] = np.hypot(a["x"] - a["x_st"], a["y"] - a["y_st"])
     a["walk_s"] = a.dist * DETOUR / WALK_SPEED
+    a = a.drop(columns=["x_st", "y_st"])
     a.to_parquet(cache)
     return a
+
+
+def best_access(access: pd.DataFrame, med_station: np.ndarray, med_wait_station: np.ndarray) -> pd.DataFrame:
+    """One row per hectare: best station (min of station median journey + walk) among those in reach.
+    Columns j / jw in seconds (NaN: no station within 1.5 km; inf: none of them reached)."""
+    a = access.dropna(subset=["bfs_nr"])
+    ok = a.idx.notna()
+    a = a.assign(j=np.nan, jw=np.nan)
+    ii = a.loc[ok, "idx"].astype(int).to_numpy()
+    a.loc[ok, "j"] = med_station[ii] + a.loc[ok, "walk_s"].to_numpy()
+    a.loc[ok, "jw"] = med_wait_station[ii] + a.loc[ok, "walk_s"].to_numpy()
+    g = a.groupby("RELI", sort=False)
+    best = g.agg(bfs_nr=("bfs_nr", "first"), BBTOT=("BBTOT", "first"), j=("j", "min"), jw=("jw", "min"),
+                 has_stop=("idx", "count"))
+    best["idx"] = np.where(best["has_stop"] > 0, 1.0, np.nan)  # marker: a station is within reach
+    return best.reset_index()
 
 
 def hub_sources(net: Network, didok: int) -> list[int]:
@@ -113,13 +134,15 @@ def municipality_results(net: Network, slug: str, ea: np.ndarray, journey: np.nd
         else:
             rows.append((slug, "pt", int(bfs), round(m / 60, 1), round(mw / 60, 1), "ok", "gtfs_csa_station", np.nan))
     # --- population-weighted variant
-    med_wait_station = np.median(wait, axis=0)
-    a = access.dropna(subset=["bfs_nr"])
-    ok = a.idx.notna()
-    a = a.assign(j=np.nan, jw=np.nan)
-    ii = a.loc[ok, "idx"].astype(int).to_numpy()
-    a.loc[ok, "j"] = med_station[ii] + a.loc[ok, "walk_s"].to_numpy()
-    a.loc[ok, "jw"] = med_wait_station[ii] + a.loc[ok, "walk_s"].to_numpy()
+    rows += popweighted_rows(slug, med_station, np.median(wait, axis=0), access, gem_ids)
+    return pd.DataFrame(rows, columns=["hub", "mode", "bfs_nr", "minutes", "minutes_incl_wait", "status",
+                                       "method", "pop_share_with_stop"])
+
+
+def popweighted_rows(slug: str, med_station: np.ndarray, med_wait_station: np.ndarray,
+                     access: pd.DataFrame, gem_ids: np.ndarray) -> list[tuple]:
+    rows = []
+    a = best_access(access, med_station, med_wait_station)
     for bfs, g in a.groupby("bfs_nr"):
         pop = g.BBTOT.sum()
         cov = g[g.idx.notna()]
@@ -141,8 +164,27 @@ def municipality_results(net: Network, slug: str, ea: np.ndarray, journey: np.nd
     for bfs in gem_ids:
         if int(bfs) not in done:
             rows.append((slug, "pt", int(bfs), np.nan, np.nan, "no populated hectare", "gtfs_csa_popweighted", np.nan))
-    return pd.DataFrame(rows, columns=["hub", "mode", "bfs_nr", "minutes", "minutes_incl_wait", "status",
-                                       "method", "pop_share_with_stop"])
+    return rows
+
+
+def recompute_popweighted(hubs=HUBS) -> pd.DataFrame:
+    """Recompute only the population-weighted PT rows from the cached per-station medians
+    (data/interim/reach/pt_station_times), without re-running the CSA. Returns the new rows."""
+    net = Network.load(outdir())
+    access = access_links(net.stations)
+    gem = gpd.read_file(interim_path("geo", f"units_{REFERENCE_DATE.isoformat()}.gpkg"), layer="gemeinde",
+                        ignore_geometry=True)
+    gem_ids = gem["id"].astype(int).to_numpy()
+    out = []
+    n = len(net.stations)
+    for slug, _name, _didok in hubs:
+        st = pd.read_parquet(interim_path("reach", "pt_station_times", f"{slug}.parquet"))
+        med = np.full(n, np.inf); medw = np.full(n, np.inf)
+        med[st.idx.to_numpy()] = st.median_journey_s.to_numpy()
+        medw[st.idx.to_numpy()] = st.median_incl_wait_s.to_numpy()
+        out += popweighted_rows(slug, med, medw, access, gem_ids)
+    return pd.DataFrame(out, columns=["hub", "mode", "bfs_nr", "minutes", "minutes_incl_wait", "status",
+                                      "method", "pop_share_with_stop"])
 
 
 def representative_departure(journey: np.ndarray, net: Network) -> int:
