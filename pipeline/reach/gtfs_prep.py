@@ -8,6 +8,8 @@ Output (data/interim/reach/gtfs_<date>/):
                        day, sorted by departure: dep, arr (seconds after midnight), from_idx, to_idx,
                        trip (int), seq, board (pickup allowed at from), alight (drop-off allowed at to),
                        route_type, chain_trip (trip continued in-seat at to via transfer_type 4, or -1)
+                       n_dep / n_dep_rail (boardable departures 06:30-18:00, all modes / rail),
+                       served_in_window (any departure or arrival 06:30-18:00)
   footpaths.parquet    from_idx, to_idx, walk_s (stations within 400 m straight line, time =
                        d * 1.3 / 1.2 m/s, overridden by transfers.txt between stations where given;
                        a station with no neighbour within 400 m is linked to its nearest station
@@ -38,7 +40,9 @@ from pipeline.common import REFERENCE_DATE, interim_path
 from pipeline.sources.otd_gtfs.fetch import FEED, gtfs
 
 SERVICE_DATE = dt.date(2026, 11, 17)   # Tuesday, see reach.md for the choice
-WINDOW = (7 * 3600 + 30 * 60, 18 * 3600)   # keep connections departing 07:30 .. 18:00
+WINDOW = (7 * 3600 + 30 * 60, 18 * 3600)   # forward runs: departures 07:30 .. 18:00
+EARLIEST_DEP = 4 * 3600 + 30 * 60          # keep connections from 04:30 (reverse runs: arrivals at the hub 07:30-08:30)
+SERVED = (WINDOW[0] - 3600, WINDOW[1])     # a stop is "served" with a departure/arrival 06:30-18:00
 DEFAULT_MCT = 120
 MAX_MCT = 900   # a few bus stops carry implausible rules (e.g. 5940 s); capped
 FOOT_RADIUS = 400.0
@@ -123,7 +127,7 @@ def expand_frequencies(z, st: pd.DataFrame, trips: pd.DataFrame) -> tuple[pd.Dat
         k = 0
         for _, f in fr[fr.trip_id == tid].iterrows():
             for start in range(int(f.start), int(f.end), int(f.hw)):
-                if start + (g.arr.max() - t0) < WINDOW[0] or start > WINDOW[1]:
+                if start + (g.arr.max() - t0) < EARLIEST_DEP or start > WINDOW[1]:
                     continue
                 nid = f"{tid}#f{k}"
                 k += 1
@@ -217,7 +221,7 @@ def build(date: dt.date = SERVICE_DATE, feed: str = FEED) -> dict:
         lk = lk[~lk.index.duplicated()]
         k2 = pd.MultiIndex.from_arrays([con.trip, con.to_idx])
         con["chain_trip"] = lk.reindex(k2).fillna(-1).astype(np.int32).to_numpy()
-    con = con[(con.dep >= WINDOW[0] - 3600) & (con.dep <= WINDOW[1])]
+    con = con[(con.dep >= EARLIEST_DEP) & (con.dep <= WINDOW[1])]
     con = con.sort_values(["dep", "arr", "trip", "seq"]).reset_index(drop=True)
     print("connections", len(con))
 
@@ -273,7 +277,13 @@ def build(date: dt.date = SERVICE_DATE, feed: str = FEED) -> dict:
     rail_types = set(range(100, 118)) | {2}
     rail_st = set(con.loc[con.route_type.isin(rail_types), "from_idx"]) | set(con.loc[con.route_type.isin(rail_types), "to_idx"])
     sta["rail"] = sta.idx.isin(rail_st)
-    sta["served_in_window"] = sta.idx.isin(set(con.from_idx) | set(con.to_idx))
+    sv = con[(con.dep >= SERVED[0]) & (con.dep <= SERVED[1])]
+    sta["served_in_window"] = sta.idx.isin(set(sv.from_idx) | set(sv.to_idx))
+    # departures 06:30-18:00 per station (boardable), all modes and rail only: main-station choice (pt.py)
+    dep_all = sv[sv.board].groupby("from_idx").size()
+    dep_rail = sv[sv.board & sv.route_type.isin(rail_types)].groupby("from_idx").size()
+    sta["n_dep"] = sta.idx.map(dep_all).fillna(0).astype(np.int32)
+    sta["n_dep_rail"] = sta.idx.map(dep_rail).fillna(0).astype(np.int32)
 
     od = outdir(date)
     sta.to_parquet(od / "stations.parquet")
@@ -283,7 +293,7 @@ def build(date: dt.date = SERVICE_DATE, feed: str = FEED) -> dict:
     meta = {"feed": feed, "service_date": date.isoformat(), "services": len(services), "trips": len(trips),
             "connections": len(con), "stations": len(sta), "footpaths": len(fp),
             "stations_in_ch": int(sta.bfs_nr.notna().sum()),
-            "window": [WINDOW[0] - 3600, WINDOW[1]]}
+            "window": [EARLIEST_DEP, WINDOW[1]], "served_window": list(SERVED)}
     (od / "meta.json").write_text(json.dumps(meta, indent=1))
     print(meta)
     return meta

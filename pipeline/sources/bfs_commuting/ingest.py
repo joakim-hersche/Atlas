@@ -51,7 +51,8 @@ def _load() -> pd.DataFrame:
     d = pd.read_csv(matrix_csv(), encoding="utf-8-sig")
     d.columns = [c.strip() for c in d.columns]
     return d.rename(columns={"GEO_COMM_RESID": "res", "GEO_COMM_WORK": "work", "REF_YEAR": "year",
-                             "VALUE": "value", "PERSPECTIVE": "persp"})[["persp", "year", "res", "work", "value"]]
+                             "VALUE": "value", "PERSPECTIVE": "persp", "GEO_CANT_RESID": "cant_res",
+                             "GEO_CANT_WORK": "cant_work"})[["persp", "year", "res", "work", "value", "cant_res", "cant_work"]]
 
 
 def _mapping(state) -> pd.DataFrame:
@@ -114,6 +115,33 @@ def _year(d: pd.DataFrame, year: int) -> pd.DataFrame:
     return out
 
 
+def leave_canton(g: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Employed residents of each canton working in another canton (review round 1, defect 7).
+
+    R rows mapped to the reference state; the work canton of an explicit flow is the reference canton
+    of the work municipality. Relations below 5 persons (code 7777) carry the work canton in the
+    source (GEO_CANT_WORK; 77 = another canton), so canton totals are exact. Below the canton
+    (districts, labour-market areas, ...) such relations cannot be placed, so no value is computed.
+    """
+    from pipeline.backbone.levels import membership
+    state, _ = infer_vintage(g.loc[g["persp"] == "R", "res"].unique())
+    m = _mapping(state)
+    kt = membership().set_index("bfs_nr")["kanton"]
+    r = g[g["persp"] == "R"].copy()
+    r = _map(_map(r, "res", m), "work", m)
+    r["v"] = r["value"] * r["w_res"] * r["w_work"]
+    r["kt_res"] = r["res"].map(kt)
+    other = r["work"] == OTHER
+    r["leaves"] = np.where(other, r["cant_work"].astype(int) != r["cant_res"].astype(int),
+                           r["work"].map(kt) != r["kt_res"])
+    t = r[r["leaves"]].groupby("kt_res")["v"].sum().reindex(sorted(kt.unique())).fillna(0.0)
+    out = pd.DataFrame({"unit": t.index, "value": t.values, "year": str(year)})
+    o = emit(out, {"value": "com_leave_unit"}, "year", SOURCE, level="kanton", unit_col="unit",
+             precision="exact", provenance="native")
+    o["note"] = "computed from the commuter matrix flows: employed residents working in another canton"
+    return o
+
+
 METRICS = {"emp": "com_employed_residents", "jobs": "com_jobs", "own": "com_work_in_own",
            "out": "com_out_commuters", "inc": "com_in_commuters", "bal": "com_balance"}
 NEEDS_OWN = {"own", "out", "inc"}
@@ -142,5 +170,8 @@ def observations() -> pd.DataFrame:
                 o.loc[s, "status"] = "suppressed"
                 o.loc[s, "note"] = "own-municipality flow below 5 persons (grouped into code 7777 in the source)"
             parts.append(o)
+            if col == "out":   # leaving the unit, municipality level = out-commuters
+                parts.append(o.assign(metric_id="com_leave_unit"))
+        parts.append(leave_canton(g, int(year)))
     parts.append(national(d))
     return pd.concat(parts, ignore_index=True)[OBS_COLUMNS]

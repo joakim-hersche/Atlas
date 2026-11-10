@@ -20,6 +20,8 @@ observation (one row per unit × metric × period):
 Metric metadata (pipeline/sources/<source_id>/metrics.yaml), list of:
   id, theme, label_en, label_de, unit, decimals, direction (higher_better|lower_better|neutral),
   aggregation  sum | ratio:<num>/<den>[*<factor>] | weighted_mean:<metric> | not_aggregatable
+               | change:<metric>:<years> | pooled:<num>/<den>[*<factor>]:<years>[:<den lag>] (derived)
+  optional     zero_when, include_pseudo (pipeline.build.metrics), credit_source (source shown in the app)
   kind         base (delivered by the connector) | derived (computed by the build from base metrics)
   precision, coverage (national | partial:<cantons>), native_level, description, source_note
 """
@@ -46,7 +48,7 @@ METRIC_KEYS = {"id", "theme", "label_en", "label_de", "unit", "decimals", "direc
 # optional keys; anything else is a typo or an unquoted comma in a YAML flow mapping
 OPTIONAL_METRIC_KEYS = {"description", "source_note", "volatile", "zero_when", "plausibility_note",
                         "additivity_note", "additivity_rounding", "additivity_tolerance", "bounded_0_100",
-                        "allow_negative", "source_id"}
+                        "allow_negative", "source_id", "include_pseudo", "credit_source", "unavailable_note"}
 
 SOURCES_DIR = Path(__file__).resolve().parents[1] / "sources"
 
@@ -78,7 +80,7 @@ def validate_metrics(df: pd.DataFrame) -> list[str]:
         if m.get("direction") not in ("higher_better", "lower_better", "neutral"):
             errors.append(f"{m.get('id')}: bad direction")
         agg = str(m.get("aggregation", ""))
-        if not (agg in ("sum", "not_aggregatable") or agg.startswith(("ratio:", "weighted_mean:", "change:"))):
+        if not (agg in ("sum", "not_aggregatable") or agg.startswith(("ratio:", "weighted_mean:", "change:", "pooled:"))):
             errors.append(f"{m.get('id')}: bad aggregation {agg!r}")
     dup = df["id"][df["id"].duplicated()].tolist() if "id" in df else []
     if dup:

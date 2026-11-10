@@ -34,3 +34,20 @@ def turnout() -> pd.DataFrame:
 def parties() -> dict[str, str]:
     v = next(x for x in metadata("px-x-1702020000_105")["variables"] if x["code"] == "Partei")
     return dict(zip(v["values"], v["valueTexts"]))
+
+
+def seats() -> pd.Series:
+    """Seats (elected, all parties, both sexes) per canton and election year, px-x-1702020000_103
+    (Nationalratswahlen: Anzahl Kandidaturen und Gewählte seit 1971). Index (Kanton, Jahr)."""
+    d = query_codes("px-x-1702020000_103", {"Kanton": "*", "Jahr": "*", "Partei": ["0"], "Geschlecht": ["Z"],
+                                           "Ergebnisse": ["2"]})
+    return d.set_index(["Kanton", "Jahr"])["value"]
+
+
+def majority_cantons() -> dict[str, list[str]]:
+    """Election year -> cantons with a single seat. With one seat the election is by majority
+    (Majorzwahl, Art. 47 BPR), so party strength is not comparable with proportional cantons."""
+    s = seats()
+    s = s[s.index.get_level_values("Kanton") != "CH"]
+    one = s[s == 1].reset_index()
+    return {str(y): sorted(g["Kanton"]) for y, g in one.groupby("Jahr")}

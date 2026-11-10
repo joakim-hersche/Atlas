@@ -5,7 +5,9 @@ Area (ha): swissBOUNDARIES3D 2026-01 (swisstopo), layer tlm_hoheitsgebiet, objek
   The 2026-01 release holds exactly the 2110 municipalities of the reference state (keyed on
   bfs_nummer), so no reprojection is needed. Lake areas and state forest outside any municipality
   (objektart Kantonsgebiet, BFS codes 9xxx and 2391 Staatswald Galm) and the two Kommunanzen are not
-  part of any municipality; only native canton / Switzerland land area is emitted (see _area).
+  part of any municipality; they are emitted as level 'pseudo' rows ('<KT>:<bfs_nummer>') that the
+  build adds to canton and Swiss sums (include_pseudo), plus the published canton / Swiss areas
+  (native) for the plausibility check.
   Area refers to the reference boundaries and is the same for every year (decision D16), so it is
   emitted for every STATPOP year (2010–latest) and the release year: density
   (pop_total / land area) can then be computed per year by the build.
@@ -68,10 +70,25 @@ def _area() -> pd.DataFrame:
     l = pyogrio.read_dataframe(path, layer="tlm_landesgebiet", read_geometry=False)
     l = l[l["icc"] == "CH"].assign(unit="CH")
     l["land"] = l["landesflaeche"] - l["see_flaeche"]
-    nnote = f"swissBOUNDARIES3D {RELEASE}; includes Kommunanzen and state forest outside municipalities"
-    nat = [_rows(k, "canton", "kanton", {"land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote),
-           _rows(l, "unit", "schweiz", {"land": "geo_area_land_ha"}, [RELEASE[:4]], "native", nnote)]
-    return pd.concat([mun, *nat], ignore_index=True)
+    nnote = f"swissBOUNDARIES3D {RELEASE}; includes lakes, Kommunanzen and state forest outside municipalities"
+    k["total"] = k["kantonsflaeche"]
+    l["total"] = l["landesflaeche"]
+    cols = {"land": "geo_area_land_ha", "total": "geo_area_total_ha", "see_flaeche": "geo_area_lake_ha"}
+    nat = [_rows(k, "canton", "kanton", cols, [RELEASE[:4]], "native", nnote),
+           _rows(l, "unit", "schweiz", cols, [RELEASE[:4]], "native", nnote)]
+    # territory outside municipalities (review round 1, defect 5): cantonal lake areas (BFS 9xxx),
+    # Staatswald Galm and the two Ticino Kommunanzen, as level 'pseudo' rows '<KT>:<bfs_nummer>'.
+    # metrics.yaml include_pseudo adds them to canton and Swiss sums, which then equal the published
+    # canton areas (kantonsflaeche, see_flaeche).
+    o = h[(h["icc"] == "CH") & (h["objektart"] != "Gemeindegebiet")].copy()
+    o = o.merge(cant[["canton_id", "canton"]], left_on="kantonsnummer", right_on="canton_id")
+    o["land"] = o["gem_flaeche"] - o["see_flaeche"]
+    o["unit"] = o["canton"] + ":" + o["bfs_nummer"].astype(int).astype(str)
+    ps = _rows(o, "unit", "pseudo", {"gem_flaeche": "geo_area_total_ha", "see_flaeche": "geo_area_lake_ha",
+                                     "land": "geo_area_land_ha"}, AREA_PERIODS, "native",
+               f"swissBOUNDARIES3D {RELEASE}: territory of the canton outside any municipality (objektart "
+               "Kantonsgebiet / Kommunanz)")
+    return pd.concat([mun, *nat, ps], ignore_index=True)
 
 
 def _elevation() -> pd.DataFrame:

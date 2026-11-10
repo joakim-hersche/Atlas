@@ -10,6 +10,13 @@ Model
   after every improved arrival (not transitively closed).
 - pickup_type / drop_off_type = 1 are respected (board / alight flags).
 
+`run_reverse()` is the reverse scan (latest departure): for one arrival deadline T at a set of target
+stations it returns, for every station, the latest time one can leave it (board there, or walk from
+it over one footpath to a boarding station) and still reach a target by T. Connections are scanned
+by descending departure time; a trip is marked usable once staying on it reaches a target in time
+(standard reverse CSA, mirror of the forward rules: change time at the boarding station, footpaths
+without change time, in-seat transfers, board/alight flags).
+
 `run()` returns the earliest arrival (seconds after midnight, INF if not reached) at every station
 for one departure time from a set of source stations, plus the journey tree:
   in_conn[s]   connection by which s was first reached (-1 if by footpath or source)
@@ -63,6 +70,29 @@ class Network:
                    con.alight.to_numpy(np.bool_), con.chain_trip.to_numpy(np.int32),
                    sta.mct_s.to_numpy(np.int32), start, fp.to_idx.to_numpy(np.int32),
                    fp.walk_s.to_numpy(np.int32), int(trips.trip.max()) + 1, sta, con, trips)
+
+    def _reverse_prep(self):
+        if not hasattr(self, "_rorder"):
+            seq = self.connections.seq.to_numpy()
+            # descending departure; ties: later arrival / later stop of the trip first
+            self._rorder = np.lexsort((-seq, -self.arr.astype(np.int64), -self.dep.astype(np.int64))).astype(np.int64)
+            self._rdep_neg = (-self.dep[self._rorder]).astype(np.int64)   # ascending
+            fp_from = np.repeat(np.arange(len(self.mct), dtype=np.int32), np.diff(self.fp_start))
+            o = np.argsort(self.fp_to, kind="stable")
+            counts = np.bincount(self.fp_to, minlength=len(self.mct))
+            st = np.zeros(len(self.mct) + 1, np.int64)
+            st[1:] = np.cumsum(counts)
+            self._rfp = (st, fp_from[o].astype(np.int32), self.fp_w[o].astype(np.int32))
+
+    def run_reverse(self, targets, deadline: int, earliest: int = 0):
+        """Latest departure (seconds; -INF if the targets cannot be reached by `deadline`) per station."""
+        self._reverse_prep()
+        tgt = np.asarray(targets, np.int32)
+        k0 = int(np.searchsorted(self._rdep_neg, -deadline, side="left"))
+        st, rfrom, rw = self._rfp
+        return _rcsa(tgt, np.int32(deadline), np.int32(earliest), k0, self._rorder, self.dep, self.arr,
+                     self.frm, self.to, self.trip, self.board, self.alight, self.chain, self.mct,
+                     st, rfrom, rw, self.n_trips)
 
     def run(self, sources, t0: int, cutoff: int):
         src = np.asarray(sources, np.int32)
@@ -129,6 +159,63 @@ def _csa(src, t0, cutoff, i0, dep, arr, frm, to, trip, board, alight, chain, mct
                     in_conn[u] = -1
                     in_foot[u] = v
     return ea, in_conn, in_foot, entry
+
+
+@nb.njit(cache=True)
+def _rcsa(tgt, T, earliest, k0, order, dep, arr, frm, to, trip, board, alight, chain, mct, rfp_start, rfp_from,
+          rfp_w, n_trips):
+    n = mct.shape[0]
+    neg = -INF
+    ld = np.full(n, neg, np.int32)        # latest departure from s (journey start, footpath from s allowed)
+    need = np.full(n, neg, np.int32)      # latest arrival at s by vehicle that still reaches a target by T
+    board_ld = np.full(n, neg, np.int32)  # latest boarding at s
+    ok_trip = np.zeros(n_trips, np.bool_)
+    for k in range(tgt.shape[0]):
+        s = tgt[k]
+        ld[s] = T
+        need[s] = T
+        for j in range(rfp_start[s], rfp_start[s + 1]):
+            u = rfp_from[j]
+            t = T - rfp_w[j]
+            if t > ld[u]:
+                ld[u] = t
+            if t > need[u]:
+                need[u] = t
+    m = order.shape[0]
+    for k in range(k0, m):
+        i = order[k]
+        if dep[i] < earliest:
+            break
+        tr = trip[i]
+        ok = ok_trip[tr]
+        if not ok and alight[i] and arr[i] <= need[to[i]]:
+            ok = True
+        if not ok:
+            c = chain[i]
+            if c >= 0 and ok_trip[c]:
+                ok = True
+        if not ok:
+            continue
+        ok_trip[tr] = True
+        if not board[i]:
+            continue
+        s = frm[i]
+        t = dep[i]
+        if t > board_ld[s]:
+            board_ld[s] = t
+            if t > ld[s]:
+                ld[s] = t
+            r = t - mct[s]
+            if r > need[s]:
+                need[s] = r
+            for j in range(rfp_start[s], rfp_start[s + 1]):
+                u = rfp_from[j]
+                tw = t - rfp_w[j]
+                if tw > need[u]:
+                    need[u] = tw
+                if tw > ld[u]:
+                    ld[u] = tw
+    return ld
 
 
 @nb.njit(cache=True)
